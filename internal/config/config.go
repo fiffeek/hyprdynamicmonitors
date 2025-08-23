@@ -65,9 +65,40 @@ type Profile struct {
 	Conditions ProfileCondition `toml:"conditions"`
 }
 
+type PowerStateType int
+
+const (
+	BAT PowerStateType = iota
+	AC
+)
+
+func (e *PowerStateType) Value() string {
+	switch *e {
+	case BAT:
+		return "BAT"
+	case AC:
+		return "AC"
+	}
+	return ""
+}
+
+func (e *PowerStateType) UnmarshalTOML(value any) error {
+	sValue, ok := value.(string)
+	if !ok {
+		return fmt.Errorf("value %v is not a string type", value)
+	}
+	for _, enum := range []PowerStateType{BAT, AC} {
+		if enum.Value() == sValue {
+			*e = enum
+			return nil
+		}
+	}
+	return errors.New("invalid enum value")
+}
+
 type ProfileCondition struct {
 	RequiredMonitors []*RequiredMonitor `toml:"required_monitors"`
-	PowerState       string             `toml:"power_state"` // "AC", "BAT", or "any"
+	PowerState       *PowerStateType    `toml:"power_state"`
 }
 
 type RequiredMonitor struct {
@@ -150,16 +181,6 @@ func (c *Config) Validate() error {
 
 		if _, err := os.Stat(profile.ConfigFile); os.IsNotExist(err) {
 			return fmt.Errorf("profile %s: config file %s not found", name, profile.ConfigFile)
-		}
-
-		switch profile.Conditions.PowerState {
-		case "AC", "BAT", "ANY", "":
-			if profile.Conditions.PowerState == "" {
-				profile.Conditions.PowerState = "ANY"
-			}
-		default:
-			return fmt.Errorf("profile %s: invalid power_state '%s' (must be AC, BAT, or any)",
-				name, profile.Conditions.PowerState)
 		}
 
 		if len(profile.Conditions.RequiredMonitors) == 0 {
