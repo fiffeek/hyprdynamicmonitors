@@ -1,0 +1,23 @@
+[general]
+destination = "$HOME/.config/hypr/config.d/dynamic-monitors.conf"
+
+[profiles.by_name]
+config_file = "hyprconfigs/basic.conf"
+
+[[profiles.by_name.conditions.required_monitors]]
+name = "eDP-1"
+
+[profiles.by_description]
+config_file = "hyprconfigs/basic.conf"
+
+[[profiles.by_description.conditions.required_monitors]]
+description = "BOE NE135A1M-NY1"
+
+[profiles.multiple_monitors]
+config_file = "hyprconfigs/basic.conf"
+
+[[profiles.multiple_monitors.conditions.required_monitors]]
+description = "BOE NE135A1M-NY1"
+
+[[profiles.multiple_monitors.conditions.required_monitors]]
+name = "DP-10"
