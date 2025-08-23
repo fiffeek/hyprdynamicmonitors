@@ -6,6 +6,7 @@ import (
 
 	"github.com/fiffeek/hyprdynamicmonitors/internal/config"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/detectors"
+	"github.com/fiffeek/hyprdynamicmonitors/internal/generators"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/hypr"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/matchers"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/service"
@@ -54,10 +55,14 @@ func main() {
 
 	matcher := matchers.NewMatcher(cfg, *verbose)
 
+	generator := generators.NewConfigGenerator(&generators.GeneratorConfig{
+		Verbose: *verbose,
+	})
+
 	svc := service.NewService(cfg, monitorDetector, &service.Config{
 		DryRun:  *dryRun,
 		Verbose: *verbose,
-	}, matcher)
+	}, matcher, generator)
 
 	if err := svc.Run(); err != nil {
 		log.Fatalf("Service failed: %v", err)
