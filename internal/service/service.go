@@ -1,9 +1,11 @@
 package service
 
 import (
+	"bytes"
 	"fmt"
 	"log"
 	"os"
+	"text/template"
 
 	"github.com/fiffeek/hyprdynamicmonitors/internal/config"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/detectors"
@@ -78,12 +80,107 @@ func (s *Service) UpdateOnce(connectedMonitors []*hypr.MonitorSpec) error {
 
 	log.Printf("Using profile: %s -> %s", profile.Name, profile.ConfigFile)
 
-	if err := s.linkConfigFile(profile); err != nil {
-		return fmt.Errorf("failed to link config file: %w", err)
+	switch *profile.ConfigType {
+	case config.Static:
+		if err := s.linkConfigFile(profile); err != nil {
+			return fmt.Errorf("failed to link config file: %w", err)
+		}
+		log.Printf("Successfully linked configuration: %s", profile.ConfigFile)
+	case config.Template:
+		if err := s.renderTemplateFile(profile, connectedMonitors); err != nil {
+			return fmt.Errorf("failed to render template file: %w", err)
+		}
+		log.Printf("Successfully rendered template configuration: %s", profile.ConfigFile)
 	}
 
-	log.Printf("Successfully linked configuration: %s", profile.ConfigFile)
 	return nil
+}
+
+func (s *Service) renderTemplateFile(profile *config.Profile, connectedMonitors []*hypr.MonitorSpec) error {
+	templatePath := profile.ConfigFile
+	dest := *s.config.General.Destination
+
+	templateContent, err := os.ReadFile(templatePath)
+	if err != nil {
+		return fmt.Errorf("failed to read template file %s: %w", templatePath, err)
+	}
+
+	tmpl, err := template.New("config").Parse(string(templateContent))
+	if err != nil {
+		return fmt.Errorf("failed to parse template: %w", err)
+	}
+
+	templateData := s.createTemplateData(profile, connectedMonitors)
+
+	var rendered bytes.Buffer
+	if err := tmpl.Execute(&rendered, templateData); err != nil {
+		return fmt.Errorf("failed to execute template: %w", err)
+	}
+
+	renderedContent := rendered.Bytes()
+	if existingContent, err := os.ReadFile(dest); err == nil {
+		if bytes.Equal(existingContent, renderedContent) {
+			if s.cfg.Verbose {
+				log.Printf("Template content unchanged, skipping write: %s", dest)
+			}
+			return nil
+		}
+	}
+
+	tempFile := dest + ".tmp"
+	if err := os.WriteFile(tempFile, renderedContent, 0644); err != nil {
+		return fmt.Errorf("failed to write temp config to %s: %w", tempFile, err)
+	}
+
+	if err := os.Rename(tempFile, dest); err != nil {
+		return fmt.Errorf("failed to rename temp config %s to %s: %w", tempFile, dest, err)
+	}
+
+	return nil
+}
+
+func (s *Service) createTemplateData(profile *config.Profile, connectedMonitors []*hypr.MonitorSpec) map[string]any {
+	data := make(map[string]any)
+	data["Monitors"] = connectedMonitors
+
+	monitorsByTag := make(map[string]*hypr.MonitorSpec)
+
+	for _, requiredMonitor := range profile.Conditions.RequiredMonitors {
+		if requiredMonitor.MonitorTag == nil {
+			continue
+		}
+
+		for _, connectedMonitor := range connectedMonitors {
+			if s.monitorMatches(requiredMonitor, connectedMonitor) {
+				monitorsByTag[*requiredMonitor.MonitorTag] = connectedMonitor
+				if s.cfg.Verbose {
+					log.Printf("Mapped monitor tag '%s' to monitor: Name=%s, Description=%s",
+						*requiredMonitor.MonitorTag, connectedMonitor.Name, connectedMonitor.Description)
+				}
+				break
+			}
+		}
+	}
+
+	if s.cfg.Verbose {
+		log.Printf("Template data: %d monitors, %d tagged monitors", len(connectedMonitors), len(monitorsByTag))
+		for tag, monitor := range monitorsByTag {
+			log.Printf("  Tag '%s': %s (%s)", tag, monitor.Name, monitor.Description)
+		}
+	}
+
+	data["MonitorsByTag"] = monitorsByTag
+	return data
+}
+
+func (s *Service) monitorMatches(required *config.RequiredMonitor, connected *hypr.MonitorSpec) bool {
+	if required.Name != nil && *required.Name != connected.Name {
+		return false
+	}
+	if required.Description != nil && *required.Description != connected.Description {
+		return false
+	}
+	return true
 }
 
 func (s *Service) linkConfigFile(profile *config.Profile) error {

@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -26,9 +27,41 @@ type ScoringSection struct {
 	DescriptionMatch *int `toml:"description_match"`
 }
 
+type ConfigFileType int
+
+const (
+	Static ConfigFileType = iota
+	Template
+)
+
+func (e *ConfigFileType) Value() string {
+	switch *e {
+	case Static:
+		return "static"
+	case Template:
+		return "template"
+	}
+	return ""
+}
+
+func (e *ConfigFileType) UnmarshalTOML(value any) error {
+	sValue, ok := value.(string)
+	if !ok {
+		return fmt.Errorf("value %v is not a string type", value)
+	}
+	for _, enum := range []ConfigFileType{Static, Template} {
+		if enum.Value() == sValue {
+			*e = enum
+			return nil
+		}
+	}
+	return errors.New("invalid enum value")
+}
+
 type Profile struct {
 	Name       string
 	ConfigFile string           `toml:"config_file"`
+	ConfigType *ConfigFileType  `toml:"config_file_type"`
 	Conditions ProfileCondition `toml:"conditions"`
 }
 
@@ -40,6 +73,7 @@ type ProfileCondition struct {
 type RequiredMonitor struct {
 	Name        *string `toml:"name"`
 	Description *string `toml:"description"`
+	MonitorTag  *string `toml:"monitor_tag"`
 }
 
 func Load(configPath string) (*Config, error) {
@@ -100,6 +134,12 @@ func (c *Config) Validate() error {
 
 		if profile.ConfigFile == "" {
 			return fmt.Errorf("profile %s: config_file is required", name)
+		}
+
+		// Set default config type to static if not specified
+		if profile.ConfigType == nil {
+			defaultType := Static
+			profile.ConfigType = &defaultType
 		}
 
 		if !strings.HasPrefix(profile.ConfigFile, "/") {

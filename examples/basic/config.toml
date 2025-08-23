@@ -3,21 +3,26 @@ destination = "$HOME/.config/hypr/config.d/dynamic-monitors.conf"
 
 [profiles.by_name]
 config_file = "hyprconfigs/basic.conf"
+config_file_type = "static"
 
 [[profiles.by_name.conditions.required_monitors]]
 name = "eDP-1"
 
 [profiles.by_description]
 config_file = "hyprconfigs/basic.conf"
+config_file_type = "static"
 
 [[profiles.by_description.conditions.required_monitors]]
 description = "BOE NE135A1M-NY1"
 
 [profiles.multiple_monitors]
-config_file = "hyprconfigs/basic.conf"
+config_file = "hyprconfigs/template.go.tmpl"
+config_file_type = "template"
 
 [[profiles.multiple_monitors.conditions.required_monitors]]
 description = "BOE NE135A1M-NY1"
+monitor_tag = "LaptopScreen"
 
 [[profiles.multiple_monitors.conditions.required_monitors]]
-name = "DP-10"
+description = "LG Electronics LG SDQHD 301NTBKDU037"
+monitor_tag = "ExternalScreen"
