@@ -112,7 +112,6 @@ func (h *IPC) Run(ctx context.Context) error {
 		if err := scanner.Err(); err != nil {
 			select {
 			case <-ctx.Done():
-				logrus.Debug("Hypr IPC scanner error after context cancellation, ignoring")
 				return ctx.Err()
 			default:
 				return fmt.Errorf("scanner error: %w", err)

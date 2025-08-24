@@ -48,7 +48,7 @@ func NewService(cfg *config.Config, monitorDetector *detectors.MonitorDetector, 
 }
 
 func (s *Service) Run(ctx context.Context) error {
-	if err := s.RunOnce(); err != nil {
+	if err := s.RunOnce(ctx); err != nil {
 		return fmt.Errorf("unable to update configuration on start: %v", err)
 	}
 
@@ -96,9 +96,9 @@ func (s *Service) Run(ctx context.Context) error {
 	return g.Wait()
 }
 
-func (s *Service) RunOnce() error {
+func (s *Service) RunOnce(ctx context.Context) error {
 	monitors := s.monitorDetector.GetConnected()
-	powerState, err := s.powerDetector.GetCurrentState()
+	powerState, err := s.powerDetector.GetCurrentState(ctx)
 	if err != nil {
 		return fmt.Errorf("unable to fetch power state: %v", err)
 	}

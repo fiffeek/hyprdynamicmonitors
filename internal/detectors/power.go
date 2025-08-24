@@ -37,7 +37,7 @@ type PowerDetector struct {
 	signals chan *dbus.Signal
 }
 
-func NewPowerDetector() (*PowerDetector, error) {
+func NewPowerDetector(ctx context.Context) (*PowerDetector, error) {
 	conn, err := dbus.ConnectSystemBus()
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to system D-Bus: %w", err)
@@ -49,7 +49,7 @@ func NewPowerDetector() (*PowerDetector, error) {
 		signals: make(chan *dbus.Signal, 10),
 	}
 
-	if _, err := detector.GetCurrentState(); err != nil {
+	if _, err := detector.GetCurrentState(ctx); err != nil {
 		_ = conn.Close()
 		return nil, fmt.Errorf("UPower not available or accessible: %w", err)
 	}
@@ -59,11 +59,11 @@ func NewPowerDetector() (*PowerDetector, error) {
 	return detector, nil
 }
 
-func (p *PowerDetector) GetCurrentState() (PowerState, error) {
+func (p *PowerDetector) GetCurrentState(ctx context.Context) (PowerState, error) {
 	obj := p.conn.Object("org.freedesktop.UPower", "/org/freedesktop/UPower")
 
 	var onBattery dbus.Variant
-	err := obj.Call("org.freedesktop.DBus.Properties.Get", 0, "org.freedesktop.UPower", "OnBattery").Store(&onBattery)
+	err := obj.CallWithContext(ctx, "org.freedesktop.DBus.Properties.Get", 0, "org.freedesktop.UPower", "OnBattery").Store(&onBattery)
 	if err != nil {
 		return Battery, fmt.Errorf("failed to get OnBattery property from UPower: %w", err)
 	}
@@ -101,15 +101,15 @@ func (p *PowerDetector) Run(ctx context.Context) error {
 
 	p.conn.Signal(p.signals)
 
-	g, ctx := errgroup.WithContext(ctx)
+	eg, ctx := errgroup.WithContext(ctx)
 
-	g.Go(func() error {
+	eg.Go(func() error {
 		<-ctx.Done()
 		logrus.Debug("Power detector context cancelled, closing D-Bus connection")
 		return p.conn.Close()
 	})
 
-	g.Go(func() error {
+	eg.Go(func() error {
 		defer close(p.events)
 		defer p.conn.RemoveSignal(p.signals)
 
@@ -131,14 +131,7 @@ func (p *PowerDetector) Run(ctx context.Context) error {
 				var currentState PowerState
 				var err error
 				if signal.Name == "org.freedesktop.UPower.DeviceAdded" || signal.Name == "org.freedesktop.UPower.DeviceRemoved" {
-					// Check context before making potentially blocking D-Bus call
-					select {
-					case <-ctx.Done():
-						return ctx.Err()
-					default:
-					}
-
-					currentState, err = p.GetCurrentState()
+					currentState, err = p.GetCurrentState(ctx)
 					if err != nil {
 						return fmt.Errorf("error extracting the current state: %v", currentState)
 					}
@@ -165,5 +158,5 @@ func (p *PowerDetector) Run(ctx context.Context) error {
 		}
 	})
 
-	return g.Wait()
+	return eg.Wait()
 }

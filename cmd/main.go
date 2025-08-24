@@ -50,7 +50,9 @@ func main() {
 		return
 	}
 
-	logrus.WithField("version", version).Info("Starting Hyprland Dynamic Monitor Manager")
+	logrus.WithField("version", version).Debug("Starting Hyprland Dynamic Monitor Manager")
+
+	ctx, cancel := context.WithCancel(context.Background())
 
 	cfg, err := config.Load(*configPath)
 	if err != nil {
@@ -67,7 +69,7 @@ func main() {
 		logrus.WithError(err).Fatal("Failed to initialize MonitorDetector")
 	}
 
-	powerDetector, err := detectors.NewPowerDetector()
+	powerDetector, err := detectors.NewPowerDetector(ctx)
 	if err != nil {
 		logrus.WithError(err).Fatal("Failed to initialize PowerDetector")
 	}
@@ -80,69 +82,69 @@ func main() {
 		DryRun: *dryRun,
 	}, matcher, generator)
 
-	run(svc, hyprIPC, monitorDetector, powerDetector)
+	signalHandler := signal.NewHandler(ctx, cancel)
+
+	if err := run(ctx, svc, hyprIPC, monitorDetector, powerDetector, signalHandler); err != nil {
+		logrus.WithError(err).Fatal("Service failed")
+	}
 }
 
-func run(svc *service.Service, hyprIPC *hypr.IPC, monitorDetector *detectors.MonitorDetector, powerDetector *detectors.PowerDetector) {
-	ctx, cancel := context.WithCancel(context.Background())
-	signalHandler := signal.NewHandler(ctx, cancel)
-	logrus.Info("Created signal handler")
+func run(ctx context.Context, svc *service.Service, hyprIPC *hypr.IPC, monitorDetector *detectors.MonitorDetector, powerDetector *detectors.PowerDetector, signalHandler *signal.Handler) error {
 	signalHandler.Start(svc)
-	logrus.Info("Started signal handler")
 	defer signalHandler.Stop()
-	logrus.Info("Signal handlers registered")
 
 	eg, ctx := errgroup.WithContext(ctx)
 
 	eg.Go(func() error {
-		logrus.Info("Starting Hypr IPC")
+		logrus.Debug("Starting Hypr IPC")
 		if err := hyprIPC.Run(ctx); err != nil && err != context.Canceled {
 			logrus.WithError(err).Error("Hypr IPC failed")
 			return err
 		}
-		logrus.Info("Hypr IPC finished")
+		logrus.Debug("Hypr IPC finished")
 		return nil
 	})
 
 	eg.Go(func() error {
-		logrus.Info("Starting monitor detector")
+		logrus.Debug("Starting monitor detector")
 		if err := monitorDetector.Run(ctx); err != nil && err != context.Canceled {
 			logrus.WithError(err).Error("Monitor detector failed")
 			return err
 		}
-		logrus.Info("Monitor detector finished")
+		logrus.Debug("Monitor detector finished")
 		return nil
 	})
 
 	eg.Go(func() error {
-		logrus.Info("Starting power detector")
+		logrus.Debug("Starting power detector")
 		if err := powerDetector.Run(ctx); err != nil && err != context.Canceled {
 			logrus.WithError(err).Error("Power detector failed")
 			return err
 		}
-		logrus.Info("Power detector finished")
+		logrus.Debug("Power detector finished")
 		return nil
 	})
 
 	eg.Go(func() error {
-		logrus.Info("Starting service")
+		logrus.Debug("Starting service")
 		if err := svc.Run(ctx); err != nil && err != context.Canceled {
 			logrus.WithError(err).Error("Service failed")
 			return err
 		}
-		logrus.Info("Service finished")
+		logrus.Debug("Service finished")
 		return nil
 	})
 
 	eg.Go(func() error {
 		<-ctx.Done()
-		logrus.Info("Context cancelled, shutting down")
+		logrus.Debug("Context cancelled, shutting down")
 		return ctx.Err()
 	})
 
 	if err := eg.Wait(); err != nil && err != context.Canceled {
-		logrus.WithError(err).Error("Run failed")
+		return err
 	}
 
 	logrus.Info("Shutdown complete")
+	return nil
 }

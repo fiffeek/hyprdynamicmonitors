@@ -16,7 +16,7 @@ type Handler struct {
 }
 
 type SignalHandler interface {
-	RunOnce() error
+	RunOnce(context.Context) error
 }
 
 func NewHandler(ctx context.Context, cancel context.CancelFunc) *Handler {
@@ -29,11 +29,11 @@ func NewHandler(ctx context.Context, cancel context.CancelFunc) *Handler {
 
 func (h *Handler) Start(handler SignalHandler) {
 	signal.Notify(h.sigChan, syscall.SIGUSR1, syscall.SIGTERM, syscall.SIGINT)
-	logrus.Info("Signal notifications registered for SIGUSR1, SIGTERM, SIGINT")
+	logrus.Debug("Signal notifications registered for SIGUSR1, SIGTERM, SIGINT")
 	logrus.WithField("channel_cap", cap(h.sigChan)).Info("Signal channel capacity")
 
 	go h.handleSignals(handler)
-	logrus.Info("Signal handler goroutine launched")
+	logrus.Debug("Signal handler goroutine launched")
 }
 
 func (h *Handler) Stop() {
@@ -51,8 +51,8 @@ func (h *Handler) handleSignals(handler SignalHandler) {
 			switch sig {
 			case syscall.SIGUSR1:
 				logrus.Info("Received SIGUSR1, triggering manual update")
-				if err := handler.RunOnce(); err != nil {
-					logrus.WithError(err).Error("Manual update failed")
+				if err := handler.RunOnce(h.ctx); err != nil {
+					logrus.WithError(err).Error("Manual update failed, service will keep running")
 				} else {
 					logrus.Info("Manual update completed successfully")
 				}
