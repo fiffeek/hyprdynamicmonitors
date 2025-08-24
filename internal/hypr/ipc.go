@@ -2,6 +2,7 @@ package hypr
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"io"
 	"net"
@@ -9,11 +10,13 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
+	"golang.org/x/sync/errgroup"
 )
 
 type IPC struct {
 	instanceSignature string
 	xdgRuntimeDir     string
+	events            chan MonitorEvent
 }
 
 type MonitorSpec struct {
@@ -48,50 +51,79 @@ func NewIPC() (*IPC, error) {
 	ipc := &IPC{
 		instanceSignature: signature,
 		xdgRuntimeDir:     xdgRuntimeDir,
+		events:            make(chan MonitorEvent, 10),
 	}
 
 	return ipc, nil
 }
 
-func (h *IPC) ListenEvents() (<-chan MonitorEvent, error) {
+func (h *IPC) ListenEvents() <-chan MonitorEvent {
+	return h.events
+}
+
+func (h *IPC) Run(ctx context.Context) error {
 	socketPath := fmt.Sprintf("%s/hypr/%s/.socket2.sock", h.xdgRuntimeDir, h.instanceSignature)
 
 	if _, err := os.Stat(socketPath); os.IsNotExist(err) {
-		return nil, fmt.Errorf("hyprland event socket not found at %s", socketPath)
+		return fmt.Errorf("hyprland event socket not found at %s", socketPath)
 	}
 
 	conn, err := net.Dial("unix", socketPath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect to Hyprland event socket: %w", err)
+		return fmt.Errorf("failed to connect to Hyprland event socket: %w", err)
 	}
 
-	events := make(chan MonitorEvent, 10)
+	eg, ctx := errgroup.WithContext(ctx)
 
-	go func() {
-		defer close(events)
+	eg.Go(func() error {
+		<-ctx.Done()
+		logrus.Debug("Hypr IPC context cancelled, closing connection to unblock scanner")
+		return conn.Close()
+	})
+
+	eg.Go(func() error {
+		defer close(h.events)
 		defer func() {
 			if err := conn.Close(); err != nil {
 				logrus.WithError(err).Debug("Failed to close connection")
 			}
 		}()
 
-		for {
-			scanner := bufio.NewScanner(conn)
-			for scanner.Scan() {
-				line := scanner.Text()
+		scanner := bufio.NewScanner(conn)
+		for scanner.Scan() {
+			select {
+			case <-ctx.Done():
+				logrus.Debug("Hypr IPC context cancelled during processing")
+				return ctx.Err()
+			default:
+			}
 
-				if event := h.parseMonitorEvent(line); event != nil {
-					events <- *event
+			line := scanner.Text()
+			if event := h.parseMonitorEvent(line); event != nil {
+				select {
+				case h.events <- *event:
+				case <-ctx.Done():
+					logrus.Debug("Hypr IPC context cancelled during event send")
+					return ctx.Err()
 				}
 			}
+		}
 
-			if err := scanner.Err(); err != nil {
-				logrus.WithError(err).Debug("Scanner error")
+		if err := scanner.Err(); err != nil {
+			select {
+			case <-ctx.Done():
+				logrus.Debug("Hypr IPC scanner error after context cancellation, ignoring")
+				return ctx.Err()
+			default:
+				return fmt.Errorf("scanner error: %w", err)
 			}
 		}
-	}()
 
-	return events, nil
+		logrus.Debug("Hypr IPC scanner finished")
+		return nil
+	})
+
+	return eg.Wait()
 }
 
 func (h *IPC) extractMonitorEvent(line string, prefix string, eventType MonitorEventType) *MonitorEvent {

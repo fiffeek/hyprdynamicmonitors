@@ -1,10 +1,12 @@
 package detectors
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/godbus/dbus/v5"
 	"github.com/sirupsen/logrus"
+	"golang.org/x/sync/errgroup"
 )
 
 type PowerState int
@@ -30,7 +32,9 @@ type PowerEvent struct {
 }
 
 type PowerDetector struct {
-	conn *dbus.Conn
+	conn    *dbus.Conn
+	events  chan PowerEvent
+	signals chan *dbus.Signal
 }
 
 func NewPowerDetector() (*PowerDetector, error) {
@@ -40,7 +44,9 @@ func NewPowerDetector() (*PowerDetector, error) {
 	}
 
 	detector := &PowerDetector{
-		conn: conn,
+		conn:    conn,
+		events:  make(chan PowerEvent, 10),
+		signals: make(chan *dbus.Signal, 10),
 	}
 
 	if _, err := detector.GetCurrentState(); err != nil {
@@ -73,8 +79,11 @@ func (p *PowerDetector) GetCurrentState() (PowerState, error) {
 	return Battery, fmt.Errorf("unexpected OnBattery value type: %T", onBattery.Value())
 }
 
-func (p *PowerDetector) Listen() (<-chan PowerEvent, error) {
-	events := make(chan PowerEvent, 10)
+func (p *PowerDetector) Listen() <-chan PowerEvent {
+	return p.events
+}
+
+func (p *PowerDetector) Run(ctx context.Context) error {
 	rules := []string{
 		"type='signal',sender='org.freedesktop.UPower',interface='org.freedesktop.DBus.Properties',member='PropertiesChanged',path='org.freedesktop.UPower'",
 	}
@@ -86,49 +95,75 @@ func (p *PowerDetector) Listen() (<-chan PowerEvent, error) {
 				"rule":  rule,
 				"error": err,
 			}).Debug("Failed to add D-Bus match rule")
-			return nil, fmt.Errorf("cant add signal rule for dbus: %v", err)
+			return fmt.Errorf("cant add signal rule for dbus: %v", err)
 		}
 	}
 
-	signals := make(chan *dbus.Signal, 10)
-	p.conn.Signal(signals)
+	p.conn.Signal(p.signals)
 
-	go func() {
-		defer close(events)
-		defer p.conn.RemoveSignal(signals)
+	g, ctx := errgroup.WithContext(ctx)
+
+	g.Go(func() error {
+		<-ctx.Done()
+		logrus.Debug("Power detector context cancelled, closing D-Bus connection")
+		return p.conn.Close()
+	})
+
+	g.Go(func() error {
+		defer close(p.events)
+		defer p.conn.RemoveSignal(p.signals)
 
 		logrus.Debug("Power detector started, listening for UPower D-Bus signals")
 
 		lastState := ACPower
 
-		for signal := range signals {
-			logrus.WithFields(logrus.Fields{
-				"signal_name": signal.Name,
-				"signal_path": signal.Path,
-			}).Debug("Received D-Bus signal")
-
-			var currentState PowerState
-			var err error
-			if signal.Name == "org.freedesktop.UPower.DeviceAdded" || signal.Name == "org.freedesktop.UPower.DeviceRemoved" {
-				currentState, err = p.GetCurrentState()
-				if err != nil {
-					logrus.WithError(err).Debug("Failed to read power state after signal")
-					continue
+		for {
+			select {
+			case signal, ok := <-p.signals:
+				if !ok {
+					return fmt.Errorf("dbus power events channel closed")
 				}
-			}
-
-			if currentState != lastState {
 				logrus.WithFields(logrus.Fields{
-					"from": lastState.String(),
-					"to":   currentState.String(),
-				}).Info("Power state changed")
-				events <- PowerEvent{State: currentState}
-				lastState = currentState
-			} else {
-				logrus.WithField("power_state", currentState.String()).Debug("Power state unchanged after signal")
+					"signal_name": signal.Name,
+					"signal_path": signal.Path,
+				}).Debug("Received D-Bus signal")
+
+				var currentState PowerState
+				var err error
+				if signal.Name == "org.freedesktop.UPower.DeviceAdded" || signal.Name == "org.freedesktop.UPower.DeviceRemoved" {
+					// Check context before making potentially blocking D-Bus call
+					select {
+					case <-ctx.Done():
+						return ctx.Err()
+					default:
+					}
+
+					currentState, err = p.GetCurrentState()
+					if err != nil {
+						return fmt.Errorf("error extracting the current state: %v", currentState)
+					}
+				}
+
+				if currentState != lastState {
+					logrus.WithFields(logrus.Fields{
+						"from": lastState.String(),
+						"to":   currentState.String(),
+					}).Info("Power state changed")
+					select {
+					case p.events <- PowerEvent{State: currentState}:
+						lastState = currentState
+					case <-ctx.Done():
+						return ctx.Err()
+					}
+				} else {
+					logrus.WithField("power_state", currentState.String()).Debug("Power state unchanged after signal")
+				}
+			case <-ctx.Done():
+				logrus.Debug("Power detector context cancelled, shutting down")
+				return ctx.Err()
 			}
 		}
-	}()
+	})
 
-	return events, nil
+	return g.Wait()
 }

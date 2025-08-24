@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 
 	"github.com/fiffeek/hyprdynamicmonitors/internal/config"
@@ -9,7 +10,9 @@ import (
 	"github.com/fiffeek/hyprdynamicmonitors/internal/hypr"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/matchers"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/service"
+	"github.com/fiffeek/hyprdynamicmonitors/internal/signal"
 	"github.com/sirupsen/logrus"
+	"golang.org/x/sync/errgroup"
 )
 
 var (
@@ -77,7 +80,69 @@ func main() {
 		DryRun: *dryRun,
 	}, matcher, generator)
 
-	if err := svc.Run(); err != nil {
-		logrus.WithError(err).Fatal("Service failed")
+	run(svc, hyprIPC, monitorDetector, powerDetector)
+}
+
+func run(svc *service.Service, hyprIPC *hypr.IPC, monitorDetector *detectors.MonitorDetector, powerDetector *detectors.PowerDetector) {
+	ctx, cancel := context.WithCancel(context.Background())
+	signalHandler := signal.NewHandler(ctx, cancel)
+	logrus.Info("Created signal handler")
+	signalHandler.Start(svc)
+	logrus.Info("Started signal handler")
+	defer signalHandler.Stop()
+	logrus.Info("Signal handlers registered")
+
+	eg, ctx := errgroup.WithContext(ctx)
+
+	eg.Go(func() error {
+		logrus.Info("Starting Hypr IPC")
+		if err := hyprIPC.Run(ctx); err != nil && err != context.Canceled {
+			logrus.WithError(err).Error("Hypr IPC failed")
+			return err
+		}
+		logrus.Info("Hypr IPC finished")
+		return nil
+	})
+
+	eg.Go(func() error {
+		logrus.Info("Starting monitor detector")
+		if err := monitorDetector.Run(ctx); err != nil && err != context.Canceled {
+			logrus.WithError(err).Error("Monitor detector failed")
+			return err
+		}
+		logrus.Info("Monitor detector finished")
+		return nil
+	})
+
+	eg.Go(func() error {
+		logrus.Info("Starting power detector")
+		if err := powerDetector.Run(ctx); err != nil && err != context.Canceled {
+			logrus.WithError(err).Error("Power detector failed")
+			return err
+		}
+		logrus.Info("Power detector finished")
+		return nil
+	})
+
+	eg.Go(func() error {
+		logrus.Info("Starting service")
+		if err := svc.Run(ctx); err != nil && err != context.Canceled {
+			logrus.WithError(err).Error("Service failed")
+			return err
+		}
+		logrus.Info("Service finished")
+		return nil
+	})
+
+	eg.Go(func() error {
+		<-ctx.Done()
+		logrus.Info("Context cancelled, shutting down")
+		return ctx.Err()
+	})
+
+	if err := eg.Wait(); err != nil && err != context.Canceled {
+		logrus.WithError(err).Error("Run failed")
 	}
+
+	logrus.Info("Shutdown complete")
 }

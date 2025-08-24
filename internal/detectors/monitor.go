@@ -1,16 +1,19 @@
 package detectors
 
 import (
+	"context"
 	"fmt"
 	"sync"
 
 	"github.com/fiffeek/hyprdynamicmonitors/internal/hypr"
+	"golang.org/x/sync/errgroup"
 )
 
 type MonitorDetector struct {
 	ipc               *hypr.IPC
 	connectedMonitors map[string]*hypr.MonitorSpec
 	monitorsMutex     sync.RWMutex
+	monitors          chan []*hypr.MonitorSpec
 }
 
 func NewMonitorDetector(ipc *hypr.IPC) (*MonitorDetector, error) {
@@ -22,37 +25,62 @@ func NewMonitorDetector(ipc *hypr.IPC) (*MonitorDetector, error) {
 	for _, monitor := range monitors {
 		connectedMonitors[monitor.Name] = monitor
 	}
-	return &MonitorDetector{ipc, connectedMonitors, sync.RWMutex{}}, nil
+	return &MonitorDetector{
+		ipc:               ipc,
+		connectedMonitors: connectedMonitors,
+		monitorsMutex:     sync.RWMutex{},
+		monitors:          make(chan []*hypr.MonitorSpec, 1),
+	}, nil
 }
 
-func (m *MonitorDetector) Listen() (<-chan []*hypr.MonitorSpec, error) {
-	monitors := make(chan []*hypr.MonitorSpec, 1)
-	events, err := m.ipc.ListenEvents()
-	if err != nil {
-		return nil, fmt.Errorf("failed to start event listener: %w", err)
-	}
+func (m *MonitorDetector) Listen() <-chan []*hypr.MonitorSpec {
+	return m.monitors
+}
 
-	go func() {
-		defer close(monitors)
-		for event := range events {
-			m.monitorsMutex.Lock()
-			switch event.Type {
-			case hypr.MonitorAdded:
-				m.connectedMonitors[event.Monitor.Name] = event.Monitor
-			case hypr.MonitorRemoved:
-				delete(m.connectedMonitors, event.Monitor.Name)
+func (m *MonitorDetector) Run(ctx context.Context) error {
+	events := m.ipc.ListenEvents()
+
+	eg, ctx := errgroup.WithContext(ctx)
+
+	eg.Go(func() error {
+		defer close(m.monitors)
+		for {
+			select {
+			case event, ok := <-events:
+				if !ok {
+					return fmt.Errorf("monitor ipc events channel closed")
+				}
+				m.monitorsMutex.Lock()
+				switch event.Type {
+				case hypr.MonitorAdded:
+					m.connectedMonitors[event.Monitor.Name] = event.Monitor
+				case hypr.MonitorRemoved:
+					delete(m.connectedMonitors, event.Monitor.Name)
+				}
+				connectedMonitors := m.GetConnectedUnsafe()
+				m.monitorsMutex.Unlock()
+
+				select {
+				case m.monitors <- connectedMonitors:
+				case <-ctx.Done():
+					return ctx.Err()
+				}
+			case <-ctx.Done():
+				return ctx.Err()
 			}
-			m.monitorsMutex.Unlock()
-			monitors <- m.GetConnected()
 		}
-	}()
+	})
 
-	return monitors, nil
+	return eg.Wait()
 }
 
 func (m *MonitorDetector) GetConnected() []*hypr.MonitorSpec {
 	m.monitorsMutex.Lock()
 	defer m.monitorsMutex.Unlock()
+	return m.GetConnectedUnsafe()
+}
+
+func (m *MonitorDetector) GetConnectedUnsafe() []*hypr.MonitorSpec {
 	var monitors []*hypr.MonitorSpec
 	for _, monitor := range m.connectedMonitors {
 		monitors = append(monitors, monitor)

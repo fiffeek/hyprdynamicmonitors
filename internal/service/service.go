@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"fmt"
 	"sync"
 	"time"
@@ -11,6 +12,7 @@ import (
 	"github.com/fiffeek/hyprdynamicmonitors/internal/hypr"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/matchers"
 	"github.com/sirupsen/logrus"
+	"golang.org/x/sync/errgroup"
 )
 
 type Service struct {
@@ -45,54 +47,72 @@ func NewService(cfg *config.Config, monitorDetector *detectors.MonitorDetector, 
 	}
 }
 
-func (s *Service) Run() error {
-	s.stateMu.Lock()
-	s.cachedMonitors = s.monitorDetector.GetConnected()
-	if powerState, err := s.powerDetector.GetCurrentState(); err == nil {
-		s.cachedPowerState = powerState
+func (s *Service) Run(ctx context.Context) error {
+	if err := s.RunOnce(); err != nil {
+		return fmt.Errorf("unable to update configuration on start: %v", err)
 	}
+
+	monitorEventsChannel := s.monitorDetector.Listen()
+
+	powerEventsChannel := s.powerDetector.Listen()
+	logrus.Info("Listening for monitor and power events...")
+
+	g, ctx := errgroup.WithContext(ctx)
+
+	g.Go(func() error {
+		return s.updateProcessor(ctx)
+	})
+
+	g.Go(func() error {
+		for {
+			select {
+			case monitors, ok := <-monitorEventsChannel:
+				if !ok {
+					return fmt.Errorf("monitor events channel closed")
+				}
+				logrus.WithField("monitor_count", len(monitors)).Debug("Monitor event received")
+				s.stateMu.Lock()
+				s.cachedMonitors = monitors
+				s.stateMu.Unlock()
+				s.triggerUpdate()
+
+			case powerEvent, ok := <-powerEventsChannel:
+				if !ok {
+					return fmt.Errorf("power event channel closed")
+				}
+				logrus.WithField("power_state", powerEvent.State.String()).Debug("Power event received")
+				s.stateMu.Lock()
+				s.cachedPowerState = powerEvent.State
+				s.stateMu.Unlock()
+				s.triggerUpdate()
+
+			case <-ctx.Done():
+				logrus.Debug("Event processor context cancelled, shutting down")
+				return ctx.Err()
+			}
+		}
+	})
+
+	return g.Wait()
+}
+
+func (s *Service) RunOnce() error {
+	monitors := s.monitorDetector.GetConnected()
+	powerState, err := s.powerDetector.GetCurrentState()
+	if err != nil {
+		return fmt.Errorf("unable to fetch power state: %v", err)
+	}
+
+	s.stateMu.Lock()
+	s.cachedMonitors = monitors
+	s.cachedPowerState = powerState
 	s.stateMu.Unlock()
 
 	if err := s.UpdateOnce(); err != nil {
-		logrus.WithError(err).Error("Initial configuration update failed")
+		return fmt.Errorf("unable to update configuration: %v", err)
 	}
 
-	monitorEventsChannel, err := s.monitorDetector.Listen()
-	if err != nil {
-		return fmt.Errorf("failed to start monitor event listener: %w", err)
-	}
-
-	powerEventsChannel, err := s.powerDetector.Listen()
-	if err != nil {
-		return fmt.Errorf("failed to start power event listener: %w", err)
-	}
-	logrus.Info("Listening for monitor and power events...")
-
-	go s.updateProcessor()
-
-	for {
-		select {
-		case monitors, ok := <-monitorEventsChannel:
-			if !ok {
-				return fmt.Errorf("monitor event channel closed unexpectedly")
-			}
-			logrus.WithField("monitor_count", len(monitors)).Debug("Monitor event received")
-			s.stateMu.Lock()
-			s.cachedMonitors = monitors
-			s.stateMu.Unlock()
-			s.triggerUpdate()
-
-		case powerEvent, ok := <-powerEventsChannel:
-			if !ok {
-				return fmt.Errorf("power event channel closed unexpectedly")
-			}
-			logrus.WithField("power_state", powerEvent.State.String()).Debug("Power event received")
-			s.stateMu.Lock()
-			s.cachedPowerState = powerEvent.State
-			s.stateMu.Unlock()
-			s.triggerUpdate()
-		}
-	}
+	return nil
 }
 
 func (s *Service) triggerUpdate() {
@@ -105,13 +125,19 @@ func (s *Service) triggerUpdate() {
 	logrus.Debug("Update scheduled (debounced 1500ms)")
 }
 
-func (s *Service) updateProcessor() {
+func (s *Service) updateProcessor(ctx context.Context) error {
 	s.debounceTimer.Stop()
 
-	for range s.debounceTimer.C {
-		logrus.Debug("Debounce timer expired, performing update")
-		if err := s.UpdateOnce(); err != nil {
-			logrus.WithError(err).Error("Configuration update failed")
+	for {
+		select {
+		case <-s.debounceTimer.C:
+			logrus.Debug("Debounce timer expired, performing update")
+			if err := s.UpdateOnce(); err != nil {
+				return fmt.Errorf("configuration update failed: %v", err)
+			}
+		case <-ctx.Done():
+			logrus.Debug("Update processor context cancelled, shutting down")
+			return nil
 		}
 	}
 }
