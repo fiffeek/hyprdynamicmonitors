@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"sync"
+	"time"
 
 	"github.com/fiffeek/hyprdynamicmonitors/internal/config"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/detectors"
@@ -23,7 +24,8 @@ type Service struct {
 	stateMu          sync.RWMutex
 	cachedMonitors   []*hypr.MonitorSpec
 	cachedPowerState detectors.PowerState
-	updateChan       chan struct{}
+	debounceTimer    *time.Timer
+	debounceMutex    sync.Mutex
 }
 
 type Config struct {
@@ -40,7 +42,7 @@ func NewService(cfg *config.Config, monitorDetector *detectors.MonitorDetector, 
 		matcher:          matcher,
 		generator:        generator,
 		cachedPowerState: detectors.Battery,
-		updateChan:       make(chan struct{}, 1),
+		debounceTimer:    time.NewTimer(0),
 	}
 }
 
@@ -93,11 +95,24 @@ func (s *Service) Run() error {
 }
 
 func (s *Service) triggerUpdate() {
-	s.updateChan <- struct{}{}
+	s.debounceMutex.Lock()
+	defer s.debounceMutex.Unlock()
+
+	s.debounceTimer.Stop()
+	s.debounceTimer.Reset(1500 * time.Millisecond)
+
+	if s.cfg.Verbose {
+		log.Printf("Update scheduled (debounced 1500ms)")
+	}
 }
 
 func (s *Service) updateProcessor() {
-	for range s.updateChan {
+	s.debounceTimer.Stop()
+
+	for range s.debounceTimer.C {
+		if s.cfg.Verbose {
+			log.Printf("Debounce timer expired, performing update")
+		}
 		if err := s.UpdateOnce(); err != nil {
 			log.Printf("Configuration update failed: %v", err)
 		}
