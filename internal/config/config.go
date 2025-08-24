@@ -21,6 +21,7 @@ type Config struct {
 }
 
 type PowerSection struct {
+	Disabled                 *bool                      `toml:"disabled"`
 	DbusSignalMatchRules     []*DbusSignalMatchRule     `toml:"dbus_signal_match_rules"`
 	DbusSignalReceiveFilters []*DbusSignalReceiveFilter `toml:"dbus_signal_receive_filters"`
 }
@@ -276,6 +277,9 @@ func (rm *RequiredMonitor) Validate() error {
 }
 
 func (ps *PowerSection) Validate() error {
+	if ps.Disabled == nil {
+		ps.Disabled = utils.BoolPtr(false)
+	}
 	if len(ps.DbusSignalMatchRules) == 0 {
 		ps.DbusSignalMatchRules = []*DbusSignalMatchRule{
 			{

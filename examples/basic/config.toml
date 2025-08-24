@@ -1,6 +1,9 @@
 [general]
 destination = "$HOME/.config/hypr/config.d/dynamic-monitors.conf"
 
+[power_events]
+disabled = true
+
 [profiles.by_name]
 config_file = "hyprconfigs/basic.conf"
 config_file_type = "static"

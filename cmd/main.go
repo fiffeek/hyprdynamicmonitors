@@ -82,9 +82,14 @@ func main() {
 		logrus.WithError(err).Fatal("Failed to initialize MonitorDetector")
 	}
 
-	powerDetector, err := detectors.NewPowerDetector(ctx, cfg.PowerEvents)
-	if err != nil {
-		logrus.WithError(err).Fatal("Failed to initialize PowerDetector")
+	var powerDetector service.IPowerDetector
+	if *cfg.PowerEvents.Disabled {
+		powerDetector = detectors.NewStaticPowerDetector(cfg.PowerEvents)
+	} else {
+		powerDetector, err = detectors.NewPowerDetector(ctx, cfg.PowerEvents)
+		if err != nil {
+			logrus.WithError(err).Fatal("Failed to initialize PowerDetector")
+		}
 	}
 
 	matcher := matchers.NewMatcher(cfg)
@@ -102,7 +107,7 @@ func main() {
 	}
 }
 
-func run(ctx context.Context, svc *service.Service, hyprIPC *hypr.IPC, monitorDetector *detectors.MonitorDetector, powerDetector *detectors.PowerDetector, signalHandler *signal.Handler) error {
+func run(ctx context.Context, svc *service.Service, hyprIPC *hypr.IPC, monitorDetector *detectors.MonitorDetector, powerDetector service.IPowerDetector, signalHandler *signal.Handler) error {
 	signalHandler.Start(svc)
 	defer signalHandler.Stop()
 

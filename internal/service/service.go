@@ -15,10 +15,16 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
+type IPowerDetector interface {
+	GetCurrentState(context.Context) (detectors.PowerState, error)
+	Listen() <-chan detectors.PowerEvent
+	Run(context.Context) error
+}
+
 type Service struct {
 	config          *config.Config
 	monitorDetector *detectors.MonitorDetector
-	powerDetector   *detectors.PowerDetector
+	powerDetector   IPowerDetector
 	matcher         *matchers.Matcher
 	cfg             *Config
 	generator       *generators.ConfigGenerator
@@ -34,7 +40,7 @@ type Config struct {
 	DryRun bool
 }
 
-func NewService(cfg *config.Config, monitorDetector *detectors.MonitorDetector, powerDetector *detectors.PowerDetector, svcCfg *Config, matcher *matchers.Matcher, generator *generators.ConfigGenerator) *Service {
+func NewService(cfg *config.Config, monitorDetector *detectors.MonitorDetector, powerDetector IPowerDetector, svcCfg *Config, matcher *matchers.Matcher, generator *generators.ConfigGenerator) *Service {
 	return &Service{
 		config:           cfg,
 		monitorDetector:  monitorDetector,
