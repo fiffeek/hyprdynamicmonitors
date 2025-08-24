@@ -1,7 +1,53 @@
-monitor={{.MonitorsByTag.LaptopScreen.Name}},2880x1920@120.00000,0x0,2.0,vrr,1
-monitor=desc:{{.MonitorsByTag.ExternalScreen.Description}},2560x2880@59.96700,auto-left,1.6,transform,3
+# Configuration generated for power state: {{.PowerState}}
 
-workspace = 2,monitor:{{.MonitorsByTag.ExternalScreen.Name}}
-workspace = 3,monitor:{{.MonitorsByTag.ExternalScreen.Name}}
-workspace = 4,monitor:{{.MonitorsByTag.ExternalScreen.Name}}
-workspace = 5,monitor:{{.MonitorsByTag.ExternalScreen.Name}}
+{{- $laptop := index .MonitorsByTag "LaptopScreen" -}}
+{{- $external := index .MonitorsByTag "ExternalScreen" -}}
+
+{{- if $laptop -}}
+{{- if isOnBattery }}
+# Battery mode: Lower refresh rate to save power
+monitor={{$laptop.Name}},2880x1920@60.00000,0x0,2.0,vrr,0
+{{- else }}
+# AC mode: Full performance
+monitor={{$laptop.Name}},2880x1920@120.00000,0x0,2.0,vrr,1
+{{- end -}}
+{{- end -}}
+
+{{- if $external -}}
+{{- if isOnAC }}
+# AC mode: Enable external monitor
+monitor=desc:{{$external.Description}},2560x2880@59.96700,auto-left,1.6,transform,3
+
+workspace = 2,monitor:{{$external.Name}}
+workspace = 3,monitor:{{$external.Name}}
+workspace = 4,monitor:{{$external.Name}}
+workspace = 5,monitor:{{$external.Name}}
+{{- else -}}
+# Battery mode: Disable external monitor to save power
+monitor=desc:{{$external.Description}},disable
+{{- end -}}
+{{- end }}
+
+# Power-dependent settings
+{{- if isOnBattery }}
+# Battery optimizations
+decoration {
+    blur {
+        enabled = false
+    }
+}
+animations {
+    enabled = false
+}
+{{- else }}
+# AC power: Full visual effects
+decoration {
+    blur {
+        enabled = true
+        size = 8
+    }
+}
+animations {
+    enabled = true
+}
+{{- end }}

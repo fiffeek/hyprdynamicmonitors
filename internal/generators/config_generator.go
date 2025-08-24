@@ -8,6 +8,7 @@ import (
 	"text/template"
 
 	"github.com/fiffeek/hyprdynamicmonitors/internal/config"
+	"github.com/fiffeek/hyprdynamicmonitors/internal/detectors"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/hypr"
 )
 
@@ -25,18 +26,18 @@ func NewConfigGenerator(cfg *GeneratorConfig) *ConfigGenerator {
 	}
 }
 
-func (g *ConfigGenerator) GenerateConfig(profile *config.Profile, connectedMonitors []*hypr.MonitorSpec, destination string) error {
+func (g *ConfigGenerator) GenerateConfig(profile *config.Profile, connectedMonitors []*hypr.MonitorSpec, powerState detectors.PowerState, destination string) error {
 	switch *profile.ConfigType {
 	case config.Static:
 		return g.linkConfigFile(profile, destination)
 	case config.Template:
-		return g.renderTemplateFile(profile, connectedMonitors, destination)
+		return g.renderTemplateFile(profile, connectedMonitors, powerState, destination)
 	default:
 		return fmt.Errorf("unsupported config type: %v", *profile.ConfigType)
 	}
 }
 
-func (g *ConfigGenerator) renderTemplateFile(profile *config.Profile, connectedMonitors []*hypr.MonitorSpec, destination string) error {
+func (g *ConfigGenerator) renderTemplateFile(profile *config.Profile, connectedMonitors []*hypr.MonitorSpec, powerState detectors.PowerState, destination string) error {
 	templatePath := profile.ConfigFile
 
 	templateContent, err := os.ReadFile(templatePath)
@@ -44,12 +45,24 @@ func (g *ConfigGenerator) renderTemplateFile(profile *config.Profile, connectedM
 		return fmt.Errorf("failed to read template file %s: %w", templatePath, err)
 	}
 
-	tmpl, err := template.New("config").Parse(string(templateContent))
+	funcMap := template.FuncMap{
+		"isOnBattery": func() bool {
+			return powerState == detectors.Battery
+		},
+		"isOnAC": func() bool {
+			return powerState == detectors.ACPower
+		},
+		"powerState": func() string {
+			return powerState.String()
+		},
+	}
+
+	tmpl, err := template.New("config").Funcs(funcMap).Parse(string(templateContent))
 	if err != nil {
 		return fmt.Errorf("failed to parse template: %w", err)
 	}
 
-	templateData := g.createTemplateData(profile, connectedMonitors)
+	templateData := g.createTemplateData(profile, connectedMonitors, powerState)
 
 	var rendered bytes.Buffer
 	if err := tmpl.Execute(&rendered, templateData); err != nil {
@@ -78,9 +91,10 @@ func (g *ConfigGenerator) renderTemplateFile(profile *config.Profile, connectedM
 	return nil
 }
 
-func (g *ConfigGenerator) createTemplateData(profile *config.Profile, connectedMonitors []*hypr.MonitorSpec) map[string]any {
+func (g *ConfigGenerator) createTemplateData(profile *config.Profile, connectedMonitors []*hypr.MonitorSpec, powerState detectors.PowerState) map[string]any {
 	data := make(map[string]any)
 	data["Monitors"] = connectedMonitors
+	data["PowerState"] = powerState.String()
 
 	monitorsByTag := make(map[string]*hypr.MonitorSpec)
 
@@ -102,7 +116,7 @@ func (g *ConfigGenerator) createTemplateData(profile *config.Profile, connectedM
 	}
 
 	if g.verbose {
-		log.Printf("Template data: %d monitors, %d tagged monitors", len(connectedMonitors), len(monitorsByTag))
+		log.Printf("Template data: %d monitors, %d tagged monitors, power: %s", len(connectedMonitors), len(monitorsByTag), powerState)
 		for tag, monitor := range monitorsByTag {
 			log.Printf("  Tag '%s': %s (%s)", tag, monitor.Name, monitor.Description)
 		}

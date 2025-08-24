@@ -134,7 +134,7 @@ func (s *Service) UpdateOnce() error {
 	log.Printf("Using profile: %s -> %s", profile.Name, profile.ConfigFile)
 
 	destination := *s.config.General.Destination
-	if err := s.generator.GenerateConfig(profile, monitors, destination); err != nil {
+	if err := s.generator.GenerateConfig(profile, monitors, powerState, destination); err != nil {
 		return fmt.Errorf("failed to generate config: %w", err)
 	}
 
