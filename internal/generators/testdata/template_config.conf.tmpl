@@ -1,0 +1,27 @@
+# Template test configuration for Hyprland
+# Generated with power state: {{.PowerState}}
+
+{{- range .Monitors}}
+monitor={{.Name}},auto,auto,1.0
+{{- end}}
+
+{{- if .MonitorsByTag.laptop}}
+# Laptop monitor tagged settings
+workspace=1,monitor:{{.MonitorsByTag.laptop.Name}}
+{{- end}}
+
+{{- if .MonitorsByTag.external}}
+# External monitor tagged settings
+workspace=2,monitor:{{.MonitorsByTag.external.Name}}
+{{- end}}
+
+# Power state specific settings
+{{- if isOnBattery}}
+decoration:blur:enabled = false
+animation:enabled = false
+{{- else}}
+decoration:blur:enabled = true
+animation:enabled = true
+{{- end}}
+
+# Power state function test: {{powerState}}

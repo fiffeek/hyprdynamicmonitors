@@ -3,6 +3,8 @@ PYTHON_BIN := python
 PRECOMMIT_FILE := .pre-commit-config.yaml
 VENV := venv
 REQUIREMENTS_FILE := requirements.txt
+GOLANGCI_LINT_BIN := golangci-lint
+GOLANG_BIN := go
 
 install: $(INSTALL_DIR)/.dir.stamp $(INSTALL_DIR)/.asdf.stamp $(INSTALL_DIR)/.venv.stamp $(INSTALL_DIR)/.precommit.stamp
 
@@ -26,4 +28,11 @@ $(INSTALL_DIR)/.precommit.stamp: $(PRECOMMIT_FILE) $(INSTALL_DIR)/.venv.stamp
 	touch $@
 
 test:
-	go test ./... -v
+	$(GOLANG_BIN) test ./... -v
+
+fmt:
+	$(GOLANG_BIN) mod tidy
+	$(GOLANGCI_LINT_BIN) fmt
+
+lint:
+	$(GOLANGCI_LINT_BIN) run

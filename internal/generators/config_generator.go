@@ -81,7 +81,7 @@ func (g *ConfigGenerator) renderTemplateFile(profile *config.Profile, connectedM
 		return fmt.Errorf("failed to rename temp config %s to %s: %w", tempFile, destination, err)
 	}
 
-	logrus.WithField("config_file", profile.ConfigFile).Info("Successfully rendered template configuration")
+	logrus.WithFields(logrus.Fields{"config_file": profile.ConfigFile, "destination": destination}).Info("Successfully rendered template configuration")
 
 	return nil
 }
