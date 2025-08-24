@@ -147,7 +147,7 @@ func (g *ConfigGenerator) linkConfigFile(profile *config.Profile, destination st
 		return fmt.Errorf("failed to create symlink from %s to %s: %w", source, destination, err)
 	}
 
-	logrus.WithField("config_file", profile.ConfigFile).Info("Successfully linked configuration")
+	logrus.WithFields(logrus.Fields{"config_file": profile.ConfigFile, "destination": destination}).Info("Successfully linked configuration")
 
 	return nil
 }

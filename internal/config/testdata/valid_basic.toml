@@ -6,6 +6,20 @@ name_match = 2
 description_match = 3
 power_state_match = 1
 
+[[power_events.dbus_signal_match_rules]]
+sender = "sender"
+
+[[power_events.dbus_signal_match_rules]]
+interface = "interface"
+member = "member"
+object_path = "object_path"
+
+[[power_events.dbus_signal_receive_filters]]
+name = "filter1"
+
+[[power_events.dbus_signal_receive_filters]]
+name = "filter2"
+
 [profiles.laptop_only]
 config_file = "laptop.conf"
 config_file_type = "static"

@@ -82,7 +82,7 @@ func main() {
 		logrus.WithError(err).Fatal("Failed to initialize MonitorDetector")
 	}
 
-	powerDetector, err := detectors.NewPowerDetector(ctx)
+	powerDetector, err := detectors.NewPowerDetector(ctx, cfg.PowerEvents)
 	if err != nil {
 		logrus.WithError(err).Fatal("Failed to initialize PowerDetector")
 	}

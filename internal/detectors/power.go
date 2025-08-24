@@ -3,7 +3,9 @@ package detectors
 import (
 	"context"
 	"fmt"
+	"slices"
 
+	"github.com/fiffeek/hyprdynamicmonitors/internal/config"
 	"github.com/godbus/dbus/v5"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
@@ -32,12 +34,13 @@ type PowerEvent struct {
 }
 
 type PowerDetector struct {
+	cfg     *config.PowerSection
 	conn    *dbus.Conn
 	events  chan PowerEvent
 	signals chan *dbus.Signal
 }
 
-func NewPowerDetector(ctx context.Context) (*PowerDetector, error) {
+func NewPowerDetector(ctx context.Context, cfg *config.PowerSection) (*PowerDetector, error) {
 	conn, err := dbus.ConnectSystemBus()
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to system D-Bus: %w", err)
@@ -45,6 +48,7 @@ func NewPowerDetector(ctx context.Context) (*PowerDetector, error) {
 
 	detector := &PowerDetector{
 		conn:    conn,
+		cfg:     cfg,
 		events:  make(chan PowerEvent, 10),
 		signals: make(chan *dbus.Signal, 10),
 	}
@@ -83,22 +87,45 @@ func (p *PowerDetector) Listen() <-chan PowerEvent {
 	return p.events
 }
 
-func (p *PowerDetector) Run(ctx context.Context) error {
-	rules := []string{
-		"type='signal',sender='org.freedesktop.UPower',interface='org.freedesktop.DBus.Properties',member='PropertiesChanged',path='org.freedesktop.UPower'",
+func (p *PowerDetector) createMatchRules() [][]dbus.MatchOption {
+	rules := [][]dbus.MatchOption{}
+	for _, rule := range p.cfg.DbusSignalMatchRules {
+		matchRules := []dbus.MatchOption{}
+		if rule.Interface != nil {
+			matchRules = append(matchRules, dbus.WithMatchInterface(*rule.Interface))
+		}
+		if rule.Sender != nil {
+			matchRules = append(matchRules, dbus.WithMatchSender(*rule.Sender))
+		}
+		if rule.Member != nil {
+			matchRules = append(matchRules, dbus.WithMatchMember(*rule.Member))
+		}
+		if rule.ObjectPath != nil {
+			matchRules = append(matchRules, dbus.WithMatchObjectPath(dbus.ObjectPath(*rule.ObjectPath)))
+		}
+		rules = append(rules, matchRules)
 	}
+	return rules
+}
 
-	for _, rule := range rules {
-		err := p.conn.AddMatchSignal(dbus.WithMatchInterface("org.freedesktop.UPower"))
-		if err != nil {
+func (p *PowerDetector) getExpectedSignalNames() []string {
+	result := []string{}
+	for _, filter := range p.cfg.DbusSignalReceiveFilters {
+		result = append(result, *filter.Name)
+	}
+	return result
+}
+
+func (p *PowerDetector) Run(ctx context.Context) error {
+	rules := p.createMatchRules()
+	for _, ruleSet := range rules {
+		if err := p.conn.AddMatchSignal(ruleSet...); err != nil {
 			logrus.WithFields(logrus.Fields{
-				"rule":  rule,
 				"error": err,
-			}).Debug("Failed to add D-Bus match rule")
-			return fmt.Errorf("cant add signal rule for dbus: %v", err)
+			}).Debug("Failed to add D-Bus match rule for UPower PropertiesChanged")
+			return fmt.Errorf("cant add UPower signal rule for dbus: %v", err)
 		}
 	}
-
 	p.conn.Signal(p.signals)
 
 	eg, ctx := errgroup.WithContext(ctx)
@@ -130,11 +157,16 @@ func (p *PowerDetector) Run(ctx context.Context) error {
 
 				var currentState PowerState
 				var err error
-				if signal.Name == "org.freedesktop.UPower.DeviceAdded" || signal.Name == "org.freedesktop.UPower.DeviceRemoved" {
+
+				if slices.Contains(p.getExpectedSignalNames(), signal.Name) {
 					currentState, err = p.GetCurrentState(ctx)
-					if err != nil {
-						return fmt.Errorf("error extracting the current state: %v", currentState)
-					}
+				} else {
+					logrus.WithField("signal_name", signal.Name).Debug("Ignoring unknown UPower signal")
+					continue
+				}
+
+				if err != nil {
+					return fmt.Errorf("failed to get power state after signal %s: %v", signal.Name, err)
 				}
 
 				if currentState != lastState {

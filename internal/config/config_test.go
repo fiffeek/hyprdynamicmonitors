@@ -3,6 +3,8 @@ package config
 import (
 	"path/filepath"
 	"testing"
+
+	"github.com/fiffeek/hyprdynamicmonitors/internal/utils"
 )
 
 func TestLoad(t *testing.T) {
@@ -69,6 +71,18 @@ func TestLoad(t *testing.T) {
 						t.Errorf("expected power state AC, got %v", acProfile.Conditions.PowerState)
 					}
 				}
+
+				if c.PowerEvents == nil {
+					t.Error("power events section should not be nil")
+				} else {
+					if len(c.PowerEvents.DbusSignalMatchRules) < 2 {
+						t.Errorf("expected at least 2 custom dbus match rules, got %d", len(c.PowerEvents.DbusSignalMatchRules))
+					}
+
+					if len(c.PowerEvents.DbusSignalReceiveFilters) < 2 {
+						t.Errorf("expected at least 2 custom dbus receive filters, got %d", len(c.PowerEvents.DbusSignalReceiveFilters))
+					}
+				}
 			},
 		},
 		{
@@ -89,6 +103,34 @@ func TestLoad(t *testing.T) {
 				profile := c.Profiles["minimal"]
 				if profile.ConfigType == nil || *profile.ConfigType != Static {
 					t.Error("config_file_type should default to static")
+				}
+
+				if c.PowerEvents == nil {
+					t.Error("power events section should not be nil after validation")
+				} else {
+					if len(c.PowerEvents.DbusSignalMatchRules) != 3 {
+						t.Errorf("expected 3 default dbus match rules, got %d", len(c.PowerEvents.DbusSignalMatchRules))
+					}
+
+					if len(c.PowerEvents.DbusSignalReceiveFilters) != 3 {
+						t.Errorf("expected 3 default dbus receive filters, got %d", len(c.PowerEvents.DbusSignalReceiveFilters))
+					}
+
+					expectedRules := map[string]bool{
+						"DeviceAdded":       false,
+						"DeviceRemoved":     false,
+						"PropertiesChanged": false,
+					}
+					for _, rule := range c.PowerEvents.DbusSignalMatchRules {
+						if rule.Member != nil {
+							expectedRules[*rule.Member] = true
+						}
+					}
+					for member, found := range expectedRules {
+						if !found {
+							t.Errorf("expected default rule for %s not found", member)
+						}
+					}
 				}
 			},
 		},
@@ -190,7 +232,7 @@ func TestGeneralSectionValidate(t *testing.T) {
 		{
 			name: "existing destination is preserved",
 			general: &GeneralSection{
-				Destination: stringPtr("/custom/path.conf"),
+				Destination: utils.StringPtr("/custom/path.conf"),
 			},
 			expected: "/custom/path.conf",
 		},
@@ -234,26 +276,26 @@ func TestScoringSectionValidate(t *testing.T) {
 		{
 			name: "existing values preserved",
 			scoring: &ScoringSection{
-				NameMatch:        intPtr(5),
-				DescriptionMatch: intPtr(10),
-				PowerStateMatch:  intPtr(3),
+				NameMatch:        utils.IntPtr(5),
+				DescriptionMatch: utils.IntPtr(10),
+				PowerStateMatch:  utils.IntPtr(3),
 			},
 		},
 		{
 			name: "zero value causes error",
 			scoring: &ScoringSection{
-				NameMatch:        intPtr(0),
-				DescriptionMatch: intPtr(1),
-				PowerStateMatch:  intPtr(1),
+				NameMatch:        utils.IntPtr(0),
+				DescriptionMatch: utils.IntPtr(1),
+				PowerStateMatch:  utils.IntPtr(1),
 			},
 			expectError: true,
 		},
 		{
 			name: "negative value causes error",
 			scoring: &ScoringSection{
-				NameMatch:        intPtr(-1),
-				DescriptionMatch: intPtr(1),
-				PowerStateMatch:  intPtr(1),
+				NameMatch:        utils.IntPtr(-1),
+				DescriptionMatch: utils.IntPtr(1),
+				PowerStateMatch:  utils.IntPtr(1),
 			},
 			expectError: true,
 		},
@@ -297,33 +339,33 @@ func TestRequiredMonitorValidate(t *testing.T) {
 		{
 			name: "name only is valid",
 			monitor: &RequiredMonitor{
-				Name: stringPtr("eDP-1"),
+				Name: utils.StringPtr("eDP-1"),
 			},
 		},
 		{
 			name: "description only is valid",
 			monitor: &RequiredMonitor{
-				Description: stringPtr("BOE Screen"),
+				Description: utils.StringPtr("BOE Screen"),
 			},
 		},
 		{
 			name: "both name and description is valid",
 			monitor: &RequiredMonitor{
-				Name:        stringPtr("eDP-1"),
-				Description: stringPtr("BOE Screen"),
+				Name:        utils.StringPtr("eDP-1"),
+				Description: utils.StringPtr("BOE Screen"),
 			},
 		},
 		{
 			name: "monitor tag with name is valid",
 			monitor: &RequiredMonitor{
-				Name:       stringPtr("eDP-1"),
-				MonitorTag: stringPtr("LaptopScreen"),
+				Name:       utils.StringPtr("eDP-1"),
+				MonitorTag: utils.StringPtr("LaptopScreen"),
 			},
 		},
 		{
 			name: "only monitor tag is invalid",
 			monitor: &RequiredMonitor{
-				MonitorTag: stringPtr("LaptopScreen"),
+				MonitorTag: utils.StringPtr("LaptopScreen"),
 			},
 			expectError: true,
 		},
@@ -453,12 +495,98 @@ func TestEnumUnmarshalTOML(t *testing.T) {
 	})
 }
 
-func stringPtr(s string) *string {
-	return &s
-}
+func TestPowerSectionValidate(t *testing.T) {
+	tests := []struct {
+		name        string
+		powerEvents *PowerSection
+		expectError bool
+	}{
+		{
+			name:        "nil power section gets defaults",
+			powerEvents: &PowerSection{},
+		},
+		{
+			name: "existing rules preserved",
+			powerEvents: &PowerSection{
+				DbusSignalMatchRules: []*DbusSignalMatchRule{
+					{
+						Sender:    utils.StringPtr("custom.sender"),
+						Interface: utils.StringPtr("custom.interface"),
+					},
+				},
+				DbusSignalReceiveFilters: []*DbusSignalReceiveFilter{
+					{Name: utils.StringPtr("custom.signal")},
+				},
+			},
+		},
+		{
+			name: "invalid match rule - all nil",
+			powerEvents: &PowerSection{
+				DbusSignalMatchRules: []*DbusSignalMatchRule{
+					{}, // empty rule should fail validation
+				},
+			},
+			expectError: true,
+		},
+		{
+			name: "invalid receive filter - nil name",
+			powerEvents: &PowerSection{
+				DbusSignalReceiveFilters: []*DbusSignalReceiveFilter{
+					{}, // empty filter should fail validation
+				},
+			},
+			expectError: true,
+		},
+	}
 
-func intPtr(i int) *int {
-	return &i
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.powerEvents.Validate()
+
+			if tt.expectError {
+				if err == nil {
+					t.Error("expected error but got none")
+				}
+				return
+			}
+
+			if err != nil {
+				t.Errorf("unexpected error: %v", err)
+				return
+			}
+
+			if tt.name == "nil power section gets defaults" {
+				if len(tt.powerEvents.DbusSignalMatchRules) != 3 {
+					t.Errorf("expected 3 default match rules, got %d", len(tt.powerEvents.DbusSignalMatchRules))
+				}
+				if len(tt.powerEvents.DbusSignalReceiveFilters) != 3 {
+					t.Errorf("expected 3 default receive filters, got %d", len(tt.powerEvents.DbusSignalReceiveFilters))
+				}
+
+				expectedSignals := []string{
+					"org.freedesktop.DBus.Properties.PropertiesChanged",
+					"org.freedesktop.UPower.DeviceAdded",
+					"org.freedesktop.UPower.DeviceRemoved",
+				}
+				for i, filter := range tt.powerEvents.DbusSignalReceiveFilters {
+					if filter.Name == nil {
+						t.Errorf("filter %d name should not be nil", i)
+					} else {
+						found := false
+						for _, expected := range expectedSignals {
+							if *filter.Name == expected {
+								found = true
+								break
+							}
+						}
+						if !found {
+							t.Errorf("unexpected default filter name: %s", *filter.Name)
+						}
+					}
+				}
+			}
+		})
+	}
 }
 
 func containsString(haystack, needle string) bool {

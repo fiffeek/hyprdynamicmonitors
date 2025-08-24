@@ -8,14 +8,32 @@ import (
 	"strings"
 
 	"github.com/BurntSushi/toml"
+	"github.com/fiffeek/hyprdynamicmonitors/internal/utils"
 	"github.com/sirupsen/logrus"
 )
 
 type Config struct {
-	configPath string
-	Profiles   map[string]*Profile `toml:"profiles"`
-	General    *GeneralSection     `toml:"general"`
-	Scoring    *ScoringSection     `toml:"scoring"`
+	configPath  string
+	Profiles    map[string]*Profile `toml:"profiles"`
+	General     *GeneralSection     `toml:"general"`
+	Scoring     *ScoringSection     `toml:"scoring"`
+	PowerEvents *PowerSection       `toml:"power_events"`
+}
+
+type PowerSection struct {
+	DbusSignalMatchRules     []*DbusSignalMatchRule     `toml:"dbus_signal_match_rules"`
+	DbusSignalReceiveFilters []*DbusSignalReceiveFilter `toml:"dbus_signal_receive_filters"`
+}
+
+type DbusSignalReceiveFilter struct {
+	Name *string `toml:"name"`
+}
+
+type DbusSignalMatchRule struct {
+	Sender     *string `toml:"sender"`
+	Interface  *string `toml:"interface"`
+	Member     *string `toml:"member"`
+	ObjectPath *string `toml:"object_path"`
 }
 
 type GeneralSection struct {
@@ -158,6 +176,13 @@ func (c *Config) Validate() error {
 		}
 	}
 
+	if c.PowerEvents == nil {
+		c.PowerEvents = &PowerSection{}
+	}
+	if err := c.PowerEvents.Validate(); err != nil {
+		return fmt.Errorf("power events section validation failed: %w", err)
+	}
+
 	return nil
 }
 
@@ -245,6 +270,69 @@ func (pc *ProfileCondition) Validate() error {
 func (rm *RequiredMonitor) Validate() error {
 	if rm.Name == nil && rm.Description == nil {
 		return fmt.Errorf("at least one of name, or description must be specified")
+	}
+
+	return nil
+}
+
+func (ps *PowerSection) Validate() error {
+	if len(ps.DbusSignalMatchRules) == 0 {
+		ps.DbusSignalMatchRules = []*DbusSignalMatchRule{
+			{
+				Sender:     utils.StringPtr("org.freedesktop.UPower"),
+				Interface:  utils.StringPtr("org.freedesktop.UPower"),
+				Member:     utils.StringPtr("DeviceAdded"),
+				ObjectPath: utils.StringPtr("/org/freedesktop/UPower"),
+			},
+			{
+				Sender:     utils.StringPtr("org.freedesktop.UPower"),
+				Interface:  utils.StringPtr("org.freedesktop.UPower"),
+				Member:     utils.StringPtr("DeviceRemoved"),
+				ObjectPath: utils.StringPtr("/org/freedesktop/UPower"),
+			},
+			{
+				Sender:     utils.StringPtr("org.freedesktop.UPower"),
+				Interface:  utils.StringPtr("org.freedesktop.UPower.Properties"),
+				Member:     utils.StringPtr("PropertiesChanged"),
+				ObjectPath: utils.StringPtr("/org/freedesktop/UPower"),
+			},
+		}
+	}
+
+	for _, rule := range ps.DbusSignalMatchRules {
+		if err := rule.Validate(); err != nil {
+			return fmt.Errorf("one of the dbus match rules is invalid: %v", err)
+		}
+	}
+
+	if ps.DbusSignalReceiveFilters == nil {
+		ps.DbusSignalReceiveFilters = []*DbusSignalReceiveFilter{
+			{Name: utils.StringPtr("org.freedesktop.DBus.Properties.PropertiesChanged")},
+			{Name: utils.StringPtr("org.freedesktop.UPower.DeviceAdded")},
+			{Name: utils.StringPtr("org.freedesktop.UPower.DeviceRemoved")},
+		}
+	}
+
+	for _, signalFilter := range ps.DbusSignalReceiveFilters {
+		if err := signalFilter.Validate(); err != nil {
+			return fmt.Errorf("one of the dbus receive filter is invalid: %v", err)
+		}
+	}
+
+	return nil
+}
+
+func (dr *DbusSignalMatchRule) Validate() error {
+	if dr.Interface == nil && dr.Sender == nil && dr.Member == nil && dr.ObjectPath == nil {
+		return fmt.Errorf("dbus rule cant be empty")
+	}
+
+	return nil
+}
+
+func (d *DbusSignalReceiveFilter) Validate() error {
+	if d.Name == nil {
+		return fmt.Errorf("name cant be emtpy")
 	}
 
 	return nil
