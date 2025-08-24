@@ -3,6 +3,9 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
+	"path/filepath"
+	"runtime"
 
 	"github.com/fiffeek/hyprdynamicmonitors/internal/config"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/detectors"
@@ -25,20 +28,30 @@ func main() {
 	var (
 		configPath = flag.String("config", "$HOME/.config/hyprdynamicmonitors/config.toml", "Path to configuration file")
 		dryRun     = flag.Bool("dry-run", false, "Show what would be done without making changes")
+		debug      = flag.Bool("debug", false, "Enable debug logging")
 		verbose    = flag.Bool("verbose", false, "Enable verbose logging")
 		showVer    = flag.Bool("version", false, "Show version information")
 	)
 	flag.Parse()
 
-	if *verbose {
+	if *debug {
 		logrus.SetLevel(logrus.DebugLevel)
 	} else {
 		logrus.SetLevel(logrus.InfoLevel)
+	}
+	if *verbose {
+		logrus.SetReportCaller(true)
 	}
 	logrus.SetFormatter(&logrus.TextFormatter{
 		DisableTimestamp: false,
 		DisableColors:    false,
 		FullTimestamp:    true,
+		ForceQuote:       true,
+		CallerPrettyfier: func(f *runtime.Frame) (string, string) {
+			fn := filepath.Base(f.Function)
+			file := fmt.Sprintf("%s:%d", filepath.Base(f.File), f.Line)
+			return fn, file
+		},
 	})
 
 	if *showVer {
