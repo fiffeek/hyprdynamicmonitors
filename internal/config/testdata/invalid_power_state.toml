@@ -1,0 +1,8 @@
+[profiles.bad_power]
+config_file = "basic.conf"
+
+[[profiles.bad_power.conditions.required_monitors]]
+name = "eDP-1"
+
+[profiles.bad_power.conditions]
+power_state = "INVALID"

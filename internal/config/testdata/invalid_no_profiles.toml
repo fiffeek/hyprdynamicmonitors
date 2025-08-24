@@ -1,0 +1,7 @@
+[general]
+destination = "/tmp/test-monitors.conf"
+
+[scoring]
+name_match = 1
+description_match = 1
+power_state_match = 1

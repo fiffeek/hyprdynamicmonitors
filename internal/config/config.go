@@ -140,59 +140,111 @@ func (c *Config) Validate() error {
 	if c.General == nil {
 		c.General = &GeneralSection{}
 	}
-
-	if c.General.Destination == nil {
-		defaultDest := "$HOME/.config/hypr/monitors.conf"
-		c.General.Destination = &defaultDest
+	if err := c.General.Validate(); err != nil {
+		return fmt.Errorf("general section validation failed: %w", err)
 	}
-
-	defaultScore := 1
 
 	if c.Scoring == nil {
 		c.Scoring = &ScoringSection{}
 	}
-	if c.Scoring.NameMatch == nil {
-		c.Scoring.NameMatch = &defaultScore
+	if err := c.Scoring.Validate(); err != nil {
+		return fmt.Errorf("scoring section validation failed: %w", err)
 	}
-	if c.Scoring.DescriptionMatch == nil {
-		c.Scoring.DescriptionMatch = &defaultScore
-	}
-	if c.Scoring.PowerStateMatch == nil {
-		c.Scoring.PowerStateMatch = &defaultScore
-	}
-
-	dest := os.ExpandEnv(*c.General.Destination)
-	c.General.Destination = &dest
 
 	for name, profile := range c.Profiles {
 		profile.Name = name
-
-		if profile.ConfigFile == "" {
-			return fmt.Errorf("profile %s: config_file is required", name)
+		if err := profile.Validate(c.configPath); err != nil {
+			return fmt.Errorf("profile %s validation failed: %w", name, err)
 		}
+	}
 
-		// Set default config type to static if not specified
-		if profile.ConfigType == nil {
-			defaultType := Static
-			profile.ConfigType = &defaultType
-		}
+	return nil
+}
 
-		if !strings.HasPrefix(profile.ConfigFile, "/") {
-			profile.ConfigFile = filepath.Join(c.configPath, profile.ConfigFile)
-		}
-		logrus.WithFields(logrus.Fields{
-			"profile":     name,
-			"config_file": profile.ConfigFile,
-		}).Debug("Profile config file resolved")
-		profile.ConfigFile = os.ExpandEnv(profile.ConfigFile)
+func (g *GeneralSection) Validate() error {
+	if g.Destination == nil {
+		defaultDest := "$HOME/.config/hypr/monitors.conf"
+		g.Destination = &defaultDest
+	}
 
-		if _, err := os.Stat(profile.ConfigFile); os.IsNotExist(err) {
-			return fmt.Errorf("profile %s: config file %s not found", name, profile.ConfigFile)
-		}
+	dest := os.ExpandEnv(*g.Destination)
+	g.Destination = &dest
 
-		if len(profile.Conditions.RequiredMonitors) == 0 {
-			return fmt.Errorf("profile %s: at least one required_monitor must be specified", name)
+	return nil
+}
+
+func (s *ScoringSection) Validate() error {
+	defaultScore := 1
+
+	if s.NameMatch == nil {
+		s.NameMatch = &defaultScore
+	}
+	if s.DescriptionMatch == nil {
+		s.DescriptionMatch = &defaultScore
+	}
+	if s.PowerStateMatch == nil {
+		s.PowerStateMatch = &defaultScore
+	}
+
+	fields := []int{*s.DescriptionMatch, *s.NameMatch, *s.PowerStateMatch}
+	for _, field := range fields {
+		if 1 > field {
+			return fmt.Errorf("scoring section validation failed, score needs to be > 1")
 		}
+	}
+
+	return nil
+}
+
+func (p *Profile) Validate(configPath string) error {
+	if p.ConfigFile == "" {
+		return fmt.Errorf("config_file is required")
+	}
+
+	if p.ConfigType == nil {
+		defaultType := Static
+		p.ConfigType = &defaultType
+	}
+
+	if !strings.HasPrefix(p.ConfigFile, "/") {
+		p.ConfigFile = filepath.Join(configPath, p.ConfigFile)
+	}
+
+	logrus.WithFields(logrus.Fields{
+		"profile":     p.Name,
+		"config_file": p.ConfigFile,
+	}).Debug("Profile config file resolved")
+
+	p.ConfigFile = os.ExpandEnv(p.ConfigFile)
+
+	if _, err := os.Stat(p.ConfigFile); os.IsNotExist(err) {
+		return fmt.Errorf("config file %s not found", p.ConfigFile)
+	}
+
+	if err := p.Conditions.Validate(); err != nil {
+		return fmt.Errorf("conditions validation failed: %w", err)
+	}
+
+	return nil
+}
+
+func (pc *ProfileCondition) Validate() error {
+	if len(pc.RequiredMonitors) == 0 {
+		return fmt.Errorf("at least one required_monitor must be specified")
+	}
+
+	for i, monitor := range pc.RequiredMonitors {
+		if err := monitor.Validate(); err != nil {
+			return fmt.Errorf("required_monitor[%d] validation failed: %w", i, err)
+		}
+	}
+
+	return nil
+}
+
+func (rm *RequiredMonitor) Validate() error {
+	if rm.Name == nil && rm.Description == nil {
+		return fmt.Errorf("at least one of name, or description must be specified")
 	}
 
 	return nil

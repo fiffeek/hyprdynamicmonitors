@@ -1,0 +1,10 @@
+[scoring]
+name_match = 0
+description_match = 1
+power_state_match = 1
+
+[profiles.test]
+config_file = "basic.conf"
+
+[[profiles.test.conditions.required_monitors]]
+name = "eDP-1"

@@ -24,3 +24,6 @@ $(INSTALL_DIR)/.venv.stamp: $(REQUIREMENTS_FILE) $(INSTALL_DIR)/.asdf.stamp
 $(INSTALL_DIR)/.precommit.stamp: $(PRECOMMIT_FILE) $(INSTALL_DIR)/.venv.stamp
 	. "$(VENV)/bin/activate"; pre-commit install
 	touch $@
+
+test:
+	go test ./... -v

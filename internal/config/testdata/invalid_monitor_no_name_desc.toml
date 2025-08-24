@@ -1,0 +1,5 @@
+[profiles.bad_monitor]
+config_file = "basic.conf"
+
+[[profiles.bad_monitor.conditions.required_monitors]]
+monitor_tag = "OnlyTag"

@@ -1,0 +1,4 @@
+[profiles.no_monitors]
+config_file = "basic.conf"
+
+[profiles.no_monitors.conditions]

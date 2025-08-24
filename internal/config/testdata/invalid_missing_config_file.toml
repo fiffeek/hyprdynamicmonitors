@@ -1,0 +1,4 @@
+[profiles.no_config_file]
+
+[[profiles.no_config_file.conditions.required_monitors]]
+name = "eDP-1"

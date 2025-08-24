@@ -1,0 +1,33 @@
+[general]
+destination = "/tmp/test-monitors.conf"
+
+[scoring]
+name_match = 2
+description_match = 3
+power_state_match = 1
+
+[profiles.laptop_only]
+config_file = "laptop.conf"
+config_file_type = "static"
+
+[[profiles.laptop_only.conditions.required_monitors]]
+name = "eDP-1"
+
+[profiles.dual_monitor]
+config_file = "dual.conf"
+config_file_type = "template"
+
+[[profiles.dual_monitor.conditions.required_monitors]]
+name = "eDP-1"
+
+[[profiles.dual_monitor.conditions.required_monitors]]
+description = "External Monitor"
+
+[profiles.ac_power_profile]
+config_file = "ac.conf"
+
+[[profiles.ac_power_profile.conditions.required_monitors]]
+description = "BOE Screen"
+
+[profiles.ac_power_profile.conditions]
+power_state = "AC"

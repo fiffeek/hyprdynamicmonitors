@@ -1,0 +1,6 @@
+[profiles.bad_type]
+config_file = "basic.conf"
+config_file_type = "invalid_type"
+
+[[profiles.bad_type.conditions.required_monitors]]
+name = "eDP-1"

@@ -1,0 +1,5 @@
+[profiles.minimal]
+config_file = "basic.conf"
+
+[[profiles.minimal.conditions.required_monitors]]
+name = "eDP-1"
