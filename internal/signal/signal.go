@@ -1,3 +1,4 @@
+// Package signal provides signal handling functionality.
 package signal
 
 import (

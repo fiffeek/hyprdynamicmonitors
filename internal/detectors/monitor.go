@@ -1,7 +1,9 @@
+// Package detectors provides monitor and power state detection functionality.
 package detectors
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 
@@ -16,10 +18,10 @@ type MonitorDetector struct {
 	monitors          chan []*hypr.MonitorSpec
 }
 
-func NewMonitorDetector(ipc *hypr.IPC) (*MonitorDetector, error) {
-	monitors, err := ipc.QueryConnectedMonitors()
+func NewMonitorDetector(ctx context.Context, ipc *hypr.IPC) (*MonitorDetector, error) {
+	monitors, err := ipc.QueryConnectedMonitors(ctx)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("cant query connected monitors on start up: %w", err)
 	}
 	connectedMonitors := make(map[string]*hypr.MonitorSpec)
 	for _, monitor := range monitors {
@@ -48,7 +50,7 @@ func (m *MonitorDetector) Run(ctx context.Context) error {
 			select {
 			case event, ok := <-events:
 				if !ok {
-					return fmt.Errorf("monitor ipc events channel closed")
+					return errors.New("monitor ipc events channel closed")
 				}
 				m.monitorsMutex.Lock()
 				switch event.Type {
@@ -71,7 +73,10 @@ func (m *MonitorDetector) Run(ctx context.Context) error {
 		}
 	})
 
-	return eg.Wait()
+	if err := eg.Wait(); err != nil {
+		return fmt.Errorf("goroutines for monitor detector failed %w", err)
+	}
+	return nil
 }
 
 func (m *MonitorDetector) GetConnected() []*hypr.MonitorSpec {

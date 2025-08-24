@@ -1,3 +1,4 @@
+// Package generators provides configuration file generation functionality.
 package generators
 
 import (
@@ -32,6 +33,7 @@ func (g *ConfigGenerator) GenerateConfig(profile *config.Profile, connectedMonit
 func (g *ConfigGenerator) renderTemplateFile(profile *config.Profile, connectedMonitors []*hypr.MonitorSpec, powerState detectors.PowerState, destination string) error {
 	templatePath := profile.ConfigFile
 
+	//nolint:gosec
 	templateContent, err := os.ReadFile(templatePath)
 	if err != nil {
 		return fmt.Errorf("failed to read template file %s: %w", templatePath, err)
@@ -62,6 +64,7 @@ func (g *ConfigGenerator) renderTemplateFile(profile *config.Profile, connectedM
 	}
 
 	renderedContent := rendered.Bytes()
+	//nolint:gosec
 	if existingContent, err := os.ReadFile(destination); err == nil {
 		if bytes.Equal(existingContent, renderedContent) {
 			logrus.WithField("destination", destination).Debug("Template content unchanged, skipping write")
@@ -70,7 +73,7 @@ func (g *ConfigGenerator) renderTemplateFile(profile *config.Profile, connectedM
 	}
 
 	tempFile := destination + ".tmp"
-	if err := os.WriteFile(tempFile, renderedContent, 0644); err != nil {
+	if err := os.WriteFile(tempFile, renderedContent, 0o600); err != nil {
 		return fmt.Errorf("failed to write temp config to %s: %w", tempFile, err)
 	}
 

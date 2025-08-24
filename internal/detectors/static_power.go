@@ -2,6 +2,7 @@ package detectors
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/fiffeek/hyprdynamicmonitors/internal/config"
 	"github.com/sirupsen/logrus"
@@ -38,5 +39,8 @@ func (p *StaticPowerDetector) Run(ctx context.Context) error {
 		return nil
 	})
 
-	return eg.Wait()
+	if err := eg.Wait(); err != nil {
+		return fmt.Errorf("goroutines for static power detector failed %w", err)
+	}
+	return nil
 }

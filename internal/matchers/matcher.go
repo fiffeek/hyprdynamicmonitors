@@ -1,3 +1,4 @@
+// Package matchers provides profile matching logic based on monitor conditions.
 package matchers
 
 import (

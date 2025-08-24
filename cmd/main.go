@@ -1,7 +1,10 @@
+// Package main provides the entry point for the hyprdynamicmonitors application.
+// It dynamically manages Hyprland monitor configurations based on connected displays.
 package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"path/filepath"
@@ -77,7 +80,7 @@ func main() {
 		logrus.WithError(err).Fatal("Failed to initialize Hyprland IPC")
 	}
 
-	monitorDetector, err := detectors.NewMonitorDetector(hyprIPC)
+	monitorDetector, err := detectors.NewMonitorDetector(ctx, hyprIPC)
 	if err != nil {
 		logrus.WithError(err).Fatal("Failed to initialize MonitorDetector")
 	}
@@ -102,7 +105,7 @@ func main() {
 
 	signalHandler := signal.NewHandler(ctx, cancel)
 
-	if err := run(ctx, svc, hyprIPC, monitorDetector, powerDetector, signalHandler); err != nil {
+	if err := run(ctx, svc, hyprIPC, monitorDetector, powerDetector, signalHandler); err != nil && !errors.Is(err, context.Canceled) {
 		logrus.WithError(err).Fatal("Service failed")
 	}
 }
@@ -115,9 +118,8 @@ func run(ctx context.Context, svc *service.Service, hyprIPC *hypr.IPC, monitorDe
 
 	eg.Go(func() error {
 		logrus.Debug("Starting Hypr IPC")
-		if err := hyprIPC.Run(ctx); err != nil && err != context.Canceled {
-			logrus.WithError(err).Error("Hypr IPC failed")
-			return err
+		if err := hyprIPC.Run(ctx); err != nil && !errors.Is(err, context.Canceled) {
+			return fmt.Errorf("hypr ipc failed: %w", err)
 		}
 		logrus.Debug("Hypr IPC finished")
 		return nil
@@ -125,9 +127,8 @@ func run(ctx context.Context, svc *service.Service, hyprIPC *hypr.IPC, monitorDe
 
 	eg.Go(func() error {
 		logrus.Debug("Starting monitor detector")
-		if err := monitorDetector.Run(ctx); err != nil && err != context.Canceled {
-			logrus.WithError(err).Error("Monitor detector failed")
-			return err
+		if err := monitorDetector.Run(ctx); err != nil && !errors.Is(err, context.Canceled) {
+			return fmt.Errorf("monitor detector failed: %w", err)
 		}
 		logrus.Debug("Monitor detector finished")
 		return nil
@@ -135,9 +136,8 @@ func run(ctx context.Context, svc *service.Service, hyprIPC *hypr.IPC, monitorDe
 
 	eg.Go(func() error {
 		logrus.Debug("Starting power detector")
-		if err := powerDetector.Run(ctx); err != nil && err != context.Canceled {
-			logrus.WithError(err).Error("Power detector failed")
-			return err
+		if err := powerDetector.Run(ctx); err != nil && !errors.Is(err, context.Canceled) {
+			return fmt.Errorf("power detector failed: %w", err)
 		}
 		logrus.Debug("Power detector finished")
 		return nil
@@ -145,9 +145,8 @@ func run(ctx context.Context, svc *service.Service, hyprIPC *hypr.IPC, monitorDe
 
 	eg.Go(func() error {
 		logrus.Debug("Starting service")
-		if err := svc.Run(ctx); err != nil && err != context.Canceled {
-			logrus.WithError(err).Error("Service failed")
-			return err
+		if err := svc.Run(ctx); err != nil && !errors.Is(err, context.Canceled) {
+			return fmt.Errorf("service failed: %w", err)
 		}
 		logrus.Debug("Service finished")
 		return nil
@@ -159,8 +158,8 @@ func run(ctx context.Context, svc *service.Service, hyprIPC *hypr.IPC, monitorDe
 		return ctx.Err()
 	})
 
-	if err := eg.Wait(); err != nil && err != context.Canceled {
-		return err
+	if err := eg.Wait(); err != nil {
+		return fmt.Errorf("main eg failed: %w", err)
 	}
 
 	logrus.Info("Shutdown complete")

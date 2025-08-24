@@ -1,3 +1,4 @@
+// Package config handles loading and validation of TOML configuration files.
 package config
 
 import (
@@ -135,7 +136,7 @@ func Load(configPath string) (*Config, error) {
 
 	absConfig, err := filepath.Abs(filepath.Dir(configPath))
 	if err != nil {
-		return nil, fmt.Errorf("cant convert config bath to abs %v", err)
+		return nil, fmt.Errorf("cant convert config bath to abs %w", err)
 	}
 
 	var config Config
@@ -153,7 +154,7 @@ func Load(configPath string) (*Config, error) {
 
 func (c *Config) Validate() error {
 	if len(c.Profiles) == 0 {
-		return fmt.Errorf("no profiles defined")
+		return errors.New("no profiles defined")
 	}
 
 	if c.General == nil {
@@ -215,7 +216,7 @@ func (s *ScoringSection) Validate() error {
 	fields := []int{*s.DescriptionMatch, *s.NameMatch, *s.PowerStateMatch}
 	for _, field := range fields {
 		if 1 > field {
-			return fmt.Errorf("scoring section validation failed, score needs to be > 1")
+			return errors.New("scoring section validation failed, score needs to be > 1")
 		}
 	}
 
@@ -224,7 +225,7 @@ func (s *ScoringSection) Validate() error {
 
 func (p *Profile) Validate(configPath string) error {
 	if p.ConfigFile == "" {
-		return fmt.Errorf("config_file is required")
+		return errors.New("config_file is required")
 	}
 
 	if p.ConfigType == nil {
@@ -256,7 +257,7 @@ func (p *Profile) Validate(configPath string) error {
 
 func (pc *ProfileCondition) Validate() error {
 	if len(pc.RequiredMonitors) == 0 {
-		return fmt.Errorf("at least one required_monitor must be specified")
+		return errors.New("at least one required_monitor must be specified")
 	}
 
 	for i, monitor := range pc.RequiredMonitors {
@@ -270,7 +271,7 @@ func (pc *ProfileCondition) Validate() error {
 
 func (rm *RequiredMonitor) Validate() error {
 	if rm.Name == nil && rm.Description == nil {
-		return fmt.Errorf("at least one of name, or description must be specified")
+		return errors.New("at least one of name, or description must be specified")
 	}
 
 	return nil
@@ -305,7 +306,7 @@ func (ps *PowerSection) Validate() error {
 
 	for _, rule := range ps.DbusSignalMatchRules {
 		if err := rule.Validate(); err != nil {
-			return fmt.Errorf("one of the dbus match rules is invalid: %v", err)
+			return fmt.Errorf("one of the dbus match rules is invalid: %w", err)
 		}
 	}
 
@@ -319,7 +320,7 @@ func (ps *PowerSection) Validate() error {
 
 	for _, signalFilter := range ps.DbusSignalReceiveFilters {
 		if err := signalFilter.Validate(); err != nil {
-			return fmt.Errorf("one of the dbus receive filter is invalid: %v", err)
+			return fmt.Errorf("one of the dbus receive filter is invalid: %w", err)
 		}
 	}
 
@@ -328,7 +329,7 @@ func (ps *PowerSection) Validate() error {
 
 func (dr *DbusSignalMatchRule) Validate() error {
 	if dr.Interface == nil && dr.Sender == nil && dr.Member == nil && dr.ObjectPath == nil {
-		return fmt.Errorf("dbus rule cant be empty")
+		return errors.New("dbus rule cant be empty")
 	}
 
 	return nil
@@ -336,7 +337,7 @@ func (dr *DbusSignalMatchRule) Validate() error {
 
 func (d *DbusSignalReceiveFilter) Validate() error {
 	if d.Name == nil {
-		return fmt.Errorf("name cant be emtpy")
+		return errors.New("name cant be emtpy")
 	}
 
 	return nil

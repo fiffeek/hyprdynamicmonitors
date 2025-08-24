@@ -2,6 +2,7 @@ package detectors
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"slices"
 
@@ -123,7 +124,7 @@ func (p *PowerDetector) Run(ctx context.Context) error {
 			logrus.WithFields(logrus.Fields{
 				"error": err,
 			}).Debug("Failed to add D-Bus match rule for UPower PropertiesChanged")
-			return fmt.Errorf("cant add UPower signal rule for dbus: %v", err)
+			return fmt.Errorf("cant add UPower signal rule for dbus: %w", err)
 		}
 	}
 	p.conn.Signal(p.signals)
@@ -148,7 +149,7 @@ func (p *PowerDetector) Run(ctx context.Context) error {
 			select {
 			case signal, ok := <-p.signals:
 				if !ok {
-					return fmt.Errorf("dbus power events channel closed")
+					return errors.New("dbus power events channel closed")
 				}
 				logrus.WithFields(logrus.Fields{
 					"signal_name": signal.Name,
@@ -166,7 +167,7 @@ func (p *PowerDetector) Run(ctx context.Context) error {
 				}
 
 				if err != nil {
-					return fmt.Errorf("failed to get power state after signal %s: %v", signal.Name, err)
+					return fmt.Errorf("failed to get power state after signal %s: %w", signal.Name, err)
 				}
 
 				if currentState != lastState {
@@ -190,5 +191,8 @@ func (p *PowerDetector) Run(ctx context.Context) error {
 		}
 	})
 
-	return eg.Wait()
+	if err := eg.Wait(); err != nil {
+		return fmt.Errorf("goroutines for power detector failed %w", err)
+	}
+	return nil
 }

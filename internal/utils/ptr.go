@@ -1,3 +1,4 @@
+// Package utils provides utility functions.
 package utils
 
 func StringPtr(s string) *string {

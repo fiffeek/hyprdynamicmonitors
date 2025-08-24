@@ -1,7 +1,9 @@
+// Package service provides the main service coordination and event handling.
 package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -55,7 +57,7 @@ func NewService(cfg *config.Config, monitorDetector *detectors.MonitorDetector, 
 
 func (s *Service) Run(ctx context.Context) error {
 	if err := s.RunOnce(ctx); err != nil {
-		return fmt.Errorf("unable to update configuration on start: %v", err)
+		return fmt.Errorf("unable to update configuration on start: %w", err)
 	}
 
 	monitorEventsChannel := s.monitorDetector.Listen()
@@ -63,18 +65,18 @@ func (s *Service) Run(ctx context.Context) error {
 	powerEventsChannel := s.powerDetector.Listen()
 	logrus.Info("Listening for monitor and power events...")
 
-	g, ctx := errgroup.WithContext(ctx)
+	eg, ctx := errgroup.WithContext(ctx)
 
-	g.Go(func() error {
+	eg.Go(func() error {
 		return s.updateProcessor(ctx)
 	})
 
-	g.Go(func() error {
+	eg.Go(func() error {
 		for {
 			select {
 			case monitors, ok := <-monitorEventsChannel:
 				if !ok {
-					return fmt.Errorf("monitor events channel closed")
+					return errors.New("monitor events channel closed")
 				}
 				logrus.WithField("monitor_count", len(monitors)).Debug("Monitor event received")
 				s.stateMu.Lock()
@@ -84,7 +86,7 @@ func (s *Service) Run(ctx context.Context) error {
 
 			case powerEvent, ok := <-powerEventsChannel:
 				if !ok {
-					return fmt.Errorf("power event channel closed")
+					return errors.New("power event channel closed")
 				}
 				logrus.WithField("power_state", powerEvent.State.String()).Debug("Power event received")
 				s.stateMu.Lock()
@@ -99,14 +101,17 @@ func (s *Service) Run(ctx context.Context) error {
 		}
 	})
 
-	return g.Wait()
+	if err := eg.Wait(); err != nil {
+		return fmt.Errorf("goroutines for service failed %w", err)
+	}
+	return nil
 }
 
 func (s *Service) RunOnce(ctx context.Context) error {
 	monitors := s.monitorDetector.GetConnected()
 	powerState, err := s.powerDetector.GetCurrentState(ctx)
 	if err != nil {
-		return fmt.Errorf("unable to fetch power state: %v", err)
+		return fmt.Errorf("unable to fetch power state: %w", err)
 	}
 
 	s.stateMu.Lock()
@@ -115,7 +120,7 @@ func (s *Service) RunOnce(ctx context.Context) error {
 	s.stateMu.Unlock()
 
 	if err := s.UpdateOnce(); err != nil {
-		return fmt.Errorf("unable to update configuration: %v", err)
+		return fmt.Errorf("unable to update configuration: %w", err)
 	}
 
 	return nil
@@ -139,7 +144,7 @@ func (s *Service) updateProcessor(ctx context.Context) error {
 		case <-s.debounceTimer.C:
 			logrus.Debug("Debounce timer expired, performing update")
 			if err := s.UpdateOnce(); err != nil {
-				return fmt.Errorf("configuration update failed: %v", err)
+				return fmt.Errorf("configuration update failed: %w", err)
 			}
 		case <-ctx.Done():
 			logrus.Debug("Update processor context cancelled, shutting down")
@@ -162,7 +167,7 @@ func (s *Service) UpdateOnce() error {
 
 	profile, err := s.matcher.Match(monitors, powerState)
 	if err != nil {
-		return fmt.Errorf("failed to match a profile %v", err)
+		return fmt.Errorf("failed to match a profile %w", err)
 	}
 
 	if profile == nil {

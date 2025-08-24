@@ -1,9 +1,10 @@
-package config
+package config_test
 
 import (
 	"path/filepath"
 	"testing"
 
+	"github.com/fiffeek/hyprdynamicmonitors/internal/config"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/utils"
 )
 
@@ -13,12 +14,12 @@ func TestLoad(t *testing.T) {
 		configFile    string
 		expectError   bool
 		errorContains string
-		validate      func(*testing.T, *Config)
+		validate      func(*testing.T, *config.Config)
 	}{
 		{
 			name:       "valid basic config",
 			configFile: "valid_basic.toml",
-			validate: func(t *testing.T, c *Config) {
+			validate: func(t *testing.T, c *config.Config) {
 				if len(c.Profiles) != 3 {
 					t.Errorf("expected 3 profiles, got %d", len(c.Profiles))
 				}
@@ -50,7 +51,7 @@ func TestLoad(t *testing.T) {
 					if laptop.Name != "laptop_only" {
 						t.Errorf("expected profile name 'laptop_only', got '%s'", laptop.Name)
 					}
-					if *laptop.ConfigType != Static {
+					if *laptop.ConfigType != config.Static {
 						t.Errorf("expected config type Static, got %v", *laptop.ConfigType)
 					}
 					if len(laptop.Conditions.RequiredMonitors) != 1 {
@@ -66,10 +67,8 @@ func TestLoad(t *testing.T) {
 				acProfile, exists := c.Profiles["ac_power_profile"]
 				if !exists {
 					t.Error("ac_power_profile should exist")
-				} else {
-					if acProfile.Conditions.PowerState == nil || *acProfile.Conditions.PowerState != AC {
-						t.Errorf("expected power state AC, got %v", acProfile.Conditions.PowerState)
-					}
+				} else if acProfile.Conditions.PowerState == nil || *acProfile.Conditions.PowerState != config.AC {
+					t.Errorf("expected power state AC, got %v", acProfile.Conditions.PowerState)
 				}
 
 				if c.PowerEvents == nil {
@@ -88,7 +87,7 @@ func TestLoad(t *testing.T) {
 		{
 			name:       "valid minimal config",
 			configFile: "valid_minimal.toml",
-			validate: func(t *testing.T, c *Config) {
+			validate: func(t *testing.T, c *config.Config) {
 				if len(c.Profiles) != 1 {
 					t.Errorf("expected 1 profile, got %d", len(c.Profiles))
 				}
@@ -101,7 +100,7 @@ func TestLoad(t *testing.T) {
 				}
 
 				profile := c.Profiles["minimal"]
-				if profile.ConfigType == nil || *profile.ConfigType != Static {
+				if profile.ConfigType == nil || *profile.ConfigType != config.Static {
 					t.Error("config_file_type should default to static")
 				}
 
@@ -188,7 +187,7 @@ func TestLoad(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			configPath := filepath.Join("testdata", tt.configFile)
 
-			config, err := Load(configPath)
+			config, err := config.Load(configPath)
 
 			if tt.expectError {
 				if err == nil {
@@ -221,17 +220,17 @@ func TestLoad(t *testing.T) {
 func TestGeneralSectionValidate(t *testing.T) {
 	tests := []struct {
 		name     string
-		general  *GeneralSection
+		general  *config.GeneralSection
 		expected string
 	}{
 		{
 			name:     "nil destination gets default",
-			general:  &GeneralSection{},
+			general:  &config.GeneralSection{},
 			expected: "$HOME/.config/hypr/monitors.conf",
 		},
 		{
 			name: "existing destination is preserved",
-			general: &GeneralSection{
+			general: &config.GeneralSection{
 				Destination: utils.StringPtr("/custom/path.conf"),
 			},
 			expected: "/custom/path.conf",
@@ -266,16 +265,16 @@ func TestGeneralSectionValidate(t *testing.T) {
 func TestScoringSectionValidate(t *testing.T) {
 	tests := []struct {
 		name        string
-		scoring     *ScoringSection
+		scoring     *config.ScoringSection
 		expectError bool
 	}{
 		{
 			name:    "nil values get defaults",
-			scoring: &ScoringSection{},
+			scoring: &config.ScoringSection{},
 		},
 		{
 			name: "existing values preserved",
-			scoring: &ScoringSection{
+			scoring: &config.ScoringSection{
 				NameMatch:        utils.IntPtr(5),
 				DescriptionMatch: utils.IntPtr(10),
 				PowerStateMatch:  utils.IntPtr(3),
@@ -283,7 +282,7 @@ func TestScoringSectionValidate(t *testing.T) {
 		},
 		{
 			name: "zero value causes error",
-			scoring: &ScoringSection{
+			scoring: &config.ScoringSection{
 				NameMatch:        utils.IntPtr(0),
 				DescriptionMatch: utils.IntPtr(1),
 				PowerStateMatch:  utils.IntPtr(1),
@@ -292,7 +291,7 @@ func TestScoringSectionValidate(t *testing.T) {
 		},
 		{
 			name: "negative value causes error",
-			scoring: &ScoringSection{
+			scoring: &config.ScoringSection{
 				NameMatch:        utils.IntPtr(-1),
 				DescriptionMatch: utils.IntPtr(1),
 				PowerStateMatch:  utils.IntPtr(1),
@@ -333,45 +332,45 @@ func TestScoringSectionValidate(t *testing.T) {
 func TestRequiredMonitorValidate(t *testing.T) {
 	tests := []struct {
 		name        string
-		monitor     *RequiredMonitor
+		monitor     *config.RequiredMonitor
 		expectError bool
 	}{
 		{
 			name: "name only is valid",
-			monitor: &RequiredMonitor{
+			monitor: &config.RequiredMonitor{
 				Name: utils.StringPtr("eDP-1"),
 			},
 		},
 		{
 			name: "description only is valid",
-			monitor: &RequiredMonitor{
+			monitor: &config.RequiredMonitor{
 				Description: utils.StringPtr("BOE Screen"),
 			},
 		},
 		{
 			name: "both name and description is valid",
-			monitor: &RequiredMonitor{
+			monitor: &config.RequiredMonitor{
 				Name:        utils.StringPtr("eDP-1"),
 				Description: utils.StringPtr("BOE Screen"),
 			},
 		},
 		{
 			name: "monitor tag with name is valid",
-			monitor: &RequiredMonitor{
+			monitor: &config.RequiredMonitor{
 				Name:       utils.StringPtr("eDP-1"),
 				MonitorTag: utils.StringPtr("LaptopScreen"),
 			},
 		},
 		{
 			name: "only monitor tag is invalid",
-			monitor: &RequiredMonitor{
+			monitor: &config.RequiredMonitor{
 				MonitorTag: utils.StringPtr("LaptopScreen"),
 			},
 			expectError: true,
 		},
 		{
 			name:        "empty monitor is invalid",
-			monitor:     &RequiredMonitor{},
+			monitor:     &config.RequiredMonitor{},
 			expectError: true,
 		},
 	}
@@ -398,18 +397,18 @@ func TestEnumUnmarshalTOML(t *testing.T) {
 		tests := []struct {
 			name        string
 			value       interface{}
-			expected    ConfigFileType
+			expected    config.ConfigFileType
 			expectError bool
 		}{
 			{
 				name:     "static",
 				value:    "static",
-				expected: Static,
+				expected: config.Static,
 			},
 			{
 				name:     "template",
 				value:    "template",
-				expected: Template,
+				expected: config.Template,
 			},
 			{
 				name:        "invalid string",
@@ -425,7 +424,7 @@ func TestEnumUnmarshalTOML(t *testing.T) {
 
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
-				var cft ConfigFileType
+				var cft config.ConfigFileType
 				err := cft.UnmarshalTOML(tt.value)
 
 				if tt.expectError {
@@ -448,18 +447,18 @@ func TestEnumUnmarshalTOML(t *testing.T) {
 		tests := []struct {
 			name        string
 			value       interface{}
-			expected    PowerStateType
+			expected    config.PowerStateType
 			expectError bool
 		}{
 			{
 				name:     "AC",
 				value:    "AC",
-				expected: AC,
+				expected: config.AC,
 			},
 			{
 				name:     "BAT",
 				value:    "BAT",
-				expected: BAT,
+				expected: config.BAT,
 			},
 			{
 				name:        "invalid string",
@@ -475,7 +474,7 @@ func TestEnumUnmarshalTOML(t *testing.T) {
 
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
-				var pst PowerStateType
+				var pst config.PowerStateType
 				err := pst.UnmarshalTOML(tt.value)
 
 				if tt.expectError {
@@ -498,31 +497,31 @@ func TestEnumUnmarshalTOML(t *testing.T) {
 func TestPowerSectionValidate(t *testing.T) {
 	tests := []struct {
 		name        string
-		powerEvents *PowerSection
+		powerEvents *config.PowerSection
 		expectError bool
 	}{
 		{
 			name:        "nil power section gets defaults",
-			powerEvents: &PowerSection{},
+			powerEvents: &config.PowerSection{},
 		},
 		{
 			name: "existing rules preserved",
-			powerEvents: &PowerSection{
-				DbusSignalMatchRules: []*DbusSignalMatchRule{
+			powerEvents: &config.PowerSection{
+				DbusSignalMatchRules: []*config.DbusSignalMatchRule{
 					{
 						Sender:    utils.StringPtr("custom.sender"),
 						Interface: utils.StringPtr("custom.interface"),
 					},
 				},
-				DbusSignalReceiveFilters: []*DbusSignalReceiveFilter{
+				DbusSignalReceiveFilters: []*config.DbusSignalReceiveFilter{
 					{Name: utils.StringPtr("custom.signal")},
 				},
 			},
 		},
 		{
 			name: "invalid match rule - all nil",
-			powerEvents: &PowerSection{
-				DbusSignalMatchRules: []*DbusSignalMatchRule{
+			powerEvents: &config.PowerSection{
+				DbusSignalMatchRules: []*config.DbusSignalMatchRule{
 					{}, // empty rule should fail validation
 				},
 			},
@@ -530,8 +529,8 @@ func TestPowerSectionValidate(t *testing.T) {
 		},
 		{
 			name: "invalid receive filter - nil name",
-			powerEvents: &PowerSection{
-				DbusSignalReceiveFilters: []*DbusSignalReceiveFilter{
+			powerEvents: &config.PowerSection{
+				DbusSignalReceiveFilters: []*config.DbusSignalReceiveFilter{
 					{}, // empty filter should fail validation
 				},
 			},

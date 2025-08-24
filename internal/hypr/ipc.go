@@ -1,8 +1,10 @@
+// Package hypr provides Hyprland IPC communication functionality.
 package hypr
 
 import (
 	"bufio"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -40,12 +42,12 @@ type MonitorEvent struct {
 func NewIPC() (*IPC, error) {
 	signature := os.Getenv("HYPRLAND_INSTANCE_SIGNATURE")
 	if signature == "" {
-		return nil, fmt.Errorf("HYPRLAND_INSTANCE_SIGNATURE environment variable not set - are you running under Hyprland?")
+		return nil, errors.New("HYPRLAND_INSTANCE_SIGNATURE environment variable not set - are you running under Hyprland?")
 	}
 
 	xdgRuntimeDir := os.Getenv("XDG_RUNTIME_DIR")
-	if signature == "" {
-		return nil, fmt.Errorf("XDG_RUNTIME_DIR environment variable not set - are you running under Hyprland?")
+	if xdgRuntimeDir == "" {
+		return nil, errors.New("XDG_RUNTIME_DIR environment variable not set - are you running under Hyprland?")
 	}
 
 	ipc := &IPC{
@@ -68,7 +70,8 @@ func (h *IPC) Run(ctx context.Context) error {
 		return fmt.Errorf("hyprland event socket not found at %s", socketPath)
 	}
 
-	conn, err := net.Dial("unix", socketPath)
+	d := &net.Dialer{}
+	conn, err := d.DialContext(ctx, "unix", socketPath)
 	if err != nil {
 		return fmt.Errorf("failed to connect to Hyprland event socket: %w", err)
 	}
@@ -122,10 +125,13 @@ func (h *IPC) Run(ctx context.Context) error {
 		return nil
 	})
 
-	return eg.Wait()
+	if err = eg.Wait(); err != nil {
+		return fmt.Errorf("goroutines for hypr ipc failed %w", err)
+	}
+	return nil
 }
 
-func (h *IPC) extractMonitorEvent(line string, prefix string, eventType MonitorEventType) *MonitorEvent {
+func (h *IPC) extractMonitorEvent(line, prefix string, eventType MonitorEventType) *MonitorEvent {
 	after, done := strings.CutPrefix(line, prefix)
 	if done {
 		parts := strings.Split(after, ",")
@@ -156,13 +162,14 @@ func (h *IPC) parseMonitorEvent(line string) *MonitorEvent {
 	return nil
 }
 
-func (h *IPC) QueryConnectedMonitors() ([]*MonitorSpec, error) {
+func (h *IPC) QueryConnectedMonitors(ctx context.Context) ([]*MonitorSpec, error) {
 	socketPath := fmt.Sprintf("%s/hypr/%s/.socket.sock", h.xdgRuntimeDir, h.instanceSignature)
 	if _, err := os.Stat(socketPath); os.IsNotExist(err) {
 		return nil, fmt.Errorf("hyprland command socket not found at %s", socketPath)
 	}
 
-	conn, err := net.Dial("unix", socketPath)
+	d := &net.Dialer{}
+	conn, err := d.DialContext(ctx, "unix", socketPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to Hyprland command socket: %w", err)
 	}
@@ -234,7 +241,7 @@ func (h *IPC) parseMonitorsResponse(response string) ([]*MonitorSpec, error) {
 	}
 
 	if len(monitors) == 0 {
-		return nil, fmt.Errorf("no monitors found in Hyprland response")
+		return nil, errors.New("no monitors found in Hyprland response")
 	}
 
 	return monitors, nil
