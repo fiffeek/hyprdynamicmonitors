@@ -2,7 +2,6 @@ package service
 
 import (
 	"fmt"
-	"log"
 	"sync"
 	"time"
 
@@ -11,6 +10,7 @@ import (
 	"github.com/fiffeek/hyprdynamicmonitors/internal/generators"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/hypr"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/matchers"
+	"github.com/sirupsen/logrus"
 )
 
 type Service struct {
@@ -29,8 +29,7 @@ type Service struct {
 }
 
 type Config struct {
-	DryRun  bool
-	Verbose bool
+	DryRun bool
 }
 
 func NewService(cfg *config.Config, monitorDetector *detectors.MonitorDetector, powerDetector *detectors.PowerDetector, svcCfg *Config, matcher *matchers.Matcher, generator *generators.ConfigGenerator) *Service {
@@ -55,7 +54,7 @@ func (s *Service) Run() error {
 	s.stateMu.Unlock()
 
 	if err := s.UpdateOnce(); err != nil {
-		log.Printf("Initial configuration update failed: %v", err)
+		logrus.WithError(err).Error("Initial configuration update failed")
 	}
 
 	monitorEventsChannel, err := s.monitorDetector.Listen()
@@ -67,7 +66,7 @@ func (s *Service) Run() error {
 	if err != nil {
 		return fmt.Errorf("failed to start power event listener: %w", err)
 	}
-	log.Printf("Listening for monitor and power events...")
+	logrus.Info("Listening for monitor and power events...")
 
 	go s.updateProcessor()
 
@@ -77,6 +76,7 @@ func (s *Service) Run() error {
 			if !ok {
 				return fmt.Errorf("monitor event channel closed unexpectedly")
 			}
+			logrus.WithField("monitor_count", len(monitors)).Debug("Monitor event received")
 			s.stateMu.Lock()
 			s.cachedMonitors = monitors
 			s.stateMu.Unlock()
@@ -86,6 +86,7 @@ func (s *Service) Run() error {
 			if !ok {
 				return fmt.Errorf("power event channel closed unexpectedly")
 			}
+			logrus.WithField("power_state", powerEvent.State.String()).Debug("Power event received")
 			s.stateMu.Lock()
 			s.cachedPowerState = powerEvent.State
 			s.stateMu.Unlock()
@@ -101,20 +102,16 @@ func (s *Service) triggerUpdate() {
 	s.debounceTimer.Stop()
 	s.debounceTimer.Reset(1500 * time.Millisecond)
 
-	if s.cfg.Verbose {
-		log.Printf("Update scheduled (debounced 1500ms)")
-	}
+	logrus.Debug("Update scheduled (debounced 1500ms)")
 }
 
 func (s *Service) updateProcessor() {
 	s.debounceTimer.Stop()
 
 	for range s.debounceTimer.C {
-		if s.cfg.Verbose {
-			log.Printf("Debounce timer expired, performing update")
-		}
+		logrus.Debug("Debounce timer expired, performing update")
 		if err := s.UpdateOnce(); err != nil {
-			log.Printf("Configuration update failed: %v", err)
+			logrus.WithError(err).Error("Configuration update failed")
 		}
 	}
 }
@@ -125,9 +122,11 @@ func (s *Service) UpdateOnce() error {
 	powerState := s.cachedPowerState
 	s.stateMu.RUnlock()
 
-	if s.cfg.Verbose || s.cfg.DryRun {
-		log.Printf("Current state: %d monitors, power: %s", len(monitors), powerState)
-	}
+	logrus.WithFields(logrus.Fields{
+		"monitor_count": len(monitors),
+		"power_state":   powerState.String(),
+		"dry_run":       s.cfg.DryRun,
+	}).Debug("Updating configuration")
 
 	profile, err := s.matcher.Match(monitors, powerState)
 	if err != nil {
@@ -135,18 +134,22 @@ func (s *Service) UpdateOnce() error {
 	}
 
 	if profile == nil {
-		if s.cfg.Verbose {
-			log.Printf("No matching profile found")
-		}
+		logrus.Debug("No matching profile found")
 		return nil
+	}
+
+	profileFields := logrus.Fields{
+		"profile_name": profile.Name,
+		"config_file":  profile.ConfigFile,
+		"config_type":  profile.ConfigType.Value(),
 	}
 
 	if s.cfg.DryRun {
-		log.Printf("[DRY RUN] Would use profile: %s -> %s", profile.Name, profile.ConfigFile)
+		logrus.WithFields(profileFields).Info("[DRY RUN] Would use profile")
 		return nil
 	}
 
-	log.Printf("Using profile: %s -> %s", profile.Name, profile.ConfigFile)
+	logrus.WithFields(profileFields).Info("Using profile")
 
 	destination := *s.config.General.Destination
 	if err := s.generator.GenerateConfig(profile, monitors, powerState, destination); err != nil {
@@ -155,9 +158,9 @@ func (s *Service) UpdateOnce() error {
 
 	switch *profile.ConfigType {
 	case config.Static:
-		log.Printf("Successfully linked configuration: %s", profile.ConfigFile)
+		logrus.WithField("config_file", profile.ConfigFile).Info("Successfully linked configuration")
 	case config.Template:
-		log.Printf("Successfully rendered template configuration: %s", profile.ConfigFile)
+		logrus.WithField("config_file", profile.ConfigFile).Info("Successfully rendered template configuration")
 	}
 
 	return nil

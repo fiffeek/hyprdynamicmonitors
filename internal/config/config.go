@@ -3,12 +3,12 @@ package config
 import (
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/BurntSushi/toml"
+	"github.com/sirupsen/logrus"
 )
 
 type Config struct {
@@ -180,7 +180,10 @@ func (c *Config) Validate() error {
 		if !strings.HasPrefix(profile.ConfigFile, "/") {
 			profile.ConfigFile = filepath.Join(c.configPath, profile.ConfigFile)
 		}
-		log.Printf("Hello %s %s", name, profile.ConfigFile)
+		logrus.WithFields(logrus.Fields{
+			"profile":     name,
+			"config_file": profile.ConfigFile,
+		}).Debug("Profile config file resolved")
 		profile.ConfigFile = os.ExpandEnv(profile.ConfigFile)
 
 		if _, err := os.Stat(profile.ConfigFile); os.IsNotExist(err) {

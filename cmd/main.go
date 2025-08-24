@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"log"
 
 	"github.com/fiffeek/hyprdynamicmonitors/internal/config"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/detectors"
@@ -10,6 +9,7 @@ import (
 	"github.com/fiffeek/hyprdynamicmonitors/internal/hypr"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/matchers"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/service"
+	"github.com/sirupsen/logrus"
 )
 
 var (
@@ -27,49 +27,56 @@ func main() {
 	)
 	flag.Parse()
 
+	if *verbose {
+		logrus.SetLevel(logrus.DebugLevel)
+	} else {
+		logrus.SetLevel(logrus.InfoLevel)
+	}
+	logrus.SetFormatter(&logrus.TextFormatter{
+		DisableTimestamp: true,
+		DisableColors:    false,
+	})
+
 	if *showVer {
-		log.Printf("hypr-dynmon %s (commit: %s, built: %s)", version, commit, buildDate)
+		logrus.WithFields(logrus.Fields{
+			"version":   version,
+			"commit":    commit,
+			"buildDate": buildDate,
+		}).Info("hyprdynamicmonitors version")
 		return
 	}
 
-	if !*verbose {
-		log.SetFlags(0)
-	}
-
-	log.Printf("Starting Hyprland Dynamic Monitor Manager v%s", version)
+	logrus.WithField("version", version).Info("Starting Hyprland Dynamic Monitor Manager")
 
 	cfg, err := config.Load(*configPath)
 	if err != nil {
-		log.Fatalf("Failed to load configuration: %v", err)
+		logrus.WithError(err).Fatal("Failed to load configuration")
 	}
 
-	hyprIPC, err := hypr.NewIPC(*verbose)
+	hyprIPC, err := hypr.NewIPC()
 	if err != nil {
-		log.Fatalf("Failed to initialize Hyprland IPC: %v", err)
+		logrus.WithError(err).Fatal("Failed to initialize Hyprland IPC")
 	}
 
 	monitorDetector, err := detectors.NewMonitorDetector(hyprIPC)
 	if err != nil {
-		log.Fatalf("Failed to initialize MonitorDetector: %v", err)
+		logrus.WithError(err).Fatal("Failed to initialize MonitorDetector")
 	}
 
-	powerDetector, err := detectors.NewPowerDetector(*verbose)
+	powerDetector, err := detectors.NewPowerDetector()
 	if err != nil {
-		log.Fatalf("Failed to initialize PowerDetector with file path %v", err)
+		logrus.WithError(err).Fatal("Failed to initialize PowerDetector")
 	}
 
-	matcher := matchers.NewMatcher(cfg, *verbose)
+	matcher := matchers.NewMatcher(cfg)
 
-	generator := generators.NewConfigGenerator(&generators.GeneratorConfig{
-		Verbose: *verbose,
-	})
+	generator := generators.NewConfigGenerator()
 
 	svc := service.NewService(cfg, monitorDetector, powerDetector, &service.Config{
-		DryRun:  *dryRun,
-		Verbose: *verbose,
+		DryRun: *dryRun,
 	}, matcher, generator)
 
 	if err := svc.Run(); err != nil {
-		log.Fatalf("Service failed: %v", err)
+		logrus.WithError(err).Fatal("Service failed")
 	}
 }

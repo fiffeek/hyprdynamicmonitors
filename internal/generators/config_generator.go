@@ -3,27 +3,20 @@ package generators
 import (
 	"bytes"
 	"fmt"
-	"log"
 	"os"
 	"text/template"
 
 	"github.com/fiffeek/hyprdynamicmonitors/internal/config"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/detectors"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/hypr"
+	"github.com/sirupsen/logrus"
 )
 
 type ConfigGenerator struct {
-	verbose bool
 }
 
-type GeneratorConfig struct {
-	Verbose bool
-}
-
-func NewConfigGenerator(cfg *GeneratorConfig) *ConfigGenerator {
-	return &ConfigGenerator{
-		verbose: cfg.Verbose,
-	}
+func NewConfigGenerator() *ConfigGenerator {
+	return &ConfigGenerator{}
 }
 
 func (g *ConfigGenerator) GenerateConfig(profile *config.Profile, connectedMonitors []*hypr.MonitorSpec, powerState detectors.PowerState, destination string) error {
@@ -72,9 +65,7 @@ func (g *ConfigGenerator) renderTemplateFile(profile *config.Profile, connectedM
 	renderedContent := rendered.Bytes()
 	if existingContent, err := os.ReadFile(destination); err == nil {
 		if bytes.Equal(existingContent, renderedContent) {
-			if g.verbose {
-				log.Printf("Template content unchanged, skipping write: %s", destination)
-			}
+			logrus.WithField("destination", destination).Debug("Template content unchanged, skipping write")
 			return nil
 		}
 	}
@@ -106,20 +97,28 @@ func (g *ConfigGenerator) createTemplateData(profile *config.Profile, connectedM
 		for _, connectedMonitor := range connectedMonitors {
 			if g.monitorMatches(requiredMonitor, connectedMonitor) {
 				monitorsByTag[*requiredMonitor.MonitorTag] = connectedMonitor
-				if g.verbose {
-					log.Printf("Mapped monitor tag '%s' to monitor: Name=%s, Description=%s",
-						*requiredMonitor.MonitorTag, connectedMonitor.Name, connectedMonitor.Description)
-				}
+				logrus.WithFields(logrus.Fields{
+					"tag":         *requiredMonitor.MonitorTag,
+					"name":        connectedMonitor.Name,
+					"description": connectedMonitor.Description,
+				}).Debug("Mapped monitor tag")
 				break
 			}
 		}
 	}
 
-	if g.verbose {
-		log.Printf("Template data: %d monitors, %d tagged monitors, power: %s", len(connectedMonitors), len(monitorsByTag), powerState)
-		for tag, monitor := range monitorsByTag {
-			log.Printf("  Tag '%s': %s (%s)", tag, monitor.Name, monitor.Description)
-		}
+	logrus.WithFields(logrus.Fields{
+		"monitor_count":        len(connectedMonitors),
+		"tagged_monitor_count": len(monitorsByTag),
+		"power_state":          powerState.String(),
+	}).Debug("Template data prepared")
+
+	for tag, monitor := range monitorsByTag {
+		logrus.WithFields(logrus.Fields{
+			"tag":         tag,
+			"name":        monitor.Name,
+			"description": monitor.Description,
+		}).Debug("Tagged monitor")
 	}
 
 	data["MonitorsByTag"] = monitorsByTag

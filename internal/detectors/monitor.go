@@ -2,7 +2,6 @@ package detectors
 
 import (
 	"fmt"
-	"log"
 	"sync"
 
 	"github.com/fiffeek/hyprdynamicmonitors/internal/hypr"
@@ -19,7 +18,6 @@ func NewMonitorDetector(ipc *hypr.IPC) (*MonitorDetector, error) {
 	if err != nil {
 		return nil, err
 	}
-	log.Printf(" mondet %d", len(monitors))
 	connectedMonitors := make(map[string]*hypr.MonitorSpec)
 	for _, monitor := range monitors {
 		connectedMonitors[monitor.Name] = monitor

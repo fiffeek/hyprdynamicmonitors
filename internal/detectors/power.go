@@ -2,9 +2,9 @@ package detectors
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/godbus/dbus/v5"
+	"github.com/sirupsen/logrus"
 )
 
 type PowerState int
@@ -30,19 +30,17 @@ type PowerEvent struct {
 }
 
 type PowerDetector struct {
-	conn    *dbus.Conn
-	verbose bool
+	conn *dbus.Conn
 }
 
-func NewPowerDetector(verbose bool) (*PowerDetector, error) {
+func NewPowerDetector() (*PowerDetector, error) {
 	conn, err := dbus.ConnectSystemBus()
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to system D-Bus: %w", err)
 	}
 
 	detector := &PowerDetector{
-		conn:    conn,
-		verbose: verbose,
+		conn: conn,
 	}
 
 	if _, err := detector.GetCurrentState(); err != nil {
@@ -50,9 +48,7 @@ func NewPowerDetector(verbose bool) (*PowerDetector, error) {
 		return nil, fmt.Errorf("UPower not available or accessible: %w", err)
 	}
 
-	if verbose {
-		log.Printf("UPower D-Bus power detection initialized")
-	}
+	logrus.Info("UPower D-Bus power detection initialized")
 
 	return detector, nil
 }
@@ -67,9 +63,7 @@ func (p *PowerDetector) GetCurrentState() (PowerState, error) {
 	}
 
 	if onBatteryValue, ok := onBattery.Value().(bool); ok {
-		if p.verbose {
-			log.Printf("UPower OnBattery: %v", onBatteryValue)
-		}
+		logrus.WithField("on_battery", onBatteryValue).Debug("UPower OnBattery property")
 		if onBatteryValue {
 			return Battery, nil
 		}
@@ -88,14 +82,14 @@ func (p *PowerDetector) Listen() (<-chan PowerEvent, error) {
 	for _, rule := range rules {
 		err := p.conn.AddMatchSignal(dbus.WithMatchInterface("org.freedesktop.UPower"))
 		if err != nil {
-			if p.verbose {
-				log.Printf("Failed to add match rule %s: %v", rule, err)
-			}
+			logrus.WithFields(logrus.Fields{
+				"rule":  rule,
+				"error": err,
+			}).Debug("Failed to add D-Bus match rule")
 			return nil, fmt.Errorf("cant add signal rule for dbus: %v", err)
 		}
 	}
 
-	// Create signal channel
 	signals := make(chan *dbus.Signal, 10)
 	p.conn.Signal(signals)
 
@@ -103,37 +97,35 @@ func (p *PowerDetector) Listen() (<-chan PowerEvent, error) {
 		defer close(events)
 		defer p.conn.RemoveSignal(signals)
 
-		if p.verbose {
-			log.Printf("Power detector started, listening for UPower D-Bus signals")
-		}
+		logrus.Debug("Power detector started, listening for UPower D-Bus signals")
 
 		lastState := ACPower
 
 		for signal := range signals {
-			if p.verbose {
-				log.Printf("Received D-Bus signal: %s from %s", signal.Name, signal.Path)
-			}
+			logrus.WithFields(logrus.Fields{
+				"signal_name": signal.Name,
+				"signal_path": signal.Path,
+			}).Debug("Received D-Bus signal")
 
 			var currentState PowerState
 			var err error
-			if signal.Name == "org.freedesktop.UPower.DeviceAdded" || signal.Name == "org.freedesktop.Upower.DeviceRemoved" {
+			if signal.Name == "org.freedesktop.UPower.DeviceAdded" || signal.Name == "org.freedesktop.UPower.DeviceRemoved" {
 				currentState, err = p.GetCurrentState()
 				if err != nil {
-					if p.verbose {
-						log.Printf("Failed to read power state after signal: %v", err)
-					}
+					logrus.WithError(err).Debug("Failed to read power state after signal")
 					continue
 				}
 			}
 
 			if currentState != lastState {
-				if p.verbose {
-					log.Printf("Power state changed: %s -> %s", lastState, currentState)
-				}
+				logrus.WithFields(logrus.Fields{
+					"from": lastState.String(),
+					"to":   currentState.String(),
+				}).Info("Power state changed")
 				events <- PowerEvent{State: currentState}
 				lastState = currentState
-			} else if p.verbose {
-				log.Printf("Power state unchanged after signal: %s", currentState)
+			} else {
+				logrus.WithField("power_state", currentState.String()).Debug("Power state unchanged after signal")
 			}
 		}
 	}()

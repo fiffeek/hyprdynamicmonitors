@@ -7,14 +7,12 @@ import (
 )
 
 type Matcher struct {
-	cfg     *config.Config
-	verbose bool
+	cfg *config.Config
 }
 
-func NewMatcher(cfg *config.Config, verbose bool) *Matcher {
+func NewMatcher(cfg *config.Config) *Matcher {
 	return &Matcher{
-		cfg,
-		verbose,
+		cfg: cfg,
 	}
 }
 

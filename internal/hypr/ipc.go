@@ -4,16 +4,16 @@ import (
 	"bufio"
 	"fmt"
 	"io"
-	"log"
 	"net"
 	"os"
 	"strings"
+
+	"github.com/sirupsen/logrus"
 )
 
 type IPC struct {
 	instanceSignature string
 	xdgRuntimeDir     string
-	verbose           bool
 }
 
 type MonitorSpec struct {
@@ -34,7 +34,7 @@ type MonitorEvent struct {
 	Monitor *MonitorSpec
 }
 
-func NewIPC(verbose bool) (*IPC, error) {
+func NewIPC() (*IPC, error) {
 	signature := os.Getenv("HYPRLAND_INSTANCE_SIGNATURE")
 	if signature == "" {
 		return nil, fmt.Errorf("HYPRLAND_INSTANCE_SIGNATURE environment variable not set - are you running under Hyprland?")
@@ -48,7 +48,6 @@ func NewIPC(verbose bool) (*IPC, error) {
 	ipc := &IPC{
 		instanceSignature: signature,
 		xdgRuntimeDir:     xdgRuntimeDir,
-		verbose:           true,
 	}
 
 	return ipc, nil
@@ -72,7 +71,7 @@ func (h *IPC) ListenEvents() (<-chan MonitorEvent, error) {
 		defer close(events)
 		defer func() {
 			if err := conn.Close(); err != nil {
-				log.Printf("Failed to close connection: %v", err)
+				logrus.WithError(err).Debug("Failed to close connection")
 			}
 		}()
 
@@ -87,7 +86,7 @@ func (h *IPC) ListenEvents() (<-chan MonitorEvent, error) {
 			}
 
 			if err := scanner.Err(); err != nil {
-				log.Printf("scanner error %v", err)
+				logrus.WithError(err).Debug("Scanner error")
 			}
 		}
 	}()
@@ -139,7 +138,7 @@ func (h *IPC) QueryConnectedMonitors() ([]*MonitorSpec, error) {
 
 	defer func() {
 		if err := conn.Close(); err != nil {
-			log.Printf("Failed to close connection: %v", err)
+			logrus.WithError(err).Debug("Failed to close connection")
 		}
 	}()
 
@@ -158,9 +157,7 @@ func (h *IPC) QueryConnectedMonitors() ([]*MonitorSpec, error) {
 
 func (h *IPC) parseMonitorsResponse(response string) ([]*MonitorSpec, error) {
 	var monitors []*MonitorSpec
-	if h.verbose {
-		log.Printf("Read: %s,", response)
-	}
+	logrus.WithField("response", response).Debug("Hyprland monitors response")
 	monitorBlocks := strings.Split(response, "Monitor")
 
 	for _, block := range monitorBlocks {
@@ -171,9 +168,9 @@ func (h *IPC) parseMonitorsResponse(response string) ([]*MonitorSpec, error) {
 		for lineNumber, line := range strings.Split(block, "\n") {
 			line = strings.TrimSpace(line)
 			if lineNumber == 0 {
-				log.Printf("%s", line)
+				logrus.WithField("line", line).Debug("Monitor header line")
 				parts := strings.Fields(line)
-				log.Printf("%d", len(parts))
+				logrus.WithField("parts_count", len(parts)).Debug("Monitor header parts")
 				if len(parts) != 3 {
 					continue
 				}
@@ -181,7 +178,6 @@ func (h *IPC) parseMonitorsResponse(response string) ([]*MonitorSpec, error) {
 				name = parts[0]
 				id = strings.Trim(parts[2], ":()")
 			}
-			log.Printf("%s %s %s", name, desc, id)
 
 			descriptionSep := "description: "
 			if strings.Contains(line, descriptionSep) {
@@ -189,6 +185,12 @@ func (h *IPC) parseMonitorsResponse(response string) ([]*MonitorSpec, error) {
 				desc = parts[1]
 			}
 		}
+
+		logrus.WithFields(logrus.Fields{
+			"name": name,
+			"desc": desc,
+			"id":   id,
+		}).Debug("Monitor parsed")
 
 		if id == "" || desc == "" || name == "" {
 			continue
