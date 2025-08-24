@@ -32,6 +32,7 @@ test:
 	$(GOLANG_BIN) test ./... -v
 
 fmt:
+	$(GOLANG_BIN) fmt ./...
 	$(GOLANG_BIN) mod tidy
 	$(GOLANGCI_LINT_BIN) fmt
 

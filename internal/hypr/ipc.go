@@ -81,7 +81,8 @@ func (h *IPC) Run(ctx context.Context) error {
 	eg.Go(func() error {
 		<-ctx.Done()
 		logrus.Debug("Hypr IPC context cancelled, closing connection to unblock scanner")
-		return conn.Close()
+		_ = conn.Close()
+		return nil
 	})
 
 	eg.Go(func() error {
@@ -102,7 +103,11 @@ func (h *IPC) Run(ctx context.Context) error {
 			}
 
 			line := scanner.Text()
-			if event := h.parseMonitorEvent(line); event != nil {
+			event, err := h.parseMonitorEvent(line)
+			if err != nil {
+				return fmt.Errorf("scanner gave unknown event: %w", err)
+			}
+			if event != nil {
 				select {
 				case h.events <- *event:
 				case <-ctx.Done():
@@ -131,35 +136,48 @@ func (h *IPC) Run(ctx context.Context) error {
 	return nil
 }
 
-func (h *IPC) extractMonitorEvent(line, prefix string, eventType MonitorEventType) *MonitorEvent {
+func (h *IPC) extractMonitorEvent(line, prefix string, eventType MonitorEventType) (*MonitorEvent, error) {
 	after, done := strings.CutPrefix(line, prefix)
-	if done {
-		parts := strings.Split(after, ",")
-		if len(parts) > 0 {
-			return &MonitorEvent{
-				Type: eventType,
-				Monitor: &MonitorSpec{
-					ID:          parts[0],
-					Name:        parts[1],
-					Description: parts[2],
-				},
-			}
-		}
+	if !done {
+		return nil, nil
 	}
-	return nil
+
+	logrus.WithFields(logrus.Fields{"event": line, "as": prefix}).Debug("trying to parse event")
+
+	parts := strings.Split(after, ",")
+	if len(parts) != 3 {
+		return nil, fmt.Errorf("cant parse event %s", after)
+	}
+
+	return &MonitorEvent{
+		Type: eventType,
+		Monitor: &MonitorSpec{
+			ID:          parts[0],
+			Name:        parts[1],
+			Description: parts[2],
+		},
+	}, nil
 }
 
-func (h *IPC) parseMonitorEvent(line string) *MonitorEvent {
-	events := []*MonitorEvent{
-		h.extractMonitorEvent(line, "monitoraddedv2>>", MonitorAdded),
-		h.extractMonitorEvent(line, "monitorremovedv2>>", MonitorRemoved),
+func (h *IPC) parseMonitorEvent(line string) (*MonitorEvent, error) {
+	events := []func(string) (*MonitorEvent, error){
+		func(line string) (*MonitorEvent, error) {
+			return h.extractMonitorEvent(line, "monitoraddedv2>>", MonitorAdded)
+		},
+		func(line string) (*MonitorEvent, error) {
+			return h.extractMonitorEvent(line, "monitorremovedv2>>", MonitorRemoved)
+		},
 	}
-	for _, event := range events {
+	for _, fun := range events {
+		event, err := fun(line)
+		if err != nil {
+			return nil, fmt.Errorf("cant parse: %w", err)
+		}
 		if event != nil {
-			return event
+			return event, nil
 		}
 	}
-	return nil
+	return nil, nil
 }
 
 func (h *IPC) QueryConnectedMonitors(ctx context.Context) ([]*MonitorSpec, error) {
