@@ -33,8 +33,9 @@ func main() {
 		logrus.SetLevel(logrus.InfoLevel)
 	}
 	logrus.SetFormatter(&logrus.TextFormatter{
-		DisableTimestamp: true,
+		DisableTimestamp: false,
 		DisableColors:    false,
+		FullTimestamp:    true,
 	})
 
 	if *showVer {
