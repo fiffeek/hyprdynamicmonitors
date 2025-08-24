@@ -28,6 +28,7 @@ $(INSTALL_DIR)/.precommit.stamp: $(PRECOMMIT_FILE) $(INSTALL_DIR)/.venv.stamp
 	touch $@
 
 test:
+	$(GOLANGCI_LINT_BIN) config verify
 	$(GOLANG_BIN) test ./... -v
 
 fmt:
