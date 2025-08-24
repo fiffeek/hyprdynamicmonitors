@@ -2,6 +2,7 @@ package matchers
 
 import (
 	"github.com/fiffeek/hyprdynamicmonitors/internal/config"
+	"github.com/fiffeek/hyprdynamicmonitors/internal/detectors"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/hypr"
 )
 
@@ -17,7 +18,7 @@ func NewMatcher(cfg *config.Config, verbose bool) *Matcher {
 	}
 }
 
-func (m *Matcher) Match(connectedMonitors []*hypr.MonitorSpec) (*config.Profile, error) {
+func (m *Matcher) Match(connectedMonitors []*hypr.MonitorSpec, powerState detectors.PowerState) (*config.Profile, error) {
 	score := make(map[string]int)
 	for name := range m.cfg.Profiles {
 		score[name] = 0
@@ -26,6 +27,12 @@ func (m *Matcher) Match(connectedMonitors []*hypr.MonitorSpec) (*config.Profile,
 	for name, profile := range m.cfg.Profiles {
 		conditions := profile.Conditions
 		fullMatchScore := 0
+		if conditions.PowerState != nil {
+			fullMatchScore += *m.cfg.Scoring.PowerStateMatch
+		}
+		if conditions.PowerState != nil && conditions.PowerState.Value() == powerState.String() {
+			score[name] += *m.cfg.Scoring.PowerStateMatch
+		}
 		for _, condition := range conditions.RequiredMonitors {
 			if condition.Name != nil {
 				fullMatchScore += *m.cfg.Scoring.NameMatch

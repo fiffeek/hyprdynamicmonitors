@@ -53,13 +53,18 @@ func main() {
 		log.Fatalf("Failed to initialize MonitorDetector: %v", err)
 	}
 
+	powerDetector, err := detectors.NewPowerDetector(*verbose)
+	if err != nil {
+		log.Fatalf("Failed to initialize PowerDetector with file path %v", err)
+	}
+
 	matcher := matchers.NewMatcher(cfg, *verbose)
 
 	generator := generators.NewConfigGenerator(&generators.GeneratorConfig{
 		Verbose: *verbose,
 	})
 
-	svc := service.NewService(cfg, monitorDetector, &service.Config{
+	svc := service.NewService(cfg, monitorDetector, powerDetector, &service.Config{
 		DryRun:  *dryRun,
 		Verbose: *verbose,
 	}, matcher, generator)

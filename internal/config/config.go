@@ -25,6 +25,7 @@ type GeneralSection struct {
 type ScoringSection struct {
 	NameMatch        *int `toml:"name_match"`
 	DescriptionMatch *int `toml:"description_match"`
+	PowerStateMatch  *int `toml:"power_state_match"`
 }
 
 type ConfigFileType int
@@ -155,6 +156,9 @@ func (c *Config) Validate() error {
 	}
 	if c.Scoring.DescriptionMatch == nil {
 		c.Scoring.DescriptionMatch = &defaultScore
+	}
+	if c.Scoring.PowerStateMatch == nil {
+		c.Scoring.PowerStateMatch = &defaultScore
 	}
 
 	dest := os.ExpandEnv(*c.General.Destination)
