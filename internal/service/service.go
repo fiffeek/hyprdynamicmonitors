@@ -156,12 +156,5 @@ func (s *Service) UpdateOnce() error {
 		return fmt.Errorf("failed to generate config: %w", err)
 	}
 
-	switch *profile.ConfigType {
-	case config.Static:
-		logrus.WithField("config_file", profile.ConfigFile).Info("Successfully linked configuration")
-	case config.Template:
-		logrus.WithField("config_file", profile.ConfigFile).Info("Successfully rendered template configuration")
-	}
-
 	return nil
 }

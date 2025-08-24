@@ -12,8 +12,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type ConfigGenerator struct {
-}
+type ConfigGenerator struct{}
 
 func NewConfigGenerator() *ConfigGenerator {
 	return &ConfigGenerator{}
@@ -78,6 +77,8 @@ func (g *ConfigGenerator) renderTemplateFile(profile *config.Profile, connectedM
 	if err := os.Rename(tempFile, destination); err != nil {
 		return fmt.Errorf("failed to rename temp config %s to %s: %w", tempFile, destination, err)
 	}
+
+	logrus.WithField("config_file", profile.ConfigFile).Info("Successfully rendered template configuration")
 
 	return nil
 }
@@ -145,6 +146,8 @@ func (g *ConfigGenerator) linkConfigFile(profile *config.Profile, destination st
 	if err := os.Symlink(source, destination); err != nil {
 		return fmt.Errorf("failed to create symlink from %s to %s: %w", source, destination, err)
 	}
+
+	logrus.WithField("config_file", profile.ConfigFile).Info("Successfully linked configuration")
 
 	return nil
 }
