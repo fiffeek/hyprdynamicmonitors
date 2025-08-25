@@ -20,7 +20,7 @@ func TestIPC_Run(t *testing.T) {
 		name           string
 		mockEvents     []string
 		instantlyClose bool
-		expectedEvents []hypr.MonitorEvent
+		expectedEvents []hypr.HyprEvent
 		expectedErrors []string
 		expectError    bool
 		description    string
@@ -33,7 +33,7 @@ func TestIPC_Run(t *testing.T) {
 				"monitorremovedv2>>2,DP-1,External Monitor",
 			},
 			instantlyClose: false,
-			expectedEvents: []hypr.MonitorEvent{
+			expectedEvents: []hypr.HyprEvent{
 				{
 					Type: hypr.MonitorAdded,
 					Monitor: &hypr.MonitorSpec{
@@ -129,7 +129,7 @@ func TestIPC_Run(t *testing.T) {
 	}
 }
 
-func processIPCEvents(t *testing.T, listener net.Listener, mockEvents []string, ipc *hypr.IPC, expectedEventCount int, instantlyClose bool) (chan error, []hypr.MonitorEvent) {
+func processIPCEvents(t *testing.T, listener net.Listener, mockEvents []string, ipc *hypr.IPC, expectedEventCount int, instantlyClose bool) (chan error, []hypr.HyprEvent) {
 	serverDone := make(chan struct{})
 	go func() {
 		defer close(serverDone)
@@ -162,10 +162,10 @@ func processIPCEvents(t *testing.T, listener net.Listener, mockEvents []string, 
 
 	ipcDone := make(chan error, 1)
 	go func() {
-		ipcDone <- ipc.Run(ctx)
+		ipcDone <- ipc.RunEventLoop(ctx)
 	}()
 
-	events := []hypr.MonitorEvent{}
+	events := []hypr.HyprEvent{}
 	eventsChannel := ipc.ListenEvents()
 
 	eventTimeout := time.After(2 * time.Second)
@@ -311,7 +311,7 @@ func TestIPC_QueryConnectedMonitors(t *testing.T) {
 	tests := []struct {
 		name             string
 		responseFile     string
-		expectedMonitors []*hypr.MonitorSpec
+		expectedMonitors hypr.MonitorSpecs
 		expectedError    string
 		description      string
 	}{

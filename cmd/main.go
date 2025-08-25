@@ -118,7 +118,7 @@ func run(ctx context.Context, svc *service.Service, hyprIPC *hypr.IPC, monitorDe
 
 	eg.Go(func() error {
 		logrus.Debug("Starting Hypr IPC")
-		if err := hyprIPC.Run(ctx); err != nil && !errors.Is(err, context.Canceled) {
+		if err := hyprIPC.RunEventLoop(ctx); err != nil && !errors.Is(err, context.Canceled) {
 			return fmt.Errorf("hypr ipc failed: %w", err)
 		}
 		logrus.Debug("Hypr IPC finished")

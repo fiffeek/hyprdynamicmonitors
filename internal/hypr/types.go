@@ -3,6 +3,10 @@ package hypr
 import (
 	"errors"
 	"fmt"
+	"strconv"
+	"strings"
+
+	"github.com/sirupsen/logrus"
 )
 
 type MonitorSpec struct {
@@ -35,14 +39,83 @@ func (m MonitorSpecs) Validate() error {
 	return nil
 }
 
-type MonitorEventType int
+type HyprEventType int
 
 const (
-	MonitorAdded MonitorEventType = iota
+	MonitorUnknown HyprEventType = iota
+	MonitorAdded
 	MonitorRemoved
 )
 
-type MonitorEvent struct {
-	Type    MonitorEventType
+func (m HyprEventType) Value() string {
+	switch m {
+	case MonitorAdded:
+		return "monitoraddedv2>>"
+	case MonitorRemoved:
+		return "monitorremovedv2>>"
+	}
+	return "unknownevent>>"
+}
+
+type HyprEvent struct {
+	Type    HyprEventType
 	Monitor *MonitorSpec
+}
+
+func (m HyprEvent) Validate() error {
+	switch m.Type {
+	case MonitorAdded:
+	case MonitorRemoved:
+		if m.Monitor == nil {
+			return errors.New("hypr event monitor type does not have the monitor description")
+		}
+	}
+
+	return nil
+}
+
+func extractTypedHyprEvent(line string, eventType HyprEventType) (bool, *HyprEvent, error) {
+	after, done := strings.CutPrefix(line, eventType.Value())
+	if !done {
+		return done, nil, nil
+	}
+
+	logrus.WithFields(logrus.Fields{"event": line, "as": eventType.Value()}).Debug("trying to parse event")
+
+	parts := strings.Split(after, ",")
+	if len(parts) != 3 {
+		return done, nil, fmt.Errorf("cant parse event %s", after)
+	}
+
+	id, err := strconv.Atoi(parts[0])
+	if err != nil {
+		return done, nil, fmt.Errorf("cant parse %s as int: %w", parts[0], err)
+	}
+
+	return done, &HyprEvent{
+		Type: eventType,
+		Monitor: &MonitorSpec{
+			ID:          &id,
+			Name:        parts[1],
+			Description: parts[2],
+		},
+	}, nil
+}
+
+func extractHyprEvent(line string) (*HyprEvent, error) {
+	possibleEvents := []HyprEventType{MonitorAdded, MonitorRemoved}
+	for _, event := range possibleEvents {
+		ok, parsedEvent, err := extractTypedHyprEvent(line, event)
+		if !ok {
+			continue
+		}
+		if err != nil {
+			return nil, fmt.Errorf("cant parse event %s as %s: %w", line, event.Value(), err)
+		}
+		if err := parsedEvent.Validate(); err != nil {
+			return nil, fmt.Errorf("invalid hypr event: %w", err)
+		}
+		return parsedEvent, nil
+	}
+	return nil, nil
 }
