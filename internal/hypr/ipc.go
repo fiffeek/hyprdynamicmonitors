@@ -217,18 +217,25 @@ func (h *IPC) parseMonitorsResponse(response string) ([]*MonitorSpec, error) {
 	monitorBlocks := strings.Split(response, "Monitor")
 
 	for _, block := range monitorBlocks {
+		if len(block) == 0 {
+			continue
+		}
+
 		id := ""
 		desc := ""
 		name := ""
 
 		for lineNumber, line := range strings.Split(block, "\n") {
 			line = strings.TrimSpace(line)
+			if len(line) == 0 {
+				continue
+			}
 			if lineNumber == 0 {
 				logrus.WithField("line", line).Debug("Monitor header line")
 				parts := strings.Fields(line)
 				logrus.WithField("parts_count", len(parts)).Debug("Monitor header parts")
 				if len(parts) != 3 {
-					continue
+					return nil, fmt.Errorf("cant parse %s to extract the monitor header", line)
 				}
 
 				name = parts[0]
@@ -237,7 +244,10 @@ func (h *IPC) parseMonitorsResponse(response string) ([]*MonitorSpec, error) {
 
 			descriptionSep := "description: "
 			if strings.Contains(line, descriptionSep) {
-				parts := strings.Split(line, descriptionSep)
+				parts := strings.SplitN(line, descriptionSep, 2)
+				if len(parts) != 2 {
+					return nil, fmt.Errorf("cant parse %s to extract monitors description", line)
+				}
 				desc = parts[1]
 			}
 		}
@@ -249,7 +259,7 @@ func (h *IPC) parseMonitorsResponse(response string) ([]*MonitorSpec, error) {
 		}).Debug("Monitor parsed")
 
 		if id == "" || desc == "" || name == "" {
-			continue
+			return nil, fmt.Errorf("cant parse monitor from the block %s", block)
 		}
 		monitors = append(monitors, &MonitorSpec{
 			name,

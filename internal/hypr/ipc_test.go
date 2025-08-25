@@ -305,3 +305,133 @@ func setupTest(t *testing.T) (func(t *testing.T), net.Listener, *hypr.IPC) {
 
 	return teardown, listener, ipc
 }
+
+func TestIPC_QueryConnectedMonitors(t *testing.T) {
+	tests := []struct {
+		name             string
+		responseFile     string
+		expectedMonitors []*hypr.MonitorSpec
+		expectedError    string
+		description      string
+	}{
+		{
+			name:         "happy_path",
+			responseFile: "testdata/monitors_response_valid.txt",
+			expectedMonitors: []*hypr.MonitorSpec{
+				{
+					Name:        "eDP-1",
+					ID:          "0",
+					Description: "BOE NE135A1M-NY1",
+				},
+				{
+					Name:        "DP-11",
+					ID:          "1",
+					Description: "LG Electronics LG SDQHD 301NTBKDU037",
+				},
+			},
+			description: "Should successfully parse valid monitor response",
+		},
+		{
+			name:          "missing_description",
+			responseFile:  "testdata/monitors_response_missing_description.txt",
+			expectedError: "cant parse monitor from the block",
+			description:   "Should fail when monitor block is missing description",
+		},
+		{
+			name:          "malformed_header",
+			responseFile:  "testdata/monitors_response_malformed_header.txt",
+			expectedError: "cant parse",
+			description:   "Should fail when monitor header has wrong number of parts",
+		},
+		{
+			name:          "malformed_description",
+			responseFile:  "testdata/monitors_response_malformed_description.txt",
+			expectedError: "cant parse",
+			description:   "Should fail when description line has wrong format",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tempDir := t.TempDir()
+			hyprDir := filepath.Join(tempDir, "hypr", "test_signature")
+			//nolint:gosec
+			if err := os.MkdirAll(hyprDir, 0o755); err != nil {
+				t.Fatalf("Failed to create hypr directory: %v", err)
+			}
+
+			originalXDG := os.Getenv("XDG_RUNTIME_DIR")
+			originalSig := os.Getenv("HYPRLAND_INSTANCE_SIGNATURE")
+			t.Cleanup(func() {
+				_ = os.Setenv("XDG_RUNTIME_DIR", originalXDG)
+				_ = os.Setenv("HYPRLAND_INSTANCE_SIGNATURE", originalSig)
+			})
+
+			_ = os.Setenv("XDG_RUNTIME_DIR", tempDir)
+			_ = os.Setenv("HYPRLAND_INSTANCE_SIGNATURE", "test_signature")
+
+			commandSocketPath := filepath.Join(hyprDir, ".socket.sock")
+			//nolint:noctx
+			listener, err := net.Listen("unix", commandSocketPath)
+			if err != nil {
+				t.Fatalf("Failed to create test command socket: %v", err)
+			}
+			defer listener.Close()
+
+			responseData, err := os.ReadFile(tt.responseFile)
+			if err != nil {
+				t.Fatalf("Failed to read test response file %s: %v", tt.responseFile, err)
+			}
+
+			serverDone := make(chan struct{})
+			go func() {
+				defer close(serverDone)
+				conn, err := listener.Accept()
+				if err != nil {
+					t.Errorf("Failed to accept connection: %v", err)
+					return
+				}
+				defer conn.Close()
+
+				buf := make([]byte, 1024)
+				_, err = conn.Read(buf)
+				if err != nil {
+					t.Errorf("Failed to read command: %v", err)
+					return
+				}
+
+				_, err = conn.Write(responseData)
+				if err != nil {
+					t.Errorf("Failed to write response: %v", err)
+					return
+				}
+			}()
+
+			ipc, err := hypr.NewIPC()
+			if err != nil {
+				t.Fatalf("Failed to create IPC: %v", err)
+			}
+
+			ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+			defer cancel()
+
+			monitors, err := ipc.QueryConnectedMonitors(ctx)
+
+			select {
+			case <-serverDone:
+			case <-time.After(1 * time.Second):
+				t.Error("Server didn't finish in time")
+			}
+
+			if tt.expectedError != "" {
+				assert.Error(t, err, "Expected error for %s", tt.description)
+				if err != nil {
+					assert.Contains(t, err.Error(), tt.expectedError, "Error should contain expected text")
+				}
+			} else {
+				assert.NoError(t, err, "Should not error for %s", tt.description)
+				assert.Equal(t, tt.expectedMonitors, monitors, tt.description)
+			}
+		})
+	}
+}

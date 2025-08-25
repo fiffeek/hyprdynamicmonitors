@@ -1,0 +1,11 @@
+Monitor eDP-1 (ID 0):
+        2880x1920@120.00000 at 0x0
+        make: BOE
+        model: NE135A1M-NY1
+        serial:
+        active workspace: 5 (5)
+
+Monitor DP-11 (ID 1):
+        2560x2880@59.96700 at -1800x0
+        description: LG Electronics LG SDQHD 301NTBKDU037
+        make: LG Electronics

@@ -1,0 +1,43 @@
+Monitor eDP-1 (ID 0):
+        2880x1920@120.00000 at 0x0
+        description: BOE NE135A1M-NY1
+        make: BOE
+        model: NE135A1M-NY1
+        serial:
+        active workspace: 5 (5)
+        special workspace: 0 ()
+        reserved: 0 14 0 0
+        scale: 2.00
+        transform: 0
+        focused: no
+        dpmsStatus: 1
+        vrr: true
+        solitary: 0
+        activelyTearing: false
+        directScanoutTo: 0
+        disabled: false
+        currentFormat: XRGB8888
+        mirrorOf: none
+        availableModes: 2880x1920@120.00Hz 2880x1920@60.00Hz 1920x1200@120.00Hz 1920x1080@120.00Hz 1600x1200@120.00Hz 1680x1050@120.00Hz 1280x1024@120.00Hz 1440x900@120.00Hz 1280x800@120.00Hz 1280x720@120.00Hz 1024x768@120.00Hz 800x600@120.00Hz 640x480@120.00Hz
+
+Monitor DP-11 (ID 1):
+        2560x2880@59.96700 at -1800x0
+        description: LG Electronics LG SDQHD 301NTBKDU037
+        make: LG Electronics
+        model: LG SDQHD
+        serial: 301NTBKDU037
+        active workspace: 3 (3)
+        special workspace: 0 ()
+        reserved: 0 14 0 0
+        scale: 1.60
+        transform: 3
+        focused: yes
+        dpmsStatus: 1
+        vrr: false
+        solitary: 0
+        activelyTearing: false
+        directScanoutTo: 0
+        disabled: false
+        currentFormat: XRGB8888
+        mirrorOf: none
+        availableModes: 2560x2880@59.97Hz 3840x2160@60.00Hz 3840x2160@59.94Hz 3840x2160@50.00Hz 3840x2160@30.00Hz 3840x2160@29.97Hz 3840x2160@25.00Hz 3840x2160@24.00Hz 3840x2160@23.98Hz 2560x2880@29.99Hz 1920x1080@60.00Hz 1920x1080@60.00Hz 1920x1080@59.94Hz 1920x1080@50.00Hz 1920x1080@30.00Hz 1920x1080@29.97Hz 1280x720@60.00Hz 1280x720@59.94Hz 1280x720@50.00Hz 1024x768@60.00Hz 800x600@60.32Hz 720x576@50.00Hz 720x480@60.00Hz 720x480@59.94Hz 640x480@60.00Hz 640x480@59.94Hz 640x480@59.94Hz
