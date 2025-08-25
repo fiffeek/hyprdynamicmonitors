@@ -42,7 +42,9 @@ type Config struct {
 	DryRun bool
 }
 
-func NewService(cfg *config.Config, monitorDetector *detectors.MonitorDetector, powerDetector IPowerDetector, svcCfg *Config, matcher *matchers.Matcher, generator *generators.ConfigGenerator) *Service {
+func NewService(cfg *config.Config, monitorDetector *detectors.MonitorDetector,
+	powerDetector IPowerDetector, svcCfg *Config, matcher *matchers.Matcher, generator *generators.ConfigGenerator,
+) *Service {
 	return &Service{
 		config:           cfg,
 		monitorDetector:  monitorDetector,

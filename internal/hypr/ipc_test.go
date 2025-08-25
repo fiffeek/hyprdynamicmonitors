@@ -129,7 +129,9 @@ func TestIPC_Run(t *testing.T) {
 	}
 }
 
-func processIPCEvents(t *testing.T, listener net.Listener, mockEvents []string, ipc *hypr.IPC, expectedEventCount int, instantlyClose bool) (chan error, []hypr.HyprEvent) {
+func processIPCEvents(t *testing.T, listener net.Listener, mockEvents []string, ipc *hypr.IPC,
+	expectedEventCount int, instantlyClose bool,
+) (chan error, []hypr.HyprEvent) {
 	serverDone := make(chan struct{})
 	go func() {
 		defer close(serverDone)

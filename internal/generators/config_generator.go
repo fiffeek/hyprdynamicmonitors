@@ -19,7 +19,9 @@ func NewConfigGenerator() *ConfigGenerator {
 	return &ConfigGenerator{}
 }
 
-func (g *ConfigGenerator) GenerateConfig(profile *config.Profile, connectedMonitors []*hypr.MonitorSpec, powerState detectors.PowerState, destination string) error {
+func (g *ConfigGenerator) GenerateConfig(profile *config.Profile,
+	connectedMonitors []*hypr.MonitorSpec, powerState detectors.PowerState, destination string,
+) error {
 	switch *profile.ConfigType {
 	case config.Static:
 		return g.linkConfigFile(profile, destination)
@@ -30,7 +32,9 @@ func (g *ConfigGenerator) GenerateConfig(profile *config.Profile, connectedMonit
 	}
 }
 
-func (g *ConfigGenerator) renderTemplateFile(profile *config.Profile, connectedMonitors []*hypr.MonitorSpec, powerState detectors.PowerState, destination string) error {
+func (g *ConfigGenerator) renderTemplateFile(profile *config.Profile,
+	connectedMonitors []*hypr.MonitorSpec, powerState detectors.PowerState, destination string,
+) error {
 	templatePath := profile.ConfigFile
 
 	//nolint:gosec
@@ -67,7 +71,8 @@ func (g *ConfigGenerator) renderTemplateFile(profile *config.Profile, connectedM
 	//nolint:gosec
 	if existingContent, err := os.ReadFile(destination); err == nil {
 		if bytes.Equal(existingContent, renderedContent) {
-			logrus.WithField("destination", destination).Debug("Template content unchanged, skipping write")
+			logrus.WithField("destination", destination).Debug(
+				"Template content unchanged, skipping write")
 			return nil
 		}
 	}
@@ -81,12 +86,17 @@ func (g *ConfigGenerator) renderTemplateFile(profile *config.Profile, connectedM
 		return fmt.Errorf("failed to rename temp config %s to %s: %w", tempFile, destination, err)
 	}
 
-	logrus.WithFields(logrus.Fields{"config_file": profile.ConfigFile, "destination": destination}).Info("Successfully rendered template configuration")
+	logrus.WithFields(logrus.Fields{
+		"config_file": profile.ConfigFile,
+		"destination": destination,
+	}).Info("Successfully rendered template configuration")
 
 	return nil
 }
 
-func (g *ConfigGenerator) createTemplateData(profile *config.Profile, connectedMonitors []*hypr.MonitorSpec, powerState detectors.PowerState) map[string]any {
+func (g *ConfigGenerator) createTemplateData(profile *config.Profile,
+	connectedMonitors []*hypr.MonitorSpec, powerState detectors.PowerState,
+) map[string]any {
 	data := make(map[string]any)
 	data["Monitors"] = connectedMonitors
 	data["PowerState"] = powerState.String()
@@ -150,7 +160,10 @@ func (g *ConfigGenerator) linkConfigFile(profile *config.Profile, destination st
 		return fmt.Errorf("failed to create symlink from %s to %s: %w", source, destination, err)
 	}
 
-	logrus.WithFields(logrus.Fields{"config_file": profile.ConfigFile, "destination": destination}).Info("Successfully linked configuration")
+	logrus.WithFields(logrus.Fields{
+		"config_file": profile.ConfigFile,
+		"destination": destination,
+	}).Info("Successfully linked configuration")
 
 	return nil
 }

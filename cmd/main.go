@@ -110,7 +110,9 @@ func main() {
 	}
 }
 
-func run(ctx context.Context, svc *service.Service, hyprIPC *hypr.IPC, monitorDetector *detectors.MonitorDetector, powerDetector service.IPowerDetector, signalHandler *signal.Handler) error {
+func run(ctx context.Context, svc *service.Service, hyprIPC *hypr.IPC,
+	monitorDetector *detectors.MonitorDetector, powerDetector service.IPowerDetector, signalHandler *signal.Handler,
+) error {
 	signalHandler.Start(svc)
 	defer signalHandler.Stop()
 

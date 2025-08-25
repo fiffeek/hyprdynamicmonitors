@@ -56,7 +56,8 @@ func TestLoad(t *testing.T) {
 						t.Errorf("expected config type Static, got %v", *laptop.ConfigType)
 					}
 					if len(laptop.Conditions.RequiredMonitors) != 1 {
-						t.Errorf("expected 1 required monitor, got %d", len(laptop.Conditions.RequiredMonitors))
+						t.Errorf("expected 1 required monitor, got %d",
+							len(laptop.Conditions.RequiredMonitors))
 					} else {
 						monitor := laptop.Conditions.RequiredMonitors[0]
 						if monitor.Name == nil || *monitor.Name != "eDP-1" {
@@ -68,7 +69,8 @@ func TestLoad(t *testing.T) {
 				acProfile, exists := c.Profiles["ac_power_profile"]
 				if !exists {
 					t.Error("ac_power_profile should exist")
-				} else if acProfile.Conditions.PowerState == nil || *acProfile.Conditions.PowerState != config.AC {
+				} else if acProfile.Conditions.PowerState == nil ||
+					*acProfile.Conditions.PowerState != config.AC {
 					t.Errorf("expected power state AC, got %v", acProfile.Conditions.PowerState)
 				}
 
@@ -76,11 +78,13 @@ func TestLoad(t *testing.T) {
 					t.Error("power events section should not be nil")
 				} else {
 					if len(c.PowerEvents.DbusSignalMatchRules) < 2 {
-						t.Errorf("expected at least 2 custom dbus match rules, got %d", len(c.PowerEvents.DbusSignalMatchRules))
+						t.Errorf("expected at least 2 custom dbus match rules, got %d",
+							len(c.PowerEvents.DbusSignalMatchRules))
 					}
 
 					if len(c.PowerEvents.DbusSignalReceiveFilters) < 2 {
-						t.Errorf("expected at least 2 custom dbus receive filters, got %d", len(c.PowerEvents.DbusSignalReceiveFilters))
+						t.Errorf("expected at least 2 custom dbus receive filters, got %d",
+							len(c.PowerEvents.DbusSignalReceiveFilters))
 					}
 				}
 			},
@@ -109,11 +113,13 @@ func TestLoad(t *testing.T) {
 					t.Error("power events section should not be nil after validation")
 				} else {
 					if len(c.PowerEvents.DbusSignalMatchRules) != 3 {
-						t.Errorf("expected 3 default dbus match rules, got %d", len(c.PowerEvents.DbusSignalMatchRules))
+						t.Errorf("expected 3 default dbus match rules, got %d",
+							len(c.PowerEvents.DbusSignalMatchRules))
 					}
 
 					if len(c.PowerEvents.DbusSignalReceiveFilters) != 3 {
-						t.Errorf("expected 3 default dbus receive filters, got %d", len(c.PowerEvents.DbusSignalReceiveFilters))
+						t.Errorf("expected 3 default dbus receive filters, got %d",
+							len(c.PowerEvents.DbusSignalReceiveFilters))
 					}
 
 					expectedRules := map[string]bool{
@@ -200,7 +206,8 @@ func TestLoad(t *testing.T) {
 					},
 				}
 
-				assert.Equal(t, expectedQuery, c.PowerEvents.DbusQueryObject, "DbusQueryObject should match expected")
+				assert.Equal(t, expectedQuery, c.PowerEvents.DbusQueryObject,
+					"DbusQueryObject should match expected")
 
 				expectedCollectedArgs := []interface{}{"org.freedesktop.UPower", "LidIsPresent"}
 				collectedArgs := c.PowerEvents.DbusQueryObject.CollectArgs()
@@ -600,10 +607,12 @@ func TestPowerSectionValidate(t *testing.T) {
 
 			if tt.name == "nil power section gets defaults" {
 				if len(tt.powerEvents.DbusSignalMatchRules) != 3 {
-					t.Errorf("expected 3 default match rules, got %d", len(tt.powerEvents.DbusSignalMatchRules))
+					t.Errorf("expected 3 default match rules, got %d",
+						len(tt.powerEvents.DbusSignalMatchRules))
 				}
 				if len(tt.powerEvents.DbusSignalReceiveFilters) != 3 {
-					t.Errorf("expected 3 default receive filters, got %d", len(tt.powerEvents.DbusSignalReceiveFilters))
+					t.Errorf("expected 3 default receive filters, got %d",
+						len(tt.powerEvents.DbusSignalReceiveFilters))
 				}
 
 				expectedSignals := []string{
@@ -831,7 +840,8 @@ func TestPowerSectionDbusQueryObjectDefaults(t *testing.T) {
 		},
 	}
 
-	assert.Equal(t, expected, powerSection.DbusQueryObject, "default DbusQueryObject should match expected")
+	assert.Equal(t, expected, powerSection.DbusQueryObject,
+		"default DbusQueryObject should match expected")
 
 	expectedCollectedArgs := []interface{}{"org.freedesktop.UPower", "OnBattery"}
 	collectedArgs := powerSection.DbusQueryObject.CollectArgs()

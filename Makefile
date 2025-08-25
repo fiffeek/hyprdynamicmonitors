@@ -34,7 +34,7 @@ test:
 fmt:
 	$(GOLANG_BIN) fmt ./...
 	$(GOLANG_BIN) mod tidy
-	$(GOLANGCI_LINT_BIN) fmt
+	env GOFUMPT_SPLIT_LONG_LINES=on $(GOLANGCI_LINT_BIN) fmt
 
 lint:
 	$(GOLANGCI_LINT_BIN) run

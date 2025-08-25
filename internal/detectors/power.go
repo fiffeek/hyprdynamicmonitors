@@ -70,7 +70,8 @@ func (p *PowerDetector) GetCurrentState(ctx context.Context) (PowerState, error)
 		dbus.ObjectPath(p.cfg.DbusQueryObject.Path))
 
 	var onBattery dbus.Variant
-	err := obj.CallWithContext(ctx, p.cfg.DbusQueryObject.Method, 0, p.cfg.DbusQueryObject.CollectArgs()...).Store(&onBattery)
+	err := obj.CallWithContext(ctx, p.cfg.DbusQueryObject.Method, 0,
+		p.cfg.DbusQueryObject.CollectArgs()...).Store(&onBattery)
 	if err != nil {
 		return Battery, fmt.Errorf("failed to get OnBattery property from UPower: %w", err)
 	}
