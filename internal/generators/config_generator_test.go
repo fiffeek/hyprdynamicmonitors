@@ -30,8 +30,8 @@ func TestConfigGenerator_GenerateConfig_Static(t *testing.T) {
 	}
 
 	monitors := []*hypr.MonitorSpec{
-		{Name: "DP-1", ID: "0", Description: "External Monitor"},
-		{Name: "eDP-1", ID: "1", Description: "Built-in Display"},
+		{Name: "DP-1", ID: utils.IntPtr(0), Description: "External Monitor"},
+		{Name: "eDP-1", ID: utils.IntPtr(1), Description: "Built-in Display"},
 	}
 
 	err = generator.GenerateConfig(profile, monitors, detectors.ACPower, destination)
@@ -88,8 +88,8 @@ func TestConfigGenerator_GenerateConfig_Template(t *testing.T) {
 	}
 
 	monitors := []*hypr.MonitorSpec{
-		{Name: "DP-1", ID: "0", Description: "External Monitor"},
-		{Name: "eDP-1", ID: "1", Description: "Built-in Display"},
+		{Name: "DP-1", ID: utils.IntPtr(0), Description: "External Monitor"},
+		{Name: "eDP-1", ID: utils.IntPtr(1), Description: "Built-in Display"},
 	}
 
 	// Test with battery power state

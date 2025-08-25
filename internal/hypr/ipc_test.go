@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/fiffeek/hyprdynamicmonitors/internal/hypr"
+	"github.com/fiffeek/hyprdynamicmonitors/internal/utils"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -36,7 +37,7 @@ func TestIPC_Run(t *testing.T) {
 				{
 					Type: hypr.MonitorAdded,
 					Monitor: &hypr.MonitorSpec{
-						ID:          "1",
+						ID:          utils.IntPtr(1),
 						Name:        "eDP-1",
 						Description: "Built-in Display",
 					},
@@ -44,7 +45,7 @@ func TestIPC_Run(t *testing.T) {
 				{
 					Type: hypr.MonitorAdded,
 					Monitor: &hypr.MonitorSpec{
-						ID:          "2",
+						ID:          utils.IntPtr(2),
 						Name:        "DP-1",
 						Description: "External Monitor",
 					},
@@ -52,7 +53,7 @@ func TestIPC_Run(t *testing.T) {
 				{
 					Type: hypr.MonitorRemoved,
 					Monitor: &hypr.MonitorSpec{
-						ID:          "2",
+						ID:          utils.IntPtr(2),
 						Name:        "DP-1",
 						Description: "External Monitor",
 					},
@@ -287,7 +288,7 @@ func setupTest(t *testing.T) (func(t *testing.T), net.Listener, *hypr.IPC) {
 	_ = os.Setenv("XDG_RUNTIME_DIR", tempDir)
 	_ = os.Setenv("HYPRLAND_INSTANCE_SIGNATURE", "test_signature")
 
-	socketPath := filepath.Join(hyprDir, ".socket2.sock")
+	socketPath := hypr.GetHyprEventsSocket(tempDir, "test_signature")
 	//nolint:noctx
 	listener, err := net.Listen("unix", socketPath)
 	if err != nil {
@@ -316,16 +317,16 @@ func TestIPC_QueryConnectedMonitors(t *testing.T) {
 	}{
 		{
 			name:         "happy_path",
-			responseFile: "testdata/monitors_response_valid.txt",
+			responseFile: "testdata/monitors_response_valid.json",
 			expectedMonitors: []*hypr.MonitorSpec{
 				{
 					Name:        "eDP-1",
-					ID:          "0",
+					ID:          utils.IntPtr(0),
 					Description: "BOE NE135A1M-NY1",
 				},
 				{
 					Name:        "DP-11",
-					ID:          "1",
+					ID:          utils.IntPtr(1),
 					Description: "LG Electronics LG SDQHD 301NTBKDU037",
 				},
 			},
@@ -333,20 +334,20 @@ func TestIPC_QueryConnectedMonitors(t *testing.T) {
 		},
 		{
 			name:          "missing_description",
-			responseFile:  "testdata/monitors_response_missing_description.txt",
-			expectedError: "cant parse monitor from the block",
+			responseFile:  "testdata/monitors_response_missing_description.json",
+			expectedError: "monitor spec is invalid",
 			description:   "Should fail when monitor block is missing description",
 		},
 		{
 			name:          "malformed_header",
-			responseFile:  "testdata/monitors_response_malformed_header.txt",
-			expectedError: "cant parse",
+			responseFile:  "testdata/monitors_response_malformed_header.json",
+			expectedError: "monitor spec is invalid",
 			description:   "Should fail when monitor header has wrong number of parts",
 		},
 		{
 			name:          "malformed_description",
-			responseFile:  "testdata/monitors_response_malformed_description.txt",
-			expectedError: "cant parse",
+			responseFile:  "testdata/monitors_response_malformed_description.json",
+			expectedError: "monitor spec is invalid",
 			description:   "Should fail when description line has wrong format",
 		},
 	}
@@ -370,7 +371,7 @@ func TestIPC_QueryConnectedMonitors(t *testing.T) {
 			_ = os.Setenv("XDG_RUNTIME_DIR", tempDir)
 			_ = os.Setenv("HYPRLAND_INSTANCE_SIGNATURE", "test_signature")
 
-			commandSocketPath := filepath.Join(hyprDir, ".socket.sock")
+			commandSocketPath := hypr.GetHyprSocket(tempDir, "test_signature")
 			//nolint:noctx
 			listener, err := net.Listen("unix", commandSocketPath)
 			if err != nil {

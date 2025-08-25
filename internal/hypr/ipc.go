@@ -9,8 +9,10 @@ import (
 	"io"
 	"net"
 	"os"
+	"strconv"
 	"strings"
 
+	"github.com/fiffeek/hyprdynamicmonitors/internal/utils"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
 )
@@ -19,24 +21,6 @@ type IPC struct {
 	instanceSignature string
 	xdgRuntimeDir     string
 	events            chan MonitorEvent
-}
-
-type MonitorSpec struct {
-	Name        string
-	ID          string
-	Description string
-}
-
-type MonitorEventType int
-
-const (
-	MonitorAdded MonitorEventType = iota
-	MonitorRemoved
-)
-
-type MonitorEvent struct {
-	Type    MonitorEventType
-	Monitor *MonitorSpec
 }
 
 func NewIPC() (*IPC, error) {
@@ -64,7 +48,7 @@ func (h *IPC) ListenEvents() <-chan MonitorEvent {
 }
 
 func (h *IPC) Run(ctx context.Context) error {
-	socketPath := fmt.Sprintf("%s/hypr/%s/.socket2.sock", h.xdgRuntimeDir, h.instanceSignature)
+	socketPath := GetHyprEventsSocket(h.xdgRuntimeDir, h.instanceSignature)
 
 	if _, err := os.Stat(socketPath); os.IsNotExist(err) {
 		return fmt.Errorf("hyprland event socket not found at %s", socketPath)
@@ -149,10 +133,15 @@ func (h *IPC) extractMonitorEvent(line, prefix string, eventType MonitorEventTyp
 		return nil, fmt.Errorf("cant parse event %s", after)
 	}
 
+	id, err := strconv.Atoi(parts[0])
+	if err != nil {
+		return nil, fmt.Errorf("cant parse %s as int: %w", parts[0], err)
+	}
+
 	return &MonitorEvent{
 		Type: eventType,
 		Monitor: &MonitorSpec{
-			ID:          parts[0],
+			ID:          &id,
 			Name:        parts[1],
 			Description: parts[2],
 		},
@@ -181,7 +170,7 @@ func (h *IPC) parseMonitorEvent(line string) (*MonitorEvent, error) {
 }
 
 func (h *IPC) QueryConnectedMonitors(ctx context.Context) ([]*MonitorSpec, error) {
-	socketPath := fmt.Sprintf("%s/hypr/%s/.socket.sock", h.xdgRuntimeDir, h.instanceSignature)
+	socketPath := GetHyprSocket(h.xdgRuntimeDir, h.instanceSignature)
 	if _, err := os.Stat(socketPath); os.IsNotExist(err) {
 		return nil, fmt.Errorf("hyprland command socket not found at %s", socketPath)
 	}
@@ -198,7 +187,7 @@ func (h *IPC) QueryConnectedMonitors(ctx context.Context) ([]*MonitorSpec, error
 		}
 	}()
 
-	_, err = conn.Write([]byte("monitors"))
+	_, err = conn.Write([]byte("j/monitors"))
 	if err != nil {
 		return nil, fmt.Errorf("failed to send monitors command: %w", err)
 	}
@@ -208,69 +197,16 @@ func (h *IPC) QueryConnectedMonitors(ctx context.Context) ([]*MonitorSpec, error
 		return nil, fmt.Errorf("failed to read monitors response: %w", err)
 	}
 
-	return h.parseMonitorsResponse(string(response))
-}
+	logrus.WithFields(logrus.Fields{"response": string(response)}).Debug("gop hypr ipc response")
 
-func (h *IPC) parseMonitorsResponse(response string) ([]*MonitorSpec, error) {
-	var monitors []*MonitorSpec
-	logrus.WithField("response", response).Debug("Hyprland monitors response")
-	monitorBlocks := strings.Split(response, "Monitor")
-
-	for _, block := range monitorBlocks {
-		if len(block) == 0 {
-			continue
-		}
-
-		id := ""
-		desc := ""
-		name := ""
-
-		for lineNumber, line := range strings.Split(block, "\n") {
-			line = strings.TrimSpace(line)
-			if len(line) == 0 {
-				continue
-			}
-			if lineNumber == 0 {
-				logrus.WithField("line", line).Debug("Monitor header line")
-				parts := strings.Fields(line)
-				logrus.WithField("parts_count", len(parts)).Debug("Monitor header parts")
-				if len(parts) != 3 {
-					return nil, fmt.Errorf("cant parse %s to extract the monitor header", line)
-				}
-
-				name = parts[0]
-				id = strings.Trim(parts[2], ":()")
-			}
-
-			descriptionSep := "description: "
-			if strings.Contains(line, descriptionSep) {
-				parts := strings.SplitN(line, descriptionSep, 2)
-				if len(parts) != 2 {
-					return nil, fmt.Errorf("cant parse %s to extract monitors description", line)
-				}
-				desc = parts[1]
-			}
-		}
-
-		logrus.WithFields(logrus.Fields{
-			"name": name,
-			"desc": desc,
-			"id":   id,
-		}).Debug("Monitor parsed")
-
-		if id == "" || desc == "" || name == "" {
-			return nil, fmt.Errorf("cant parse monitor from the block %s", block)
-		}
-		monitors = append(monitors, &MonitorSpec{
-			name,
-			id,
-			desc,
-		})
+	res := MonitorSpecs{}
+	if err := utils.UnmarshalResponse(response, &res); err != nil {
+		return nil, fmt.Errorf("failed to parse hypr ipc response: %w", err)
 	}
 
-	if len(monitors) == 0 {
-		return nil, errors.New("no monitors found in Hyprland response")
+	if err := res.Validate(); err != nil {
+		return nil, fmt.Errorf("failed to validate response: %w", err)
 	}
 
-	return monitors, nil
+	return res, nil
 }

@@ -1,9 +1,0 @@
-Monitor eDP-1 (ID 0):
-        2880x1920@120.00000 at 0x0
-        description:
-        make: BOE
-
-Monitor DP-11 (ID 1):
-        2560x2880@59.96700 at -1800x0
-        description: first part: description: third part
-        make: LG Electronics

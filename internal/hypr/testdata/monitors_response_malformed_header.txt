@@ -1,7 +1,0 @@
-Monitor eDP-1:
-        2880x1920@120.00000 at 0x0
-        description: BOE NE135A1M-NY1
-
-Monitor DP-11 (ID 1) (extra):
-        2560x2880@59.96700 at -1800x0
-        description: LG Electronics LG SDQHD 301NTBKDU037

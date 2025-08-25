@@ -40,8 +40,8 @@ func TestMatcher_Match(t *testing.T) {
 				},
 			}),
 			connectedMonitors: []*hypr.MonitorSpec{
-				{Name: "eDP-1", ID: "0", Description: "Built-in Display"},
-				{Name: "DP-1", ID: "1", Description: "External Monitor"},
+				{Name: "eDP-1", ID: utils.IntPtr(0), Description: "Built-in Display"},
+				{Name: "DP-1", ID: utils.IntPtr(1), Description: "External Monitor"},
 			},
 			powerState:      detectors.ACPower,
 			expectedProfile: "dual_monitors",
@@ -60,7 +60,7 @@ func TestMatcher_Match(t *testing.T) {
 				},
 			}),
 			connectedMonitors: []*hypr.MonitorSpec{
-				{Name: "DP-1", ID: "0", Description: "External Monitor"},
+				{Name: "DP-1", ID: utils.IntPtr(0), Description: "External Monitor"},
 			},
 			powerState:      detectors.ACPower,
 			expectedProfile: "external_only",
@@ -89,7 +89,7 @@ func TestMatcher_Match(t *testing.T) {
 				},
 			}),
 			connectedMonitors: []*hypr.MonitorSpec{
-				{Name: "eDP-1", ID: "0", Description: "Built-in Display"},
+				{Name: "eDP-1", ID: utils.IntPtr(0), Description: "Built-in Display"},
 			},
 			powerState:      detectors.Battery,
 			expectedProfile: "battery_profile",
@@ -109,7 +109,7 @@ func TestMatcher_Match(t *testing.T) {
 				},
 			}),
 			connectedMonitors: []*hypr.MonitorSpec{
-				{Name: "eDP-1", ID: "0", Description: "Built-in Display"},
+				{Name: "eDP-1", ID: utils.IntPtr(0), Description: "Built-in Display"},
 			},
 			powerState:      detectors.ACPower,
 			expectedProfile: "",
@@ -128,7 +128,7 @@ func TestMatcher_Match(t *testing.T) {
 				},
 			}),
 			connectedMonitors: []*hypr.MonitorSpec{
-				{Name: "eDP-1", ID: "0", Description: "Built-in Display"},
+				{Name: "eDP-1", ID: utils.IntPtr(0), Description: "Built-in Display"},
 			},
 			powerState:      detectors.ACPower,
 			expectedProfile: "",
@@ -156,8 +156,8 @@ func TestMatcher_Match(t *testing.T) {
 				},
 			}),
 			connectedMonitors: []*hypr.MonitorSpec{
-				{Name: "eDP-1", ID: "0", Description: "Built-in Display"},
-				{Name: "DP-1", ID: "1", Description: "External Monitor"},
+				{Name: "eDP-1", ID: utils.IntPtr(0), Description: "Built-in Display"},
+				{Name: "DP-1", ID: utils.IntPtr(1), Description: "External Monitor"},
 			},
 			powerState:      detectors.ACPower,
 			expectedProfile: "mixed_high_score",
@@ -177,7 +177,7 @@ func TestMatcher_Match(t *testing.T) {
 				},
 			}),
 			connectedMonitors: []*hypr.MonitorSpec{
-				{Name: "eDP-1", ID: "0", Description: "Built-in Display"},
+				{Name: "eDP-1", ID: utils.IntPtr(0), Description: "Built-in Display"},
 			},
 			powerState:      detectors.Battery,
 			expectedProfile: "",

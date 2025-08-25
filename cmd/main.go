@@ -22,9 +22,9 @@ import (
 )
 
 var (
-	version   = "dev"
-	commit    = "none"
-	buildDate = "unknown"
+	Version   = "dev"
+	Commit    = "none"
+	BuildDate = "unknown"
 )
 
 func main() {
@@ -59,14 +59,14 @@ func main() {
 
 	if *showVer {
 		logrus.WithFields(logrus.Fields{
-			"version":   version,
-			"commit":    commit,
-			"buildDate": buildDate,
+			"version":   Version,
+			"commit":    Commit,
+			"buildDate": BuildDate,
 		}).Info("hyprdynamicmonitors version")
 		return
 	}
 
-	logrus.WithField("version", version).Debug("Starting Hyprland Dynamic Monitor Manager")
+	logrus.WithField("version", Version).Debug("Starting Hyprland Dynamic Monitor Manager")
 
 	ctx, cancel := context.WithCancel(context.Background())
 
