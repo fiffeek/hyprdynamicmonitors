@@ -3,3 +3,5 @@ venv
 CLAUDE.md
 hyprdynamicmonitors
 main
+# Added by goreleaser init:
+dist/

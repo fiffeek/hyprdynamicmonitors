@@ -1,0 +1,26 @@
+---
+name: Release a tag
+on:
+    push:
+        tags:
+            - v*
+
+jobs:
+    release:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v5
+              with:
+                  fetch-depth: 0
+
+            - uses: actions/setup-go@v5
+              with:
+                  go-version-file: go.mod
+
+            - name: Create release
+              uses: goreleaser/goreleaser-action@v6
+              with:
+                  version: 2.11.2
+                  args: release --clean --timeout=10m
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
