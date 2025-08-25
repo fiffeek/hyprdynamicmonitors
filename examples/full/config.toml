@@ -1,0 +1,151 @@
+# HyprDynamicMonitors - Full Configuration Example
+# This example demonstrates all available configuration options
+
+[general]
+# Path where the final configuration will be written/linked
+# Environment variables are expanded (e.g., $HOME, $XDG_CONFIG_HOME)
+destination = "$HOME/.config/hypr/config.d/dynamic-monitors.conf"
+
+[power_events]
+# Set to true to disable power state monitoring entirely
+# When disabled, only monitor events will trigger configuration updates
+disabled = false
+
+# Custom D-Bus signal matching rules (optional)
+# These rules determine which D-Bus signals to listen for
+# Default rules work with standard UPower installations
+[[power_events.dbus_signal_match_rules]]
+interface = "org.freedesktop.DBus.Properties"
+object_path = "/org/freedesktop/UPower"
+member = "PropertiesChanged"
+# sender = "org.freedesktop.UPower"  # Optional: specific sender
+
+# Additional rule for device events
+[[power_events.dbus_signal_match_rules]]
+interface = "org.freedesktop.UPower"
+member = "DeviceAdded"
+
+[[power_events.dbus_signal_match_rules]]
+interface = "org.freedesktop.UPower"
+member = "DeviceRemoved"
+
+# Signal name filters (optional)
+# Only signals matching these names will be processed
+[[power_events.dbus_signal_receive_filters]]
+name = "org.freedesktop.DBus.Properties.PropertiesChanged"
+
+[[power_events.dbus_signal_receive_filters]]
+name = "org.freedesktop.UPower.DeviceAdded"
+
+[[power_events.dbus_signal_receive_filters]]
+name = "org.freedesktop.UPower.DeviceRemoved"
+
+[scoring]
+# Scoring system for profile selection when multiple profiles match
+# Higher scores win - adjust these values to prioritize different matching criteria
+name_match = 10       # Points awarded for exact monitor name match (e.g., "eDP-1")
+description_match = 5 # Points awarded for exact monitor description match
+power_state_match = 3 # Bonus points for matching power state requirements
+
+# Profile: Laptop only (static configuration)
+[profiles.laptop_only]
+config_file = "hyprconfigs/laptop-only.conf"
+config_file_type = "static"                  # Creates a symlink to the config file
+
+# Conditions define when this profile should be used
+[profiles.laptop_only.conditions]
+# No power_state requirement - works on both AC and battery
+
+# All monitors in required_monitors must be connected for profile to match
+[[profiles.laptop_only.conditions.required_monitors]]
+name = "eDP-1" # Match by exact monitor name
+
+# Profile: Laptop + External Monitor (template configuration)
+[profiles.dual_monitors_template]
+config_file = "hyprconfigs/dual-template.conf.tmpl"
+config_file_type = "template"                       # Processes Go template with dynamic data
+
+[profiles.dual_monitors_template.conditions]
+# This profile is only used when on AC power (provides bonus scoring)
+power_state = "AC"
+
+[[profiles.dual_monitors_template.conditions.required_monitors]]
+name = "eDP-1"
+monitor_tag = "laptop" # Tag for use in templates
+
+[[profiles.dual_monitors_template.conditions.required_monitors]]
+description = "LG Electronics LG SDQHD 301NTBKDU037"
+monitor_tag = "external"                             # Tag for use in templates
+
+# Profile: External Monitor Only
+[profiles.external_only]
+config_file = "hyprconfigs/external-only.conf"
+config_file_type = "static"
+
+[[profiles.external_only.conditions.required_monitors]]
+description = "LG Electronics LG SDQHD 301NTBKDU037"
+
+# Profile: Gaming Setup (high refresh rate, AC power only)
+[profiles.gaming_setup]
+config_file = "hyprconfigs/gaming-template.conf.tmpl"
+config_file_type = "template"
+
+[profiles.gaming_setup.conditions]
+power_state = "AC" # Only activate when on AC power
+
+[[profiles.gaming_setup.conditions.required_monitors]]
+name = "eDP-1"
+monitor_tag = "laptop"
+
+[[profiles.gaming_setup.conditions.required_monitors]]
+# Match a high-refresh gaming monitor by description
+description = "ASUS VG248QE"
+monitor_tag = "gaming_monitor"
+
+# Profile: Battery Saver (template with power optimizations)
+[profiles.battery_saver]
+config_file = "hyprconfigs/battery-saver-template.conf.tmpl"
+config_file_type = "template"
+
+[profiles.battery_saver.conditions]
+power_state = "BAT" # Only activate when on battery
+
+[[profiles.battery_saver.conditions.required_monitors]]
+name = "eDP-1"
+monitor_tag = "laptop"
+
+# Profile: Triple Monitor Workstation
+[profiles.workstation]
+config_file = "hyprconfigs/workstation-template.conf.tmpl"
+config_file_type = "template"
+
+[profiles.workstation.conditions]
+power_state = "AC" # Workstation setup only makes sense on AC
+
+[[profiles.workstation.conditions.required_monitors]]
+name = "eDP-1"
+monitor_tag = "laptop"
+
+[[profiles.workstation.conditions.required_monitors]]
+description = "Dell U2720Q"
+monitor_tag = "left_monitor"
+
+[[profiles.workstation.conditions.required_monitors]]
+description = "Dell U2720Q"   # Second identical monitor
+monitor_tag = "right_monitor"
+
+# Profile: Presentation Mode (projector/external display)
+[profiles.presentation]
+config_file = "hyprconfigs/presentation-template.conf.tmpl"
+config_file_type = "template"
+
+# No power state requirement - presentations can happen on battery
+
+[[profiles.presentation.conditions.required_monitors]]
+name = "eDP-1"
+monitor_tag = "laptop"
+
+[[profiles.presentation.conditions.required_monitors]]
+# Generic match for various projectors/presentation displays
+description = "Projector" # Or match specific projector model
+monitor_tag = "projector"

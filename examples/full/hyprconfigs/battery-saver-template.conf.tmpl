@@ -1,0 +1,46 @@
+# Battery Saver Template Configuration
+# Power-optimized configuration for extended battery life
+# Power State: {{.PowerState}} (Battery mode)
+
+{{- $laptop := index .MonitorsByTag "laptop" -}}
+
+# Monitor Configuration - Power Saving
+{{- if $laptop }}
+# Reduced refresh rate and brightness for battery saving
+monitor={{$laptop.Name}},2880x1920@60.00000,0x0,2.0
+{{- end }}
+
+# Workspace Assignment - Minimal
+{{- if $laptop }}
+workspace = 1,monitor:{{$laptop.Name}},default:true
+workspace = 2,monitor:{{$laptop.Name}}
+workspace = 3,monitor:{{$laptop.Name}}
+# Fewer workspaces to reduce memory usage
+{{- end }}
+
+# Minimal visual effects for battery saving
+decoration {
+    # Disable all blur effects
+    blur {
+        enabled = false
+    }
+
+    # Disable shadows completely
+    drop_shadow = false
+
+    # Minimal rounding to reduce rendering
+    rounding = 2
+
+    # Reduce border thickness
+    border_size = 1
+}
+
+animations {
+    # Disable all animations to save power
+    enabled = false
+}
+
+# Battery-optimized applications
+windowrulev2 = workspace 1,class:^(firefox)$
+windowrulev2 = workspace 2,class:^(code)$
+windowrulev2 = workspace 3,class:^(terminal)$

@@ -156,15 +156,22 @@ monitor={{$external.Name}},disable
 {{- end }}
 ```
 
-## Example Configuration
+## Example Configurations
 
-See the complete example in [`examples/basic/config.toml`](examples/basic/config.toml):
-
+### Basic Example
+See [`examples/basic/config.toml`](examples/basic/config.toml) for a simple setup with:
 - **Multiple profiles** for different monitor combinations
-- **Power state conditions** for battery optimization
 - **Template usage** for dynamic configuration
-- **Monitor matching** by name and description
-- **Tagged monitors** for template access
+- **Power state conditions** for battery optimization
+
+### Comprehensive Example
+See [`examples/full/config.toml`](examples/full/config.toml) for a complete configuration showcasing:
+- **All configuration options** with detailed comments
+- **Static and template configurations** for different scenarios
+- **Battery saver mode** with power optimizations
+- **Presentation mode** for projectors/external displays
+- **Custom D-Bus signal matching** for advanced users
+- **Comprehensive scoring configuration** examples
 
 ## Usage
 

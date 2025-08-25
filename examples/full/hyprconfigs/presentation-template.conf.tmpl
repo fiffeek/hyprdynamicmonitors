@@ -1,0 +1,63 @@
+# Presentation Template Configuration
+# Configuration for presentations and external displays
+# Power State: {{.PowerState}}
+
+{{- $laptop := index .MonitorsByTag "laptop" -}}
+{{- $projector := index .MonitorsByTag "projector" -}}
+
+# Monitor Configuration - Presentation Setup
+{{- if $laptop }}
+# Laptop as presenter display
+monitor={{$laptop.Name}},2880x1920@60.00000,0x0,2.0
+{{- end }}
+
+{{- if $projector }}
+# Projector/external display - mirror or extend based on needs
+# Most projectors work best at 1920x1080 or 1366x768
+monitor=desc:{{$projector.Description}},1920x1080@60.00000,auto-right,1.0
+{{- end }}
+
+# Workspace Assignment - Presentation Mode
+{{- if $laptop }}
+# Presenter workspace on laptop
+workspace = 1,monitor:{{$laptop.Name}},default:true  # Presentation control
+workspace = 2,monitor:{{$laptop.Name}}              # Notes/backup slides
+{{- end }}
+
+{{- if $projector }}
+# Main presentation on external display
+workspace = 3,monitor:{{$projector.Name}}  # Active presentation
+{{- end }}
+
+
+# Presentation window rules
+{{- if $laptop }}
+# Presentation control applications on laptop
+windowrulev2 = workspace 1,class:^(libreoffice-impress)$
+windowrulev2 = workspace 1,class:^(soffice)$
+windowrulev2 = workspace 1,title:^(.* - LibreOffice Impress)$
+windowrulev2 = workspace 1,class:^(microsoft-powerpoint)$
+windowrulev2 = workspace 1,class:^(reveal-md)$
+
+# Notes and backup on laptop
+windowrulev2 = workspace 2,class:^(obsidian)$
+windowrulev2 = workspace 2,class:^(notion.*)$
+windowrulev2 = workspace 2,class:^(joplin)$
+windowrulev2 = workspace 2,class:^(firefox)$,title:^(.*notes.*)$
+{{- end }}
+
+{{- if $projector }}
+# Full-screen presentation on projector
+windowrulev2 = workspace 3,class:^(libreoffice-impress)$,title:^(.*Presentation.*)$
+windowrulev2 = fullscreen,class:^(libreoffice-impress)$,title:^(.*Presentation.*)$
+
+# Media for presentations
+windowrulev2 = workspace 3,class:^(vlc)$
+windowrulev2 = workspace 3,class:^(mpv)$
+windowrulev2 = fullscreen,class:^(vlc)$
+windowrulev2 = fullscreen,class:^(mpv)$
+
+# Browser presentations
+windowrulev2 = workspace 3,class:^(firefox)$,title:^(.*reveal.*)$
+windowrulev2 = workspace 3,class:^(chromium)$,title:^(.*slides.*)$
+{{- end }}

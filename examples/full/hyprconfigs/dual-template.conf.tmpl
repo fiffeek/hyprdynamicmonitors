@@ -1,0 +1,95 @@
+# Dual Monitor Template Configuration
+# Dynamic configuration for laptop + external monitor setup
+# Generated for power state: {{.PowerState}}
+
+{{- $laptop := index .MonitorsByTag "laptop" -}}
+{{- $external := index .MonitorsByTag "external" -}}
+
+# Monitor Configuration
+{{- if $laptop }}
+{{- if isOnBattery }}
+# Battery mode: Reduce laptop refresh rate to save power
+monitor={{$laptop.Name}},2880x1920@60.00000,0x0,2.0
+{{- else }}
+# AC mode: Full laptop performance
+monitor={{$laptop.Name}},2880x1920@120.00000,0x0,2.0
+{{- end }}
+{{- end }}
+
+{{- if $external }}
+{{- if isOnAC }}
+# AC mode: Enable external monitor in portrait mode
+monitor=desc:{{$external.Description}},2560x2880@59.96700,auto-left,1.6,transform,3
+{{- else }}
+# Battery mode: Disable external monitor to save power
+monitor=desc:{{$external.Description}},disable
+{{- end }}
+{{- end }}
+
+# Workspace Assignment
+{{- if $laptop }}
+# Primary workspaces on laptop
+workspace = 1,monitor:{{$laptop.Name}},default:true
+workspace = 6,monitor:{{$laptop.Name}}
+{{- end }}
+
+{{- if $external }}
+{{- if isOnAC }}
+# Secondary workspaces on external monitor
+workspace = 2,monitor:{{$external.Name}}
+workspace = 3,monitor:{{$external.Name}}
+workspace = 4,monitor:{{$external.Name}}
+workspace = 5,monitor:{{$external.Name}}
+{{- end }}
+{{- end }}
+
+# Power-dependent visual settings
+{{- if isOnBattery }}
+# Battery mode: Minimize visual effects
+decoration {
+    blur {
+        enabled = false
+    }
+    drop_shadow = false
+}
+
+animations {
+    enabled = false
+}
+{{- else }}
+# AC mode: Full visual effects
+decoration {
+    blur {
+        enabled = true
+        size = 10
+        passes = 2
+        new_optimizations = true
+    }
+
+    drop_shadow = true
+    shadow_range = 6
+    shadow_render_power = 3
+}
+
+animations {
+    enabled = true
+
+    bezier = easeOutExpo,0.16,1,0.3,1
+
+    animation = windows,1,6,easeOutExpo
+    animation = windowsOut,1,6,easeOutExpo,popin 80%
+    animation = fade,1,8,easeOutExpo
+    animation = workspaces,1,7,easeOutExpo,slide
+}
+{{- end }}
+
+# Window rules for dual monitor setup
+{{- if $external }}
+{{- if isOnAC }}
+# Move specific applications to external monitor
+windowrulev2 = workspace 2,class:^(firefox)$
+windowrulev2 = workspace 3,class:^(code)$
+windowrulev2 = workspace 4,class:^(discord)$
+windowrulev2 = workspace 5,class:^(spotify)$
+{{- end }}
+{{- end }}

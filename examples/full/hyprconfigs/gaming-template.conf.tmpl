@@ -1,0 +1,61 @@
+# Gaming Setup Template Configuration
+# Configuration for gaming
+# Power State: {{.PowerState}} (AC power required)
+
+{{- $laptop := index .MonitorsByTag "laptop" -}}
+{{- $gaming := index .MonitorsByTag "gaming_monitor" -}}
+
+# Monitor Configuration - Gaming Optimized
+{{- if $laptop }}
+# Laptop as secondary display at lower refresh rate
+monitor={{$laptop.Name}},2880x1920@60.00000,auto-up,2.0
+{{- end }}
+
+{{- if $gaming }}
+# Gaming monitor as primary - maximum refresh rate
+monitor=desc:{{$gaming.Description}},1920x1080@144.00000,0x0,1.0
+{{- end }}
+
+# Workspace Assignment - Gaming Focus
+{{- if $gaming }}
+# Gaming workspaces on high refresh monitor
+workspace = 1,monitor:{{$gaming.Name}},default:true
+workspace = 2,monitor:{{$gaming.Name}}  # Secondary games
+workspace = 3,monitor:{{$gaming.Name}}  # Streaming/recording
+{{- end }}
+
+{{- if $laptop }}
+# Utility workspaces on laptop screen
+workspace = 4,monitor:{{$laptop.Name}}  # Discord/chat
+workspace = 5,monitor:{{$laptop.Name}}  # System monitoring
+workspace = 6,monitor:{{$laptop.Name}}  # Browser/guides
+{{- end }}
+
+{{- if $gaming }}
+# Force games to gaming monitor at full screen
+windowrulev2 = workspace 1,class:^(steam_app_.*)$
+windowrulev2 = fullscreen,class:^(steam_app_.*)$
+windowrulev2 = workspace 1,class:^(lutris)$
+windowrulev2 = workspace 1,class:^(minecraft.*)$
+windowrulev2 = workspace 1,class:^(.*\.exe)$
+
+# Streaming/recording apps on gaming monitor
+windowrulev2 = workspace 3,class:^(obs)$
+windowrulev2 = workspace 3,class:^(streamlabs.*)$
+{{- end }}
+
+{{- if $laptop }}
+# Communication apps on laptop screen
+windowrulev2 = workspace 4,class:^(discord)$
+windowrulev2 = workspace 4,class:^(teamspeak.*)$
+windowrulev2 = workspace 4,class:^(mumble)$
+
+# System monitoring on laptop screen
+windowrulev2 = workspace 5,class:^(btop)$
+windowrulev2 = workspace 5,class:^(htop)$
+windowrulev2 = workspace 5,title:^(.*System Monitor.*)$
+
+# Guides/browser on laptop screen
+windowrulev2 = workspace 6,class:^(firefox)$
+windowrulev2 = workspace 6,class:^(chromium)$
+{{- end }}

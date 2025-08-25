@@ -1,0 +1,159 @@
+# Workstation Template Configuration
+# Multi-monitor setup for productivity
+# Power State: {{.PowerState}} (AC power required)
+
+{{- $laptop := index .MonitorsByTag "laptop" -}}
+{{- $left := index .MonitorsByTag "left_monitor" -}}
+{{- $right := index .MonitorsByTag "right_monitor" -}}
+
+# Triple Monitor Configuration
+{{- if $left }}
+# Left monitor - Primary external display
+monitor=desc:{{$left.Description}},2560x1440@60.00000,-2560x0,1.0
+{{- end }}
+
+{{- if $laptop }}
+# Center laptop screen - Main workspace
+monitor={{$laptop.Name}},2880x1920@120.00000,0x0,2.0
+{{- end }}
+
+{{- if $right }}
+# Right monitor - Secondary external display
+monitor=desc:{{$right.Description}},2560x1440@60.00000,2880x0,1.0
+{{- end }}
+
+# Workspace Layout
+{{- if $left }}
+# Left monitor - Development/IDE
+workspace = 1,monitor:{{$left.Name}}  # Primary IDE
+workspace = 4,monitor:{{$left.Name}}  # Secondary IDE/Editor
+workspace = 7,monitor:{{$left.Name}}  # Terminal/CLI
+{{- end }}
+
+{{- if $laptop }}
+# Laptop screen - Main work
+workspace = 2,monitor:{{$laptop.Name}},default:true  # Main applications
+workspace = 5,monitor:{{$laptop.Name}}              # Documentation/Research
+workspace = 8,monitor:{{$laptop.Name}}              # File management
+{{- end }}
+
+{{- if $right }}
+# Right monitor - Communication/Monitoring
+workspace = 3,monitor:{{$right.Name}}  # Communication (Slack, Email)
+workspace = 6,monitor:{{$right.Name}}  # System monitoring
+workspace = 9,monitor:{{$right.Name}}  # Media/Music
+{{- end }}
+
+# Visual settings
+decoration {
+    blur {
+        enabled = true
+        size = 6
+        passes = 2
+        new_optimizations = true
+        ignore_opacity = true
+    }
+
+    drop_shadow = true
+    shadow_range = 8
+    shadow_render_power = 2
+    col.shadow = rgba(00000050)
+
+    rounding = 8
+    border_size = 2
+    col.active_border = rgba(2563ebff)
+    col.inactive_border = rgba(555555aa)
+}
+
+animations {
+    enabled = true
+
+    bezier = professional,0.25,0.1,0.25,1
+
+    animation = windows,1,6,professional
+    animation = windowsOut,1,6,professional,popin 80%
+    animation = fade,1,8,professional
+    animation = workspaces,1,6,professional,slide
+}
+
+input {
+    sensitivity = 0.0
+    accel_profile = adaptive
+
+    touchpad {
+        natural_scroll = true
+        tap-to-click = true
+        middle_button_emulation = true
+        drag_lock = true
+
+        # Professional touchpad settings
+        clickfinger_behavior = true
+        scroll_method = two_finger
+    }
+}
+
+{{- if $left }}
+# Development environment on left monitor
+windowrulev2 = workspace 1,class:^(code)$
+windowrulev2 = workspace 1,class:^(jetbrains-.*)$
+windowrulev2 = workspace 1,class:^(neovim)$
+
+windowrulev2 = workspace 4,class:^(sublime_text)$
+windowrulev2 = workspace 4,class:^(atom)$
+
+windowrulev2 = workspace 7,class:^(kitty)$
+windowrulev2 = workspace 7,class:^(alacritty)$
+windowrulev2 = workspace 7,class:^(terminator)$
+{{- end }}
+
+{{- if $laptop }}
+# Main applications on laptop screen
+windowrulev2 = workspace 2,class:^(firefox)$
+windowrulev2 = workspace 2,class:^(chromium)$
+windowrulev2 = workspace 2,class:^(libreoffice.*)$
+
+windowrulev2 = workspace 5,class:^(zathura)$
+windowrulev2 = workspace 5,class:^(evince)$
+windowrulev2 = workspace 5,class:^(notion.*)$
+
+windowrulev2 = workspace 8,class:^(thunar)$
+windowrulev2 = workspace 8,class:^(nautilus)$
+windowrulev2 = workspace 8,class:^(pcmanfm)$
+{{- end }}
+
+{{- if $right }}
+# Communication and monitoring on right monitor
+windowrulev2 = workspace 3,class:^(slack)$
+windowrulev2 = workspace 3,class:^(discord)$
+windowrulev2 = workspace 3,class:^(teams)$
+windowrulev2 = workspace 3,class:^(thunderbird)$
+
+windowrulev2 = workspace 6,class:^(btop)$
+windowrulev2 = workspace 6,class:^(htop)$
+windowrulev2 = workspace 6,title:^(.*System Monitor.*)$
+windowrulev2 = workspace 6,class:^(docker.*)$
+
+windowrulev2 = workspace 9,class:^(spotify)$
+windowrulev2 = workspace 9,class:^(vlc)$
+windowrulev2 = workspace 9,class:^(mpv)$
+{{- end }}
+
+# Focus monitors directly
+{{- if $left }}
+bind = SUPER, F1, focusmonitor, {{$left.Name}}
+{{- end }}
+{{- if $laptop }}
+bind = SUPER, F2, focusmonitor, {{$laptop.Name}}
+{{- end }}
+{{- if $right }}
+bind = SUPER, F3, focusmonitor, {{$right.Name}}
+{{- end }}
+
+misc {
+    vfr = true
+
+    animate_manual_resizes = true
+    animate_mouse_windowdragging = true
+    focus_on_activate = true
+    mouse_move_focuses_monitor = false
+}
