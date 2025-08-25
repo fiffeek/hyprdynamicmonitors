@@ -189,17 +189,17 @@ func TestMatcher_Match(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			matcher := NewMatcher(tt.config)
 
-			result, err := matcher.Match(tt.connectedMonitors, tt.powerState)
+			found, result, err := matcher.Match(tt.connectedMonitors, tt.powerState)
 			if err != nil {
 				t.Fatalf("Match returned unexpected error: %v", err)
 			}
 
 			if tt.expectedProfile == "" {
-				if result != nil {
+				if result != nil || found {
 					t.Errorf("Expected no profile match, but got profile: %s", result.Name)
 				}
 			} else {
-				if result == nil {
+				if result == nil || !found {
 					t.Errorf("Expected profile %s, but got no match", tt.expectedProfile)
 				} else if result.Name != tt.expectedProfile {
 					t.Errorf("Expected profile %s, but got %s", tt.expectedProfile, result.Name)

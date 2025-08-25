@@ -39,7 +39,8 @@ type DbusSignalMatchRule struct {
 }
 
 type GeneralSection struct {
-	Destination *string `toml:"destination"`
+	Destination    *string `toml:"destination"`
+	DebounceTimeMs *int    `toml:"debounce_time_ms"`
 }
 
 type ScoringSection struct {
@@ -196,6 +197,10 @@ func (g *GeneralSection) Validate() error {
 
 	dest := os.ExpandEnv(*g.Destination)
 	g.Destination = &dest
+
+	if g.DebounceTimeMs == nil {
+		g.DebounceTimeMs = utils.IntPtr(1500)
+	}
 
 	return nil
 }

@@ -60,11 +60,7 @@ func (h *IPC) RunEventLoop(ctx context.Context) error {
 
 	eg.Go(func() error {
 		defer close(h.events)
-		defer func() {
-			if err := conn.Close(); err != nil {
-				logrus.WithError(err).Debug("Failed to close connection")
-			}
-		}()
+		defer connTeardown()
 
 		scanner := bufio.NewScanner(conn)
 		for scanner.Scan() {

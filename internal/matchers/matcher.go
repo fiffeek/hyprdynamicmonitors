@@ -17,7 +17,7 @@ func NewMatcher(cfg *config.Config) *Matcher {
 	}
 }
 
-func (m *Matcher) Match(connectedMonitors []*hypr.MonitorSpec, powerState detectors.PowerState) (*config.Profile, error) {
+func (m *Matcher) Match(connectedMonitors []*hypr.MonitorSpec, powerState detectors.PowerState) (bool, *config.Profile, error) {
 	score := make(map[string]int)
 	for name := range m.cfg.Profiles {
 		score[name] = 0
@@ -25,36 +25,15 @@ func (m *Matcher) Match(connectedMonitors []*hypr.MonitorSpec, powerState detect
 
 	for name, profile := range m.cfg.Profiles {
 		conditions := profile.Conditions
-		fullMatchScore := 0
-		if conditions.PowerState != nil {
-			fullMatchScore += *m.cfg.Scoring.PowerStateMatch
-		}
-		if conditions.PowerState != nil && conditions.PowerState.Value() == powerState.String() {
-			score[name] += *m.cfg.Scoring.PowerStateMatch
-		}
-		for _, condition := range conditions.RequiredMonitors {
-			if condition.Name != nil {
-				fullMatchScore += *m.cfg.Scoring.NameMatch
-			}
-			if condition.Description != nil {
-				fullMatchScore += *m.cfg.Scoring.DescriptionMatch
-			}
-
-			for _, connectedMonitor := range connectedMonitors {
-				if condition.Name != nil && *condition.Name == connectedMonitor.Name {
-					score[name] += *m.cfg.Scoring.NameMatch
-				}
-				if condition.Description != nil && *condition.Description == connectedMonitor.Description {
-					score[name] += *m.cfg.Scoring.DescriptionMatch
-				}
-			}
-		}
+		fullMatchScore := m.calcFullProfileScore(conditions)
+		score[name] = m.scoreProfile(conditions, powerState, connectedMonitors)
 
 		// if there is a partial match discard the config
 		if fullMatchScore != score[name] {
 			delete(score, name)
 		}
 	}
+
 	bestScore := 0
 	for _, value := range score {
 		bestScore = max(bestScore, value)
@@ -62,13 +41,51 @@ func (m *Matcher) Match(connectedMonitors []*hypr.MonitorSpec, powerState detect
 
 	// when nothing scored > 0 then no config matches
 	if bestScore == 0 {
-		return nil, nil
+		return false, nil, nil
 	}
 
 	for name, profile := range m.cfg.Profiles {
 		if score[name] == bestScore {
-			return profile, nil
+			return true, profile, nil
 		}
 	}
-	return nil, nil
+	return false, nil, nil
+}
+
+func (m *Matcher) scoreProfile(conditions config.ProfileCondition, powerState detectors.PowerState, connectedMonitors []*hypr.MonitorSpec) int {
+	profileScore := 0
+	if conditions.PowerState != nil && conditions.PowerState.Value() == powerState.String() {
+		profileScore += *m.cfg.Scoring.PowerStateMatch
+	}
+
+	for _, condition := range conditions.RequiredMonitors {
+		for _, connectedMonitor := range connectedMonitors {
+			if condition.Name != nil && *condition.Name == connectedMonitor.Name {
+				profileScore += *m.cfg.Scoring.NameMatch
+			}
+			if condition.Description != nil && *condition.Description == connectedMonitor.Description {
+				profileScore += *m.cfg.Scoring.DescriptionMatch
+			}
+		}
+	}
+
+	return profileScore
+}
+
+func (m *Matcher) calcFullProfileScore(conditions config.ProfileCondition) int {
+	fullMatchScore := 0
+	if conditions.PowerState != nil {
+		fullMatchScore += *m.cfg.Scoring.PowerStateMatch
+	}
+
+	for _, condition := range conditions.RequiredMonitors {
+		if condition.Name != nil {
+			fullMatchScore += *m.cfg.Scoring.NameMatch
+		}
+		if condition.Description != nil {
+			fullMatchScore += *m.cfg.Scoring.DescriptionMatch
+		}
+	}
+
+	return fullMatchScore
 }

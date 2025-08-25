@@ -5,6 +5,9 @@
 # Path where the final configuration will be written/linked
 # Environment variables are expanded (e.g., $HOME, $XDG_CONFIG_HOME)
 destination = "$HOME/.config/hypr/config.d/dynamic-monitors.conf"
+# Colect events for 1500ms and issue one update,
+# prevents configuration thrashing
+debounce_time_ms = 1500
 
 [power_events]
 # Set to true to disable power state monitoring entirely

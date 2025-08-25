@@ -28,7 +28,7 @@ type Service struct {
 	monitorDetector *detectors.MonitorDetector
 	powerDetector   IPowerDetector
 	matcher         *matchers.Matcher
-	cfg             *Config
+	serviceConfig   *Config
 	generator       *generators.ConfigGenerator
 
 	stateMu          sync.RWMutex
@@ -47,7 +47,7 @@ func NewService(cfg *config.Config, monitorDetector *detectors.MonitorDetector, 
 		config:           cfg,
 		monitorDetector:  monitorDetector,
 		powerDetector:    powerDetector,
-		cfg:              svcCfg,
+		serviceConfig:    svcCfg,
 		matcher:          matcher,
 		generator:        generator,
 		cachedPowerState: detectors.Battery,
@@ -131,9 +131,9 @@ func (s *Service) triggerUpdate() {
 	defer s.debounceMutex.Unlock()
 
 	s.debounceTimer.Stop()
-	s.debounceTimer.Reset(1500 * time.Millisecond)
+	s.debounceTimer.Reset(time.Duration(*s.config.General.DebounceTimeMs) * time.Millisecond)
 
-	logrus.Debug("Update scheduled (debounced 1500ms)")
+	logrus.WithField("debounce", *s.config.General.DebounceTimeMs).Debug("Update scheduled")
 }
 
 func (s *Service) updateProcessor(ctx context.Context) error {
@@ -162,15 +162,15 @@ func (s *Service) UpdateOnce() error {
 	logrus.WithFields(logrus.Fields{
 		"monitor_count": len(monitors),
 		"power_state":   powerState.String(),
-		"dry_run":       s.cfg.DryRun,
+		"dry_run":       s.serviceConfig.DryRun,
 	}).Debug("Updating configuration")
 
-	profile, err := s.matcher.Match(monitors, powerState)
+	found, profile, err := s.matcher.Match(monitors, powerState)
 	if err != nil {
 		return fmt.Errorf("failed to match a profile %w", err)
 	}
 
-	if profile == nil {
+	if !found {
 		logrus.Debug("No matching profile found")
 		return nil
 	}
@@ -181,7 +181,7 @@ func (s *Service) UpdateOnce() error {
 		"config_type":  profile.ConfigType.Value(),
 	}
 
-	if s.cfg.DryRun {
+	if s.serviceConfig.DryRun {
 		logrus.WithFields(profileFields).Info("[DRY RUN] Would use profile")
 		return nil
 	}
