@@ -116,41 +116,29 @@ func run(ctx context.Context, svc *service.Service, hyprIPC *hypr.IPC, monitorDe
 
 	eg, ctx := errgroup.WithContext(ctx)
 
-	eg.Go(func() error {
-		logrus.Debug("Starting Hypr IPC")
-		if err := hyprIPC.RunEventLoop(ctx); err != nil && !errors.Is(err, context.Canceled) {
-			return fmt.Errorf("hypr ipc failed: %w", err)
-		}
-		logrus.Debug("Hypr IPC finished")
-		return nil
-	})
-
-	eg.Go(func() error {
-		logrus.Debug("Starting monitor detector")
-		if err := monitorDetector.Run(ctx); err != nil && !errors.Is(err, context.Canceled) {
-			return fmt.Errorf("monitor detector failed: %w", err)
-		}
-		logrus.Debug("Monitor detector finished")
-		return nil
-	})
-
-	eg.Go(func() error {
-		logrus.Debug("Starting power detector")
-		if err := powerDetector.Run(ctx); err != nil && !errors.Is(err, context.Canceled) {
-			return fmt.Errorf("power detector failed: %w", err)
-		}
-		logrus.Debug("Power detector finished")
-		return nil
-	})
-
-	eg.Go(func() error {
-		logrus.Debug("Starting service")
-		if err := svc.Run(ctx); err != nil && !errors.Is(err, context.Canceled) {
-			return fmt.Errorf("service failed: %w", err)
-		}
-		logrus.Debug("Service finished")
-		return nil
-	})
+	backgroundGoroutines := []struct {
+		Fun  func(context.Context) error
+		Name string
+	}{
+		{Fun: hyprIPC.RunEventLoop, Name: "hypr ipc"},
+		{Fun: monitorDetector.Run, Name: "monitor detector proxy"},
+		{Fun: powerDetector.Run, Name: "power detector dbus"},
+		{Fun: svc.Run, Name: "main service"},
+	}
+	for _, bg := range backgroundGoroutines {
+		eg.Go(func() error {
+			fields := logrus.Fields{"name": bg.Name, "fun": bg.Fun}
+			logrus.WithFields(fields).Debug("Starting")
+			if err := bg.Fun(ctx); err != nil {
+				if errors.Is(err, context.Canceled) {
+					return fmt.Errorf("%s cancelled: %w", bg.Name, err)
+				}
+				return fmt.Errorf("%s failed: %w", bg.Name, err)
+			}
+			logrus.WithFields(fields).Debug("Finished")
+			return nil
+		})
+	}
 
 	eg.Go(func() error {
 		<-ctx.Done()
