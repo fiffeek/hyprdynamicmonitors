@@ -14,6 +14,26 @@ debounce_time_ms = 1500
 # When disabled, only monitor events will trigger configuration updates
 disabled = false
 
+# Control the query for the current battery state, the default (underneath)
+# effectively performs:
+# dbus-send --system --print-reply \
+#   --dest=org.freedesktop.UPower \
+#   /org/freedesktop/UPower \
+#   org.freedesktop.DBus.Properties.Get \
+#   string:org.freedesktop.UPower \
+#   string:OnBattery
+# The code expects a single boolean as the result
+[power_events.dbus_query_object]
+destination = "org.freedesktop.UPower"
+path = "/org/freedesktop/UPower"
+method = "org.freedesktop.DBus.Properties.Get"
+
+[[power_events.dbus_query_object.args]]
+arg = "org.freedesktop.UPower"
+
+[[power_events.dbus_query_object.args]]
+arg = "OnBattery"
+
 # Custom D-Bus signal matching rules (optional)
 # These rules determine which D-Bus signals to listen for
 # Default rules work with standard UPower installations

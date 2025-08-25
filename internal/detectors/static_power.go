@@ -36,7 +36,7 @@ func (p *StaticPowerDetector) Run(ctx context.Context) error {
 	eg.Go(func() error {
 		<-ctx.Done()
 		logrus.Debug("Power detector context cancelled, closing D-Bus connection")
-		return nil
+		return ctx.Err()
 	})
 
 	if err := eg.Wait(); err != nil {

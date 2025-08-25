@@ -25,6 +25,18 @@ type PowerSection struct {
 	Disabled                 *bool                      `toml:"disabled"`
 	DbusSignalMatchRules     []*DbusSignalMatchRule     `toml:"dbus_signal_match_rules"`
 	DbusSignalReceiveFilters []*DbusSignalReceiveFilter `toml:"dbus_signal_receive_filters"`
+	DbusQueryObject          *DbusQueryObject           `toml:"dbus_query_object"`
+}
+
+type DbusQueryObject struct {
+	Destination string               `toml:"destination"`
+	Path        string               `toml:"path"`
+	Method      string               `toml:"method"`
+	Args        []DbusQueryObjectArg `toml:"args"`
+}
+
+type DbusQueryObjectArg struct {
+	Arg string `toml:"arg"`
 }
 
 type DbusSignalReceiveFilter struct {
@@ -329,6 +341,48 @@ func (ps *PowerSection) Validate() error {
 		}
 	}
 
+	if ps.DbusQueryObject == nil {
+		ps.DbusQueryObject = &DbusQueryObject{
+			Destination: "org.freedesktop.UPower",
+			Path:        "/org/freedesktop/UPower",
+			Method:      "org.freedesktop.DBus.Properties.Get",
+			Args: []DbusQueryObjectArg{
+				{Arg: "org.freedesktop.UPower"},
+				{Arg: "OnBattery"},
+			},
+		}
+	}
+
+	if err := ps.DbusQueryObject.Validate(); err != nil {
+		return fmt.Errorf("dbus query object for the battery stats is invalid: %w", err)
+	}
+
+	return nil
+}
+
+func (d *DbusQueryObject) CollectArgs() []interface{} {
+	args := []any{}
+	for _, arg := range d.Args {
+		args = append(args, arg.Arg)
+	}
+	return args
+}
+
+func (d *DbusQueryObject) Validate() error {
+	if d.Destination == "" {
+		return errors.New("destination cant be empty")
+	}
+	if d.Method == "" {
+		return errors.New("method cant be empty")
+	}
+	if d.Path == "" {
+		return errors.New("path cant be empty")
+	}
+	for _, arg := range d.Args {
+		if arg.Arg == "" {
+			return errors.New("arg cant be empty")
+		}
+	}
 	return nil
 }
 

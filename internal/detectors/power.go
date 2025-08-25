@@ -65,23 +65,26 @@ func NewPowerDetector(ctx context.Context, cfg *config.PowerSection) (*PowerDete
 }
 
 func (p *PowerDetector) GetCurrentState(ctx context.Context) (PowerState, error) {
-	obj := p.conn.Object("org.freedesktop.UPower", "/org/freedesktop/UPower")
+	obj := p.conn.Object(
+		p.cfg.DbusQueryObject.Destination,
+		dbus.ObjectPath(p.cfg.DbusQueryObject.Path))
 
 	var onBattery dbus.Variant
-	err := obj.CallWithContext(ctx, "org.freedesktop.DBus.Properties.Get", 0, "org.freedesktop.UPower", "OnBattery").Store(&onBattery)
+	err := obj.CallWithContext(ctx, p.cfg.DbusQueryObject.Method, 0, p.cfg.DbusQueryObject.CollectArgs()...).Store(&onBattery)
 	if err != nil {
 		return Battery, fmt.Errorf("failed to get OnBattery property from UPower: %w", err)
 	}
 
-	if onBatteryValue, ok := onBattery.Value().(bool); ok {
-		logrus.WithField("on_battery", onBatteryValue).Debug("UPower OnBattery property")
-		if onBatteryValue {
-			return Battery, nil
-		}
-		return ACPower, nil
+	onBatteryValue, ok := onBattery.Value().(bool)
+	if !ok {
+		return Battery, fmt.Errorf("unexpected OnBattery value type: %T", onBattery.Value())
 	}
 
-	return Battery, fmt.Errorf("unexpected OnBattery value type: %T", onBattery.Value())
+	logrus.WithField("on_battery", onBatteryValue).Debug("UPower OnBattery property")
+	if onBatteryValue {
+		return Battery, nil
+	}
+	return ACPower, nil
 }
 
 func (p *PowerDetector) Listen() <-chan PowerEvent {
@@ -134,7 +137,8 @@ func (p *PowerDetector) Run(ctx context.Context) error {
 	eg.Go(func() error {
 		<-ctx.Done()
 		logrus.Debug("Power detector context cancelled, closing D-Bus connection")
-		return p.conn.Close()
+		_ = p.conn.Close()
+		return ctx.Err()
 	})
 
 	eg.Go(func() error {
@@ -170,19 +174,21 @@ func (p *PowerDetector) Run(ctx context.Context) error {
 					return fmt.Errorf("failed to get power state after signal %s: %w", signal.Name, err)
 				}
 
-				if currentState != lastState {
-					logrus.WithFields(logrus.Fields{
-						"from": lastState.String(),
-						"to":   currentState.String(),
-					}).Info("Power state changed")
-					select {
-					case p.events <- PowerEvent{State: currentState}:
-						lastState = currentState
-					case <-ctx.Done():
-						return ctx.Err()
-					}
-				} else {
+				if currentState == lastState {
 					logrus.WithField("power_state", currentState.String()).Debug("Power state unchanged after signal")
+					continue
+				}
+
+				logrus.WithFields(logrus.Fields{
+					"from": lastState.String(),
+					"to":   currentState.String(),
+				}).Info("Power state changed")
+
+				select {
+				case p.events <- PowerEvent{State: currentState}:
+					lastState = currentState
+				case <-ctx.Done():
+					return ctx.Err()
 				}
 			case <-ctx.Done():
 				logrus.Debug("Power detector context cancelled, shutting down")

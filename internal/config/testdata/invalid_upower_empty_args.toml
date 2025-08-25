@@ -1,0 +1,19 @@
+[general]
+destination = "/tmp/test-monitors.conf"
+
+[power_events.dbus_query_object]
+destination = "org.freedesktop.UPower"
+path = "/org/freedesktop/UPower"
+method = "org.freedesktop.DBus.Properties.Get"
+
+[[power_events.dbus_query_object.args]]
+arg = "org.freedesktop.UPower"
+
+[[power_events.dbus_query_object.args]]
+arg = ""
+
+[profiles.laptop_only]
+config_file = "laptop.conf"
+
+[[profiles.laptop_only.conditions.required_monitors]]
+name = "eDP-1"

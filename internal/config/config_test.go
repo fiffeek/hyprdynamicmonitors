@@ -6,6 +6,7 @@ import (
 
 	"github.com/fiffeek/hyprdynamicmonitors/internal/config"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/utils"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestLoad(t *testing.T) {
@@ -174,6 +175,49 @@ func TestLoad(t *testing.T) {
 			configFile:    "invalid_config_type.toml",
 			expectError:   true,
 			errorContains: "invalid enum value",
+		},
+		{
+			name:       "valid custom upower query",
+			configFile: "valid_custom_upower_query.toml",
+			validate: func(t *testing.T, c *config.Config) {
+				if c.PowerEvents == nil {
+					t.Error("power events section should not be nil")
+					return
+				}
+
+				if c.PowerEvents.DbusQueryObject == nil {
+					t.Error("dbus query object should not be nil")
+					return
+				}
+
+				expectedQuery := &config.DbusQueryObject{
+					Destination: "org.freedesktop.UPower",
+					Path:        "/org/freedesktop/UPower",
+					Method:      "org.freedesktop.DBus.Properties.Get",
+					Args: []config.DbusQueryObjectArg{
+						{Arg: "org.freedesktop.UPower"},
+						{Arg: "LidIsPresent"},
+					},
+				}
+
+				assert.Equal(t, expectedQuery, c.PowerEvents.DbusQueryObject, "DbusQueryObject should match expected")
+
+				expectedCollectedArgs := []interface{}{"org.freedesktop.UPower", "LidIsPresent"}
+				collectedArgs := c.PowerEvents.DbusQueryObject.CollectArgs()
+				assert.Equal(t, expectedCollectedArgs, collectedArgs, "collected args should match")
+			},
+		},
+		{
+			name:          "invalid - empty upower destination",
+			configFile:    "invalid_upower_empty_destination.toml",
+			expectError:   true,
+			errorContains: "destination cant be empty",
+		},
+		{
+			name:          "invalid - empty upower args",
+			configFile:    "invalid_upower_empty_args.toml",
+			expectError:   true,
+			errorContains: "arg cant be empty",
 		},
 		{
 			name:          "file not found",
@@ -586,6 +630,212 @@ func TestPowerSectionValidate(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestDbusQueryObjectValidate(t *testing.T) {
+	tests := []struct {
+		name          string
+		queryObject   *config.DbusQueryObject
+		expectError   bool
+		errorContains string
+	}{
+		{
+			name: "valid upower query object",
+			queryObject: &config.DbusQueryObject{
+				Destination: "org.freedesktop.UPower",
+				Path:        "/org/freedesktop/UPower",
+				Method:      "org.freedesktop.DBus.Properties.Get",
+				Args: []config.DbusQueryObjectArg{
+					{Arg: "org.freedesktop.UPower"},
+					{Arg: "OnBattery"},
+				},
+			},
+		},
+		{
+			name: "custom upower query object with different property",
+			queryObject: &config.DbusQueryObject{
+				Destination: "org.freedesktop.UPower",
+				Path:        "/org/freedesktop/UPower",
+				Method:      "org.freedesktop.DBus.Properties.Get",
+				Args: []config.DbusQueryObjectArg{
+					{Arg: "org.freedesktop.UPower"},
+					{Arg: "LidIsPresent"},
+				},
+			},
+		},
+		{
+			name: "custom destination and path",
+			queryObject: &config.DbusQueryObject{
+				Destination: "org.custom.PowerManager",
+				Path:        "/org/custom/PowerManager",
+				Method:      "org.freedesktop.DBus.Properties.Get",
+				Args: []config.DbusQueryObjectArg{
+					{Arg: "org.custom.PowerManager"},
+					{Arg: "PowerState"},
+				},
+			},
+		},
+		{
+			name: "empty destination",
+			queryObject: &config.DbusQueryObject{
+				Destination: "",
+				Path:        "/org/freedesktop/UPower",
+				Method:      "org.freedesktop.DBus.Properties.Get",
+				Args: []config.DbusQueryObjectArg{
+					{Arg: "org.freedesktop.UPower"},
+					{Arg: "OnBattery"},
+				},
+			},
+			expectError:   true,
+			errorContains: "destination cant be empty",
+		},
+		{
+			name: "empty path",
+			queryObject: &config.DbusQueryObject{
+				Destination: "org.freedesktop.UPower",
+				Path:        "",
+				Method:      "org.freedesktop.DBus.Properties.Get",
+				Args: []config.DbusQueryObjectArg{
+					{Arg: "org.freedesktop.UPower"},
+					{Arg: "OnBattery"},
+				},
+			},
+			expectError:   true,
+			errorContains: "path cant be empty",
+		},
+		{
+			name: "empty method",
+			queryObject: &config.DbusQueryObject{
+				Destination: "org.freedesktop.UPower",
+				Path:        "/org/freedesktop/UPower",
+				Method:      "",
+				Args: []config.DbusQueryObjectArg{
+					{Arg: "org.freedesktop.UPower"},
+					{Arg: "OnBattery"},
+				},
+			},
+			expectError:   true,
+			errorContains: "method cant be empty",
+		},
+		{
+			name: "empty arg",
+			queryObject: &config.DbusQueryObject{
+				Destination: "org.freedesktop.UPower",
+				Path:        "/org/freedesktop/UPower",
+				Method:      "org.freedesktop.DBus.Properties.Get",
+				Args: []config.DbusQueryObjectArg{
+					{Arg: "org.freedesktop.UPower"},
+					{Arg: ""},
+				},
+			},
+			expectError:   true,
+			errorContains: "arg cant be empty",
+		},
+		{
+			name: "no args",
+			queryObject: &config.DbusQueryObject{
+				Destination: "org.freedesktop.UPower",
+				Path:        "/org/freedesktop/UPower",
+				Method:      "org.freedesktop.DBus.Properties.GetAll",
+				Args:        []config.DbusQueryObjectArg{},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.queryObject.Validate()
+
+			if tt.expectError {
+				if err == nil {
+					t.Error("expected error but got none")
+					return
+				}
+				if tt.errorContains != "" && !containsString(err.Error(), tt.errorContains) {
+					t.Errorf("expected error to contain '%s', got '%s'", tt.errorContains, err.Error())
+				}
+			} else if err != nil {
+				t.Errorf("unexpected error: %v", err)
+			}
+		})
+	}
+}
+
+func TestDbusQueryObjectCollectArgs(t *testing.T) {
+	tests := []struct {
+		name        string
+		queryObject *config.DbusQueryObject
+		expected    []interface{}
+	}{
+		{
+			name: "standard upower query args",
+			queryObject: &config.DbusQueryObject{
+				Args: []config.DbusQueryObjectArg{
+					{Arg: "org.freedesktop.UPower"},
+					{Arg: "OnBattery"},
+				},
+			},
+			expected: []interface{}{"org.freedesktop.UPower", "OnBattery"},
+		},
+		{
+			name: "single arg",
+			queryObject: &config.DbusQueryObject{
+				Args: []config.DbusQueryObjectArg{
+					{Arg: "org.freedesktop.UPower"},
+				},
+			},
+			expected: []interface{}{"org.freedesktop.UPower"},
+		},
+		{
+			name: "no args",
+			queryObject: &config.DbusQueryObject{
+				Args: []config.DbusQueryObjectArg{},
+			},
+			expected: []interface{}{},
+		},
+		{
+			name: "multiple args",
+			queryObject: &config.DbusQueryObject{
+				Args: []config.DbusQueryObjectArg{
+					{Arg: "interface"},
+					{Arg: "property"},
+					{Arg: "value"},
+				},
+			},
+			expected: []interface{}{"interface", "property", "value"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := tt.queryObject.CollectArgs()
+			assert.Equal(t, tt.expected, result, "collected args should match expected")
+		})
+	}
+}
+
+func TestPowerSectionDbusQueryObjectDefaults(t *testing.T) {
+	powerSection := &config.PowerSection{}
+
+	err := powerSection.Validate()
+	assert.NoError(t, err, "power section validation should succeed")
+	assert.NotNil(t, powerSection.DbusQueryObject, "default DbusQueryObject should be set")
+
+	expected := &config.DbusQueryObject{
+		Destination: "org.freedesktop.UPower",
+		Path:        "/org/freedesktop/UPower",
+		Method:      "org.freedesktop.DBus.Properties.Get",
+		Args: []config.DbusQueryObjectArg{
+			{Arg: "org.freedesktop.UPower"},
+			{Arg: "OnBattery"},
+		},
+	}
+
+	assert.Equal(t, expected, powerSection.DbusQueryObject, "default DbusQueryObject should match expected")
+
+	expectedCollectedArgs := []interface{}{"org.freedesktop.UPower", "OnBattery"}
+	collectedArgs := powerSection.DbusQueryObject.CollectArgs()
+	assert.Equal(t, expectedCollectedArgs, collectedArgs, "collected args should match expected")
 }
 
 func containsString(haystack, needle string) bool {

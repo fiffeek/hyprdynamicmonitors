@@ -55,7 +55,7 @@ func (h *IPC) RunEventLoop(ctx context.Context) error {
 		<-ctx.Done()
 		logrus.Debug("Hypr IPC context cancelled, closing connection to unblock scanner")
 		connTeardown()
-		return nil
+		return ctx.Err()
 	})
 
 	eg.Go(func() error {
