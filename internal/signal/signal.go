@@ -11,26 +11,26 @@ import (
 )
 
 type Handler struct {
-	sigChan chan os.Signal
-	ctx     context.Context
-	cancel  context.CancelFunc
+	sigChan     chan os.Signal
+	ctx         context.Context
+	cancelCause context.CancelCauseFunc
 }
 
 type SignalHandler interface {
 	RunOnce(context.Context) error
 }
 
-func NewHandler(ctx context.Context, cancel context.CancelFunc) *Handler {
+func NewHandler(ctx context.Context, cancelCause context.CancelCauseFunc) *Handler {
 	return &Handler{
-		sigChan: make(chan os.Signal, 1),
-		ctx:     ctx,
-		cancel:  cancel,
+		sigChan:     make(chan os.Signal, 1),
+		ctx:         ctx,
+		cancelCause: cancelCause,
 	}
 }
 
 func (h *Handler) Start(handler SignalHandler) {
-	signal.Notify(h.sigChan, syscall.SIGUSR1, syscall.SIGTERM, syscall.SIGINT)
-	logrus.Debug("Signal notifications registered for SIGUSR1, SIGTERM, SIGINT")
+	signal.Notify(h.sigChan, syscall.SIGUSR1, syscall.SIGTERM, syscall.SIGINT, syscall.SIGHUP)
+	logrus.Debug("Signal notifications registered for SIGUSR1, SIGTERM, SIGINT, SIGHUP")
 	logrus.WithField("channel_cap", cap(h.sigChan)).Info("Signal channel capacity")
 
 	go h.handleSignals(handler)
@@ -38,7 +38,7 @@ func (h *Handler) Start(handler SignalHandler) {
 }
 
 func (h *Handler) Stop() {
-	h.cancel()
+	h.cancelCause(context.Canceled)
 	signal.Stop(h.sigChan)
 	close(h.sigChan)
 }
@@ -57,9 +57,9 @@ func (h *Handler) handleSignals(handler SignalHandler) {
 				} else {
 					logrus.Info("Manual update completed successfully")
 				}
-			case syscall.SIGTERM, syscall.SIGINT:
+			case syscall.SIGTERM, syscall.SIGINT, syscall.SIGHUP:
 				logrus.WithField("signal", sig).Info("Received termination signal, shutting down gracefully")
-				h.cancel()
+				h.cancelCause(context.Canceled)
 				return
 			}
 		case <-h.ctx.Done():

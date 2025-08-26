@@ -68,8 +68,22 @@ func main() {
 
 	logrus.WithField("version", Version).Debug("Starting Hyprland Dynamic Monitor Manager")
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancelCause(context.Background())
+	err := createApplication(configPath, dryRun, ctx, cancel)
+	if err == nil {
+		logrus.Info("Exiting...")
+		return
+	}
+	if errors.Is(err, context.Canceled) {
+		logrus.WithError(err).Info("Context cancelled, exiting")
+		return
+	}
 
+	// otherwise there is a real error
+	logrus.WithError(err).Fatal("Service failed")
+}
+
+func createApplication(configPath *string, dryRun *bool, ctx context.Context, cancel context.CancelCauseFunc) error {
 	cfg, err := config.Load(*configPath)
 	if err != nil {
 		logrus.WithError(err).Fatal("Failed to load configuration")
@@ -105,9 +119,11 @@ func main() {
 
 	signalHandler := signal.NewHandler(ctx, cancel)
 
-	if err := run(ctx, svc, hyprIPC, monitorDetector, powerDetector, signalHandler); err != nil && !errors.Is(err, context.Canceled) {
-		logrus.WithError(err).Fatal("Service failed")
+	if err := run(ctx, svc, hyprIPC, monitorDetector, powerDetector, signalHandler); err != nil {
+		return err
 	}
+
+	return nil
 }
 
 func run(ctx context.Context, svc *service.Service, hyprIPC *hypr.IPC,
@@ -132,9 +148,6 @@ func run(ctx context.Context, svc *service.Service, hyprIPC *hypr.IPC,
 			fields := logrus.Fields{"name": bg.Name, "fun": bg.Fun}
 			logrus.WithFields(fields).Debug("Starting")
 			if err := bg.Fun(ctx); err != nil {
-				if errors.Is(err, context.Canceled) {
-					return fmt.Errorf("%s cancelled: %w", bg.Name, err)
-				}
 				return fmt.Errorf("%s failed: %w", bg.Name, err)
 			}
 			logrus.WithFields(fields).Debug("Finished")

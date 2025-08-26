@@ -73,12 +73,12 @@ func (p *PowerDetector) GetCurrentState(ctx context.Context) (PowerState, error)
 	err := obj.CallWithContext(ctx, p.cfg.DbusQueryObject.Method, 0,
 		p.cfg.DbusQueryObject.CollectArgs()...).Store(&onBattery)
 	if err != nil {
-		return Battery, fmt.Errorf("failed to get OnBattery property from UPower: %w", err)
+		return Battery, fmt.Errorf("failed to get property from UPower: %w", err)
 	}
 
 	onBatteryValue, ok := onBattery.Value().(bool)
 	if !ok {
-		return Battery, fmt.Errorf("unexpected OnBattery value type: %T", onBattery.Value())
+		return Battery, fmt.Errorf("unexpected value type: %T", onBattery.Value())
 	}
 
 	logrus.WithField("on_battery", onBatteryValue).Debug("UPower OnBattery property")
@@ -124,11 +124,11 @@ func (p *PowerDetector) getExpectedSignalNames() []string {
 func (p *PowerDetector) Run(ctx context.Context) error {
 	rules := p.createMatchRules()
 	for _, ruleSet := range rules {
-		if err := p.conn.AddMatchSignal(ruleSet...); err != nil {
+		if err := p.conn.AddMatchSignalContext(ctx, ruleSet...); err != nil {
 			logrus.WithFields(logrus.Fields{
 				"error": err,
-			}).Debug("Failed to add D-Bus match rule for UPower PropertiesChanged")
-			return fmt.Errorf("cant add UPower signal rule for dbus: %w", err)
+			}).Debug("Failed to add D-Bus match rule")
+			return fmt.Errorf("cant add signal rule for dbus: %w", err)
 		}
 	}
 	p.conn.Signal(p.signals)
