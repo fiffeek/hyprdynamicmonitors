@@ -1,4 +1,6 @@
-# HyprDynamicMonitors
+<img src="https://github.com/user-attachments/assets/0effc242-3d3d-4d39-a183-0a567c4da3a9" width="90" style="margin-right:10px" align=left alt="hyprdynamicmonitors logo">
+<H1>HyprDynamicMonitors</H1><br>
+
 
 An event-driven service that automatically manages Hyprland monitor configurations based on connected displays and power state. The service monitors for display connection/disconnection events and power state changes (AC/Battery), then dynamically switches between predefined Hyprland configuration profiles.
 
