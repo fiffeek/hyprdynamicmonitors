@@ -76,13 +76,13 @@ func (p *PowerDetector) GetCurrentState(ctx context.Context) (PowerState, error)
 		return Battery, fmt.Errorf("failed to get property from UPower: %w", err)
 	}
 
-	onBatteryValue, ok := onBattery.Value().(bool)
-	if !ok {
-		return Battery, fmt.Errorf("unexpected value type: %T", onBattery.Value())
-	}
+	state := onBattery.String()
 
-	logrus.WithField("on_battery", onBatteryValue).Debug("UPower OnBattery property")
-	if onBatteryValue {
+	logrus.WithFields(logrus.Fields{
+		"upower_reported_state": state,
+		"expected":              p.cfg.DbusQueryObject.ExpectedDischargingValue,
+	}).Debug("UPower state property")
+	if state == p.cfg.DbusQueryObject.ExpectedDischargingValue {
 		return Battery, nil
 	}
 	return ACPower, nil

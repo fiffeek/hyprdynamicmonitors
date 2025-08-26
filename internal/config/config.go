@@ -29,10 +29,11 @@ type PowerSection struct {
 }
 
 type DbusQueryObject struct {
-	Destination string               `toml:"destination"`
-	Path        string               `toml:"path"`
-	Method      string               `toml:"method"`
-	Args        []DbusQueryObjectArg `toml:"args"`
+	Destination              string               `toml:"destination"`
+	Path                     string               `toml:"path"`
+	Method                   string               `toml:"method"`
+	Args                     []DbusQueryObjectArg `toml:"args"`
+	ExpectedDischargingValue string               `toml:"expected_discharging_value"`
 }
 
 type DbusQueryObjectArg struct {
@@ -211,7 +212,7 @@ func (g *GeneralSection) Validate() error {
 	g.Destination = &dest
 
 	if g.DebounceTimeMs == nil {
-		g.DebounceTimeMs = utils.IntPtr(1500)
+		g.DebounceTimeMs = utils.IntPtr(3000)
 	}
 
 	return nil
@@ -299,24 +300,15 @@ func (ps *PowerSection) Validate() error {
 		ps.Disabled = utils.BoolPtr(false)
 	}
 	if len(ps.DbusSignalMatchRules) == 0 {
+		// listen to
+		// gdbus monitor -y -d org.freedesktop.UPower | grep -E "PropertiesChanged|Device(Added|Removed)"
+		// to see the events
+		// e.g. /org/freedesktop/UPower/devices/line_power_ACAD: org.freedesktop.DBus.Properties.PropertiesChanged ('org.freedesktop.UPower.Device', {'UpdateTime': <uint64 1756242314>, 'Online': <true>}, @as [])
 		ps.DbusSignalMatchRules = []*DbusSignalMatchRule{
 			{
-				Sender:     utils.StringPtr("org.freedesktop.UPower"),
-				Interface:  utils.StringPtr("org.freedesktop.UPower"),
-				Member:     utils.StringPtr("DeviceAdded"),
-				ObjectPath: utils.StringPtr("/org/freedesktop/UPower"),
-			},
-			{
-				Sender:     utils.StringPtr("org.freedesktop.UPower"),
-				Interface:  utils.StringPtr("org.freedesktop.UPower"),
-				Member:     utils.StringPtr("DeviceRemoved"),
-				ObjectPath: utils.StringPtr("/org/freedesktop/UPower"),
-			},
-			{
-				Sender:     utils.StringPtr("org.freedesktop.UPower"),
-				Interface:  utils.StringPtr("org.freedesktop.UPower.Properties"),
+				Interface:  utils.StringPtr("org.freedesktop.DBus.Properties"),
 				Member:     utils.StringPtr("PropertiesChanged"),
-				ObjectPath: utils.StringPtr("/org/freedesktop/UPower"),
+				ObjectPath: utils.StringPtr("/org/freedesktop/UPower/devices/line_power_ACAD"),
 			},
 		}
 	}
@@ -330,8 +322,6 @@ func (ps *PowerSection) Validate() error {
 	if ps.DbusSignalReceiveFilters == nil {
 		ps.DbusSignalReceiveFilters = []*DbusSignalReceiveFilter{
 			{Name: utils.StringPtr("org.freedesktop.DBus.Properties.PropertiesChanged")},
-			{Name: utils.StringPtr("org.freedesktop.UPower.DeviceAdded")},
-			{Name: utils.StringPtr("org.freedesktop.UPower.DeviceRemoved")},
 		}
 	}
 
@@ -342,15 +332,7 @@ func (ps *PowerSection) Validate() error {
 	}
 
 	if ps.DbusQueryObject == nil {
-		ps.DbusQueryObject = &DbusQueryObject{
-			Destination: "org.freedesktop.UPower",
-			Path:        "/org/freedesktop/UPower",
-			Method:      "org.freedesktop.DBus.Properties.Get",
-			Args: []DbusQueryObjectArg{
-				{Arg: "org.freedesktop.UPower"},
-				{Arg: "OnBattery"},
-			},
-		}
+		ps.DbusQueryObject = &DbusQueryObject{}
 	}
 
 	if err := ps.DbusQueryObject.Validate(); err != nil {
@@ -369,14 +351,30 @@ func (d *DbusQueryObject) CollectArgs() []interface{} {
 }
 
 func (d *DbusQueryObject) Validate() error {
+	// dbus-send --system --print-reply \
+	//   --dest=org.freedesktop.UPower \
+	//   /org/freedesktop/UPower/devices/line_power_ACAD \
+	//   org.freedesktop.DBus.Properties.Get \
+	//   string:org.freedesktop.UPower.Device \
+	//   string:Online
+
 	if d.Destination == "" {
-		return errors.New("destination cant be empty")
+		d.Destination = "org.freedesktop.UPower"
 	}
 	if d.Method == "" {
-		return errors.New("method cant be empty")
+		d.Method = "org.freedesktop.DBus.Properties.Get"
 	}
 	if d.Path == "" {
-		return errors.New("path cant be empty")
+		d.Path = "/org/freedesktop/UPower/devices/line_power_ACAD"
+	}
+	if len(d.Args) == 0 {
+		d.Args = []DbusQueryObjectArg{
+			{Arg: "org.freedesktop.UPower.Device"},
+			{Arg: "Online"},
+		}
+	}
+	if d.ExpectedDischargingValue == "" {
+		d.ExpectedDischargingValue = "false"
 	}
 	for _, arg := range d.Args {
 		if arg.Arg == "" {

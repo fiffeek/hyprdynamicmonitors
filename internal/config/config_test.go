@@ -112,29 +112,21 @@ func TestLoad(t *testing.T) {
 				if c.PowerEvents == nil {
 					t.Error("power events section should not be nil after validation")
 				} else {
-					if len(c.PowerEvents.DbusSignalMatchRules) != 3 {
-						t.Errorf("expected 3 default dbus match rules, got %d",
+					if len(c.PowerEvents.DbusSignalMatchRules) != 1 {
+						t.Errorf("expected 1 default dbus match rule, got %d",
 							len(c.PowerEvents.DbusSignalMatchRules))
 					}
 
-					if len(c.PowerEvents.DbusSignalReceiveFilters) != 3 {
-						t.Errorf("expected 3 default dbus receive filters, got %d",
+					if len(c.PowerEvents.DbusSignalReceiveFilters) != 1 {
+						t.Errorf("expected 1 default dbus receive filter, got %d",
 							len(c.PowerEvents.DbusSignalReceiveFilters))
 					}
 
-					expectedRules := map[string]bool{
-						"DeviceAdded":       false,
-						"DeviceRemoved":     false,
-						"PropertiesChanged": false,
-					}
-					for _, rule := range c.PowerEvents.DbusSignalMatchRules {
-						if rule.Member != nil {
-							expectedRules[*rule.Member] = true
-						}
-					}
-					for member, found := range expectedRules {
-						if !found {
-							t.Errorf("expected default rule for %s not found", member)
+					// Check that the single rule is PropertiesChanged
+					if len(c.PowerEvents.DbusSignalMatchRules) > 0 {
+						rule := c.PowerEvents.DbusSignalMatchRules[0]
+						if rule.Member == nil || *rule.Member != "PropertiesChanged" {
+							t.Errorf("expected PropertiesChanged rule, got %v", rule.Member)
 						}
 					}
 				}
@@ -197,9 +189,10 @@ func TestLoad(t *testing.T) {
 				}
 
 				expectedQuery := &config.DbusQueryObject{
-					Destination: "org.freedesktop.UPower",
-					Path:        "/org/freedesktop/UPower",
-					Method:      "org.freedesktop.DBus.Properties.Get",
+					Destination:              "org.freedesktop.UPower",
+					Path:                     "/org/freedesktop/UPower",
+					Method:                   "org.freedesktop.DBus.Properties.Get",
+					ExpectedDischargingValue: "false",
 					Args: []config.DbusQueryObjectArg{
 						{Arg: "org.freedesktop.UPower"},
 						{Arg: "LidIsPresent"},
@@ -215,10 +208,13 @@ func TestLoad(t *testing.T) {
 			},
 		},
 		{
-			name:          "invalid - empty upower destination",
-			configFile:    "invalid_upower_empty_destination.toml",
-			expectError:   true,
-			errorContains: "destination cant be empty",
+			name:       "empty upower destination gets default",
+			configFile: "invalid_upower_empty_destination.toml",
+			validate: func(t *testing.T, c *config.Config) {
+				if c.PowerEvents.DbusQueryObject.Destination != "org.freedesktop.UPower" {
+					t.Errorf("expected default destination, got %s", c.PowerEvents.DbusQueryObject.Destination)
+				}
+			},
 		},
 		{
 			name:          "invalid - empty upower args",
@@ -606,34 +602,22 @@ func TestPowerSectionValidate(t *testing.T) {
 			}
 
 			if tt.name == "nil power section gets defaults" {
-				if len(tt.powerEvents.DbusSignalMatchRules) != 3 {
-					t.Errorf("expected 3 default match rules, got %d",
+				if len(tt.powerEvents.DbusSignalMatchRules) != 1 {
+					t.Errorf("expected 1 default match rule, got %d",
 						len(tt.powerEvents.DbusSignalMatchRules))
 				}
-				if len(tt.powerEvents.DbusSignalReceiveFilters) != 3 {
-					t.Errorf("expected 3 default receive filters, got %d",
+				if len(tt.powerEvents.DbusSignalReceiveFilters) != 1 {
+					t.Errorf("expected 1 default receive filter, got %d",
 						len(tt.powerEvents.DbusSignalReceiveFilters))
 				}
 
-				expectedSignals := []string{
-					"org.freedesktop.DBus.Properties.PropertiesChanged",
-					"org.freedesktop.UPower.DeviceAdded",
-					"org.freedesktop.UPower.DeviceRemoved",
-				}
-				for i, filter := range tt.powerEvents.DbusSignalReceiveFilters {
+				// Check that the single filter is PropertiesChanged
+				if len(tt.powerEvents.DbusSignalReceiveFilters) > 0 {
+					filter := tt.powerEvents.DbusSignalReceiveFilters[0]
 					if filter.Name == nil {
-						t.Errorf("filter %d name should not be nil", i)
-					} else {
-						found := false
-						for _, expected := range expectedSignals {
-							if *filter.Name == expected {
-								found = true
-								break
-							}
-						}
-						if !found {
-							t.Errorf("unexpected default filter name: %s", *filter.Name)
-						}
+						t.Error("filter name should not be nil")
+					} else if *filter.Name != "org.freedesktop.DBus.Properties.PropertiesChanged" {
+						t.Errorf("expected PropertiesChanged filter, got %s", *filter.Name)
 					}
 				}
 			}
@@ -685,7 +669,7 @@ func TestDbusQueryObjectValidate(t *testing.T) {
 			},
 		},
 		{
-			name: "empty destination",
+			name: "empty destination gets default",
 			queryObject: &config.DbusQueryObject{
 				Destination: "",
 				Path:        "/org/freedesktop/UPower",
@@ -695,11 +679,9 @@ func TestDbusQueryObjectValidate(t *testing.T) {
 					{Arg: "OnBattery"},
 				},
 			},
-			expectError:   true,
-			errorContains: "destination cant be empty",
 		},
 		{
-			name: "empty path",
+			name: "empty path gets default",
 			queryObject: &config.DbusQueryObject{
 				Destination: "org.freedesktop.UPower",
 				Path:        "",
@@ -709,11 +691,9 @@ func TestDbusQueryObjectValidate(t *testing.T) {
 					{Arg: "OnBattery"},
 				},
 			},
-			expectError:   true,
-			errorContains: "path cant be empty",
 		},
 		{
-			name: "empty method",
+			name: "empty method gets default",
 			queryObject: &config.DbusQueryObject{
 				Destination: "org.freedesktop.UPower",
 				Path:        "/org/freedesktop/UPower",
@@ -723,8 +703,6 @@ func TestDbusQueryObjectValidate(t *testing.T) {
 					{Arg: "OnBattery"},
 				},
 			},
-			expectError:   true,
-			errorContains: "method cant be empty",
 		},
 		{
 			name: "empty arg",
@@ -831,19 +809,20 @@ func TestPowerSectionDbusQueryObjectDefaults(t *testing.T) {
 	assert.NotNil(t, powerSection.DbusQueryObject, "default DbusQueryObject should be set")
 
 	expected := &config.DbusQueryObject{
-		Destination: "org.freedesktop.UPower",
-		Path:        "/org/freedesktop/UPower",
-		Method:      "org.freedesktop.DBus.Properties.Get",
+		Destination:              "org.freedesktop.UPower",
+		Path:                     "/org/freedesktop/UPower/devices/line_power_ACAD",
+		Method:                   "org.freedesktop.DBus.Properties.Get",
+		ExpectedDischargingValue: "false",
 		Args: []config.DbusQueryObjectArg{
-			{Arg: "org.freedesktop.UPower"},
-			{Arg: "OnBattery"},
+			{Arg: "org.freedesktop.UPower.Device"},
+			{Arg: "Online"},
 		},
 	}
 
 	assert.Equal(t, expected, powerSection.DbusQueryObject,
 		"default DbusQueryObject should match expected")
 
-	expectedCollectedArgs := []interface{}{"org.freedesktop.UPower", "OnBattery"}
+	expectedCollectedArgs := []interface{}{"org.freedesktop.UPower.Device", "Online"}
 	collectedArgs := powerSection.DbusQueryObject.CollectArgs()
 	assert.Equal(t, expectedCollectedArgs, collectedArgs, "collected args should match expected")
 }

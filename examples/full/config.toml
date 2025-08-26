@@ -16,30 +16,41 @@ disabled = false
 
 # Control the query for the current battery state, the default (underneath)
 # effectively performs:
+#
 # dbus-send --system --print-reply \
 #   --dest=org.freedesktop.UPower \
-#   /org/freedesktop/UPower \
+#   /org/freedesktop/UPower/devices/line_power_ACAD \
 #   org.freedesktop.DBus.Properties.Get \
-#   string:org.freedesktop.UPower \
-#   string:OnBattery
+#   string:org.freedesktop.UPower.Device \
+#   string:Online
 # The code expects a single boolean as the result
 [power_events.dbus_query_object]
 destination = "org.freedesktop.UPower"
-path = "/org/freedesktop/UPower"
+path = "/org/freedesktop/UPower/devices/line_power_ACAD"
 method = "org.freedesktop.DBus.Properties.Get"
+# expected value returned from the query
+# will compare it as strings, see logs
+expected_discharging_value = "false"
 
 [[power_events.dbus_query_object.args]]
-arg = "org.freedesktop.UPower"
+arg = "org.freedesktop.UPower.Device"
 
 [[power_events.dbus_query_object.args]]
-arg = "OnBattery"
+arg = "Online"
 
 # Custom D-Bus signal matching rules (optional)
 # These rules determine which D-Bus signals to listen for
 # Default rules work with standard UPower installations
+# You can listen to the events yourself:
+# $ gdbus monitor -y -d org.freedesktop.UPower | grep -E "PropertiesChanged|Device(Added|Removed)"
+# to see the events
+# /org/freedesktop/UPower/devices/line_power_ACAD: org.freedesktop.DBus.Properties.PropertiesChanged \
+#   ('org.freedesktop.UPower.Device', {'UpdateTime': <uint64 1756242314>, 'Online': <true>}, @as [])
+#
+
 [[power_events.dbus_signal_match_rules]]
 interface = "org.freedesktop.DBus.Properties"
-object_path = "/org/freedesktop/UPower"
+object_path = "/org/freedesktop/UPower/devices/line_power_ACAD"
 member = "PropertiesChanged"
 # sender = "org.freedesktop.UPower"  # Optional: specific sender
 
