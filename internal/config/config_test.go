@@ -212,7 +212,8 @@ func TestLoad(t *testing.T) {
 			configFile: "invalid_upower_empty_destination.toml",
 			validate: func(t *testing.T, c *config.Config) {
 				if c.PowerEvents.DbusQueryObject.Destination != "org.freedesktop.UPower" {
-					t.Errorf("expected default destination, got %s", c.PowerEvents.DbusQueryObject.Destination)
+					t.Errorf("expected default destination, got %s",
+						c.PowerEvents.DbusQueryObject.Destination)
 				}
 			},
 		},
@@ -566,13 +567,24 @@ func TestPowerSectionValidate(t *testing.T) {
 			},
 		},
 		{
-			name: "invalid match rule - all nil",
+			name: "empty match rule gets defaults",
 			powerEvents: &config.PowerSection{
 				DbusSignalMatchRules: []*config.DbusSignalMatchRule{
-					{}, // empty rule should fail validation
+					{}, // empty rule should get defaults
 				},
 			},
-			expectError: true,
+		},
+		{
+			name: "leave empty token removes field",
+			powerEvents: &config.PowerSection{
+				DbusSignalMatchRules: []*config.DbusSignalMatchRule{
+					{
+						Interface:  utils.StringPtr(config.LeaveEmpty),
+						Member:     utils.StringPtr("CustomMember"),
+						ObjectPath: utils.StringPtr(config.LeaveEmpty),
+					},
+				},
+			},
 		},
 		{
 			name: "invalid receive filter - nil name",
@@ -620,6 +632,119 @@ func TestPowerSectionValidate(t *testing.T) {
 						t.Errorf("expected PropertiesChanged filter, got %s", *filter.Name)
 					}
 				}
+			}
+
+			if tt.name == "leave empty token removes field" {
+				if len(tt.powerEvents.DbusSignalMatchRules) > 0 {
+					rule := tt.powerEvents.DbusSignalMatchRules[0]
+					if rule.Interface != nil {
+						t.Error("Interface should be nil after LeaveEmpty token processing")
+					}
+					if rule.Member == nil || *rule.Member != "CustomMember" {
+						t.Error("Member should remain as CustomMember")
+					}
+					if rule.ObjectPath != nil {
+						t.Error("ObjectPath should be nil after LeaveEmpty token processing")
+					}
+				}
+			}
+		})
+	}
+}
+
+func TestDbusSignalMatchRuleLeaveEmptyToken(t *testing.T) {
+	tests := []struct {
+		name      string
+		rule      *config.DbusSignalMatchRule
+		expectNil map[string]bool // which fields should be nil after validation
+	}{
+		{
+			name: "interface leave empty token",
+			rule: &config.DbusSignalMatchRule{
+				Interface:  utils.StringPtr(config.LeaveEmpty),
+				Member:     utils.StringPtr("TestMember"),
+				ObjectPath: utils.StringPtr("/test/path"),
+			},
+			expectNil: map[string]bool{
+				"interface": true,
+			},
+		},
+		{
+			name: "member leave empty token",
+			rule: &config.DbusSignalMatchRule{
+				Interface:  utils.StringPtr("test.interface"),
+				Member:     utils.StringPtr(config.LeaveEmpty),
+				ObjectPath: utils.StringPtr("/test/path"),
+			},
+			expectNil: map[string]bool{
+				"member": true,
+			},
+		},
+		{
+			name: "object path leave empty token",
+			rule: &config.DbusSignalMatchRule{
+				Interface:  utils.StringPtr("test.interface"),
+				Member:     utils.StringPtr("TestMember"),
+				ObjectPath: utils.StringPtr(config.LeaveEmpty),
+			},
+			expectNil: map[string]bool{
+				"objectPath": true,
+			},
+		},
+		{
+			name: "multiple leave empty tokens",
+			rule: &config.DbusSignalMatchRule{
+				Interface:  utils.StringPtr(config.LeaveEmpty),
+				Member:     utils.StringPtr("TestMember"),
+				ObjectPath: utils.StringPtr(config.LeaveEmpty),
+			},
+			expectNil: map[string]bool{
+				"interface":  true,
+				"objectPath": true,
+			},
+		},
+		{
+			name: "nil fields get defaults",
+			rule: &config.DbusSignalMatchRule{
+				Sender: utils.StringPtr("test.sender"),
+			},
+			expectNil: map[string]bool{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.rule.Validate()
+			if err != nil {
+				t.Errorf("unexpected error: %v", err)
+				return
+			}
+
+			// Check interface
+			if tt.expectNil["interface"] {
+				if tt.rule.Interface != nil {
+					t.Error("Interface should be nil after LeaveEmpty processing")
+				}
+			} else if tt.rule.Interface == nil && tt.name == "nil fields get defaults" {
+				t.Error("Interface should have default value when nil")
+			}
+
+			// Check member
+			if tt.expectNil["member"] {
+				if tt.rule.Member != nil {
+					t.Error("Member should be nil after LeaveEmpty processing")
+				}
+			} else if tt.rule.Member == nil && tt.name == "nil fields get defaults" {
+				t.Error("Member should have default value when nil")
+			}
+
+			// Check object path
+			if tt.expectNil["objectPath"] {
+				if tt.rule.ObjectPath != nil {
+					t.Error("ObjectPath should be nil after LeaveEmpty processing")
+				}
+			} else if tt.rule.ObjectPath == nil && tt.name == "nil fields get defaults" {
+				t.Error("ObjectPath should have default value when nil")
 			}
 		})
 	}

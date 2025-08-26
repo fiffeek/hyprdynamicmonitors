@@ -1,0 +1,12 @@
+# Configuration generated for power state: {{.PowerState}}
+
+{{- $laptop := index .MonitorsByTag "laptop" -}}
+
+{{- if $laptop -}}
+{{- if isOnBattery }}
+monitor={{$laptop.Name}},2880x1920@60.00000,0x0,2.0,vrr,0
+{{- else }}
+# AC mode: Full performance
+monitor={{$laptop.Name}},2880x1920@120.00000,0x0,2.0,vrr,1
+{{- end -}}
+{{- end -}}

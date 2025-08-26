@@ -13,6 +13,8 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+const LeaveEmpty = "leaveEmptyToken"
+
 type Config struct {
 	configPath  string
 	Profiles    map[string]*Profile `toml:"profiles"`
@@ -305,11 +307,7 @@ func (ps *PowerSection) Validate() error {
 		// to see the events
 		// e.g. /org/freedesktop/UPower/devices/line_power_ACAD: org.freedesktop.DBus.Properties.PropertiesChanged ('org.freedesktop.UPower.Device', {'UpdateTime': <uint64 1756242314>, 'Online': <true>}, @as [])
 		ps.DbusSignalMatchRules = []*DbusSignalMatchRule{
-			{
-				Interface:  utils.StringPtr("org.freedesktop.DBus.Properties"),
-				Member:     utils.StringPtr("PropertiesChanged"),
-				ObjectPath: utils.StringPtr("/org/freedesktop/UPower/devices/line_power_ACAD"),
-			},
+			{},
 		}
 	}
 
@@ -385,6 +383,21 @@ func (d *DbusQueryObject) Validate() error {
 }
 
 func (dr *DbusSignalMatchRule) Validate() error {
+	if dr.Interface != nil && *dr.Interface == LeaveEmpty {
+		dr.Interface = nil
+	} else if dr.Interface == nil {
+		dr.Interface = utils.StringPtr("org.freedesktop.DBus.Properties")
+	}
+	if dr.Member != nil && *dr.Member == LeaveEmpty {
+		dr.Member = nil
+	} else if dr.Member == nil {
+		dr.Member = utils.StringPtr("PropertiesChanged")
+	}
+	if dr.ObjectPath != nil && *dr.ObjectPath == LeaveEmpty {
+		dr.ObjectPath = nil
+	} else if dr.ObjectPath == nil {
+		dr.ObjectPath = utils.StringPtr("/org/freedesktop/UPower/devices/line_power_ACAD")
+	}
 	if dr.Interface == nil && dr.Sender == nil && dr.Member == nil && dr.ObjectPath == nil {
 		return errors.New("dbus rule cant be empty")
 	}
