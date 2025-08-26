@@ -17,6 +17,7 @@ import (
 	"github.com/fiffeek/hyprdynamicmonitors/internal/matchers"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/service"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/signal"
+	"github.com/fiffeek/hyprdynamicmonitors/internal/utils"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
 )
@@ -145,7 +146,7 @@ func run(ctx context.Context, svc *service.Service, hyprIPC *hypr.IPC,
 	}
 	for _, bg := range backgroundGoroutines {
 		eg.Go(func() error {
-			fields := logrus.Fields{"name": bg.Name, "fun": bg.Fun}
+			fields := logrus.Fields{"name": bg.Name, "fun": utils.GetFunctionName(bg.Fun)}
 			logrus.WithFields(fields).Debug("Starting")
 			if err := bg.Fun(ctx); err != nil {
 				return fmt.Errorf("%s failed: %w", bg.Name, err)
