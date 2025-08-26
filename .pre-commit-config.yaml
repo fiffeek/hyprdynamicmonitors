@@ -24,3 +24,10 @@ repos:
       hooks:
           - id: go-fmt
           - id: golangci-lint-repo-mod
+    - repo: local
+      hooks:
+          - id: commintlint
+            name: lint commit message
+            stages: [commit-msg]
+            entry: npx commitlint --edit
+            language: system

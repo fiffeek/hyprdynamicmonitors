@@ -3,11 +3,19 @@ PYTHON_BIN := python
 PRECOMMIT_FILE := .pre-commit-config.yaml
 VENV := venv
 REQUIREMENTS_FILE := requirements.txt
+PACKAGE_LOCK := package-lock.json
+COMMITLINT_FILE := commitlint.config.js
+NPM_BIN := npm
 GOLANGCI_LINT_BIN := golangci-lint
 GOLANG_BIN := go
 GORELEASER_BIN := goreleaser
 
-install: $(INSTALL_DIR)/.dir.stamp $(INSTALL_DIR)/.asdf.stamp $(INSTALL_DIR)/.venv.stamp $(INSTALL_DIR)/.precommit.stamp
+install: \
+	$(INSTALL_DIR)/.dir.stamp \
+	$(INSTALL_DIR)/.asdf.stamp \
+	$(INSTALL_DIR)/.venv.stamp \
+	$(INSTALL_DIR)/.npm.stamp \
+	$(INSTALL_DIR)/.precommit.stamp
 
 $(INSTALL_DIR)/.dir.stamp:
 	mkdir -p $(INSTALL_DIR)
@@ -17,6 +25,10 @@ $(INSTALL_DIR)/.asdf.stamp:
 	asdf install
 	touch $@
 
+$(INSTALL_DIR)/.npm.stamp: $(PACKAGE_LOCK) $(INSTALL_DIR)/.asdf.stamp
+	$(NPM_BIN) install
+	touch $@
+
 $(INSTALL_DIR)/.venv.stamp: $(REQUIREMENTS_FILE) $(INSTALL_DIR)/.asdf.stamp
 	test -d "$(VENV)" || $(PYTHON_BIN) -m venv "$(VENV)"
 	. "$(VENV)/bin/activate"; \
@@ -24,8 +36,9 @@ $(INSTALL_DIR)/.venv.stamp: $(REQUIREMENTS_FILE) $(INSTALL_DIR)/.asdf.stamp
 		pip install -r "$(REQUIREMENTS_FILE)"
 	touch $@
 
-$(INSTALL_DIR)/.precommit.stamp: $(PRECOMMIT_FILE) $(INSTALL_DIR)/.venv.stamp
-	. "$(VENV)/bin/activate"; pre-commit install
+$(INSTALL_DIR)/.precommit.stamp: $(PRECOMMIT_FILE) $(INSTALL_DIR)/.venv.stamp $(COMMITLINT_FILE)
+	. "$(VENV)/bin/activate"; pre-commit install \
+		pre-commit install --hook-type commit-msg
 	touch $@
 
 test:
