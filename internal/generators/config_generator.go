@@ -10,6 +10,7 @@ import (
 	"github.com/fiffeek/hyprdynamicmonitors/internal/config"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/detectors"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/hypr"
+	"github.com/fiffeek/hyprdynamicmonitors/internal/utils"
 	"github.com/sirupsen/logrus"
 )
 
@@ -21,28 +22,63 @@ func NewConfigGenerator() *ConfigGenerator {
 
 func (g *ConfigGenerator) GenerateConfig(profile *config.Profile,
 	connectedMonitors []*hypr.MonitorSpec, powerState detectors.PowerState, destination string,
-) error {
+) (bool, error) {
 	switch *profile.ConfigType {
 	case config.Static:
 		return g.linkConfigFile(profile, destination)
 	case config.Template:
 		return g.renderTemplateFile(profile, connectedMonitors, powerState, destination)
 	default:
-		return fmt.Errorf("unsupported config type: %v", *profile.ConfigType)
+		return false, fmt.Errorf("unsupported config type: %v", *profile.ConfigType)
 	}
 }
 
 func (g *ConfigGenerator) renderTemplateFile(profile *config.Profile,
 	connectedMonitors []*hypr.MonitorSpec, powerState detectors.PowerState, destination string,
-) error {
+) (bool, error) {
 	templatePath := profile.ConfigFile
 
 	//nolint:gosec
 	templateContent, err := os.ReadFile(templatePath)
 	if err != nil {
-		return fmt.Errorf("failed to read template file %s: %w", templatePath, err)
+		return false, fmt.Errorf("failed to read template file %s: %w", templatePath, err)
 	}
 
+	tmpl, err := template.New("config").Funcs(getFuncMap(powerState)).Parse(string(templateContent))
+	if err != nil {
+		return false, fmt.Errorf("failed to parse template: %w", err)
+	}
+
+	templateData := g.createTemplateData(profile, connectedMonitors, powerState)
+
+	var rendered bytes.Buffer
+	if err := tmpl.Execute(&rendered, templateData); err != nil {
+		return false, fmt.Errorf("failed to execute template: %w", err)
+	}
+
+	renderedContent := rendered.Bytes()
+	//nolint:gosec
+	if existingContent, err := os.ReadFile(destination); err == nil {
+		if bytes.Equal(existingContent, renderedContent) {
+			logrus.WithField("destination", destination).Info(
+				"Template content unchanged, skipping write")
+			return false, nil
+		}
+	}
+
+	if err := utils.WriteAtomic(destination, renderedContent); err != nil {
+		return false, fmt.Errorf("cant write to file %s, contents %s: %w", destination, renderedContent, err)
+	}
+
+	logrus.WithFields(logrus.Fields{
+		"config_file": templatePath,
+		"destination": destination,
+	}).Info("Successfully rendered template configuration")
+
+	return true, nil
+}
+
+func getFuncMap(powerState detectors.PowerState) template.FuncMap {
 	funcMap := template.FuncMap{
 		"isOnBattery": func() bool {
 			return powerState == detectors.Battery
@@ -54,44 +90,7 @@ func (g *ConfigGenerator) renderTemplateFile(profile *config.Profile,
 			return powerState.String()
 		},
 	}
-
-	tmpl, err := template.New("config").Funcs(funcMap).Parse(string(templateContent))
-	if err != nil {
-		return fmt.Errorf("failed to parse template: %w", err)
-	}
-
-	templateData := g.createTemplateData(profile, connectedMonitors, powerState)
-
-	var rendered bytes.Buffer
-	if err := tmpl.Execute(&rendered, templateData); err != nil {
-		return fmt.Errorf("failed to execute template: %w", err)
-	}
-
-	renderedContent := rendered.Bytes()
-	//nolint:gosec
-	if existingContent, err := os.ReadFile(destination); err == nil {
-		if bytes.Equal(existingContent, renderedContent) {
-			logrus.WithField("destination", destination).Debug(
-				"Template content unchanged, skipping write")
-			return nil
-		}
-	}
-
-	tempFile := destination + ".tmp"
-	if err := os.WriteFile(tempFile, renderedContent, 0o600); err != nil {
-		return fmt.Errorf("failed to write temp config to %s: %w", tempFile, err)
-	}
-
-	if err := os.Rename(tempFile, destination); err != nil {
-		return fmt.Errorf("failed to rename temp config %s to %s: %w", tempFile, destination, err)
-	}
-
-	logrus.WithFields(logrus.Fields{
-		"config_file": profile.ConfigFile,
-		"destination": destination,
-	}).Info("Successfully rendered template configuration")
-
-	return nil
+	return funcMap
 }
 
 func (g *ConfigGenerator) createTemplateData(profile *config.Profile,
@@ -149,15 +148,29 @@ func (g *ConfigGenerator) monitorMatches(required *config.RequiredMonitor, conne
 	return true
 }
 
-func (g *ConfigGenerator) linkConfigFile(profile *config.Profile, destination string) error {
+func (g *ConfigGenerator) linkConfigFile(profile *config.Profile, destination string) (bool, error) {
 	source := profile.ConfigFile
-	if _, err := os.Lstat(destination); err == nil {
+	if fileInfo, err := os.Lstat(destination); err == nil {
+		if fileInfo.Mode()&os.ModeSymlink != 0 {
+			target, err := os.Readlink(destination)
+			if err != nil {
+				return false, fmt.Errorf("cant readlink %s: %w", destination, err)
+			}
+			if target == source {
+				logrus.WithFields(logrus.Fields{
+					"config_file": profile.ConfigFile,
+					"destination": destination,
+				}).Info("Configuration already correctly linked")
+				return false, nil
+			}
+		}
+
 		if err := os.Remove(destination); err != nil {
-			return fmt.Errorf("failed to remove existing config: %w", err)
+			return false, fmt.Errorf("failed to remove existing config: %w", err)
 		}
 	}
 	if err := os.Symlink(source, destination); err != nil {
-		return fmt.Errorf("failed to create symlink from %s to %s: %w", source, destination, err)
+		return false, fmt.Errorf("failed to create symlink from %s to %s: %w", source, destination, err)
 	}
 
 	logrus.WithFields(logrus.Fields{
@@ -165,5 +178,5 @@ func (g *ConfigGenerator) linkConfigFile(profile *config.Profile, destination st
 		"destination": destination,
 	}).Info("Successfully linked configuration")
 
-	return nil
+	return true, nil
 }

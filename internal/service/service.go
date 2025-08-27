@@ -201,8 +201,13 @@ func (s *Service) UpdateOnce() error {
 	logrus.WithFields(profileFields).Info("Using profile")
 
 	destination := *s.config.General.Destination
-	if err := s.generator.GenerateConfig(profile, monitors, powerState, destination); err != nil {
+	changed, err := s.generator.GenerateConfig(profile, monitors, powerState, destination)
+	if err != nil {
 		return fmt.Errorf("failed to generate config: %w", err)
+	}
+	if !changed {
+		logrus.Info("Not sending notifications since the config has not been changed")
+		return nil
 	}
 
 	if err := s.notificationsService.NotifyProfileApplied(profile); err != nil {
