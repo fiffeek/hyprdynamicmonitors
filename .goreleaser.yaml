@@ -23,6 +23,8 @@ archives:
           {{- else if eq .Arch "386" }}i386
           {{- else }}{{ .Arch }}{{ end }}
           {{- if .Arm }}v{{ .Arm }}{{ end }}
+      files:
+          - LICENSE
 
 changelog:
     sort: asc
@@ -43,3 +45,31 @@ release:
     github:
         owner: fiffeek
         name: hyprdynamicmonitors
+
+
+aurs:
+    - description: Dynamic monitor configuration for Hyprland.
+      skip_upload: false
+      provides:
+          - hyprdynamicmonitors-bin
+      maintainers:
+          - Filip Mikina <filipmikina at gmail dot com>
+      license: MIT
+      private_key: '{{ .Env.AUR_KEY }}'
+      git_url: ssh://aur@aur.archlinux.org/hyprdynamicmonitors-bin.git
+      depends:
+          - hyprland
+      optdepends:
+          - upower
+      commit_author:
+          name: Filip Mikina
+          email: filipmikina@gmail.con
+      package: |-
+          local x86_64=amd64 i686=386 aarch64=arm64 armv6h=armv6 armv7h=armv7
+          cd "hyprdynamicmonitors-${pkgver}-linux-${!CARCH}"
+
+          # bin
+          install -Dm755 "./hyprdynamicmonitors" "${pkgdir}/usr/bin/hyprdynamicmonitors"
+
+          # license
+          install -Dm644 "./LICENSE" "${pkgdir}/usr/share/licenses/hyprdynamicmonitors/LICENSE"
