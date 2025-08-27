@@ -12,3 +12,7 @@ func IntPtr(i int) *int {
 func BoolPtr(b bool) *bool {
 	return &b
 }
+
+func JustPtr[T any](v T) *T {
+	return &v
+}

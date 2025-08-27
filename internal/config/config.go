@@ -16,11 +16,16 @@ import (
 const LeaveEmpty = "leaveEmptyToken"
 
 type Config struct {
-	configPath  string
-	Profiles    map[string]*Profile `toml:"profiles"`
-	General     *GeneralSection     `toml:"general"`
-	Scoring     *ScoringSection     `toml:"scoring"`
-	PowerEvents *PowerSection       `toml:"power_events"`
+	configPath    string
+	Profiles      map[string]*Profile `toml:"profiles"`
+	General       *GeneralSection     `toml:"general"`
+	Scoring       *ScoringSection     `toml:"scoring"`
+	PowerEvents   *PowerSection       `toml:"power_events"`
+	Notifications *Notifications      `toml:"notifications"`
+}
+type Notifications struct {
+	Disabled  *bool  `toml:"disabled"`
+	TimeoutMs *int32 `toml:"timeout_ms"`
 }
 
 type PowerSection struct {
@@ -201,6 +206,23 @@ func (c *Config) Validate() error {
 		return fmt.Errorf("power events section validation failed: %w", err)
 	}
 
+	if c.Notifications == nil {
+		c.Notifications = &Notifications{}
+	}
+	if err := c.Notifications.Validate(); err != nil {
+		return fmt.Errorf("notifications section validation failed: %w", err)
+	}
+
+	return nil
+}
+
+func (n *Notifications) Validate() error {
+	if n.Disabled == nil {
+		n.Disabled = utils.BoolPtr(false)
+	}
+	if n.TimeoutMs == nil {
+		n.TimeoutMs = utils.JustPtr[int32](10000)
+	}
 	return nil
 }
 

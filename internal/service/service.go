@@ -13,6 +13,7 @@ import (
 	"github.com/fiffeek/hyprdynamicmonitors/internal/generators"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/hypr"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/matchers"
+	"github.com/fiffeek/hyprdynamicmonitors/internal/notifications"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
 )
@@ -24,12 +25,13 @@ type IPowerDetector interface {
 }
 
 type Service struct {
-	config          *config.Config
-	monitorDetector *detectors.MonitorDetector
-	powerDetector   IPowerDetector
-	matcher         *matchers.Matcher
-	serviceConfig   *Config
-	generator       *generators.ConfigGenerator
+	config               *config.Config
+	monitorDetector      *detectors.MonitorDetector
+	powerDetector        IPowerDetector
+	matcher              *matchers.Matcher
+	serviceConfig        *Config
+	generator            *generators.ConfigGenerator
+	notificationsService *notifications.Service
 
 	stateMu          sync.RWMutex
 	cachedMonitors   []*hypr.MonitorSpec
@@ -44,16 +46,18 @@ type Config struct {
 
 func NewService(cfg *config.Config, monitorDetector *detectors.MonitorDetector,
 	powerDetector IPowerDetector, svcCfg *Config, matcher *matchers.Matcher, generator *generators.ConfigGenerator,
+	notifications *notifications.Service,
 ) *Service {
 	return &Service{
-		config:           cfg,
-		monitorDetector:  monitorDetector,
-		powerDetector:    powerDetector,
-		serviceConfig:    svcCfg,
-		matcher:          matcher,
-		generator:        generator,
-		cachedPowerState: detectors.Battery,
-		debounceTimer:    time.NewTimer(0),
+		config:               cfg,
+		monitorDetector:      monitorDetector,
+		powerDetector:        powerDetector,
+		serviceConfig:        svcCfg,
+		matcher:              matcher,
+		generator:            generator,
+		cachedPowerState:     detectors.Battery,
+		debounceTimer:        time.NewTimer(0),
+		notificationsService: notifications,
 	}
 }
 
@@ -193,6 +197,10 @@ func (s *Service) UpdateOnce() error {
 	destination := *s.config.General.Destination
 	if err := s.generator.GenerateConfig(profile, monitors, powerState, destination); err != nil {
 		return fmt.Errorf("failed to generate config: %w", err)
+	}
+
+	if err := s.notificationsService.NotifyProfileApplied(profile); err != nil {
+		logrus.WithFields(profileFields).WithError(err).Error("swallowing notification error")
 	}
 
 	return nil

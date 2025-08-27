@@ -15,6 +15,7 @@ import (
 	"github.com/fiffeek/hyprdynamicmonitors/internal/generators"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/hypr"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/matchers"
+	"github.com/fiffeek/hyprdynamicmonitors/internal/notifications"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/service"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/signal"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/utils"
@@ -113,10 +114,11 @@ func createApplication(configPath *string, dryRun *bool, ctx context.Context, ca
 	matcher := matchers.NewMatcher(cfg)
 
 	generator := generators.NewConfigGenerator()
+	notifications := notifications.NewService(cfg)
 
 	svc := service.NewService(cfg, monitorDetector, powerDetector, &service.Config{
 		DryRun: *dryRun,
-	}, matcher, generator)
+	}, matcher, generator, notifications)
 
 	signalHandler := signal.NewHandler(ctx, cancel)
 
