@@ -27,6 +27,23 @@ TODO
 
 TODO
 
+### Build from Source
+
+Requires [asdf](https://asdf-vm.com/) to manage the Go toolchain:
+```bash
+# Build the binary (output goes to ./dest/)
+make
+
+# Install to custom location
+make DESTDIR=~/binaries install
+
+# Uninstall from custom location
+make DESTDIR=~/binaries uninstall
+
+# Install system-wide (may require sudo)
+sudo make DESTDIR=/usr/bin install
+```
+
 
 ### Minimal example
 
