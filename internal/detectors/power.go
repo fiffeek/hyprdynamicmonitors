@@ -1,3 +1,4 @@
+// Package detectors provides power state detection functionality.
 package detectors
 
 import (
@@ -41,12 +42,7 @@ type PowerDetector struct {
 	signals chan *dbus.Signal
 }
 
-func NewPowerDetector(ctx context.Context, cfg *config.PowerSection) (*PowerDetector, error) {
-	conn, err := dbus.ConnectSystemBus()
-	if err != nil {
-		return nil, fmt.Errorf("failed to connect to system D-Bus: %w", err)
-	}
-
+func NewPowerDetector(ctx context.Context, cfg *config.PowerSection, conn *dbus.Conn) (*PowerDetector, error) {
 	detector := &PowerDetector{
 		conn:    conn,
 		cfg:     cfg,

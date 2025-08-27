@@ -19,9 +19,16 @@ import (
 	"github.com/fiffeek/hyprdynamicmonitors/internal/service"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/signal"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/utils"
+	"github.com/godbus/dbus/v5"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
 )
+
+type IPowerDetector interface {
+	GetCurrentState(context.Context) (detectors.PowerState, error)
+	Listen() <-chan detectors.PowerEvent
+	Run(context.Context) error
+}
 
 var (
 	Version   = "dev"
@@ -96,16 +103,15 @@ func createApplication(configPath *string, dryRun *bool, ctx context.Context, ca
 		logrus.WithError(err).Fatal("Failed to initialize Hyprland IPC")
 	}
 
-	monitorDetector, err := detectors.NewMonitorDetector(ctx, hyprIPC)
-	if err != nil {
-		logrus.WithError(err).Fatal("Failed to initialize MonitorDetector")
-	}
-
-	var powerDetector service.IPowerDetector
+	var powerDetector IPowerDetector
 	if *cfg.PowerEvents.Disabled {
 		powerDetector = detectors.NewStaticPowerDetector(cfg.PowerEvents)
 	} else {
-		powerDetector, err = detectors.NewPowerDetector(ctx, cfg.PowerEvents)
+		conn, err := dbus.ConnectSystemBus()
+		if err != nil {
+			logrus.WithError(err).Fatal("Cant connect to system bus")
+		}
+		powerDetector, err = detectors.NewPowerDetector(ctx, cfg.PowerEvents, conn)
 		if err != nil {
 			logrus.WithError(err).Fatal("Failed to initialize PowerDetector")
 		}
@@ -116,13 +122,13 @@ func createApplication(configPath *string, dryRun *bool, ctx context.Context, ca
 	generator := generators.NewConfigGenerator()
 	notifications := notifications.NewService(cfg)
 
-	svc := service.NewService(cfg, monitorDetector, powerDetector, &service.Config{
+	svc := service.NewService(cfg, hyprIPC, powerDetector, &service.Config{
 		DryRun: *dryRun,
 	}, matcher, generator, notifications)
 
 	signalHandler := signal.NewHandler(ctx, cancel)
 
-	if err := run(ctx, svc, hyprIPC, monitorDetector, powerDetector, signalHandler); err != nil {
+	if err := run(ctx, svc, hyprIPC, powerDetector, signalHandler); err != nil {
 		return err
 	}
 
@@ -130,7 +136,7 @@ func createApplication(configPath *string, dryRun *bool, ctx context.Context, ca
 }
 
 func run(ctx context.Context, svc *service.Service, hyprIPC *hypr.IPC,
-	monitorDetector *detectors.MonitorDetector, powerDetector service.IPowerDetector, signalHandler *signal.Handler,
+	powerDetector IPowerDetector, signalHandler *signal.Handler,
 ) error {
 	signalHandler.Start(svc)
 	defer signalHandler.Stop()
@@ -142,7 +148,6 @@ func run(ctx context.Context, svc *service.Service, hyprIPC *hypr.IPC,
 		Name string
 	}{
 		{Fun: hyprIPC.RunEventLoop, Name: "hypr ipc"},
-		{Fun: monitorDetector.Run, Name: "monitor detector proxy"},
 		{Fun: powerDetector.Run, Name: "power detector dbus"},
 		{Fun: svc.Run, Name: "main service"},
 	}

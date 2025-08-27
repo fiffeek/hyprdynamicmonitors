@@ -13,11 +13,21 @@ type MonitorSpec struct {
 	Name        string `json:"name"`
 	ID          *int   `json:"id"`
 	Description string `json:"description"`
+	Disabled    bool   `json:"disabled"`
 }
 
 func (m *MonitorSpec) Validate() error {
-	if m.ID == nil || m.Description == "" || m.Name == "" {
-		return errors.New("monitor spec is invalid")
+	if m.ID == nil {
+		return errors.New("id cant be nil")
+	}
+	if *m.ID < 0 {
+		return errors.New("id cant < 0")
+	}
+	if m.Description == "" {
+		return errors.New("desc cant be empty")
+	}
+	if m.Name == "" {
+		return errors.New("name cant be empty")
 	}
 
 	return nil
@@ -27,12 +37,12 @@ type MonitorSpecs []*MonitorSpec
 
 func (m MonitorSpecs) Validate() error {
 	if len(m) == 0 {
-		return errors.New("no monitors")
+		return errors.New("no monitors detected")
 	}
 
 	for _, monitor := range m {
 		if err := monitor.Validate(); err != nil {
-			return fmt.Errorf("monitor spec is invalid: %w", err)
+			return fmt.Errorf("invalid monitor: %w", err)
 		}
 	}
 
@@ -102,7 +112,7 @@ func extractTypedHyprEvent(line string, eventType HyprEventType) (bool, *HyprEve
 	}, nil
 }
 
-func extractHyprEvent(line string) (*HyprEvent, error) {
+func extractHyprEvent(line string) (bool, *HyprEvent, error) {
 	possibleEvents := []HyprEventType{MonitorAdded, MonitorRemoved}
 	for _, event := range possibleEvents {
 		ok, parsedEvent, err := extractTypedHyprEvent(line, event)
@@ -110,12 +120,12 @@ func extractHyprEvent(line string) (*HyprEvent, error) {
 			continue
 		}
 		if err != nil {
-			return nil, fmt.Errorf("cant parse event %s as %s: %w", line, event.Value(), err)
+			return false, nil, fmt.Errorf("cant parse event %s as %s: %w", line, event.Value(), err)
 		}
 		if err := parsedEvent.Validate(); err != nil {
-			return nil, fmt.Errorf("invalid hypr event: %w", err)
+			return false, nil, fmt.Errorf("invalid hypr event: %w", err)
 		}
-		return parsedEvent, nil
+		return true, parsedEvent, nil
 	}
-	return nil, nil
+	return false, nil, nil
 }

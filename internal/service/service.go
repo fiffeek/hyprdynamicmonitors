@@ -21,12 +21,16 @@ import (
 type IPowerDetector interface {
 	GetCurrentState(context.Context) (detectors.PowerState, error)
 	Listen() <-chan detectors.PowerEvent
-	Run(context.Context) error
+}
+
+type IMonitorDetector interface {
+	Listen() <-chan hypr.MonitorSpecs
+	QueryConnectedMonitors(context.Context) (hypr.MonitorSpecs, error)
 }
 
 type Service struct {
 	config               *config.Config
-	monitorDetector      *detectors.MonitorDetector
+	monitorDetector      IMonitorDetector
 	powerDetector        IPowerDetector
 	matcher              *matchers.Matcher
 	serviceConfig        *Config
@@ -44,7 +48,7 @@ type Config struct {
 	DryRun bool
 }
 
-func NewService(cfg *config.Config, monitorDetector *detectors.MonitorDetector,
+func NewService(cfg *config.Config, monitorDetector IMonitorDetector,
 	powerDetector IPowerDetector, svcCfg *Config, matcher *matchers.Matcher, generator *generators.ConfigGenerator,
 	notifications *notifications.Service,
 ) *Service {
@@ -67,7 +71,6 @@ func (s *Service) Run(ctx context.Context) error {
 	}
 
 	monitorEventsChannel := s.monitorDetector.Listen()
-
 	powerEventsChannel := s.powerDetector.Listen()
 	logrus.Info("Listening for monitor and power events...")
 
@@ -114,7 +117,10 @@ func (s *Service) Run(ctx context.Context) error {
 }
 
 func (s *Service) RunOnce(ctx context.Context) error {
-	monitors := s.monitorDetector.GetConnected()
+	monitors, err := s.monitorDetector.QueryConnectedMonitors(ctx)
+	if err != nil {
+		return fmt.Errorf("unable to query current monitors: %w", err)
+	}
 	powerState, err := s.powerDetector.GetCurrentState(ctx)
 	if err != nil {
 		return fmt.Errorf("unable to fetch power state: %w", err)
