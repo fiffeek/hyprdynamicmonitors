@@ -10,6 +10,7 @@ An event-driven service that automatically manages Hyprland monitor configuratio
 - Profile-based configuration with different settings for different monitor setups
 - Template support for dynamic configuration generation
 - Configurable UPower queries for custom power management systems
+- Desktop notifications for configuration changes (optional)
 
 ## Design Philosophy
 
@@ -35,10 +36,10 @@ Requires [asdf](https://asdf-vm.com/) to manage the Go toolchain:
 make
 
 # Install to custom location
-make DESTDIR=~/binaries install
+make DESTDIR=$HOME/binaries install
 
 # Uninstall from custom location
-make DESTDIR=~/binaries uninstall
+make DESTDIR=$HOME/binaries uninstall
 
 # Install system-wide (may require sudo)
 sudo make DESTDIR=/usr/bin install
@@ -114,6 +115,28 @@ Use `hyprctl monitors` to see available monitors and their properties.
 isOnBattery         // Returns true if on battery power
 isOnAC              // Returns true if on AC power
 powerState          // Returns current power state string
+```
+
+### Notifications
+
+HyprDynamicMonitors can show desktop notifications when configuration changes occur. Notifications are sent via D-Bus using the standard `org.freedesktop.Notifications` interface.
+
+```toml
+[notifications]
+disabled = false      # Enable/disable notifications (default: false)
+timeout_ms = 10000   # Notification timeout in milliseconds (default: 10000)
+```
+
+**To disable notifications completely:**
+```toml
+[notifications]
+disabled = true
+```
+
+**To show brief notifications:**
+```toml
+[notifications]
+timeout_ms = 3000    # 3 seconds
 ```
 
 ## Usage
