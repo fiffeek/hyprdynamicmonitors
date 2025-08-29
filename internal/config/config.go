@@ -54,14 +54,15 @@ func (c *Config) Reload() error {
 }
 
 type UnsafeConfig struct {
-	ConfigDirPath string
-	ConfigPath    string
-	Profiles      map[string]*Profile `toml:"profiles"`
-	General       *GeneralSection     `toml:"general"`
-	Scoring       *ScoringSection     `toml:"scoring"`
-	PowerEvents   *PowerSection       `toml:"power_events"`
-	HotReload     *HotReloadSection   `toml:"hot_reload_section"`
-	Notifications *Notifications      `toml:"notifications"`
+	ConfigDirPath        string
+	ConfigPath           string
+	Profiles             map[string]*Profile `toml:"profiles"`
+	General              *GeneralSection     `toml:"general"`
+	Scoring              *ScoringSection     `toml:"scoring"`
+	PowerEvents          *PowerSection       `toml:"power_events"`
+	HotReload            *HotReloadSection   `toml:"hot_reload_section"`
+	Notifications        *Notifications      `toml:"notifications"`
+	StaticTemplateValues map[string]string   `toml:"static_template_values"`
 }
 
 type HotReloadSection struct {
@@ -113,6 +114,12 @@ type ScoringSection struct {
 	PowerStateMatch  *int `toml:"power_state_match"`
 }
 
+var reservedTemplateVariables = map[string]bool{
+	"MonitorsByTag": true,
+	"Monitors":      true,
+	"PowerState":    true,
+}
+
 type ConfigFileType int
 
 const (
@@ -149,12 +156,13 @@ func (e *ConfigFileType) MarshalTOML() ([]byte, error) {
 }
 
 type Profile struct {
-	Name              string
-	ConfigFileModTime time.Time
-	ConfigFileDir     string
-	ConfigFile        string           `toml:"config_file"`
-	ConfigType        *ConfigFileType  `toml:"config_file_type"`
-	Conditions        ProfileCondition `toml:"conditions"`
+	Name                 string
+	ConfigFileModTime    time.Time
+	ConfigFileDir        string
+	ConfigFile           string            `toml:"config_file"`
+	ConfigType           *ConfigFileType   `toml:"config_file_type"`
+	Conditions           ProfileCondition  `toml:"conditions"`
+	StaticTemplateValues map[string]string `toml:"static_template_values"`
 }
 
 type PowerStateType int
@@ -290,6 +298,12 @@ func (c *UnsafeConfig) Validate() error {
 		return fmt.Errorf("hot reload section validation failed: %w", err)
 	}
 
+	for key := range c.StaticTemplateValues {
+		if _, ok := reservedTemplateVariables[key]; ok {
+			return errors.New("key " + key + " cant be used since it is a reserved keyword")
+		}
+	}
+
 	return nil
 }
 
@@ -386,6 +400,12 @@ func (p *Profile) Validate(configPath string) error {
 
 	if err := p.Conditions.Validate(); err != nil {
 		return fmt.Errorf("conditions validation failed: %w", err)
+	}
+
+	for key := range p.StaticTemplateValues {
+		if _, ok := reservedTemplateVariables[key]; ok {
+			return errors.New("key " + key + " cant be used since it is a reserved keyword")
+		}
 	}
 
 	return nil

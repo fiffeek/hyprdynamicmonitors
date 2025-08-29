@@ -55,6 +55,11 @@ func (t *TestConfig) WithHotReload(h *config.HotReloadSection) *TestConfig {
 	return t
 }
 
+func (t *TestConfig) WithStaticTemplateValues(s map[string]string) *TestConfig {
+	t.cfg.StaticTemplateValues = s
+	return t
+}
+
 func (t *TestConfig) WithConfigDir(dir string) *TestConfig {
 	require.NoError(t.t, os.MkdirAll(dir, 0o750))
 

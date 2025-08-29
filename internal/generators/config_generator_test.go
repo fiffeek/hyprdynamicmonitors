@@ -69,7 +69,10 @@ func TestConfigGenerator_GenerateConfig_Static(t *testing.T) {
 }
 
 func TestConfigGenerator_GenerateConfig_Template(t *testing.T) {
-	generator := generators.NewConfigGenerator(testutils.NewTestConfig(t).Get())
+	generator := generators.NewConfigGenerator(testutils.NewTestConfig(t).WithStaticTemplateValues(map[string]string{
+		"overwritten_value": "this_shall_be_overwritten",
+		"general_value":     "general",
+	}).Get())
 
 	tempDir := t.TempDir()
 	destination := filepath.Join(tempDir, "hyprland.conf")
@@ -93,6 +96,10 @@ func TestConfigGenerator_GenerateConfig_Template(t *testing.T) {
 					MonitorTag:  utils.StringPtr("external"),
 				},
 			},
+		},
+		StaticTemplateValues: map[string]string{
+			"profile_value":     "profile",
+			"overwritten_value": "overwritten_profile",
 		},
 	}
 
@@ -148,6 +155,17 @@ func TestConfigGenerator_GenerateConfig_Template(t *testing.T) {
 	}
 	if !strings.Contains(contentStr, "Power state function test: BAT") {
 		t.Error("Expected powerState function to return BAT")
+	}
+
+	// Verify templates
+	if !strings.Contains(contentStr, "general_value = general") {
+		t.Error("Expected the template to use general_value from config")
+	}
+	if !strings.Contains(contentStr, "profile_value = profile") {
+		t.Error("Expected the template to use profile_value from config")
+	}
+	if !strings.Contains(contentStr, "overwritten_value = overwritten_profile") {
+		t.Error("Expected the template to use overwritten_value from config")
 	}
 
 	// Test with AC power state

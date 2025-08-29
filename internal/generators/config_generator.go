@@ -20,6 +20,7 @@ import (
 type ConfigGenerator struct {
 	mtime   map[string]time.Time
 	mtimeMu sync.RWMutex
+	cfg     *config.Config
 }
 
 func NewConfigGenerator(cfg *config.Config) *ConfigGenerator {
@@ -28,7 +29,7 @@ func NewConfigGenerator(cfg *config.Config) *ConfigGenerator {
 		mtime[profile.ConfigFile] = profile.ConfigFileModTime
 	}
 
-	return &ConfigGenerator{mtime: mtime, mtimeMu: sync.RWMutex{}}
+	return &ConfigGenerator{mtime: mtime, mtimeMu: sync.RWMutex{}, cfg: cfg}
 }
 
 // GenerateConfig either renders a template or links a file, and returns if any changed were done
@@ -148,6 +149,31 @@ func (g *ConfigGenerator) createTemplateData(profile *config.Profile,
 	}
 
 	data["MonitorsByTag"] = monitorsByTag
+
+	logrus.Debug("Adding user defined values")
+	for key, value := range g.cfg.Get().StaticTemplateValues {
+		data[key] = value
+		logrus.WithFields(logrus.Fields{
+			"key":   key,
+			"value": value,
+		}).Debug("Added user kv pair")
+	}
+
+	logrus.Debug("Adding profile defined values")
+	for key, value := range profile.StaticTemplateValues {
+		_, ok := data[key]
+		data[key] = value
+
+		action := "Added"
+		if ok {
+			action = "Overwritten"
+		}
+		logrus.WithFields(logrus.Fields{
+			"key":   key,
+			"value": value,
+		}).Debug(action + " user kv pair")
+	}
+
 	return data
 }
 
