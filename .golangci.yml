@@ -42,6 +42,11 @@ linters:
         - noctx
 
     settings:
+        wrapcheck:
+            extra-ignore-sigs:
+                - .Err(
+                - .Wait(
+
         staticcheck:
             checks:
                 - all

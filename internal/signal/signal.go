@@ -3,68 +3,87 @@ package signal
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/sirupsen/logrus"
+	"golang.org/x/sync/errgroup"
 )
+
+type SIGUSR1Handler interface {
+	Handle(context.Context) error
+}
+
+type SIGHUPHandler interface {
+	Handle(context.Context) error
+}
 
 type Handler struct {
 	sigChan     chan os.Signal
 	ctx         context.Context
 	cancelCause context.CancelCauseFunc
+	sighup      SIGHUPHandler
+	sigurs1     SIGUSR1Handler
 }
 
-type SignalHandler interface {
-	RunOnce(context.Context) error
-}
-
-func NewHandler(ctx context.Context, cancelCause context.CancelCauseFunc) *Handler {
+func NewHandler(ctx context.Context, cancelCause context.CancelCauseFunc, sighup SIGHUPHandler, sigusr1 SIGUSR1Handler) *Handler {
 	return &Handler{
 		sigChan:     make(chan os.Signal, 1),
 		ctx:         ctx,
 		cancelCause: cancelCause,
+		sighup:      sighup,
+		sigurs1:     sigusr1,
 	}
 }
 
-func (h *Handler) Start(handler SignalHandler) {
+func (h *Handler) Run() error {
 	signal.Notify(h.sigChan, syscall.SIGUSR1, syscall.SIGTERM, syscall.SIGINT, syscall.SIGHUP)
 	logrus.Debug("Signal notifications registered for SIGUSR1, SIGTERM, SIGINT, SIGHUP")
-	logrus.WithField("channel_cap", cap(h.sigChan)).Info("Signal channel capacity")
 
-	go h.handleSignals(handler)
-	logrus.Debug("Signal handler goroutine launched")
-}
+	eg, ctx := errgroup.WithContext(h.ctx)
 
-func (h *Handler) Stop() {
-	h.cancelCause(context.Canceled)
-	signal.Stop(h.sigChan)
-	close(h.sigChan)
-}
+	eg.Go(func() error {
+		<-ctx.Done()
+		logrus.Debug("Signal handler goroutine exiting")
+		signal.Stop(h.sigChan)
+		return nil
+	})
 
-func (h *Handler) handleSignals(handler SignalHandler) {
-	logrus.Debug("Signal handler goroutine started")
-	for {
-		select {
-		case sig := <-h.sigChan:
-			logrus.WithField("signal", sig).Debug("Signal received")
-			switch sig {
-			case syscall.SIGUSR1:
-				logrus.Info("Received SIGUSR1, triggering manual update")
-				if err := handler.RunOnce(h.ctx); err != nil {
-					logrus.WithError(err).Error("Manual update failed, service will keep running")
-				} else {
-					logrus.Info("Manual update completed successfully")
+	eg.Go(func() error {
+		logrus.Debug("Signal handler goroutine started")
+		defer close(h.sigChan)
+		for {
+			select {
+			case sig := <-h.sigChan:
+				logrus.WithField("signal", sig).Debug("Signal received")
+				switch sig {
+				case syscall.SIGHUP:
+					logrus.Info("Received SIGHUP")
+					if err := h.sighup.Handle(ctx); err != nil {
+						return fmt.Errorf("SIGUSR1 handler failed: %w", err)
+					} else {
+						logrus.Info("SIGHUP handled normally")
+					}
+				case syscall.SIGUSR1:
+					logrus.Info("Received SIGUSR1")
+					if err := h.sigurs1.Handle(ctx); err != nil {
+						return fmt.Errorf("error while handling SIGUSR1: %w", err)
+					} else {
+						logrus.Info("SIGUSR1 handled normally")
+					}
+				case syscall.SIGTERM, syscall.SIGINT:
+					logrus.WithField("signal", sig).Info("Received termination signal, shutting down gracefully")
+					h.cancelCause(context.Canceled)
+					return context.Canceled
 				}
-			case syscall.SIGTERM, syscall.SIGINT, syscall.SIGHUP:
-				logrus.WithField("signal", sig).Info("Received termination signal, shutting down gracefully")
-				h.cancelCause(context.Canceled)
-				return
+			case <-ctx.Done():
+				logrus.Debug("Signal handler context done, exiting")
+				return ctx.Err()
 			}
-		case <-h.ctx.Done():
-			logrus.Debug("Signal handler context done, exiting")
-			return
 		}
-	}
+	})
+
+	return eg.Wait()
 }

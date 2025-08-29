@@ -12,10 +12,12 @@ import (
 
 	"github.com/fiffeek/hyprdynamicmonitors/internal/config"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/detectors"
+	"github.com/fiffeek/hyprdynamicmonitors/internal/filewatcher"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/generators"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/hypr"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/matchers"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/notifications"
+	"github.com/fiffeek/hyprdynamicmonitors/internal/reloader"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/service"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/signal"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/utils"
@@ -28,6 +30,7 @@ type IPowerDetector interface {
 	GetCurrentState(context.Context) (detectors.PowerState, error)
 	Listen() <-chan detectors.PowerEvent
 	Run(context.Context) error
+	Reload(context.Context) error
 }
 
 var (
@@ -39,10 +42,14 @@ var (
 func main() {
 	var (
 		configPath = flag.String("config", "$HOME/.config/hyprdynamicmonitors/config.toml", "Path to configuration file")
-		dryRun     = flag.Bool("dry-run", false, "Show what would be done without making changes")
-		debug      = flag.Bool("debug", false, "Enable debug logging")
-		verbose    = flag.Bool("verbose", false, "Enable verbose logging")
-		showVer    = flag.Bool("version", false, "Show version information")
+		dryRun     = flag.Bool("dry-run", false,
+			"Show what would be done without making changes")
+		debug                = flag.Bool("debug", false, "Enable debug logging")
+		verbose              = flag.Bool("verbose", false, "Enable verbose logging")
+		showVer              = flag.Bool("version", false, "Show version information")
+		disablePowerEvents   = flag.Bool("disable-power-events", false, "Disable power events (dbus)")
+		disableAutoHotReload = flag.Bool("disable-auto-hot-reload", false,
+			"Disable automatic hot reload (no file watchers)")
 	)
 	flag.Parse()
 
@@ -78,7 +85,7 @@ func main() {
 	logrus.WithField("version", Version).Debug("Starting Hyprland Dynamic Monitor Manager")
 
 	ctx, cancel := context.WithCancelCause(context.Background())
-	err := createApplication(configPath, dryRun, ctx, cancel)
+	err := createApplication(configPath, dryRun, ctx, cancel, disablePowerEvents, disableAutoHotReload)
 	if err == nil {
 		logrus.Info("Exiting...")
 		return
@@ -92,8 +99,10 @@ func main() {
 	logrus.WithError(err).Fatal("Service failed")
 }
 
-func createApplication(configPath *string, dryRun *bool, ctx context.Context, cancel context.CancelCauseFunc) error {
-	cfg, err := config.Load(*configPath)
+func createApplication(configPath *string, dryRun *bool, ctx context.Context,
+	cancel context.CancelCauseFunc, disablePowerEvents, disableAutoHotReload *bool,
+) error {
+	cfg, err := config.NewConfig(*configPath)
 	if err != nil {
 		logrus.WithError(err).Fatal("Failed to load configuration")
 	}
@@ -103,15 +112,17 @@ func createApplication(configPath *string, dryRun *bool, ctx context.Context, ca
 		logrus.WithError(err).Fatal("Failed to initialize Hyprland IPC")
 	}
 
+	fswatcher := filewatcher.NewService(cfg, disableAutoHotReload)
+
 	var powerDetector IPowerDetector
-	if *cfg.PowerEvents.Disabled {
-		powerDetector = detectors.NewStaticPowerDetector(cfg.PowerEvents)
+	if *disablePowerEvents {
+		powerDetector = detectors.NewStaticPowerDetector(cfg)
 	} else {
 		conn, err := dbus.ConnectSystemBus()
 		if err != nil {
 			logrus.WithError(err).Fatal("Cant connect to system bus")
 		}
-		powerDetector, err = detectors.NewPowerDetector(ctx, cfg.PowerEvents, conn)
+		powerDetector, err = detectors.NewPowerDetector(ctx, cfg, conn)
 		if err != nil {
 			logrus.WithError(err).Fatal("Failed to initialize PowerDetector")
 		}
@@ -119,16 +130,18 @@ func createApplication(configPath *string, dryRun *bool, ctx context.Context, ca
 
 	matcher := matchers.NewMatcher(cfg)
 
-	generator := generators.NewConfigGenerator()
+	generator := generators.NewConfigGenerator(cfg)
 	notifications := notifications.NewService(cfg)
 
 	svc := service.NewService(cfg, hyprIPC, powerDetector, &service.Config{
 		DryRun: *dryRun,
 	}, matcher, generator, notifications)
 
-	signalHandler := signal.NewHandler(ctx, cancel)
+	reloader := reloader.NewService(cfg, fswatcher, powerDetector, svc, *disableAutoHotReload)
 
-	if err := run(ctx, svc, hyprIPC, powerDetector, signalHandler); err != nil {
+	signalHandler := signal.NewHandler(ctx, cancel, reloader, svc)
+
+	if err := run(ctx, svc, hyprIPC, powerDetector, signalHandler, fswatcher, reloader); err != nil {
 		return err
 	}
 
@@ -136,19 +149,20 @@ func createApplication(configPath *string, dryRun *bool, ctx context.Context, ca
 }
 
 func run(ctx context.Context, svc *service.Service, hyprIPC *hypr.IPC,
-	powerDetector IPowerDetector, signalHandler *signal.Handler,
+	powerDetector IPowerDetector, signalHandler *signal.Handler, fswatcher *filewatcher.Service,
+	reloader *reloader.Service,
 ) error {
-	signalHandler.Start(svc)
-	defer signalHandler.Stop()
-
 	eg, ctx := errgroup.WithContext(ctx)
 
 	backgroundGoroutines := []struct {
 		Fun  func(context.Context) error
 		Name string
 	}{
+		{Fun: func(ctx context.Context) error { return signalHandler.Run() }, Name: "signal handler"},
+		{Fun: fswatcher.Run, Name: "filewatcher"},
 		{Fun: hyprIPC.RunEventLoop, Name: "hypr ipc"},
 		{Fun: powerDetector.Run, Name: "power detector dbus"},
+		{Fun: reloader.Run, Name: "reloader"},
 		{Fun: svc.Run, Name: "main service"},
 	}
 	for _, bg := range backgroundGoroutines {

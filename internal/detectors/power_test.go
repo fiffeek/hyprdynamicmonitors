@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/fiffeek/hyprdynamicmonitors/internal/config"
+	"github.com/fiffeek/hyprdynamicmonitors/internal/testutils"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/utils"
 	"github.com/godbus/dbus/v5"
 	"github.com/stretchr/testify/require"
@@ -87,30 +88,30 @@ func setupTestDbusService(t *testing.T) (*testDbusService, string, string, func(
 	return service, testBusName, testObjectPath, cleanup
 }
 
-func createTestPowerConfig(busName, objectPath string) *config.PowerSection {
-	return &config.PowerSection{
-		Disabled: utils.BoolPtr(false),
-		DbusSignalMatchRules: []*config.DbusSignalMatchRule{
-			{
-				Interface:  utils.StringPtr(testInterface),
-				Member:     utils.StringPtr(testMemberName),
-				ObjectPath: utils.StringPtr(objectPath),
+func createTestPowerConfig(t *testing.T, busName, objectPath string) *config.Config {
+	return testutils.NewTestConfig(t).WithPowerSection(
+		&config.PowerSection{
+			DbusSignalMatchRules: []*config.DbusSignalMatchRule{
+				{
+					Interface:  utils.StringPtr(testInterface),
+					Member:     utils.StringPtr(testMemberName),
+					ObjectPath: utils.StringPtr(objectPath),
+				},
 			},
-		},
-		DbusSignalReceiveFilters: []*config.DbusSignalReceiveFilter{
-			{Name: utils.StringPtr(testSignalName)},
-		},
-		DbusQueryObject: &config.DbusQueryObject{
-			Destination:              busName,
-			Path:                     objectPath,
-			Method:                   testMethodName,
-			ExpectedDischargingValue: "true", // true means on battery
-			Args: []config.DbusQueryObjectArg{
-				{Arg: testInterface},
-				{Arg: testProperty},
+			DbusSignalReceiveFilters: []*config.DbusSignalReceiveFilter{
+				{Name: utils.StringPtr(testSignalName)},
 			},
-		},
-	}
+			DbusQueryObject: &config.DbusQueryObject{
+				Destination:              busName,
+				Path:                     objectPath,
+				Method:                   testMethodName,
+				ExpectedDischargingValue: "true", // true means on battery
+				Args: []config.DbusQueryObjectArg{
+					{Arg: testInterface},
+					{Arg: testProperty},
+				},
+			},
+		}).Get()
 }
 
 func TestPowerDetector_Integration(t *testing.T) {
@@ -119,9 +120,7 @@ func TestPowerDetector_Integration(t *testing.T) {
 
 	time.Sleep(100 * time.Millisecond)
 
-	cfg := createTestPowerConfig(testBusName, testObjectPath)
-	err := cfg.Validate()
-	require.NoError(t, err, "config validation should pass")
+	cfg := createTestPowerConfig(t, testBusName, testObjectPath)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -135,7 +134,7 @@ func TestPowerDetector_Integration(t *testing.T) {
 
 	initialState, err := detector.GetCurrentState(ctx)
 	require.NoError(t, err, "should be able to get initial state")
-	require.Equal(t, Battery, initialState, "initial state should be ac")
+	require.Equal(t, BatteryPowerState, initialState, "initial state should be ac")
 
 	ctx2, cancel2 := context.WithCancel(ctx)
 	defer cancel2()
@@ -155,7 +154,7 @@ func TestPowerDetector_Integration(t *testing.T) {
 
 	select {
 	case event := <-detector.Listen():
-		require.Equal(t, Battery, event.State, "should receive bat event")
+		require.Equal(t, BatteryPowerState, event.State, "should receive bat event")
 	case <-time.After(2 * time.Second):
 		t.Fatal("timeout waiting for power event")
 	}
@@ -166,7 +165,7 @@ func TestPowerDetector_Integration(t *testing.T) {
 
 	select {
 	case event := <-detector.Listen():
-		require.Equal(t, ACPower, event.State, "should receive ac event")
+		require.Equal(t, ACPowerState, event.State, "should receive ac event")
 	case <-time.After(2 * time.Second):
 		t.Fatal("timeout waiting for battery event")
 	}
@@ -181,7 +180,7 @@ func TestPowerDetector_Integration(t *testing.T) {
 	require.NoError(t, err, "should be able to emit signal")
 	select {
 	case event := <-detector.Listen():
-		require.Equal(t, Battery, event.State, "should receive battery event")
+		require.Equal(t, BatteryPowerState, event.State, "should receive battery event")
 	case <-time.After(2 * time.Second):
 		t.Fatal("timeout waiting for battery event")
 	}
