@@ -130,7 +130,7 @@ func createApplication(configPath *string, dryRun *bool, ctx context.Context,
 
 	reloader := reloader.NewService(cfg, fswatcher, powerDetector, svc, *disableAutoHotReload)
 
-	signalHandler := signal.NewHandler(ctx, cancel, reloader, svc)
+	signalHandler := signal.NewHandler(cancel, reloader, svc)
 
 	if err := run(ctx, svc, hyprIPC, powerDetector, signalHandler, fswatcher, reloader); err != nil {
 		return err
@@ -149,7 +149,7 @@ func run(ctx context.Context, svc *userconfigupdater.Service, hyprIPC *hypr.IPC,
 		Fun  func(context.Context) error
 		Name string
 	}{
-		{Fun: func(ctx context.Context) error { return signalHandler.Run() }, Name: "signal handler"},
+		{Fun: signalHandler.Run, Name: "signal handler"},
 		{Fun: fswatcher.Run, Name: "filewatcher"},
 		{Fun: hyprIPC.RunEventLoop, Name: "hypr ipc"},
 		{Fun: powerDetector.Run, Name: "power detector dbus"},
@@ -161,6 +161,7 @@ func run(ctx context.Context, svc *userconfigupdater.Service, hyprIPC *hypr.IPC,
 			fields := logrus.Fields{"name": bg.Name, "fun": utils.GetFunctionName(bg.Fun)}
 			logrus.WithFields(fields).Debug("Starting")
 			if err := bg.Fun(ctx); err != nil {
+				logrus.WithFields(fields).Debug("Exited with error")
 				return fmt.Errorf("%s failed: %w", bg.Name, err)
 			}
 			logrus.WithFields(fields).Debug("Finished")

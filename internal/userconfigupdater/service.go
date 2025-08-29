@@ -84,7 +84,11 @@ func (s *Service) Run(ctx context.Context) error {
 	})
 
 	eg.Go(func() error {
-		return s.debouncer.Run(ctx)
+		logrus.Debug("Running debouncer for userconfigupdater")
+		if err := s.debouncer.Run(ctx); err != nil {
+			return fmt.Errorf("debouncer failed: %w", err)
+		}
+		return nil
 	})
 
 	eg.Go(func() error {

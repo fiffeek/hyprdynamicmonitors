@@ -22,27 +22,25 @@ type SIGHUPHandler interface {
 
 type Handler struct {
 	sigChan     chan os.Signal
-	ctx         context.Context
 	cancelCause context.CancelCauseFunc
 	sighup      SIGHUPHandler
 	sigurs1     SIGUSR1Handler
 }
 
-func NewHandler(ctx context.Context, cancelCause context.CancelCauseFunc, sighup SIGHUPHandler, sigusr1 SIGUSR1Handler) *Handler {
+func NewHandler(cancelCause context.CancelCauseFunc, sighup SIGHUPHandler, sigusr1 SIGUSR1Handler) *Handler {
 	return &Handler{
 		sigChan:     make(chan os.Signal, 1),
-		ctx:         ctx,
 		cancelCause: cancelCause,
 		sighup:      sighup,
 		sigurs1:     sigusr1,
 	}
 }
 
-func (h *Handler) Run() error {
+func (h *Handler) Run(ctx context.Context) error {
 	signal.Notify(h.sigChan, syscall.SIGUSR1, syscall.SIGTERM, syscall.SIGINT, syscall.SIGHUP)
 	logrus.Debug("Signal notifications registered for SIGUSR1, SIGTERM, SIGINT, SIGHUP")
 
-	eg, ctx := errgroup.WithContext(h.ctx)
+	eg, ctx := errgroup.WithContext(ctx)
 
 	eg.Go(func() error {
 		<-ctx.Done()
