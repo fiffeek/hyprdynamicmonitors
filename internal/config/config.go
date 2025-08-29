@@ -18,7 +18,7 @@ import (
 const LeaveEmpty = "leaveEmptyToken"
 
 type Config struct {
-	cfg  *ConfigUnsafe
+	cfg  *UnsafeConfig
 	path string
 	mu   sync.RWMutex
 }
@@ -36,7 +36,7 @@ func NewConfig(path string) (*Config, error) {
 	return cfg, nil
 }
 
-func (c *Config) Get() *ConfigUnsafe {
+func (c *Config) Get() *UnsafeConfig {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	return c.cfg
@@ -53,7 +53,7 @@ func (c *Config) Reload() error {
 	return nil
 }
 
-type ConfigUnsafe struct {
+type UnsafeConfig struct {
 	ConfigDirPath string
 	ConfigPath    string
 	Profiles      map[string]*Profile `toml:"profiles"`
@@ -203,7 +203,7 @@ type RequiredMonitor struct {
 	MonitorTag  *string `toml:"monitor_tag"`
 }
 
-func Load(configPath string) (*ConfigUnsafe, error) {
+func Load(configPath string) (*UnsafeConfig, error) {
 	configPath = os.ExpandEnv(configPath)
 	if _, err := os.Stat(configPath); os.IsNotExist(err) {
 		return nil, fmt.Errorf("configuration file %s not found", configPath)
@@ -218,7 +218,7 @@ func Load(configPath string) (*ConfigUnsafe, error) {
 
 	logrus.WithFields(logrus.Fields{"abs": absConfig}).Debug("Found absolute config path")
 
-	var config ConfigUnsafe
+	var config UnsafeConfig
 	if _, err := toml.DecodeFile(configPath, &config); err != nil {
 		return nil, fmt.Errorf("failed to decode TOML: %w", err)
 	}
@@ -235,7 +235,7 @@ func Load(configPath string) (*ConfigUnsafe, error) {
 	return &config, nil
 }
 
-func (c *ConfigUnsafe) Validate() error {
+func (c *UnsafeConfig) Validate() error {
 	if c.ConfigPath == "" {
 		return errors.New("config path cant be empty")
 	}

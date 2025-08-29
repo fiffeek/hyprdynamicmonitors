@@ -36,6 +36,8 @@ changelog:
             - '^tests?:'
             - '(?i)^dev:'
             - '(?i)^chore:'
+            - '(?i)^style:'
+            - '(?i)^refactor:'
             - '^build\(deps\): bump .* in /docs \(#\d+\)'
             - '^build\(deps\): bump .* in /\.github/peril \(#\d+\)'
             - Merge pull request
@@ -45,7 +47,6 @@ release:
     github:
         owner: fiffeek
         name: hyprdynamicmonitors
-
 
 aurs:
     - description: Dynamic monitor configuration for Hyprland.

@@ -11,27 +11,20 @@ import (
 	"runtime"
 
 	"github.com/fiffeek/hyprdynamicmonitors/internal/config"
-	"github.com/fiffeek/hyprdynamicmonitors/internal/detectors"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/filewatcher"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/generators"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/hypr"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/matchers"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/notifications"
+	"github.com/fiffeek/hyprdynamicmonitors/internal/power"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/reloader"
-	"github.com/fiffeek/hyprdynamicmonitors/internal/service"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/signal"
+	"github.com/fiffeek/hyprdynamicmonitors/internal/userconfigupdater"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/utils"
 	"github.com/godbus/dbus/v5"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
 )
-
-type IPowerDetector interface {
-	GetCurrentState(context.Context) (detectors.PowerState, error)
-	Listen() <-chan detectors.PowerEvent
-	Run(context.Context) error
-	Reload(context.Context) error
-}
 
 var (
 	Version   = "dev"
@@ -114,18 +107,16 @@ func createApplication(configPath *string, dryRun *bool, ctx context.Context,
 
 	fswatcher := filewatcher.NewService(cfg, disableAutoHotReload)
 
-	var powerDetector IPowerDetector
-	if *disablePowerEvents {
-		powerDetector = detectors.NewStaticPowerDetector(cfg)
-	} else {
-		conn, err := dbus.ConnectSystemBus()
+	var conn *dbus.Conn
+	if !*disablePowerEvents {
+		conn, err = dbus.ConnectSystemBus()
 		if err != nil {
 			logrus.WithError(err).Fatal("Cant connect to system bus")
 		}
-		powerDetector, err = detectors.NewPowerDetector(ctx, cfg, conn)
-		if err != nil {
-			logrus.WithError(err).Fatal("Failed to initialize PowerDetector")
-		}
+	}
+	powerDetector, err := power.NewPowerDetector(ctx, cfg, conn, *disablePowerEvents)
+	if err != nil {
+		logrus.WithError(err).Fatal("Failed to initialize PowerDetector")
 	}
 
 	matcher := matchers.NewMatcher(cfg)
@@ -133,7 +124,7 @@ func createApplication(configPath *string, dryRun *bool, ctx context.Context,
 	generator := generators.NewConfigGenerator(cfg)
 	notifications := notifications.NewService(cfg)
 
-	svc := service.NewService(cfg, hyprIPC, powerDetector, &service.Config{
+	svc := userconfigupdater.NewService(cfg, hyprIPC, powerDetector, &userconfigupdater.Config{
 		DryRun: *dryRun,
 	}, matcher, generator, notifications)
 
@@ -148,8 +139,8 @@ func createApplication(configPath *string, dryRun *bool, ctx context.Context,
 	return nil
 }
 
-func run(ctx context.Context, svc *service.Service, hyprIPC *hypr.IPC,
-	powerDetector IPowerDetector, signalHandler *signal.Handler, fswatcher *filewatcher.Service,
+func run(ctx context.Context, svc *userconfigupdater.Service, hyprIPC *hypr.IPC,
+	powerDetector *power.PowerDetector, signalHandler *signal.Handler, fswatcher *filewatcher.Service,
 	reloader *reloader.Service,
 ) error {
 	eg, ctx := errgroup.WithContext(ctx)
