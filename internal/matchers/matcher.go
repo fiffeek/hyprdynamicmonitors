@@ -3,8 +3,8 @@ package matchers
 
 import (
 	"github.com/fiffeek/hyprdynamicmonitors/internal/config"
-	"github.com/fiffeek/hyprdynamicmonitors/internal/detectors"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/hypr"
+	"github.com/fiffeek/hyprdynamicmonitors/internal/power"
 )
 
 type Matcher struct {
@@ -17,7 +17,7 @@ func NewMatcher(cfg *config.Config) *Matcher {
 	}
 }
 
-func (m *Matcher) Match(connectedMonitors []*hypr.MonitorSpec, powerState detectors.PowerState) (bool, *config.Profile, error) {
+func (m *Matcher) Match(connectedMonitors []*hypr.MonitorSpec, powerState power.PowerState) (bool, *config.Profile, error) {
 	score := make(map[string]int)
 	for name := range m.cfg.Get().Profiles {
 		score[name] = 0
@@ -52,7 +52,7 @@ func (m *Matcher) Match(connectedMonitors []*hypr.MonitorSpec, powerState detect
 	return false, nil, nil
 }
 
-func (m *Matcher) scoreProfile(conditions config.ProfileCondition, powerState detectors.PowerState, connectedMonitors []*hypr.MonitorSpec) int {
+func (m *Matcher) scoreProfile(conditions config.ProfileCondition, powerState power.PowerState, connectedMonitors []*hypr.MonitorSpec) int {
 	profileScore := 0
 	if conditions.PowerState != nil && conditions.PowerState.Value() == powerState.String() {
 		profileScore += *m.cfg.Get().Scoring.PowerStateMatch

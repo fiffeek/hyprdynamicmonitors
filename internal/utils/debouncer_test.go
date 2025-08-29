@@ -44,7 +44,8 @@ func TestDebouncer_Basic(t *testing.T) {
 
 	// Check timing - function should have been called after the debounce delay
 	timeSinceStart := lastCallTime.Sub(start)
-	assert.True(t, timeSinceStart >= 100*time.Millisecond, "Function should be called after debounce delay")
+	assert.True(t, timeSinceStart >= 100*time.Millisecond,
+		"Function should be called after debounce delay")
 
 	// Cancel and wait for shutdown
 	cancel()

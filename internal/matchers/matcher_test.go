@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	"github.com/fiffeek/hyprdynamicmonitors/internal/config"
-	"github.com/fiffeek/hyprdynamicmonitors/internal/detectors"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/hypr"
+	"github.com/fiffeek/hyprdynamicmonitors/internal/power"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/testutils"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/utils"
 )
@@ -15,7 +15,7 @@ func TestMatcher_Match(t *testing.T) {
 		name              string
 		config            *config.Config
 		connectedMonitors []*hypr.MonitorSpec
-		powerState        detectors.PowerState
+		powerState        power.PowerState
 		expectedProfile   string // profile name or empty string for no match
 		description       string
 	}{
@@ -44,7 +44,7 @@ func TestMatcher_Match(t *testing.T) {
 				{Name: "eDP-1", ID: utils.IntPtr(0), Description: "Built-in Display"},
 				{Name: "DP-1", ID: utils.IntPtr(1), Description: "External Monitor"},
 			},
-			powerState:      detectors.ACPowerState,
+			powerState:      power.ACPowerState,
 			expectedProfile: "dual_monitors",
 			description:     "Higher scoring profile (2 name matches) should win over lower scoring (1 name match)",
 		},
@@ -63,7 +63,7 @@ func TestMatcher_Match(t *testing.T) {
 			connectedMonitors: []*hypr.MonitorSpec{
 				{Name: "DP-1", ID: utils.IntPtr(0), Description: "External Monitor"},
 			},
-			powerState:      detectors.ACPowerState,
+			powerState:      power.ACPowerState,
 			expectedProfile: "external_only",
 			description:     "Profile should match based on description",
 		},
@@ -92,7 +92,7 @@ func TestMatcher_Match(t *testing.T) {
 			connectedMonitors: []*hypr.MonitorSpec{
 				{Name: "eDP-1", ID: utils.IntPtr(0), Description: "Built-in Display"},
 			},
-			powerState:      detectors.BatteryPowerState,
+			powerState:      power.BatteryPowerState,
 			expectedProfile: "battery_profile",
 			description:     "Profile with matching power state should win (name match + power state match vs just name match)",
 		},
@@ -112,7 +112,7 @@ func TestMatcher_Match(t *testing.T) {
 			connectedMonitors: []*hypr.MonitorSpec{
 				{Name: "eDP-1", ID: utils.IntPtr(0), Description: "Built-in Display"},
 			},
-			powerState:      detectors.ACPowerState,
+			powerState:      power.ACPowerState,
 			expectedProfile: "",
 			description:     "Profile with partial match should be discarded (only 1 of 2 required monitors match)",
 		},
@@ -131,7 +131,7 @@ func TestMatcher_Match(t *testing.T) {
 			connectedMonitors: []*hypr.MonitorSpec{
 				{Name: "eDP-1", ID: utils.IntPtr(0), Description: "Built-in Display"},
 			},
-			powerState:      detectors.ACPowerState,
+			powerState:      power.ACPowerState,
 			expectedProfile: "",
 			description:     "No profile should match when required monitors are not connected",
 		},
@@ -160,7 +160,7 @@ func TestMatcher_Match(t *testing.T) {
 				{Name: "eDP-1", ID: utils.IntPtr(0), Description: "Built-in Display"},
 				{Name: "DP-1", ID: utils.IntPtr(1), Description: "External Monitor"},
 			},
-			powerState:      detectors.ACPowerState,
+			powerState:      power.ACPowerState,
 			expectedProfile: "mixed_high_score",
 			description:     "Profile with mixed name+description scoring (15 points) should win over name-only (10 points)",
 		},
@@ -180,7 +180,7 @@ func TestMatcher_Match(t *testing.T) {
 			connectedMonitors: []*hypr.MonitorSpec{
 				{Name: "eDP-1", ID: utils.IntPtr(0), Description: "Built-in Display"},
 			},
-			powerState:      detectors.BatteryPowerState,
+			powerState:      power.BatteryPowerState,
 			expectedProfile: "",
 			description:     "Profile with power state requirement should be discarded when power state doesn't match",
 		},

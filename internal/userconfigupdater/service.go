@@ -1,5 +1,5 @@
-// Package service provides the main service coordination and event handling.
-package service
+// Package userconfigupdater provides the main service coordination and event handling.
+package userconfigupdater
 
 import (
 	"context"
@@ -9,18 +9,19 @@ import (
 	"time"
 
 	"github.com/fiffeek/hyprdynamicmonitors/internal/config"
-	"github.com/fiffeek/hyprdynamicmonitors/internal/detectors"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/generators"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/hypr"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/matchers"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/notifications"
+	"github.com/fiffeek/hyprdynamicmonitors/internal/power"
+	"github.com/fiffeek/hyprdynamicmonitors/internal/utils"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
 )
 
 type IPowerDetector interface {
-	GetCurrentState(context.Context) (detectors.PowerState, error)
-	Listen() <-chan detectors.PowerEvent
+	GetCurrentState(context.Context) (power.PowerState, error)
+	Listen() <-chan power.PowerEvent
 }
 
 type IMonitorDetector interface {
@@ -39,9 +40,8 @@ type Service struct {
 
 	stateMu          sync.RWMutex
 	cachedMonitors   []*hypr.MonitorSpec
-	cachedPowerState detectors.PowerState
-	debounceTimer    *time.Timer
-	debounceMutex    sync.Mutex
+	cachedPowerState power.PowerState
+	debouncer        *utils.Debouncer
 }
 
 type Config struct {
@@ -59,8 +59,8 @@ func NewService(cfg *config.Config, monitorDetector IMonitorDetector,
 		serviceConfig:        svcCfg,
 		matcher:              matcher,
 		generator:            generator,
-		cachedPowerState:     detectors.BatteryPowerState,
-		debounceTimer:        time.NewTimer(0),
+		cachedPowerState:     power.BatteryPowerState,
+		debouncer:            utils.NewDebouncer(),
 		notificationsService: notifications,
 	}
 }
@@ -77,7 +77,14 @@ func (s *Service) Run(ctx context.Context) error {
 	eg, ctx := errgroup.WithContext(ctx)
 
 	eg.Go(func() error {
-		return s.updateProcessor(ctx)
+		<-ctx.Done()
+		s.debouncer.Cancel()
+		logrus.Debug("Context cancelled for service, shutting down")
+		return ctx.Err()
+	})
+
+	eg.Go(func() error {
+		return s.debouncer.Run(ctx)
 	})
 
 	eg.Go(func() error {
@@ -91,7 +98,7 @@ func (s *Service) Run(ctx context.Context) error {
 				s.stateMu.Lock()
 				s.cachedMonitors = monitors
 				s.stateMu.Unlock()
-				s.triggerUpdate()
+				s.debouncer.Do(ctx, time.Duration(*s.config.Get().General.DebounceTimeMs)*time.Millisecond, s.debounceUpdate)
 
 			case powerEvent, ok := <-powerEventsChannel:
 				if !ok {
@@ -101,7 +108,7 @@ func (s *Service) Run(ctx context.Context) error {
 				s.stateMu.Lock()
 				s.cachedPowerState = powerEvent.State
 				s.stateMu.Unlock()
-				s.triggerUpdate()
+				s.debouncer.Do(ctx, time.Duration(*s.config.Get().General.DebounceTimeMs)*time.Millisecond, s.debounceUpdate)
 
 			case <-ctx.Done():
 				logrus.Debug("Event processor context cancelled, shutting down")
@@ -138,30 +145,12 @@ func (s *Service) RunOnce(ctx context.Context) error {
 	return nil
 }
 
-func (s *Service) triggerUpdate() {
-	s.debounceMutex.Lock()
-	defer s.debounceMutex.Unlock()
-
-	s.debounceTimer.Stop()
-	s.debounceTimer.Reset(time.Duration(*s.config.Get().General.DebounceTimeMs) * time.Millisecond)
-
-	logrus.WithField("debounce", *s.config.Get().General.DebounceTimeMs).Debug("Update scheduled")
-}
-
-func (s *Service) updateProcessor(ctx context.Context) error {
-	s.debounceTimer.Stop()
-
-	for {
-		select {
-		case <-s.debounceTimer.C:
-			logrus.Debug("Debounce timer expired, performing update")
-			if err := s.UpdateOnce(); err != nil {
-				return fmt.Errorf("configuration update failed: %w", err)
-			}
-		case <-ctx.Done():
-			logrus.Debug("Update processor context cancelled, shutting down")
-			return nil
-		}
+func (s *Service) debounceUpdate(ctx context.Context) error {
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
+		return s.UpdateOnce()
 	}
 }
 

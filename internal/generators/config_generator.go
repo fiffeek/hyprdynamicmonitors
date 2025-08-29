@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"github.com/fiffeek/hyprdynamicmonitors/internal/config"
-	"github.com/fiffeek/hyprdynamicmonitors/internal/detectors"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/hypr"
+	"github.com/fiffeek/hyprdynamicmonitors/internal/power"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/utils"
 	"github.com/sirupsen/logrus"
 )
@@ -34,7 +34,7 @@ func NewConfigGenerator(cfg *config.Config) *ConfigGenerator {
 // GenerateConfig either renders a template or links a file, and returns if any changed were done
 // this includes stating the config files to catch if the user modified them by hand (in linking scenario)
 func (g *ConfigGenerator) GenerateConfig(profile *config.Profile,
-	connectedMonitors []*hypr.MonitorSpec, powerState detectors.PowerState, destination string,
+	connectedMonitors []*hypr.MonitorSpec, powerState power.PowerState, destination string,
 ) (bool, error) {
 	switch *profile.ConfigType {
 	case config.Static:
@@ -47,7 +47,7 @@ func (g *ConfigGenerator) GenerateConfig(profile *config.Profile,
 }
 
 func (g *ConfigGenerator) renderTemplateFile(profile *config.Profile,
-	connectedMonitors []*hypr.MonitorSpec, powerState detectors.PowerState, destination string,
+	connectedMonitors []*hypr.MonitorSpec, powerState power.PowerState, destination string,
 ) (bool, error) {
 	templatePath := profile.ConfigFile
 
@@ -91,13 +91,13 @@ func (g *ConfigGenerator) renderTemplateFile(profile *config.Profile,
 	return true, nil
 }
 
-func getFuncMap(powerState detectors.PowerState) template.FuncMap {
+func getFuncMap(powerState power.PowerState) template.FuncMap {
 	funcMap := template.FuncMap{
 		"isOnBattery": func() bool {
-			return powerState == detectors.BatteryPowerState
+			return powerState == power.BatteryPowerState
 		},
 		"isOnAC": func() bool {
-			return powerState == detectors.ACPowerState
+			return powerState == power.ACPowerState
 		},
 		"powerState": func() string {
 			return powerState.String()
@@ -107,7 +107,7 @@ func getFuncMap(powerState detectors.PowerState) template.FuncMap {
 }
 
 func (g *ConfigGenerator) createTemplateData(profile *config.Profile,
-	connectedMonitors []*hypr.MonitorSpec, powerState detectors.PowerState,
+	connectedMonitors []*hypr.MonitorSpec, powerState power.PowerState,
 ) map[string]any {
 	data := make(map[string]any)
 	data["Monitors"] = connectedMonitors

@@ -39,5 +39,6 @@ func (s *Service) NotifyProfileApplied(profile *config.Profile) error {
 	if _, err := ntf.Show(); err != nil {
 		return fmt.Errorf("cant send notificaiton for %s: %w", profile.Name, err)
 	}
+	logrus.Info("Update notification sent to the user")
 	return nil
 }

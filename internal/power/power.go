@@ -1,5 +1,5 @@
-// Package detectors provides power state detection functionality.
-package detectors
+// Package power provides power state detection functionality.
+package power
 
 import (
 	"context"
@@ -39,20 +39,22 @@ type PowerEvent struct {
 }
 
 type PowerDetector struct {
-	cfg              *config.Config
-	conn             *dbus.Conn
-	events           chan PowerEvent
-	signals          chan *dbus.Signal
-	stateMu          sync.RWMutex
-	dbusMatchOptions [][]dbus.MatchOption
+	cfg                *config.Config
+	conn               *dbus.Conn
+	events             chan PowerEvent
+	signals            chan *dbus.Signal
+	stateMu            sync.RWMutex
+	dbusMatchOptions   [][]dbus.MatchOption
+	disablePowerEvents bool
 }
 
-func NewPowerDetector(ctx context.Context, cfg *config.Config, conn *dbus.Conn) (*PowerDetector, error) {
+func NewPowerDetector(ctx context.Context, cfg *config.Config, conn *dbus.Conn, disablePowerEvents bool) (*PowerDetector, error) {
 	detector := &PowerDetector{
-		conn:    conn,
-		cfg:     cfg,
-		events:  make(chan PowerEvent, 10),
-		signals: make(chan *dbus.Signal, 10),
+		conn:               conn,
+		cfg:                cfg,
+		events:             make(chan PowerEvent, 10),
+		signals:            make(chan *dbus.Signal, 10),
+		disablePowerEvents: disablePowerEvents,
 	}
 
 	if _, err := detector.GetCurrentState(ctx); err != nil {
@@ -66,6 +68,12 @@ func NewPowerDetector(ctx context.Context, cfg *config.Config, conn *dbus.Conn) 
 }
 
 func (p *PowerDetector) GetCurrentState(ctx context.Context) (PowerState, error) {
+	if p.disablePowerEvents {
+		logrus.WithFields(logrus.Fields{"default": ACPowerState.String()}).Debug(
+			"Power events are disabled, returning the default value")
+		return ACPowerState, nil
+	}
+
 	obj := p.conn.Object(
 		p.cfg.Get().PowerEvents.DbusQueryObject.Destination,
 		dbus.ObjectPath(p.cfg.Get().PowerEvents.DbusQueryObject.Path))
@@ -123,6 +131,11 @@ func (p *PowerDetector) getExpectedSignalNames() []string {
 }
 
 func (p *PowerDetector) Reload(ctx context.Context) error {
+	if p.disablePowerEvents {
+		logrus.Debug("Power events are disabled, not reloading power rules")
+		return nil
+	}
+
 	p.stateMu.Lock()
 	defer p.stateMu.Unlock()
 	rules := p.createMatchRules()
@@ -154,19 +167,26 @@ func (p *PowerDetector) Reload(ctx context.Context) error {
 }
 
 func (p *PowerDetector) Run(ctx context.Context) error {
-	if err := p.Reload(ctx); err != nil {
-		return fmt.Errorf("cant reload: %w", err)
-	}
-	p.conn.Signal(p.signals)
-
 	eg, ctx := errgroup.WithContext(ctx)
 
 	eg.Go(func() error {
 		<-ctx.Done()
 		logrus.Debug("Power detector context cancelled, closing D-Bus connection")
-		_ = p.conn.Close()
+		if p.conn != nil {
+			_ = p.conn.Close()
+		}
 		return ctx.Err()
 	})
+
+	if p.disablePowerEvents {
+		logrus.Info("Power events are disabled, waiting for ctx cancellation")
+		return eg.Wait()
+	}
+
+	if err := p.Reload(ctx); err != nil {
+		return fmt.Errorf("cant reload: %w", err)
+	}
+	p.conn.Signal(p.signals)
 
 	eg.Go(func() error {
 		defer close(p.events)
