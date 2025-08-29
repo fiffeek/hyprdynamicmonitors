@@ -9,12 +9,15 @@ An event-driven service that automatically manages Hyprland monitor configuratio
 - Event-driven architecture responding to monitor and power state changes in real-time
 - Profile-based configuration with different settings for different monitor setups
 - Template support for dynamic configuration generation
+- Hot reloading: automatically detects and applies configuration changes without restart by watching config files (optional)
 - Configurable UPower queries for custom power management systems
 - Desktop notifications for configuration changes (optional)
 
 ## Design Philosophy
 
-The service is designed to fail fast on most issues, which means it should be run under systemd or a wrapper script for automatic restarts. It applies the configuration on startup, so restarts keep it operational even when critical failures occur. The reasoning is that it's easier to resume operations from a fresh start than to ensure no events are missed (the program is idle most of the time anyway).
+The service is designed to fail fast on most issues, which means it should be run under systemd or a wrapper script for automatic restarts. It applies the configuration on startup, so restarts keep it operational even when critical failures occur.
+
+For configuration changes, the service provides hot reloading that watches for file modifications and automatically applies updates without restart. When hot reloading encounters issues, the service gracefully falls back to its fail-fast behavior, ensuring reliability over attempting complex recovery scenarios.
 
 ## Installation
 
@@ -109,6 +112,32 @@ Use `hyprctl monitors` to see available monitors and their properties.
 .MonitorsByTag      // Map of tagged monitors (monitor_tag -> monitor)
 ```
 
+### Static Template Values
+
+You can define custom static values that are available in templates. These can be defined globally or per-profile:
+
+**Global static values** (available in all templates):
+```toml
+[static_template_values]
+default_vrr = "1"
+default_res = "2880x1920"
+refresh_rate_high = "120.00000"
+refresh_rate_low = "60.00000"
+```
+
+**Per-profile static values** (override global values):
+```toml
+[profiles.laptop_only.static_template_values]
+default_vrr = "0"        # Override global value
+battery_scaling = "1.5"  # Profile-specific value
+```
+
+**Template usage:**
+```go
+# Use static values in templates
+monitor=eDP-1,{{.default_res}}@{{if isOnAC}}{{.refresh_rate_high}}{{else}}{{.refresh_rate_low}}{{end}},0x0,1,vrr,{{.default_vrr}}
+```
+
 ### Template Functions
 
 ```go
@@ -151,6 +180,10 @@ Usage of hyprdynamicmonitors:
         Path to configuration file (default "$HOME/.config/hyprdynamicmonitors/config.toml")
   -debug
         Enable debug logging
+  -disable-auto-hot-reload
+        Disable automatic hot reload (no file watchers)
+  -disable-power-events
+        Disable power events (dbus)
   -dry-run
         Show what would be done without making changes
   -verbose
@@ -171,8 +204,39 @@ source = ~/.config/hypr/monitors.conf
 
 ### Signals
 
-- **SIGUSR1**: Triggers a configuration update, NOT hot-reload
+- **SIGHUP**: Instantly reloads configuration and reapplies monitor setup
+- **SIGUSR1**: Reapplies the monitor setup without reloading the service configuration
 - **SIGTERM/SIGINT**: Graceful shutdown
+
+You can trigger an instant reload with:
+```bash
+kill -SIGHUP $(pidof hyprdynamicmonitors)
+# or just restart if running as systemd service
+# since the configuration is applied on the startup
+systemctl --user reload hyprdynamicmonitors
+```
+
+### Hot Reloading
+
+HyprDynamicMonitors automatically watches for changes to configuration files and applies them without requiring a restart. This includes:
+
+- **Configuration file changes**: Modifications to `config.toml` are detected and applied automatically
+- **Profile config changes**: Updates to individual profile configuration files (both static and template files)
+- **New profile files**: Adding new configuration files referenced by profiles
+
+The service uses file system watching with debounced updates to avoid excessive reloading during rapid changes (e.g., when editors create temporary files).
+
+**Hot reload behavior:**
+- Configuration changes are debounced by default (1000ms delay; configurable)
+- Only actual content changes trigger reloads (identical content is ignored)
+- Service continues running normally during hot reloads
+
+**Disabling hot reload:**
+```bash
+hyprdynamicmonitors --disable-auto-hot-reload
+```
+
+When disabled, you can still use `SIGHUP` signal for manual reloading.
 
 ## Examples
 
@@ -409,8 +473,8 @@ Most similar tools are more generic, working with any Wayland compositor. In con
 
 **Trade-offs:**
 - Hyprland-specific (not generic Wayland)
-- No hot-reloading (relies on restarts for robustness)
-- Requires systemd or wrapper script for production use
+- Requires systemd or wrapper script for production use (fail-fast design)
+- More complex setup compared to simpler tools
 
 **Similar Tools:**
 - [kanshi](https://sr.ht/~emersion/kanshi/) - Generic Wayland output management
