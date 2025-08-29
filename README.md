@@ -372,14 +372,14 @@ Power state monitoring uses D-Bus to listen for UPower events. This feature is o
 
 ### Disabling power events
 
-To disable power state monitoring entirely:
+To disable power state monitoring entirely, start with the flag:
 
-```toml
-[power_events]
-disabled = true
+```bash
+hyprdynamicmonitors --disable-power-events
 ```
 
 When disabled, the system defaults to `AC` power state.
+No power events will be delivered, no dbus connection will be made.
 
 ### Default power event configuration
 
