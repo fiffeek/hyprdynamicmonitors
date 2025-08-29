@@ -9,6 +9,10 @@ destination = "$HOME/.config/hypr/config.d/dynamic-monitors.conf"
 # prevents configuration thrashing
 debounce_time_ms = 1500
 
+[hot_reload_section]
+# If hot reload is enabled it will wait this ms before firing an update
+debounce_time_ms = 1000
+
 [notifications]
 # Desktop notifications via D-Bus (org.freedesktop.Notifications)
 # Shows profile changes, configuration updates, and errors
@@ -16,9 +20,6 @@ disabled = false  # Set to true to disable all notifications
 timeout_ms = 5000 # Notification display duration in milliseconds (default: 10000)
 
 [power_events]
-# Set to true to disable power state monitoring entirely
-# When disabled, only monitor events will trigger configuration updates
-disabled = false
 
 # Control the query for the current battery state, the default (underneath)
 # effectively performs:

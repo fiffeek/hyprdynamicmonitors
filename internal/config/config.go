@@ -7,6 +7,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/BurntSushi/toml"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/utils"
@@ -16,20 +18,62 @@ import (
 const LeaveEmpty = "leaveEmptyToken"
 
 type Config struct {
-	configPath    string
+	cfg  *ConfigUnsafe
+	path string
+	mu   sync.RWMutex
+}
+
+func NewConfig(path string) (*Config, error) {
+	cfg := &Config{
+		cfg:  nil,
+		path: path,
+		mu:   sync.RWMutex{},
+	}
+	logrus.WithFields(logrus.Fields{"path": path}).Debug("Creating config wrapper")
+	if err := cfg.Reload(); err != nil {
+		return nil, fmt.Errorf("cant initialize config: %w", err)
+	}
+	return cfg, nil
+}
+
+func (c *Config) Get() *ConfigUnsafe {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.cfg
+}
+
+func (c *Config) Reload() error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	cfg, err := Load(c.path)
+	if err != nil {
+		return fmt.Errorf("cant reload config from %s: %w", c.path, err)
+	}
+	c.cfg = cfg
+	return nil
+}
+
+type ConfigUnsafe struct {
+	ConfigDirPath string
+	ConfigPath    string
 	Profiles      map[string]*Profile `toml:"profiles"`
 	General       *GeneralSection     `toml:"general"`
 	Scoring       *ScoringSection     `toml:"scoring"`
 	PowerEvents   *PowerSection       `toml:"power_events"`
+	HotReload     *HotReloadSection   `toml:"hot_reload_section"`
 	Notifications *Notifications      `toml:"notifications"`
 }
+
+type HotReloadSection struct {
+	UpdateDebounceTimer *int `toml:"debounce_time_ms"`
+}
+
 type Notifications struct {
 	Disabled  *bool  `toml:"disabled"`
 	TimeoutMs *int32 `toml:"timeout_ms"`
 }
 
 type PowerSection struct {
-	Disabled                 *bool                      `toml:"disabled"`
 	DbusSignalMatchRules     []*DbusSignalMatchRule     `toml:"dbus_signal_match_rules"`
 	DbusSignalReceiveFilters []*DbusSignalReceiveFilter `toml:"dbus_signal_receive_filters"`
 	DbusQueryObject          *DbusQueryObject           `toml:"dbus_query_object"`
@@ -100,11 +144,17 @@ func (e *ConfigFileType) UnmarshalTOML(value any) error {
 	return errors.New("invalid enum value")
 }
 
+func (e *ConfigFileType) MarshalTOML() ([]byte, error) {
+	return []byte("\"" + e.Value() + "\""), nil
+}
+
 type Profile struct {
-	Name       string
-	ConfigFile string           `toml:"config_file"`
-	ConfigType *ConfigFileType  `toml:"config_file_type"`
-	Conditions ProfileCondition `toml:"conditions"`
+	Name              string
+	ConfigFileModTime time.Time
+	ConfigFileDir     string
+	ConfigFile        string           `toml:"config_file"`
+	ConfigType        *ConfigFileType  `toml:"config_file_type"`
+	Conditions        ProfileCondition `toml:"conditions"`
 }
 
 type PowerStateType int
@@ -138,6 +188,10 @@ func (e *PowerStateType) UnmarshalTOML(value any) error {
 	return errors.New("invalid enum value")
 }
 
+func (e *PowerStateType) MarshalTOML() ([]byte, error) {
+	return []byte("\"" + e.Value() + "\""), nil
+}
+
 type ProfileCondition struct {
 	RequiredMonitors []*RequiredMonitor `toml:"required_monitors"`
 	PowerState       *PowerStateType    `toml:"power_state"`
@@ -149,31 +203,47 @@ type RequiredMonitor struct {
 	MonitorTag  *string `toml:"monitor_tag"`
 }
 
-func Load(configPath string) (*Config, error) {
+func Load(configPath string) (*ConfigUnsafe, error) {
 	configPath = os.ExpandEnv(configPath)
 	if _, err := os.Stat(configPath); os.IsNotExist(err) {
 		return nil, fmt.Errorf("configuration file %s not found", configPath)
 	}
 
-	absConfig, err := filepath.Abs(filepath.Dir(configPath))
+	logrus.WithFields(logrus.Fields{"expanded": configPath}).Debug("Expnaded config path")
+
+	absConfig, err := filepath.Abs(configPath)
 	if err != nil {
 		return nil, fmt.Errorf("cant convert config bath to abs %w", err)
 	}
 
-	var config Config
-	config.configPath = absConfig
+	logrus.WithFields(logrus.Fields{"abs": absConfig}).Debug("Found absolute config path")
+
+	var config ConfigUnsafe
 	if _, err := toml.DecodeFile(configPath, &config); err != nil {
 		return nil, fmt.Errorf("failed to decode TOML: %w", err)
 	}
+
+	config.ConfigPath = absConfig
+	config.ConfigDirPath = filepath.Dir(config.ConfigPath)
 
 	if err := config.Validate(); err != nil {
 		return nil, fmt.Errorf("invalid configuration: %w", err)
 	}
 
+	logrus.WithFields(logrus.Fields{"path": config.ConfigPath, "dir": config.ConfigDirPath}).Debug("Config is valid")
+
 	return &config, nil
 }
 
-func (c *Config) Validate() error {
+func (c *ConfigUnsafe) Validate() error {
+	if c.ConfigPath == "" {
+		return errors.New("config path cant be empty")
+	}
+
+	if c.ConfigDirPath == "" {
+		return errors.New("config dir path cant be empty")
+	}
+
 	if len(c.Profiles) == 0 {
 		return errors.New("no profiles defined")
 	}
@@ -194,7 +264,7 @@ func (c *Config) Validate() error {
 
 	for name, profile := range c.Profiles {
 		profile.Name = name
-		if err := profile.Validate(c.configPath); err != nil {
+		if err := profile.Validate(c.ConfigDirPath); err != nil {
 			return fmt.Errorf("profile %s validation failed: %w", name, err)
 		}
 	}
@@ -213,6 +283,20 @@ func (c *Config) Validate() error {
 		return fmt.Errorf("notifications section validation failed: %w", err)
 	}
 
+	if c.HotReload == nil {
+		c.HotReload = &HotReloadSection{}
+	}
+	if err := c.HotReload.Validate(); err != nil {
+		return fmt.Errorf("hot reload section validation failed: %w", err)
+	}
+
+	return nil
+}
+
+func (h *HotReloadSection) Validate() error {
+	if h.UpdateDebounceTimer == nil {
+		h.UpdateDebounceTimer = utils.IntPtr(1000)
+	}
 	return nil
 }
 
@@ -285,10 +369,20 @@ func (p *Profile) Validate(configPath string) error {
 	}).Debug("Profile config file resolved")
 
 	p.ConfigFile = os.ExpandEnv(p.ConfigFile)
+	absConfigFile, err := filepath.Abs(p.ConfigFile)
+	if err != nil {
+		return fmt.Errorf("cant get absolute path to config file %s: %w", p.ConfigFile, err)
+	}
 
-	if _, err := os.Stat(p.ConfigFile); os.IsNotExist(err) {
+	p.ConfigFile = absConfigFile
+
+	fi, err := os.Stat(p.ConfigFile)
+	if os.IsNotExist(err) {
 		return fmt.Errorf("config file %s not found", p.ConfigFile)
 	}
+
+	p.ConfigFileDir = filepath.Dir(p.ConfigFile)
+	p.ConfigFileModTime = fi.ModTime()
 
 	if err := p.Conditions.Validate(); err != nil {
 		return fmt.Errorf("conditions validation failed: %w", err)
@@ -320,9 +414,6 @@ func (rm *RequiredMonitor) Validate() error {
 }
 
 func (ps *PowerSection) Validate() error {
-	if ps.Disabled == nil {
-		ps.Disabled = utils.BoolPtr(false)
-	}
 	if len(ps.DbusSignalMatchRules) == 0 {
 		// listen to
 		// gdbus monitor -y -d org.freedesktop.UPower | grep -E "PropertiesChanged|Device(Added|Removed)"

@@ -59,7 +59,7 @@ func NewService(cfg *config.Config, monitorDetector IMonitorDetector,
 		serviceConfig:        svcCfg,
 		matcher:              matcher,
 		generator:            generator,
-		cachedPowerState:     detectors.Battery,
+		cachedPowerState:     detectors.BatteryPowerState,
 		debounceTimer:        time.NewTimer(0),
 		notificationsService: notifications,
 	}
@@ -143,9 +143,9 @@ func (s *Service) triggerUpdate() {
 	defer s.debounceMutex.Unlock()
 
 	s.debounceTimer.Stop()
-	s.debounceTimer.Reset(time.Duration(*s.config.General.DebounceTimeMs) * time.Millisecond)
+	s.debounceTimer.Reset(time.Duration(*s.config.Get().General.DebounceTimeMs) * time.Millisecond)
 
-	logrus.WithField("debounce", *s.config.General.DebounceTimeMs).Debug("Update scheduled")
+	logrus.WithField("debounce", *s.config.Get().General.DebounceTimeMs).Debug("Update scheduled")
 }
 
 func (s *Service) updateProcessor(ctx context.Context) error {
@@ -163,6 +163,10 @@ func (s *Service) updateProcessor(ctx context.Context) error {
 			return nil
 		}
 	}
+}
+
+func (s *Service) Handle(ctx context.Context) error {
+	return s.UpdateOnce()
 }
 
 func (s *Service) UpdateOnce() error {
@@ -200,11 +204,12 @@ func (s *Service) UpdateOnce() error {
 
 	logrus.WithFields(profileFields).Info("Using profile")
 
-	destination := *s.config.General.Destination
+	destination := *s.config.Get().General.Destination
 	changed, err := s.generator.GenerateConfig(profile, monitors, powerState, destination)
 	if err != nil {
 		return fmt.Errorf("failed to generate config: %w", err)
 	}
+
 	if !changed {
 		logrus.Info("Not sending notifications since the config has not been changed")
 		return nil

@@ -5,7 +5,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"reflect"
 	"slices"
+	"sync"
 
 	"github.com/fiffeek/hyprdynamicmonitors/internal/config"
 	"github.com/godbus/dbus/v5"
@@ -16,15 +18,16 @@ import (
 type PowerState int
 
 const (
-	Battery PowerState = iota
-	ACPower
+	UnknownPowerState PowerState = iota
+	BatteryPowerState
+	ACPowerState
 )
 
 func (p PowerState) String() string {
 	switch p {
-	case Battery:
+	case BatteryPowerState:
 		return "BAT"
-	case ACPower:
+	case ACPowerState:
 		return "AC"
 	default:
 		return "UNKNOWN"
@@ -36,13 +39,15 @@ type PowerEvent struct {
 }
 
 type PowerDetector struct {
-	cfg     *config.PowerSection
-	conn    *dbus.Conn
-	events  chan PowerEvent
-	signals chan *dbus.Signal
+	cfg              *config.Config
+	conn             *dbus.Conn
+	events           chan PowerEvent
+	signals          chan *dbus.Signal
+	stateMu          sync.RWMutex
+	dbusMatchOptions [][]dbus.MatchOption
 }
 
-func NewPowerDetector(ctx context.Context, cfg *config.PowerSection, conn *dbus.Conn) (*PowerDetector, error) {
+func NewPowerDetector(ctx context.Context, cfg *config.Config, conn *dbus.Conn) (*PowerDetector, error) {
 	detector := &PowerDetector{
 		conn:    conn,
 		cfg:     cfg,
@@ -62,26 +67,26 @@ func NewPowerDetector(ctx context.Context, cfg *config.PowerSection, conn *dbus.
 
 func (p *PowerDetector) GetCurrentState(ctx context.Context) (PowerState, error) {
 	obj := p.conn.Object(
-		p.cfg.DbusQueryObject.Destination,
-		dbus.ObjectPath(p.cfg.DbusQueryObject.Path))
+		p.cfg.Get().PowerEvents.DbusQueryObject.Destination,
+		dbus.ObjectPath(p.cfg.Get().PowerEvents.DbusQueryObject.Path))
 
 	var onBattery dbus.Variant
-	err := obj.CallWithContext(ctx, p.cfg.DbusQueryObject.Method, 0,
-		p.cfg.DbusQueryObject.CollectArgs()...).Store(&onBattery)
+	err := obj.CallWithContext(ctx, p.cfg.Get().PowerEvents.DbusQueryObject.Method, 0,
+		p.cfg.Get().PowerEvents.DbusQueryObject.CollectArgs()...).Store(&onBattery)
 	if err != nil {
-		return Battery, fmt.Errorf("failed to get property from UPower: %w", err)
+		return BatteryPowerState, fmt.Errorf("failed to get property from UPower: %w", err)
 	}
 
 	state := onBattery.String()
 
 	logrus.WithFields(logrus.Fields{
 		"upower_reported_state": state,
-		"expected":              p.cfg.DbusQueryObject.ExpectedDischargingValue,
+		"expected":              p.cfg.Get().PowerEvents.DbusQueryObject.ExpectedDischargingValue,
 	}).Debug("UPower state property")
-	if state == p.cfg.DbusQueryObject.ExpectedDischargingValue {
-		return Battery, nil
+	if state == p.cfg.Get().PowerEvents.DbusQueryObject.ExpectedDischargingValue {
+		return BatteryPowerState, nil
 	}
-	return ACPower, nil
+	return ACPowerState, nil
 }
 
 func (p *PowerDetector) Listen() <-chan PowerEvent {
@@ -90,7 +95,7 @@ func (p *PowerDetector) Listen() <-chan PowerEvent {
 
 func (p *PowerDetector) createMatchRules() [][]dbus.MatchOption {
 	rules := [][]dbus.MatchOption{}
-	for _, rule := range p.cfg.DbusSignalMatchRules {
+	for _, rule := range p.cfg.Get().PowerEvents.DbusSignalMatchRules {
 		matchRules := []dbus.MatchOption{}
 		if rule.Interface != nil {
 			matchRules = append(matchRules, dbus.WithMatchInterface(*rule.Interface))
@@ -111,14 +116,29 @@ func (p *PowerDetector) createMatchRules() [][]dbus.MatchOption {
 
 func (p *PowerDetector) getExpectedSignalNames() []string {
 	result := []string{}
-	for _, filter := range p.cfg.DbusSignalReceiveFilters {
+	for _, filter := range p.cfg.Get().PowerEvents.DbusSignalReceiveFilters {
 		result = append(result, *filter.Name)
 	}
 	return result
 }
 
-func (p *PowerDetector) Run(ctx context.Context) error {
+func (p *PowerDetector) Reload(ctx context.Context) error {
+	p.stateMu.Lock()
+	defer p.stateMu.Unlock()
 	rules := p.createMatchRules()
+	if reflect.DeepEqual(rules, p.dbusMatchOptions) {
+		logrus.Debug("power events rules match, nothing to be done")
+	}
+
+	for _, ruleSet := range p.dbusMatchOptions {
+		if err := p.conn.RemoveMatchSignalContext(ctx, ruleSet...); err != nil {
+			logrus.WithFields(logrus.Fields{
+				"error": err,
+			}).Debug("Failed to remove D-Bus match rule")
+			return fmt.Errorf("cant remove signal rule for dbus: %w", err)
+		}
+	}
+
 	for _, ruleSet := range rules {
 		if err := p.conn.AddMatchSignalContext(ctx, ruleSet...); err != nil {
 			logrus.WithFields(logrus.Fields{
@@ -126,6 +146,16 @@ func (p *PowerDetector) Run(ctx context.Context) error {
 			}).Debug("Failed to add D-Bus match rule")
 			return fmt.Errorf("cant add signal rule for dbus: %w", err)
 		}
+	}
+
+	p.dbusMatchOptions = rules
+	logrus.Debug("Reloaded power detector")
+	return nil
+}
+
+func (p *PowerDetector) Run(ctx context.Context) error {
+	if err := p.Reload(ctx); err != nil {
+		return fmt.Errorf("cant reload: %w", err)
 	}
 	p.conn.Signal(p.signals)
 
@@ -144,7 +174,7 @@ func (p *PowerDetector) Run(ctx context.Context) error {
 
 		logrus.Debug("Power detector started, listening for UPower D-Bus signals")
 
-		lastState := ACPower
+		lastState := UnknownPowerState
 
 		for {
 			select {

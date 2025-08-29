@@ -19,11 +19,11 @@ func NewMatcher(cfg *config.Config) *Matcher {
 
 func (m *Matcher) Match(connectedMonitors []*hypr.MonitorSpec, powerState detectors.PowerState) (bool, *config.Profile, error) {
 	score := make(map[string]int)
-	for name := range m.cfg.Profiles {
+	for name := range m.cfg.Get().Profiles {
 		score[name] = 0
 	}
 
-	for name, profile := range m.cfg.Profiles {
+	for name, profile := range m.cfg.Get().Profiles {
 		conditions := profile.Conditions
 		fullMatchScore := m.calcFullProfileScore(conditions)
 		score[name] = m.scoreProfile(conditions, powerState, connectedMonitors)
@@ -44,7 +44,7 @@ func (m *Matcher) Match(connectedMonitors []*hypr.MonitorSpec, powerState detect
 		return false, nil, nil
 	}
 
-	for name, profile := range m.cfg.Profiles {
+	for name, profile := range m.cfg.Get().Profiles {
 		if score[name] == bestScore {
 			return true, profile, nil
 		}
@@ -55,16 +55,16 @@ func (m *Matcher) Match(connectedMonitors []*hypr.MonitorSpec, powerState detect
 func (m *Matcher) scoreProfile(conditions config.ProfileCondition, powerState detectors.PowerState, connectedMonitors []*hypr.MonitorSpec) int {
 	profileScore := 0
 	if conditions.PowerState != nil && conditions.PowerState.Value() == powerState.String() {
-		profileScore += *m.cfg.Scoring.PowerStateMatch
+		profileScore += *m.cfg.Get().Scoring.PowerStateMatch
 	}
 
 	for _, condition := range conditions.RequiredMonitors {
 		for _, connectedMonitor := range connectedMonitors {
 			if condition.Name != nil && *condition.Name == connectedMonitor.Name {
-				profileScore += *m.cfg.Scoring.NameMatch
+				profileScore += *m.cfg.Get().Scoring.NameMatch
 			}
 			if condition.Description != nil && *condition.Description == connectedMonitor.Description {
-				profileScore += *m.cfg.Scoring.DescriptionMatch
+				profileScore += *m.cfg.Get().Scoring.DescriptionMatch
 			}
 		}
 	}
@@ -75,15 +75,15 @@ func (m *Matcher) scoreProfile(conditions config.ProfileCondition, powerState de
 func (m *Matcher) calcFullProfileScore(conditions config.ProfileCondition) int {
 	fullMatchScore := 0
 	if conditions.PowerState != nil {
-		fullMatchScore += *m.cfg.Scoring.PowerStateMatch
+		fullMatchScore += *m.cfg.Get().Scoring.PowerStateMatch
 	}
 
 	for _, condition := range conditions.RequiredMonitors {
 		if condition.Name != nil {
-			fullMatchScore += *m.cfg.Scoring.NameMatch
+			fullMatchScore += *m.cfg.Get().Scoring.NameMatch
 		}
 		if condition.Description != nil {
-			fullMatchScore += *m.cfg.Scoring.DescriptionMatch
+			fullMatchScore += *m.cfg.Get().Scoring.DescriptionMatch
 		}
 	}
 

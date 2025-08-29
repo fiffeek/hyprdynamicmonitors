@@ -10,11 +10,11 @@ import (
 )
 
 type StaticPowerDetector struct {
-	cfg    *config.PowerSection
+	cfg    *config.Config
 	events chan PowerEvent
 }
 
-func NewStaticPowerDetector(cfg *config.PowerSection) *StaticPowerDetector {
+func NewStaticPowerDetector(cfg *config.Config) *StaticPowerDetector {
 	logrus.Debug("Running static power detector, no events will be sent or monitored")
 	return &StaticPowerDetector{
 		cfg:    cfg,
@@ -23,11 +23,15 @@ func NewStaticPowerDetector(cfg *config.PowerSection) *StaticPowerDetector {
 }
 
 func (p *StaticPowerDetector) GetCurrentState(ctx context.Context) (PowerState, error) {
-	return ACPower, nil
+	return ACPowerState, nil
 }
 
 func (p *StaticPowerDetector) Listen() <-chan PowerEvent {
 	return p.events
+}
+
+func (p *StaticPowerDetector) Reload(ctx context.Context) error {
+	return nil
 }
 
 func (p *StaticPowerDetector) Run(ctx context.Context) error {

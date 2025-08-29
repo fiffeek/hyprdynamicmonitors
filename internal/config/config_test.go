@@ -15,12 +15,12 @@ func TestLoad(t *testing.T) {
 		configFile    string
 		expectError   bool
 		errorContains string
-		validate      func(*testing.T, *config.Config)
+		validate      func(*testing.T, *config.ConfigUnsafe)
 	}{
 		{
 			name:       "valid basic config",
 			configFile: "valid_basic.toml",
-			validate: func(t *testing.T, c *config.Config) {
+			validate: func(t *testing.T, c *config.ConfigUnsafe) {
 				if len(c.Profiles) != 3 {
 					t.Errorf("expected 3 profiles, got %d", len(c.Profiles))
 				}
@@ -92,7 +92,7 @@ func TestLoad(t *testing.T) {
 		{
 			name:       "valid minimal config",
 			configFile: "valid_minimal.toml",
-			validate: func(t *testing.T, c *config.Config) {
+			validate: func(t *testing.T, c *config.ConfigUnsafe) {
 				if len(c.Profiles) != 1 {
 					t.Errorf("expected 1 profile, got %d", len(c.Profiles))
 				}
@@ -177,7 +177,7 @@ func TestLoad(t *testing.T) {
 		{
 			name:       "valid custom upower query",
 			configFile: "valid_custom_upower_query.toml",
-			validate: func(t *testing.T, c *config.Config) {
+			validate: func(t *testing.T, c *config.ConfigUnsafe) {
 				if c.PowerEvents == nil {
 					t.Error("power events section should not be nil")
 					return
@@ -210,7 +210,7 @@ func TestLoad(t *testing.T) {
 		{
 			name:       "empty upower destination gets default",
 			configFile: "invalid_upower_empty_destination.toml",
-			validate: func(t *testing.T, c *config.Config) {
+			validate: func(t *testing.T, c *config.ConfigUnsafe) {
 				if c.PowerEvents.DbusQueryObject.Destination != "org.freedesktop.UPower" {
 					t.Errorf("expected default destination, got %s",
 						c.PowerEvents.DbusQueryObject.Destination)

@@ -3,9 +3,12 @@ package generators
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"os"
+	"sync"
 	"text/template"
+	"time"
 
 	"github.com/fiffeek/hyprdynamicmonitors/internal/config"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/detectors"
@@ -14,12 +17,22 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type ConfigGenerator struct{}
-
-func NewConfigGenerator() *ConfigGenerator {
-	return &ConfigGenerator{}
+type ConfigGenerator struct {
+	mtime   map[string]time.Time
+	mtimeMu sync.RWMutex
 }
 
+func NewConfigGenerator(cfg *config.Config) *ConfigGenerator {
+	mtime := make(map[string]time.Time)
+	for _, profile := range cfg.Get().Profiles {
+		mtime[profile.ConfigFile] = profile.ConfigFileModTime
+	}
+
+	return &ConfigGenerator{mtime: mtime, mtimeMu: sync.RWMutex{}}
+}
+
+// GenerateConfig either renders a template or links a file, and returns if any changed were done
+// this includes stating the config files to catch if the user modified them by hand (in linking scenario)
 func (g *ConfigGenerator) GenerateConfig(profile *config.Profile,
 	connectedMonitors []*hypr.MonitorSpec, powerState detectors.PowerState, destination string,
 ) (bool, error) {
@@ -81,10 +94,10 @@ func (g *ConfigGenerator) renderTemplateFile(profile *config.Profile,
 func getFuncMap(powerState detectors.PowerState) template.FuncMap {
 	funcMap := template.FuncMap{
 		"isOnBattery": func() bool {
-			return powerState == detectors.Battery
+			return powerState == detectors.BatteryPowerState
 		},
 		"isOnAC": func() bool {
-			return powerState == detectors.ACPower
+			return powerState == detectors.ACPowerState
 		},
 		"powerState": func() string {
 			return powerState.String()
@@ -150,25 +163,17 @@ func (g *ConfigGenerator) monitorMatches(required *config.RequiredMonitor, conne
 
 func (g *ConfigGenerator) linkConfigFile(profile *config.Profile, destination string) (bool, error) {
 	source := profile.ConfigFile
-	if fileInfo, err := os.Lstat(destination); err == nil {
-		if fileInfo.Mode()&os.ModeSymlink != 0 {
-			target, err := os.Readlink(destination)
-			if err != nil {
-				return false, fmt.Errorf("cant readlink %s: %w", destination, err)
-			}
-			if target == source {
-				logrus.WithFields(logrus.Fields{
-					"config_file": profile.ConfigFile,
-					"destination": destination,
-				}).Info("Configuration already correctly linked")
-				return false, nil
-			}
-		}
+	differentContents, err := g.compareSymlinks(destination, source, profile)
+	if err == nil {
+		return differentContents, nil
+	}
 
+	if _, err := os.Stat(destination); err == nil || !os.IsNotExist(err) {
 		if err := os.Remove(destination); err != nil {
 			return false, fmt.Errorf("failed to remove existing config: %w", err)
 		}
 	}
+
 	if err := os.Symlink(source, destination); err != nil {
 		return false, fmt.Errorf("failed to create symlink from %s to %s: %w", source, destination, err)
 	}
@@ -179,4 +184,46 @@ func (g *ConfigGenerator) linkConfigFile(profile *config.Profile, destination st
 	}).Info("Successfully linked configuration")
 
 	return true, nil
+}
+
+// checkCurrentLink returns if both files were symlinks and whether the underlying contents are different
+func (g *ConfigGenerator) compareSymlinks(destination, source string, profile *config.Profile) (bool, error) {
+	// if there is a symlink already see where it points to,
+	// then compare the locations and mtime
+	//
+	fileInfo, err := os.Lstat(destination)
+	if err != nil {
+		return false, fmt.Errorf("not a symlink %s: %w", destination, err)
+	}
+	if fileInfo.Mode()&os.ModeSymlink == 0 {
+		return false, errors.New("not a symlink")
+	}
+	target, err := os.Readlink(destination)
+	if err != nil {
+		return false, fmt.Errorf("cant readlink %s: %w", destination, err)
+	}
+	if target == source {
+		sourceFileInfo, err := os.Lstat(source)
+		if err != nil {
+			return false, fmt.Errorf("cant stat %s: %w", source, err)
+		}
+
+		g.mtimeMu.Lock()
+		defer g.mtimeMu.Unlock()
+
+		prevMtime, ok := g.mtime[source]
+		changed := false
+		if ok {
+			changed = prevMtime.Compare(sourceFileInfo.ModTime()) != 0
+		}
+		g.mtime[source] = sourceFileInfo.ModTime()
+
+		logrus.WithFields(logrus.Fields{
+			"config_file": profile.ConfigFile,
+			"destination": destination,
+		}).Info("Configuration already correctly linked")
+		return changed, nil
+	}
+
+	return false, errors.New("not a symlink")
 }

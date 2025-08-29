@@ -5,16 +5,19 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/fiffeek/hyprdynamicmonitors/internal/config"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/detectors"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/generators"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/hypr"
+	"github.com/fiffeek/hyprdynamicmonitors/internal/testutils"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/utils"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestConfigGenerator_GenerateConfig_Static(t *testing.T) {
-	generator := generators.NewConfigGenerator()
+	generator := generators.NewConfigGenerator(testutils.NewTestConfig(t).Get())
 
 	tempDir := t.TempDir()
 	destination := filepath.Join(tempDir, "hyprland.conf")
@@ -34,18 +37,12 @@ func TestConfigGenerator_GenerateConfig_Static(t *testing.T) {
 		{Name: "eDP-1", ID: utils.IntPtr(1), Description: "Built-in Display"},
 	}
 
-	changed, err := generator.GenerateConfig(profile, monitors, detectors.ACPower, destination)
-	if err != nil {
-		t.Fatalf("GenerateConfig failed: %v", err)
-	}
-	if !changed {
-		t.Fatalf("file was not changed")
-	}
+	changed, err := generator.GenerateConfig(profile, monitors, detectors.ACPowerState, destination)
+	assert.NoError(t, err, "GenerateConfig failed")
+	assert.True(t, changed, "file was not changed")
 
 	linkInfo, err := os.Lstat(destination)
-	if err != nil {
-		t.Fatalf("Failed to stat destination: %v", err)
-	}
+	assert.NoError(t, err, "Failed to stat destination")
 
 	if linkInfo.Mode()&os.ModeSymlink == 0 {
 		t.Error("Expected destination to be a symlink")
@@ -53,25 +50,26 @@ func TestConfigGenerator_GenerateConfig_Static(t *testing.T) {
 
 	// Check that the symlink points to the correct file
 	linkTarget, err := os.Readlink(destination)
-	if err != nil {
-		t.Fatalf("Failed to read symlink: %v", err)
-	}
+	assert.NoError(t, err, "Failed to read symlink")
 
 	if linkTarget != staticConfigPath {
 		t.Errorf("Expected symlink target %s, got %s", staticConfigPath, linkTarget)
 	}
 
-	changed, err = generator.GenerateConfig(profile, monitors, detectors.ACPower, destination)
-	if err != nil {
-		t.Fatalf("GenerateConfig failed: %v", err)
-	}
-	if changed {
-		t.Fatalf("file was changed")
-	}
+	changed, err = generator.GenerateConfig(profile, monitors, detectors.ACPowerState, destination)
+	assert.NoError(t, err, "GenerateConfig failed")
+	assert.False(t, changed, "file was changed")
+
+	// if the underlying file is changed report generator as updated
+	err = os.Chtimes(destination, time.Now(), time.Now())
+	assert.NoError(t, err, "touch failed")
+	changed, err = generator.GenerateConfig(profile, monitors, detectors.ACPowerState, destination)
+	assert.NoError(t, err, "GenerateConfig failed")
+	assert.True(t, changed, "file was not changed")
 }
 
 func TestConfigGenerator_GenerateConfig_Template(t *testing.T) {
-	generator := generators.NewConfigGenerator()
+	generator := generators.NewConfigGenerator(testutils.NewTestConfig(t).Get())
 
 	tempDir := t.TempDir()
 	destination := filepath.Join(tempDir, "hyprland.conf")
@@ -104,7 +102,7 @@ func TestConfigGenerator_GenerateConfig_Template(t *testing.T) {
 	}
 
 	// Test with battery power state
-	changed, err := generator.GenerateConfig(profile, monitors, detectors.Battery, destination)
+	changed, err := generator.GenerateConfig(profile, monitors, detectors.BatteryPowerState, destination)
 	if err != nil {
 		t.Fatalf("GenerateConfig failed: %v", err)
 	}
@@ -153,7 +151,7 @@ func TestConfigGenerator_GenerateConfig_Template(t *testing.T) {
 	}
 
 	// Test with AC power state
-	changed, err = generator.GenerateConfig(profile, monitors, detectors.ACPower, destination)
+	changed, err = generator.GenerateConfig(profile, monitors, detectors.ACPowerState, destination)
 	if err != nil {
 		t.Fatalf("GenerateConfig failed with AC power: %v", err)
 	}
@@ -185,7 +183,7 @@ func TestConfigGenerator_GenerateConfig_Template(t *testing.T) {
 		t.Error("Expected powerState function to return AC")
 	}
 
-	changed, err = generator.GenerateConfig(profile, monitors, detectors.ACPower, destination)
+	changed, err = generator.GenerateConfig(profile, monitors, detectors.ACPowerState, destination)
 	if err != nil {
 		t.Fatalf("GenerateConfig failed with AC power: %v", err)
 	}
