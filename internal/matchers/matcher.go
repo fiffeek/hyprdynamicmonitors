@@ -19,11 +19,13 @@ func NewMatcher(cfg *config.Config) *Matcher {
 
 func (m *Matcher) Match(connectedMonitors []*hypr.MonitorSpec, powerState power.PowerState) (bool, *config.Profile, error) {
 	score := make(map[string]int)
-	for name := range m.cfg.Get().Profiles {
+	profiles := m.cfg.Get().Profiles
+	ok, fallbackProfile := m.returnNoneOrFallback()
+	for name := range profiles {
 		score[name] = 0
 	}
 
-	for name, profile := range m.cfg.Get().Profiles {
+	for name, profile := range profiles {
 		conditions := profile.Conditions
 		fullMatchScore := m.calcFullProfileScore(conditions)
 		score[name] = m.scoreProfile(conditions, powerState, connectedMonitors)
@@ -41,15 +43,22 @@ func (m *Matcher) Match(connectedMonitors []*hypr.MonitorSpec, powerState power.
 
 	// when nothing scored > 0 then no config matches
 	if bestScore == 0 {
-		return false, nil, nil
+		return ok, fallbackProfile, nil
 	}
 
-	for name, profile := range m.cfg.Get().Profiles {
+	for name, profile := range profiles {
 		if score[name] == bestScore {
 			return true, profile, nil
 		}
 	}
-	return false, nil, nil
+	return ok, fallbackProfile, nil
+}
+
+func (m *Matcher) returnNoneOrFallback() (bool, *config.Profile) {
+	if m.cfg.Get().FallbackProfile != nil {
+		return true, m.cfg.Get().FallbackProfile
+	}
+	return false, nil
 }
 
 func (m *Matcher) scoreProfile(conditions config.ProfileCondition, powerState power.PowerState, connectedMonitors []*hypr.MonitorSpec) int {

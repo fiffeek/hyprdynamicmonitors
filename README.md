@@ -156,6 +156,45 @@ isOnAC              // Returns true if on AC power
 powerState          // Returns current power state string
 ```
 
+### Fallback Profile
+
+When no regular profile matches the current monitor setup and power state, you can define a fallback profile that will be used as a last resort. This is particularly useful for handling unexpected monitor configurations or providing a safe default configuration.
+
+```toml
+# Regular profiles with specific conditions
+[profiles.laptop_only]
+config_file = "hyprconfigs/laptop.conf"
+
+[[profiles.laptop_only.conditions.required_monitors]]
+name = "eDP-1"
+
+[profiles.dual_monitor]
+config_file = "hyprconfigs/dual.conf"
+
+[[profiles.dual_monitor.conditions.required_monitors]]
+name = "eDP-1"
+
+[[profiles.dual_monitor.conditions.required_monitors]]
+description = "External Monitor"
+
+# Fallback profile - used when no other profile matches
+[fallback_profile]
+config_file = "hyprconfigs/fallback.conf"
+config_file_type = "static"
+```
+
+The fallback profile in `hyprconfigs/fallback.conf` might contain a safe default configuration:
+```hyprconfig
+# Generic fallback: configure all connected monitors with preferred settings
+monitor=,preferred,auto,1
+```
+
+**Key characteristics of fallback profiles:**
+- Cannot define conditions (since they're used when no conditions match)
+- Supports both static and template configuration types
+- Only used when no regular profile matches the current setup
+- Regular matching profiles always take precedence over the fallback
+
 ### Notifications
 
 HyprDynamicMonitors can show desktop notifications when configuration changes occur. Notifications are sent via D-Bus using the standard `org.freedesktop.Notifications` interface.

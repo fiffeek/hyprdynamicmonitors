@@ -40,6 +40,21 @@ func (t *TestConfig) WithProfiles(profiles map[string]*config.Profile) *TestConf
 	return t
 }
 
+func (t *TestConfig) WithFallbackProfile(fallback *config.Profile) *TestConfig {
+	t.cfg.FallbackProfile = fallback
+	if fallback != nil && fallback.ConfigFile == "" {
+		tempDir := t.t.TempDir()
+		cfgFile := filepath.Join(tempDir, "fallback")
+		fallback.ConfigFile = cfgFile
+	}
+	if fallback != nil {
+		if _, err := os.Create(fallback.ConfigFile); err != nil {
+			t.t.Fatalf("Failed to create fallback config file: %v", err)
+		}
+	}
+	return t
+}
+
 func (t *TestConfig) WithScoring(scoring *config.ScoringSection) *TestConfig {
 	t.cfg.Scoring = scoring
 	return t

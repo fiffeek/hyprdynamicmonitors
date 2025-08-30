@@ -57,6 +57,7 @@ type UnsafeConfig struct {
 	ConfigDirPath        string
 	ConfigPath           string
 	Profiles             map[string]*Profile `toml:"profiles"`
+	FallbackProfile      *Profile            `toml:"fallback_profile"`
 	General              *GeneralSection     `toml:"general"`
 	Scoring              *ScoringSection     `toml:"scoring"`
 	PowerEvents          *PowerSection       `toml:"power_events"`
@@ -166,6 +167,7 @@ type Profile struct {
 	ConfigType           *ConfigFileType   `toml:"config_file_type"`
 	Conditions           ProfileCondition  `toml:"conditions"`
 	StaticTemplateValues map[string]string `toml:"static_template_values"`
+	IsFallbackProfile    bool
 }
 
 type PowerStateType int
@@ -278,8 +280,17 @@ func (c *UnsafeConfig) Validate() error {
 
 	for name, profile := range c.Profiles {
 		profile.Name = name
+		profile.IsFallbackProfile = false
 		if err := profile.Validate(c.ConfigDirPath); err != nil {
 			return fmt.Errorf("profile %s validation failed: %w", name, err)
+		}
+	}
+
+	if c.FallbackProfile != nil {
+		c.FallbackProfile.Name = "fallback"
+		c.FallbackProfile.IsFallbackProfile = true
+		if err := c.FallbackProfile.Validate(c.ConfigDirPath); err != nil {
+			return fmt.Errorf("fallback profile validation failed: %w", err)
 		}
 	}
 
@@ -404,7 +415,11 @@ func (p *Profile) Validate(configPath string) error {
 	p.ConfigFileDir = filepath.Dir(p.ConfigFile)
 	p.ConfigFileModTime = fi.ModTime()
 
-	if err := p.Conditions.Validate(); err != nil {
+	if p.IsFallbackProfile && !p.Conditions.IsEmpty() {
+		return errors.New("fallback profile cant define any conditions")
+	}
+
+	if err := p.Conditions.Validate(); err != nil && !p.IsFallbackProfile {
 		return fmt.Errorf("conditions validation failed: %w", err)
 	}
 
@@ -415,6 +430,10 @@ func (p *Profile) Validate(configPath string) error {
 	}
 
 	return nil
+}
+
+func (pc *ProfileCondition) IsEmpty() bool {
+	return len(pc.RequiredMonitors) == 0 && pc.PowerState == nil
 }
 
 func (pc *ProfileCondition) Validate() error {

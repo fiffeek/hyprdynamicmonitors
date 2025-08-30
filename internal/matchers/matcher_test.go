@@ -39,7 +39,7 @@ func TestMatcher_Match(t *testing.T) {
 						},
 					},
 				},
-			}),
+			}).Get(),
 			connectedMonitors: []*hypr.MonitorSpec{
 				{Name: "eDP-1", ID: utils.IntPtr(0), Description: "Built-in Display"},
 				{Name: "DP-1", ID: utils.IntPtr(1), Description: "External Monitor"},
@@ -59,7 +59,7 @@ func TestMatcher_Match(t *testing.T) {
 						},
 					},
 				},
-			}),
+			}).Get(),
 			connectedMonitors: []*hypr.MonitorSpec{
 				{Name: "DP-1", ID: utils.IntPtr(0), Description: "External Monitor"},
 			},
@@ -88,7 +88,7 @@ func TestMatcher_Match(t *testing.T) {
 						},
 					},
 				},
-			}),
+			}).Get(),
 			connectedMonitors: []*hypr.MonitorSpec{
 				{Name: "eDP-1", ID: utils.IntPtr(0), Description: "Built-in Display"},
 			},
@@ -108,7 +108,7 @@ func TestMatcher_Match(t *testing.T) {
 						},
 					},
 				},
-			}),
+			}).Get(),
 			connectedMonitors: []*hypr.MonitorSpec{
 				{Name: "eDP-1", ID: utils.IntPtr(0), Description: "Built-in Display"},
 			},
@@ -127,7 +127,7 @@ func TestMatcher_Match(t *testing.T) {
 						},
 					},
 				},
-			}),
+			}).Get(),
 			connectedMonitors: []*hypr.MonitorSpec{
 				{Name: "eDP-1", ID: utils.IntPtr(0), Description: "Built-in Display"},
 			},
@@ -155,7 +155,7 @@ func TestMatcher_Match(t *testing.T) {
 						},
 					},
 				},
-			}),
+			}).Get(),
 			connectedMonitors: []*hypr.MonitorSpec{
 				{Name: "eDP-1", ID: utils.IntPtr(0), Description: "Built-in Display"},
 				{Name: "DP-1", ID: utils.IntPtr(1), Description: "External Monitor"},
@@ -176,13 +176,84 @@ func TestMatcher_Match(t *testing.T) {
 						},
 					},
 				},
-			}),
+			}).Get(),
 			connectedMonitors: []*hypr.MonitorSpec{
 				{Name: "eDP-1", ID: utils.IntPtr(0), Description: "Built-in Display"},
 			},
 			powerState:      power.BatteryPowerState,
 			expectedProfile: "",
 			description:     "Profile with power state requirement should be discarded when power state doesn't match",
+		},
+		{
+			name: "fallback_profile_when_no_match",
+			config: createTestConfig(t, map[string]*config.Profile{
+				"hdmi_only": {
+					Name: "hdmi_only",
+					Conditions: config.ProfileCondition{
+						RequiredMonitors: []*config.RequiredMonitor{
+							{Name: utils.StringPtr("HDMI-1")},
+						},
+					},
+				},
+			}).WithFallbackProfile(
+				&config.Profile{
+					Name:              "fallback",
+					IsFallbackProfile: true,
+					ConfigFile:        "/tmp/fallback.conf",
+					ConfigType:        &[]config.ConfigFileType{config.Static}[0],
+				},
+			).Get(),
+			connectedMonitors: []*hypr.MonitorSpec{
+				{Name: "eDP-1", ID: utils.IntPtr(0), Description: "Built-in Display"},
+			},
+			powerState:      power.ACPowerState,
+			expectedProfile: "fallback",
+			description:     "Fallback profile should be used when no regular profile matches",
+		},
+		{
+			name: "regular_profile_preferred_over_fallback",
+			config: createTestConfig(t, map[string]*config.Profile{
+				"laptop_only": {
+					Name: "laptop_only",
+					Conditions: config.ProfileCondition{
+						RequiredMonitors: []*config.RequiredMonitor{
+							{Name: utils.StringPtr("eDP-1")},
+						},
+					},
+				},
+			}).WithFallbackProfile(
+				&config.Profile{
+					Name:              "fallback",
+					IsFallbackProfile: true,
+					ConfigFile:        "/tmp/fallback.conf",
+					ConfigType:        &[]config.ConfigFileType{config.Static}[0],
+				},
+			).Get(),
+			connectedMonitors: []*hypr.MonitorSpec{
+				{Name: "eDP-1", ID: utils.IntPtr(0), Description: "Built-in Display"},
+			},
+			powerState:      power.ACPowerState,
+			expectedProfile: "laptop_only",
+			description:     "Regular matching profile should be preferred over fallback profile",
+		},
+		{
+			name: "no_match_no_fallback_returns_false",
+			config: createTestConfig(t, map[string]*config.Profile{
+				"hdmi_only": {
+					Name: "hdmi_only",
+					Conditions: config.ProfileCondition{
+						RequiredMonitors: []*config.RequiredMonitor{
+							{Name: utils.StringPtr("HDMI-1")},
+						},
+					},
+				},
+			}).Get(),
+			connectedMonitors: []*hypr.MonitorSpec{
+				{Name: "eDP-1", ID: utils.IntPtr(0), Description: "Built-in Display"},
+			},
+			powerState:      power.ACPowerState,
+			expectedProfile: "",
+			description:     "Should return no match when no profile matches and no fallback is configured",
 		},
 	}
 
@@ -213,12 +284,12 @@ func TestMatcher_Match(t *testing.T) {
 }
 
 // Helper function to create test config with default scoring
-func createTestConfig(t *testing.T, profiles map[string]*config.Profile) *config.Config {
+func createTestConfig(t *testing.T, profiles map[string]*config.Profile) *testutils.TestConfig {
 	return testutils.NewTestConfig(t).WithProfiles(profiles).WithScoring(&config.ScoringSection{
 		NameMatch:        utils.IntPtr(10),
 		DescriptionMatch: utils.IntPtr(5),
 		PowerStateMatch:  utils.IntPtr(3),
-	}).Get()
+	})
 }
 
 // Helper function to create PowerStateType pointer

@@ -94,6 +94,12 @@ name_match = 10       # Points awarded for exact monitor name match (e.g., "eDP-
 description_match = 5 # Points awarded for exact monitor description match
 power_state_match = 3 # Bonus points for matching power state requirements
 
+# Optionally you can define a fallback profile that will be used
+# when no other user profile matches the current state.
+[fallback_profile]
+config_file = "hyprconfigs/fallback.conf"
+config_file_type = "static"
+
 # Profile: Laptop only (static configuration)
 [profiles.laptop_only]
 config_file = "hyprconfigs/laptop-only.conf"

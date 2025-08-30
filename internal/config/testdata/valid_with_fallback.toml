@@ -1,0 +1,29 @@
+[general]
+destination = "/tmp/test-monitors-fallback.conf"
+
+[scoring]
+name_match = 2
+description_match = 3
+power_state_match = 1
+
+# Regular profiles
+[profiles.laptop_only]
+config_file = "laptop.conf"
+config_file_type = "static"
+
+[[profiles.laptop_only.conditions.required_monitors]]
+name = "eDP-1"
+
+[profiles.dual_monitor]
+config_file = "dual.conf"
+
+[[profiles.dual_monitor.conditions.required_monitors]]
+name = "eDP-1"
+
+[[profiles.dual_monitor.conditions.required_monitors]]
+description = "External Monitor"
+
+# Fallback profile - used when no other profile matches
+[fallback_profile]
+config_file = "fallback.conf"
+config_file_type = "static"

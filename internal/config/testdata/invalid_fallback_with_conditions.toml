@@ -1,0 +1,15 @@
+[general]
+destination = "/tmp/test-monitors.conf"
+
+[profiles.laptop_only]
+config_file = "laptop.conf"
+
+[[profiles.laptop_only.conditions.required_monitors]]
+name = "eDP-1"
+
+# Invalid: fallback profile cannot have conditions
+[fallback_profile]
+config_file = "fallback.conf"
+
+[[fallback_profile.conditions.required_monitors]]
+name = "HDMI-1"

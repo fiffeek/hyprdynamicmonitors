@@ -224,6 +224,38 @@ func TestLoad(t *testing.T) {
 			errorContains: "arg cant be empty",
 		},
 		{
+			name:       "valid config with fallback profile",
+			configFile: "valid_with_fallback.toml",
+			validate: func(t *testing.T, c *config.UnsafeConfig) {
+				if len(c.Profiles) != 2 {
+					t.Errorf("expected 2 profiles, got %d", len(c.Profiles))
+				}
+
+				if c.FallbackProfile == nil {
+					t.Error("fallback profile should be defined")
+				} else {
+					if c.FallbackProfile.Name != "fallback" {
+						t.Errorf("expected fallback profile name 'fallback', got '%s'", c.FallbackProfile.Name)
+					}
+					if !c.FallbackProfile.IsFallbackProfile {
+						t.Error("IsFallbackProfile should be true for fallback profile")
+					}
+					if *c.FallbackProfile.ConfigType != config.Static {
+						t.Errorf("expected config type Static, got %v", *c.FallbackProfile.ConfigType)
+					}
+					if !c.FallbackProfile.Conditions.IsEmpty() {
+						t.Error("fallback profile should have empty conditions")
+					}
+				}
+			},
+		},
+		{
+			name:          "invalid - fallback profile with conditions",
+			configFile:    "invalid_fallback_with_conditions.toml",
+			expectError:   true,
+			errorContains: "fallback profile cant define any conditions",
+		},
+		{
 			name:          "file not found",
 			configFile:    "nonexistent.toml",
 			expectError:   true,
