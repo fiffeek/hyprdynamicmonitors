@@ -1,0 +1,21 @@
+# Config with invalid monitor specification
+[general]
+destination = "$HOME/.config/hypr/monitors.conf"
+
+[power_events]
+
+[power_events.dbus_query_object]
+path = "/org/freedesktop/UPower/devices/line_power_ACAD"
+
+[[power_events.dbus_signal_match_rules]]
+object_path = "/org/freedesktop/UPower/devices/line_power_ACAD"
+
+# Create a dummy config file for this test
+[profiles.laptop_only]
+config_file = "dummy.conf"
+config_file_type = "static"
+
+# Monitor with neither name nor description - should fail validation
+[[profiles.laptop_only.conditions.required_monitors]]
+monitor_tag = "laptop"
+# Missing both name and description fields

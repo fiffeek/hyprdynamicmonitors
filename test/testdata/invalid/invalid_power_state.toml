@@ -1,0 +1,22 @@
+# Config with invalid power state
+[general]
+destination = "$HOME/.config/hypr/monitors.conf"
+
+[power_events]
+
+[power_events.dbus_query_object]
+path = "/org/freedesktop/UPower/devices/line_power_ACAD"
+
+[[power_events.dbus_signal_match_rules]]
+object_path = "/org/freedesktop/UPower/devices/line_power_ACAD"
+
+# Create a dummy config file for this test
+[profiles.laptop_only]
+config_file = "dummy.conf"
+config_file_type = "static"
+
+[profiles.laptop_only.conditions]
+power_state = "INVALID_POWER_STATE" # Should be "AC" or "BAT"
+
+[[profiles.laptop_only.conditions.required_monitors]]
+name = "eDP-1"

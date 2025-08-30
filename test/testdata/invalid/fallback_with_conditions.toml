@@ -1,0 +1,30 @@
+# Config with fallback profile that has conditions (not allowed)
+[general]
+destination = "$HOME/.config/hypr/monitors.conf"
+
+[power_events]
+
+[power_events.dbus_query_object]
+path = "/org/freedesktop/UPower/devices/line_power_ACAD"
+
+[[power_events.dbus_signal_match_rules]]
+object_path = "/org/freedesktop/UPower/devices/line_power_ACAD"
+
+[profiles.laptop_only]
+config_file = "dummy.conf"
+config_file_type = "static"
+
+[[profiles.laptop_only.conditions.required_monitors]]
+name = "eDP-1"
+
+# Fallback profile with conditions - should fail validation
+[fallback_profile]
+config_file = "fallback.conf"
+config_file_type = "static"
+
+# Fallback profiles cannot have conditions
+[fallback_profile.conditions]
+power_state = "AC"
+
+[[fallback_profile.conditions.required_monitors]]
+name = "eDP-1"
