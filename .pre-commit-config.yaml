@@ -36,3 +36,8 @@ repos:
             stages: [commit-msg]
             entry: npx commitlint --edit
             language: system
+          - id: autotoc
+            name: generate toc
+            entry: ./scripts/autotoc.sh
+            language: system
+            files: ^README\.md$

@@ -12,6 +12,9 @@ GORELEASER_BIN := goreleaser
 DESTDIR ?= $(HOME)/.local/bin
 EXECUTABLE_NAME := hyprdynamicmonitors
 TEST_EXECUTABLE_NAME := ./dist/hdmtest
+GH_MD_TOC_FILE := "https://raw.githubusercontent.com/ekalinin/github-markdown-toc/master/gh-md-toc"
+DEV_BINARIES_DIR := "./bin"
+GH_MD_TOC_BIN := "gh-md-toc"
 
 .PHONY: install test fmt lint release/local
 
@@ -43,7 +46,16 @@ dev: \
 	$(INSTALL_DIR)/.asdf.stamp \
 	$(INSTALL_DIR)/.venv.stamp \
 	$(INSTALL_DIR)/.npm.stamp \
-	$(INSTALL_DIR)/.precommit.stamp
+	$(INSTALL_DIR)/.precommit.stamp \
+	$(INSTALL_DIR)/.toc.stamp
+
+$(INSTALL_DIR)/.toc.stamp: $(INSTALL_DIR)/.dir.stamp
+	@mkdir -p $(DEV_BINARIES_DIR)
+	@wget -q $(GH_MD_TOC_FILE)
+	@chmod 755 $(GH_MD_TOC_BIN)
+	@mv $(GH_MD_TOC_BIN) $(DEV_BINARIES_DIR)
+	@$(DEV_BINARIES_DIR)/$(GH_MD_TOC_BIN) --help >/dev/null
+	@touch $@
 
 $(INSTALL_DIR)/.dir.stamp:
 	@mkdir -p $(INSTALL_DIR)
