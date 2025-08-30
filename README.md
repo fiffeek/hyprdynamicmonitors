@@ -57,6 +57,16 @@ In `~/.config/hyprdynamicmonitors/config.toml` (assuming you have `eDP-1` displa
 [general]
 destination = "$HOME/.config/hypr/monitors.conf"
 
+[power_events]
+
+[power_events.dbus_query_object]
+# path to your line_power upower device
+path = "/org/freedesktop/UPower/devices/line_power_ACAD"
+
+[[power_events.dbus_signal_match_rules]]
+# path to your line_power upower device
+object_path = "/org/freedesktop/UPower/devices/line_power_ACAD"
+
 [profiles.laptop_only]
 config_file = "hyprconfigs/laptop.conf"
 config_file_type = "static"
@@ -172,10 +182,15 @@ timeout_ms = 3000    # 3 seconds
 
 ### Command Line
 
-```bash
-hyprdynamicmonitors [options]
+```text
 
-Usage of hyprdynamicmonitors:
+Usage: hyprdynamicmonitors [options] [command]
+
+Commands:
+  run      Run the service (default)
+  validate Validate configuration file and exit
+
+Options:
   -config string
         Path to configuration file (default "$HOME/.config/hyprdynamicmonitors/config.toml")
   -debug
@@ -190,6 +205,18 @@ Usage of hyprdynamicmonitors:
         Enable verbose logging
   -version
         Show version information
+```
+
+**Validate configuration:**
+```bash
+# Validate default config file
+hyprdynamicmonitors validate
+
+# Validate specific config file
+hyprdynamicmonitors -config /path/to/config.toml validate
+
+# Validate with debug output
+hyprdynamicmonitors -debug validate
 ```
 
 ### Hyprland Integration

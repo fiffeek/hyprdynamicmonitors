@@ -11,6 +11,7 @@ GOLANG_BIN := go
 GORELEASER_BIN := goreleaser
 DESTDIR ?= $(HOME)/.local/bin
 EXECUTABLE_NAME := hyprdynamicmonitors
+TEST_EXECUTABLE_NAME := ./dist/hdmtest
 
 .PHONY: install test fmt lint release/local
 
@@ -68,15 +69,25 @@ $(INSTALL_DIR)/.precommit.stamp: $(PRECOMMIT_FILE) $(INSTALL_DIR)/.venv.stamp
 		pre-commit install --hook-type commit-msg
 	@touch $@
 
-test:
+test/unit:
 	@$(GOLANGCI_LINT_BIN) config verify
 	@$(GORELEASER_BIN) check
-	@$(GOLANG_BIN) test ./... -v
+	@$(GOLANG_BIN) test ./internal/... -v
+
+build/test:
+	@mkdir -p ./dist/
+	@$(GOLANG_BIN) build -v -o $(TEST_EXECUTABLE_NAME) ./cmd/main.go
+
+test/integration: build/test
+	@HDM_BINARY_PATH=$(TEST_EXECUTABLE_NAME) $(GOLANG_BIN) test -v ./test/...
+
+test: test/unit test/integration
 
 fmt:
-	@$(GOLANG_BIN) fmt ./...
 	@$(GOLANG_BIN) mod tidy
-	@env GOFUMPT_SPLIT_LONG_LINES=on $(GOLANGCI_LINT_BIN) fmt
+	@env GOFUMPT_SPLIT_LONG_LINES=on $(GOLANGCI_LINT_BIN) fmt ./...
 
 lint:
 	@$(GOLANGCI_LINT_BIN) run
+
+pre-push: fmt lint test/unit test/integration

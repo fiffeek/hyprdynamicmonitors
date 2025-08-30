@@ -136,7 +136,7 @@ func TestLoad(t *testing.T) {
 			name:          "invalid - no profiles",
 			configFile:    "invalid_no_profiles.toml",
 			expectError:   true,
-			errorContains: "no profiles defined",
+			errorContains: "at least one profile has to be defined",
 		},
 		{
 			name:          "invalid - missing config file",
@@ -148,7 +148,7 @@ func TestLoad(t *testing.T) {
 			name:          "invalid - no required monitors",
 			configFile:    "invalid_no_monitors.toml",
 			expectError:   true,
-			errorContains: "at least one required_monitor must be specified",
+			errorContains: "at least one required_monitors must be specified",
 		},
 		{
 			name:          "invalid - monitor without name or description",

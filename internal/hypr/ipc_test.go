@@ -13,12 +13,10 @@ import (
 
 	"github.com/fiffeek/hyprdynamicmonitors/internal/hypr"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/utils"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestIPC_Run(t *testing.T) {
-	logrus.SetLevel(logrus.DebugLevel)
 	tests := []struct {
 		name               string
 		mockEvents         []string
@@ -128,7 +126,12 @@ func TestIPC_Run(t *testing.T) {
 			}
 
 			xdgRuntimeDir, signature := setupEnvVars(t)
-			eventsListener, eventsSocketCleanUp := setupSocket(ctx, t, xdgRuntimeDir, signature, hypr.GetHyprEventsSocket)
+			eventsListener, eventsSocketCleanUp := setupSocket(
+				ctx,
+				t,
+				xdgRuntimeDir,
+				signature,
+				hypr.GetHyprEventsSocket)
 			ipcListener, ipcCleanUp := setupSocket(ctx, t, xdgRuntimeDir, signature, hypr.GetHyprSocket)
 			writerDone := setupFakeHyprIPCWriter(t, ipcListener, responseData, tt.expectedCommands, tt.exitOnError)
 			ipc, err := hypr.NewIPC()
