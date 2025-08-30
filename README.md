@@ -23,13 +23,28 @@ For configuration changes, the service provides hot reloading that watches for f
 
 ### Binary Release
 
-Download the latest binary from releases and place it in your PATH:
+Download the latest binary from GitHub releases:
 
-TODO
+```bash
+# optionally override the destination directory, defaults to ~/.local/bin/
+export DESTDIR="$HOME/.bin"
+curl -o- https://raw.githubusercontent.com/fiffeek/hyprdynamicmonitors/refs/heads/main/scripts/install.sh | bash
+```
 
 ### AUR
 
-TODO
+For Arch Linux users, install from the AUR:
+
+```bash
+# Using your preferred AUR helper (replace 'aurHelper' with your choice)
+aurHelper="yay"  # or paru, trizen, etc.
+$aurHelper -S hyprdynamicmonitors-bin
+
+# Or using makepkg:
+git clone https://aur.archlinux.org/hyprdynamicmonitors-bin.git
+cd hyprdynamicmonitors-bin
+makepkg -si
+```
 
 ### Build from Source
 
