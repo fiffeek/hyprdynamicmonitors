@@ -9,6 +9,8 @@ import (
 	"fmt"
 	"path/filepath"
 	"runtime"
+	"slices"
+	"strings"
 
 	"github.com/fiffeek/hyprdynamicmonitors/internal/config"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/filewatcher"
@@ -32,6 +34,11 @@ var (
 	BuildDate = "unknown"
 )
 
+const (
+	commandValidate = "validate"
+	commandRun      = "run"
+)
+
 func main() {
 	var (
 		configPath = flag.String("config", "$HOME/.config/hyprdynamicmonitors/config.toml", "Path to configuration file")
@@ -44,7 +51,26 @@ func main() {
 		disableAutoHotReload = flag.Bool("disable-auto-hot-reload", false,
 			"Disable automatic hot reload (no file watchers)")
 	)
+	flag.Usage = func() {
+		fmt.Fprintf(flag.CommandLine.Output(), "Usage: %s [options] [command]\n\n", filepath.Base(flag.CommandLine.Name()))
+		fmt.Fprintf(flag.CommandLine.Output(), "Commands:\n")
+		fmt.Fprintf(flag.CommandLine.Output(), "  %s      Run the service (default)\n", commandRun)
+		fmt.Fprintf(flag.CommandLine.Output(), "  %s Validate configuration file and exit\n\n", commandValidate)
+		fmt.Fprintf(flag.CommandLine.Output(), "Options:\n")
+		flag.PrintDefaults()
+	}
 	flag.Parse()
+
+	command := commandRun
+	if flag.NArg() > 0 {
+		command = flag.Arg(0)
+	}
+
+	if !slices.Contains([]string{commandRun, commandValidate}, command) {
+		fmt.Fprintf(flag.CommandLine.Output(), "Error: unknown command '%s'\n", command)
+		flag.Usage()
+		return
+	}
 
 	if *debug {
 		logrus.SetLevel(logrus.DebugLevel)
@@ -72,6 +98,11 @@ func main() {
 			"commit":    Commit,
 			"buildDate": BuildDate,
 		}).Info("hyprdynamicmonitors version")
+		return
+	}
+
+	if command == commandValidate {
+		validateConfig(*configPath)
 		return
 	}
 
@@ -181,4 +212,22 @@ func run(ctx context.Context, svc *userconfigupdater.Service, hyprIPC *hypr.IPC,
 
 	logrus.Info("Shutdown complete")
 	return nil
+}
+
+func validateConfig(configPath string) {
+	logrus.WithField("config_path", configPath).Debug("Validating configuration")
+
+	_, err := config.NewConfig(configPath)
+	if err != nil {
+		parts := strings.Split(err.Error(), ": ")
+		indent := 0
+		for _, part := range parts {
+			fmt.Fprintf(flag.CommandLine.Output(), "%s%s\n", strings.Repeat(" ", indent), part)
+			indent += 2
+		}
+		logrus.Fatal("Configuration validation failed")
+		return
+	}
+
+	logrus.Info("Configuration is valid")
 }

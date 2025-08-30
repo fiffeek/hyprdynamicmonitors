@@ -127,8 +127,8 @@ const (
 	Template
 )
 
-func (e *ConfigFileType) Value() string {
-	switch *e {
+func (e ConfigFileType) Value() string {
+	switch e {
 	case Static:
 		return "static"
 	case Template:
@@ -137,18 +137,21 @@ func (e *ConfigFileType) Value() string {
 	return ""
 }
 
+var allConfigFileTypes = []ConfigFileType{Static, Template}
+
 func (e *ConfigFileType) UnmarshalTOML(value any) error {
 	sValue, ok := value.(string)
 	if !ok {
 		return fmt.Errorf("value %v is not a string type", value)
 	}
-	for _, enum := range []ConfigFileType{Static, Template} {
+	for _, enum := range allConfigFileTypes {
 		if enum.Value() == sValue {
 			*e = enum
 			return nil
 		}
 	}
-	return errors.New("invalid enum value")
+	return fmt.Errorf("invalid enum value, expecting one of %s",
+		utils.FormatEnumTypes(allConfigFileTypes))
 }
 
 func (e *ConfigFileType) MarshalTOML() ([]byte, error) {
@@ -172,8 +175,8 @@ const (
 	AC
 )
 
-func (e *PowerStateType) Value() string {
-	switch *e {
+func (e PowerStateType) Value() string {
+	switch e {
 	case BAT:
 		return "BAT"
 	case AC:
@@ -182,18 +185,21 @@ func (e *PowerStateType) Value() string {
 	return ""
 }
 
+var allPowerStateTypes = []PowerStateType{BAT, AC}
+
 func (e *PowerStateType) UnmarshalTOML(value any) error {
 	sValue, ok := value.(string)
 	if !ok {
 		return fmt.Errorf("value %v is not a string type", value)
 	}
-	for _, enum := range []PowerStateType{BAT, AC} {
+	for _, enum := range allPowerStateTypes {
 		if enum.Value() == sValue {
 			*e = enum
 			return nil
 		}
 	}
-	return errors.New("invalid enum value")
+	return fmt.Errorf("invalid enum value, expecting one of %s",
+		utils.FormatEnumTypes(allPowerStateTypes))
 }
 
 func (e *PowerStateType) MarshalTOML() ([]byte, error) {
@@ -217,11 +223,11 @@ func Load(configPath string) (*UnsafeConfig, error) {
 		return nil, fmt.Errorf("configuration file %s not found", configPath)
 	}
 
-	logrus.WithFields(logrus.Fields{"expanded": configPath}).Debug("Expnaded config path")
+	logrus.WithFields(logrus.Fields{"expanded": configPath}).Debug("Expanded config path")
 
 	absConfig, err := filepath.Abs(configPath)
 	if err != nil {
-		return nil, fmt.Errorf("cant convert config bath to abs %w", err)
+		return nil, fmt.Errorf("cant convert config path to absolute path %w", err)
 	}
 
 	logrus.WithFields(logrus.Fields{"abs": absConfig}).Debug("Found absolute config path")
@@ -253,7 +259,7 @@ func (c *UnsafeConfig) Validate() error {
 	}
 
 	if len(c.Profiles) == 0 {
-		return errors.New("no profiles defined")
+		return errors.New("at least one profile has to be defined")
 	}
 
 	if c.General == nil {
@@ -413,7 +419,7 @@ func (p *Profile) Validate(configPath string) error {
 
 func (pc *ProfileCondition) Validate() error {
 	if len(pc.RequiredMonitors) == 0 {
-		return errors.New("at least one required_monitor must be specified")
+		return errors.New("at least one required_monitors must be specified")
 	}
 
 	for i, monitor := range pc.RequiredMonitors {
@@ -532,7 +538,7 @@ func (dr *DbusSignalMatchRule) Validate() error {
 		dr.ObjectPath = utils.StringPtr("/org/freedesktop/UPower/devices/line_power_ACAD")
 	}
 	if dr.Interface == nil && dr.Sender == nil && dr.Member == nil && dr.ObjectPath == nil {
-		return errors.New("dbus rule cant be empty")
+		return errors.New("dbus rule cant be empty, at least one of interface, sender, member or object_path has to be provided")
 	}
 
 	return nil
