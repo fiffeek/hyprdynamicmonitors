@@ -16,13 +16,13 @@ import (
 )
 
 type TestConfig struct {
-	cfg     *config.UnsafeConfig
+	cfg     *config.RawConfig
 	t       *testing.T
 	cfgFile *string
 }
 
 func NewTestConfig(t *testing.T) *TestConfig {
-	return &TestConfig{cfg: &config.UnsafeConfig{}, t: t}
+	return &TestConfig{cfg: &config.RawConfig{}, t: t}
 }
 
 func (t *TestConfig) WithProfiles(profiles map[string]*config.Profile) *TestConfig {

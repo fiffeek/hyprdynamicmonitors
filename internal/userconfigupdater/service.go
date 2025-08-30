@@ -169,13 +169,16 @@ func (s *Service) UpdateOnce(ctx context.Context) error {
 	powerState := s.cachedPowerState
 	s.stateMu.RUnlock()
 
+	// grab latest config and pass along for the same world-view
+	cfg := s.config.Get()
+
 	logrus.WithFields(logrus.Fields{
 		"monitor_count": len(monitors),
 		"power_state":   powerState.String(),
 		"dry_run":       s.serviceConfig.DryRun,
 	}).Debug("Updating configuration")
 
-	found, profile, err := s.matcher.Match(monitors, powerState)
+	found, profile, err := s.matcher.Match(cfg, monitors, powerState)
 	if err != nil {
 		return fmt.Errorf("failed to match a profile %w", err)
 	}
@@ -198,10 +201,10 @@ func (s *Service) UpdateOnce(ctx context.Context) error {
 
 	logrus.WithFields(profileFields).Info("Using profile")
 
-	s.tryExec(ctx, profile.PreApplyExec, s.config.Get().General.PreApplyExec)
+	s.tryExec(ctx, profile.PreApplyExec, cfg.General.PreApplyExec)
 
-	destination := *s.config.Get().General.Destination
-	changed, err := s.generator.GenerateConfig(profile, monitors, powerState, destination)
+	destination := *cfg.General.Destination
+	changed, err := s.generator.GenerateConfig(cfg, profile, monitors, powerState, destination)
 	if err != nil {
 		return fmt.Errorf("failed to generate config: %w", err)
 	}
@@ -211,7 +214,7 @@ func (s *Service) UpdateOnce(ctx context.Context) error {
 		return nil
 	}
 
-	s.tryExec(ctx, profile.PostApplyExec, s.config.Get().General.PostApplyExec)
+	s.tryExec(ctx, profile.PostApplyExec, cfg.General.PostApplyExec)
 
 	if err := s.notificationsService.NotifyProfileApplied(profile); err != nil {
 		logrus.WithFields(profileFields).WithError(err).Error("swallowing notification error")

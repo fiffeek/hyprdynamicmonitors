@@ -20,7 +20,6 @@ import (
 type ConfigGenerator struct {
 	mtime   map[string]time.Time
 	mtimeMu sync.RWMutex
-	cfg     *config.Config
 }
 
 func NewConfigGenerator(cfg *config.Config) *ConfigGenerator {
@@ -29,25 +28,25 @@ func NewConfigGenerator(cfg *config.Config) *ConfigGenerator {
 		mtime[profile.ConfigFile] = profile.ConfigFileModTime
 	}
 
-	return &ConfigGenerator{mtime: mtime, mtimeMu: sync.RWMutex{}, cfg: cfg}
+	return &ConfigGenerator{mtime: mtime, mtimeMu: sync.RWMutex{}}
 }
 
 // GenerateConfig either renders a template or links a file, and returns if any changed were done
 // this includes stating the config files to catch if the user modified them by hand (in linking scenario)
-func (g *ConfigGenerator) GenerateConfig(profile *config.Profile,
+func (g *ConfigGenerator) GenerateConfig(cfg *config.RawConfig, profile *config.Profile,
 	connectedMonitors []*hypr.MonitorSpec, powerState power.PowerState, destination string,
 ) (bool, error) {
 	switch *profile.ConfigType {
 	case config.Static:
 		return g.linkConfigFile(profile, destination)
 	case config.Template:
-		return g.renderTemplateFile(profile, connectedMonitors, powerState, destination)
+		return g.renderTemplateFile(cfg, profile, connectedMonitors, powerState, destination)
 	default:
 		return false, fmt.Errorf("unsupported config type: %v", *profile.ConfigType)
 	}
 }
 
-func (g *ConfigGenerator) renderTemplateFile(profile *config.Profile,
+func (g *ConfigGenerator) renderTemplateFile(cfg *config.RawConfig, profile *config.Profile,
 	connectedMonitors []*hypr.MonitorSpec, powerState power.PowerState, destination string,
 ) (bool, error) {
 	templatePath := profile.ConfigFile
@@ -63,7 +62,7 @@ func (g *ConfigGenerator) renderTemplateFile(profile *config.Profile,
 		return false, fmt.Errorf("failed to parse template: %w", err)
 	}
 
-	templateData := g.createTemplateData(profile, connectedMonitors, powerState)
+	templateData := g.createTemplateData(cfg, profile, connectedMonitors, powerState)
 
 	var rendered bytes.Buffer
 	if err := tmpl.Execute(&rendered, templateData); err != nil {
@@ -107,7 +106,7 @@ func getFuncMap(powerState power.PowerState) template.FuncMap {
 	return funcMap
 }
 
-func (g *ConfigGenerator) createTemplateData(profile *config.Profile,
+func (g *ConfigGenerator) createTemplateData(cfg *config.RawConfig, profile *config.Profile,
 	connectedMonitors []*hypr.MonitorSpec, powerState power.PowerState,
 ) map[string]any {
 	data := make(map[string]any)
@@ -151,7 +150,7 @@ func (g *ConfigGenerator) createTemplateData(profile *config.Profile,
 	data["MonitorsByTag"] = monitorsByTag
 
 	logrus.Debug("Adding user defined values")
-	for key, value := range g.cfg.Get().StaticTemplateValues {
+	for key, value := range cfg.StaticTemplateValues {
 		data[key] = value
 		logrus.WithFields(logrus.Fields{
 			"key":   key,

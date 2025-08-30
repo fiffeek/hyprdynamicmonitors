@@ -17,7 +17,8 @@ import (
 )
 
 func TestConfigGenerator_GenerateConfig_Static(t *testing.T) {
-	generator := generators.NewConfigGenerator(testutils.NewTestConfig(t).Get())
+	cfg := testutils.NewTestConfig(t).Get()
+	generator := generators.NewConfigGenerator(cfg)
 
 	tempDir := t.TempDir()
 	destination := filepath.Join(tempDir, "hyprland.conf")
@@ -37,7 +38,7 @@ func TestConfigGenerator_GenerateConfig_Static(t *testing.T) {
 		{Name: "eDP-1", ID: utils.IntPtr(1), Description: "Built-in Display"},
 	}
 
-	changed, err := generator.GenerateConfig(profile, monitors, power.ACPowerState, destination)
+	changed, err := generator.GenerateConfig(cfg.Get(), profile, monitors, power.ACPowerState, destination)
 	assert.NoError(t, err, "GenerateConfig failed")
 	assert.True(t, changed, "file was not changed")
 
@@ -56,23 +57,24 @@ func TestConfigGenerator_GenerateConfig_Static(t *testing.T) {
 		t.Errorf("Expected symlink target %s, got %s", staticConfigPath, linkTarget)
 	}
 
-	changed, err = generator.GenerateConfig(profile, monitors, power.ACPowerState, destination)
+	changed, err = generator.GenerateConfig(cfg.Get(), profile, monitors, power.ACPowerState, destination)
 	assert.NoError(t, err, "GenerateConfig failed")
 	assert.False(t, changed, "file was changed")
 
 	// if the underlying file is changed report generator as updated
 	err = os.Chtimes(destination, time.Now(), time.Now())
 	assert.NoError(t, err, "touch failed")
-	changed, err = generator.GenerateConfig(profile, monitors, power.ACPowerState, destination)
+	changed, err = generator.GenerateConfig(cfg.Get(), profile, monitors, power.ACPowerState, destination)
 	assert.NoError(t, err, "GenerateConfig failed")
 	assert.True(t, changed, "file was not changed")
 }
 
 func TestConfigGenerator_GenerateConfig_Template(t *testing.T) {
-	generator := generators.NewConfigGenerator(testutils.NewTestConfig(t).WithStaticTemplateValues(map[string]string{
+	cfg := testutils.NewTestConfig(t).WithStaticTemplateValues(map[string]string{
 		"overwritten_value": "this_shall_be_overwritten",
 		"general_value":     "general",
-	}).Get())
+	}).Get()
+	generator := generators.NewConfigGenerator(cfg)
 
 	tempDir := t.TempDir()
 	destination := filepath.Join(tempDir, "hyprland.conf")
@@ -109,7 +111,7 @@ func TestConfigGenerator_GenerateConfig_Template(t *testing.T) {
 	}
 
 	// Test with battery power state
-	changed, err := generator.GenerateConfig(profile, monitors, power.BatteryPowerState, destination)
+	changed, err := generator.GenerateConfig(cfg.Get(), profile, monitors, power.BatteryPowerState, destination)
 	if err != nil {
 		t.Fatalf("GenerateConfig failed: %v", err)
 	}
@@ -169,7 +171,7 @@ func TestConfigGenerator_GenerateConfig_Template(t *testing.T) {
 	}
 
 	// Test with AC power state
-	changed, err = generator.GenerateConfig(profile, monitors, power.ACPowerState, destination)
+	changed, err = generator.GenerateConfig(cfg.Get(), profile, monitors, power.ACPowerState, destination)
 	if err != nil {
 		t.Fatalf("GenerateConfig failed with AC power: %v", err)
 	}
@@ -201,7 +203,7 @@ func TestConfigGenerator_GenerateConfig_Template(t *testing.T) {
 		t.Error("Expected powerState function to return AC")
 	}
 
-	changed, err = generator.GenerateConfig(profile, monitors, power.ACPowerState, destination)
+	changed, err = generator.GenerateConfig(cfg.Get(), profile, monitors, power.ACPowerState, destination)
 	if err != nil {
 		t.Fatalf("GenerateConfig failed with AC power: %v", err)
 	}

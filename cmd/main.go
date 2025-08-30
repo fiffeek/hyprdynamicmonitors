@@ -150,7 +150,7 @@ func createApplication(configPath *string, dryRun *bool, ctx context.Context,
 		logrus.WithError(err).Fatal("Failed to initialize PowerDetector")
 	}
 
-	matcher := matchers.NewMatcher(cfg)
+	matcher := matchers.NewMatcher()
 
 	generator := generators.NewConfigGenerator(cfg)
 	notifications := notifications.NewService(cfg)

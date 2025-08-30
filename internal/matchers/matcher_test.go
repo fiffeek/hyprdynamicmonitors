@@ -259,9 +259,9 @@ func TestMatcher_Match(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			matcher := NewMatcher(tt.config)
+			matcher := NewMatcher()
 
-			found, result, err := matcher.Match(tt.connectedMonitors, tt.powerState)
+			found, result, err := matcher.Match(tt.config.Get(), tt.connectedMonitors, tt.powerState)
 			if err != nil {
 				t.Fatalf("Match returned unexpected error: %v", err)
 			}

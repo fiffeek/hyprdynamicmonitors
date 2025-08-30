@@ -7,28 +7,26 @@ import (
 	"github.com/fiffeek/hyprdynamicmonitors/internal/power"
 )
 
-type Matcher struct {
-	cfg *config.Config
+type Matcher struct{}
+
+func NewMatcher() *Matcher {
+	return &Matcher{}
 }
 
-func NewMatcher(cfg *config.Config) *Matcher {
-	return &Matcher{
-		cfg: cfg,
-	}
-}
-
-func (m *Matcher) Match(connectedMonitors []*hypr.MonitorSpec, powerState power.PowerState) (bool, *config.Profile, error) {
+func (m *Matcher) Match(cfg *config.RawConfig, connectedMonitors []*hypr.MonitorSpec,
+	powerState power.PowerState,
+) (bool, *config.Profile, error) {
 	score := make(map[string]int)
-	profiles := m.cfg.Get().Profiles
-	ok, fallbackProfile := m.returnNoneOrFallback()
+	profiles := cfg.Profiles
+	ok, fallbackProfile := m.returnNoneOrFallback(cfg)
 	for name := range profiles {
 		score[name] = 0
 	}
 
 	for name, profile := range profiles {
 		conditions := profile.Conditions
-		fullMatchScore := m.calcFullProfileScore(conditions)
-		score[name] = m.scoreProfile(conditions, powerState, connectedMonitors)
+		fullMatchScore := m.calcFullProfileScore(cfg, conditions)
+		score[name] = m.scoreProfile(cfg, conditions, powerState, connectedMonitors)
 
 		// if there is a partial match discard the config
 		if fullMatchScore != score[name] {
@@ -54,26 +52,28 @@ func (m *Matcher) Match(connectedMonitors []*hypr.MonitorSpec, powerState power.
 	return ok, fallbackProfile, nil
 }
 
-func (m *Matcher) returnNoneOrFallback() (bool, *config.Profile) {
-	if m.cfg.Get().FallbackProfile != nil {
-		return true, m.cfg.Get().FallbackProfile
+func (m *Matcher) returnNoneOrFallback(cfg *config.RawConfig) (bool, *config.Profile) {
+	if cfg.FallbackProfile != nil {
+		return true, cfg.FallbackProfile
 	}
 	return false, nil
 }
 
-func (m *Matcher) scoreProfile(conditions config.ProfileCondition, powerState power.PowerState, connectedMonitors []*hypr.MonitorSpec) int {
+func (m *Matcher) scoreProfile(cfg *config.RawConfig, conditions config.ProfileCondition,
+	powerState power.PowerState, connectedMonitors []*hypr.MonitorSpec,
+) int {
 	profileScore := 0
 	if conditions.PowerState != nil && conditions.PowerState.Value() == powerState.String() {
-		profileScore += *m.cfg.Get().Scoring.PowerStateMatch
+		profileScore += *cfg.Scoring.PowerStateMatch
 	}
 
 	for _, condition := range conditions.RequiredMonitors {
 		for _, connectedMonitor := range connectedMonitors {
 			if condition.Name != nil && *condition.Name == connectedMonitor.Name {
-				profileScore += *m.cfg.Get().Scoring.NameMatch
+				profileScore += *cfg.Scoring.NameMatch
 			}
 			if condition.Description != nil && *condition.Description == connectedMonitor.Description {
-				profileScore += *m.cfg.Get().Scoring.DescriptionMatch
+				profileScore += *cfg.Scoring.DescriptionMatch
 			}
 		}
 	}
@@ -81,18 +81,18 @@ func (m *Matcher) scoreProfile(conditions config.ProfileCondition, powerState po
 	return profileScore
 }
 
-func (m *Matcher) calcFullProfileScore(conditions config.ProfileCondition) int {
+func (m *Matcher) calcFullProfileScore(cfg *config.RawConfig, conditions config.ProfileCondition) int {
 	fullMatchScore := 0
 	if conditions.PowerState != nil {
-		fullMatchScore += *m.cfg.Get().Scoring.PowerStateMatch
+		fullMatchScore += *cfg.Scoring.PowerStateMatch
 	}
 
 	for _, condition := range conditions.RequiredMonitors {
 		if condition.Name != nil {
-			fullMatchScore += *m.cfg.Get().Scoring.NameMatch
+			fullMatchScore += *cfg.Scoring.NameMatch
 		}
 		if condition.Description != nil {
-			fullMatchScore += *m.cfg.Get().Scoring.DescriptionMatch
+			fullMatchScore += *cfg.Scoring.DescriptionMatch
 		}
 	}
 
