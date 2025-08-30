@@ -4,6 +4,48 @@
 
 An event-driven service that automatically manages Hyprland monitor configurations based on connected displays and power state.
 
+<!--ts-->
+* [HyprDynamicMonitors](#hyprdynamicmonitors)
+   * [Features](#features)
+   * [Design Philosophy](#design-philosophy)
+   * [Installation](#installation)
+      * [Binary Release](#binary-release)
+      * [AUR](#aur)
+      * [Build from Source](#build-from-source)
+   * [Usage](#usage)
+      * [Command Line](#command-line)
+   * [Minimal example](#minimal-example)
+   * [Examples](#examples)
+   * [Runtime requirements](#runtime-requirements)
+   * [Configuration](#configuration)
+      * [Monitor Matching](#monitor-matching)
+      * [Configuration File Types](#configuration-file-types)
+      * [Template Variables](#template-variables)
+      * [Static Template Values](#static-template-values)
+      * [Template Functions](#template-functions)
+      * [Fallback Profile](#fallback-profile)
+      * [User Callbacks (Exec Commands)](#user-callbacks-exec-commands)
+      * [Notifications](#notifications)
+      * [Hyprland Integration](#hyprland-integration)
+      * [Power Events](#power-events)
+         * [Disabling power events](#disabling-power-events)
+         * [Default power event configuration](#default-power-event-configuration)
+         * [Querying](#querying)
+         * [Receive Filters](#receive-filters)
+         * [Custom D-Bus Configuration](#custom-d-bus-configuration)
+         * [Leave Empty Token](#leave-empty-token)
+      * [Signals](#signals)
+      * [Hot Reloading](#hot-reloading)
+   * [Tests](#tests)
+      * [Live Testing](#live-testing)
+   * [Running with systemd](#running-with-systemd)
+      * [Hyprland under systemd](#hyprland-under-systemd)
+      * [Run on boot and let restarts do the job](#run-on-boot-and-let-restarts-do-the-job)
+      * [Custom systemd target](#custom-systemd-target)
+      * [Alternative: Wrapper script](#alternative-wrapper-script)
+   * [Alternative software](#alternative-software)
+<!--te-->
+
 ## Features
 
 - Event-driven architecture responding to monitor and power state changes in real-time
@@ -63,8 +105,48 @@ make DESTDIR=$HOME/binaries uninstall
 sudo make DESTDIR=/usr/bin install
 ```
 
+## Usage
 
-### Minimal example
+### Command Line
+
+```text
+Usage: hyprdynamicmonitors [options] [command]
+
+Commands:
+  run      Run the service (default)
+  validate Validate configuration file and exit
+
+Options:
+  -config string
+        Path to configuration file (default "$HOME/.config/hyprdynamicmonitors/config.toml")
+  -debug
+        Enable debug logging
+  -disable-auto-hot-reload
+        Disable automatic hot reload (no file watchers)
+  -disable-power-events
+        Disable power events (dbus)
+  -dry-run
+        Show what would be done without making changes
+  -verbose
+        Enable verbose logging
+  -version
+        Show version information
+```
+
+**Validate configuration:**
+```bash
+# Validate default config file
+hyprdynamicmonitors validate
+
+# Validate specific config file
+hyprdynamicmonitors -config /path/to/config.toml validate
+
+# Validate with debug output
+hyprdynamicmonitors -debug validate
+```
+
+
+## Minimal example
 
 In `~/.config/hyprdynamicmonitors/config.toml` (assuming you have `eDP-1` display attached, see `hyprctl monitors` to query them):
 
@@ -97,6 +179,16 @@ monitor=eDP-1,2880x1920@120.00000,0x0,2.0,vrr,1
 
 Then run the service either in Hyprland (`exec-once`) or ideally
 use systemd (see [Running with systemd](#running-with-systemd)) or a wrapper script.
+
+## Examples
+
+See `examples/` directory for complete configuration examples including basic setups and comprehensive configurations with all features.
+
+## Runtime requirements
+
+- Hyprland with IPC support
+- UPower (optional, for power state monitoring)
+- Read-only access to system D-Bus (optional for notifications and power state monitoring; should already be your default)
 
 ## Configuration
 
@@ -256,47 +348,6 @@ disabled = true
 timeout_ms = 3000    # 3 seconds
 ```
 
-## Usage
-
-### Command Line
-
-```text
-
-Usage: hyprdynamicmonitors [options] [command]
-
-Commands:
-  run      Run the service (default)
-  validate Validate configuration file and exit
-
-Options:
-  -config string
-        Path to configuration file (default "$HOME/.config/hyprdynamicmonitors/config.toml")
-  -debug
-        Enable debug logging
-  -disable-auto-hot-reload
-        Disable automatic hot reload (no file watchers)
-  -disable-power-events
-        Disable power events (dbus)
-  -dry-run
-        Show what would be done without making changes
-  -verbose
-        Enable verbose logging
-  -version
-        Show version information
-```
-
-**Validate configuration:**
-```bash
-# Validate default config file
-hyprdynamicmonitors validate
-
-# Validate specific config file
-hyprdynamicmonitors -config /path/to/config.toml validate
-
-# Validate with debug output
-hyprdynamicmonitors -debug validate
-```
-
 ### Hyprland Integration
 
 Add to your Hyprland config (assuming `~/.config/hypr/monitors.conf` is your destination):
@@ -306,6 +357,103 @@ source = ~/.config/hypr/monitors.conf
 ```
 
 **Important**: Do not set `disable_autoreload = true` in Hyprland settings, or you'll have to reload Hyprland manually after configuration changes.
+
+### Power Events
+
+Power state monitoring uses D-Bus to listen for UPower events. This feature is optional and can be completely disabled.
+
+#### Disabling power events
+
+To disable power state monitoring entirely, start with the flag:
+
+```bash
+hyprdynamicmonitors --disable-power-events
+```
+
+When disabled, the system defaults to `AC` power state.
+No power events will be delivered, no dbus connection will be made.
+
+#### Default power event configuration
+
+By default, the service listens for D-Bus signals:
+- **Signal**: `org.freedesktop.DBus.Properties.PropertiesChanged`
+- **Interface**: `org.freedesktop.DBus.Properties`
+- **Member**: `PropertiesChanged`
+- **Path**: `/org/freedesktop/UPower/devices/line_power_ACAD`
+
+These defaults can be overridden in the configuration (or left empty).
+
+You can monitor these events with:
+```bash
+gdbus monitor -y -d org.freedesktop.UPower | grep -E "PropertiesChanged|Device(Added|Removed)"
+```
+
+Example output:
+```
+/org/freedesktop/UPower/devices/line_power_ACAD: org.freedesktop.DBus.Properties.PropertiesChanged ('org.freedesktop.UPower.Device', {'UpdateTime': <uint64 1756242314>, 'Online': <true>}, @as [])
+# Format: PATH INTERFACE.MEMBER (INFO)
+```
+
+#### Querying
+
+On each event, the current power status is queried. Here's the equivalent command:
+```bash
+dbus-send --system --print-reply --dest=org.freedesktop.UPower \
+  /org/freedesktop/UPower/devices/line_power_ACAD \
+  org.freedesktop.DBus.Properties.Get string:org.freedesktop.UPower.Device string:Online
+```
+
+#### Receive Filters
+You can filter received events by name. By default, only `org.freedesktop.DBus.Properties.PropertiesChanged` is matched. This prevents noisy signals. Additionally, power status changes are only propagated when the state actually changes, and template/link replacement only occurs when file contents differ.
+
+#### Custom D-Bus Configuration
+
+You can customize which D-Bus signals to monitor:
+
+```toml
+[power_events]
+# Custom D-Bus signal match rules
+[[power_events.dbus_signal_match_rules]]
+interface = "org.freedesktop.DBus.Properties"
+member = "PropertiesChanged"
+object_path = "/org/freedesktop/UPower/devices/line_power_ACAD"
+
+# Custom signal filters
+[[power_events.dbus_signal_receive_filters]]
+name = "org.freedesktop.DBus.Properties.PropertiesChanged"
+
+# Custom UPower query for non-standard power managers
+[power_events.dbus_query_object]
+destination = "org.freedesktop.UPower"
+path = "/org/freedesktop/UPower"
+method = "org.freedesktop.DBus.Properties.Get"
+expected_discharging_value = "true"
+
+[[power_events.dbus_query_object.args]]
+arg = "org.freedesktop.UPower"
+
+[[power_events.dbus_query_object.args]]
+arg = "OnBattery"
+```
+
+The above query settings are equivalent to:
+```bash
+dbus-send --system --print-reply --dest=org.freedesktop.UPower \
+  /org/freedesktop/UPower org.freedesktop.DBus.Properties.Get string:org.freedesktop.UPower string:OnBattery
+```
+**Note**: This particular query is not recommended for production use!
+
+#### Leave Empty Token
+
+To explicitly remove default values from D-Bus match rules, use the `leaveEmptyToken`:
+
+```toml
+[[power_events.dbus_signal_match_rules]]
+interface = "leaveEmptyToken"  # Removes interface match
+member = "PropertiesChanged"
+object_path = "/custom/path"
+```
+
 
 ### Signals
 
@@ -342,15 +490,6 @@ hyprdynamicmonitors --disable-auto-hot-reload
 ```
 
 When disabled, you can still use `SIGHUP` signal for manual reloading.
-
-## Examples
-
-See `examples/` directory for complete configuration examples including basic setups and comprehensive configurations with all features.
-
-## Runtime requirements
-
-- Hyprland with IPC support
-- UPower (optional, for power state monitoring)
 
 ## Tests
 
@@ -452,8 +591,6 @@ RestartSec=5
 WantedBy=hyprland-custom-session.target
 ```
 
-
-
 ### Alternative: Wrapper script
 
 If you prefer a wrapper script approach, create a simple restart loop:
@@ -471,103 +608,7 @@ Then execute it from Hyprland:
 exec-once = /path/to/the/script.sh
 ```
 
-## Power Events Configuration
-
-Power state monitoring uses D-Bus to listen for UPower events. This feature is optional and can be completely disabled.
-
-### Disabling power events
-
-To disable power state monitoring entirely, start with the flag:
-
-```bash
-hyprdynamicmonitors --disable-power-events
-```
-
-When disabled, the system defaults to `AC` power state.
-No power events will be delivered, no dbus connection will be made.
-
-### Default power event configuration
-
-By default, the service listens for D-Bus signals:
-- **Signal**: `org.freedesktop.DBus.Properties.PropertiesChanged`
-- **Interface**: `org.freedesktop.DBus.Properties`
-- **Member**: `PropertiesChanged`
-- **Path**: `/org/freedesktop/UPower/devices/line_power_ACAD`
-
-These defaults can be overridden in the configuration (or left empty).
-
-You can monitor these events with:
-```bash
-gdbus monitor -y -d org.freedesktop.UPower | grep -E "PropertiesChanged|Device(Added|Removed)"
-```
-
-Example output:
-```
-/org/freedesktop/UPower/devices/line_power_ACAD: org.freedesktop.DBus.Properties.PropertiesChanged ('org.freedesktop.UPower.Device', {'UpdateTime': <uint64 1756242314>, 'Online': <true>}, @as [])
-# Format: PATH INTERFACE.MEMBER (INFO)
-```
-
-### Querying
-
-On each event, the current power status is queried. Here's the equivalent command:
-```bash
-dbus-send --system --print-reply --dest=org.freedesktop.UPower \
-  /org/freedesktop/UPower/devices/line_power_ACAD \
-  org.freedesktop.DBus.Properties.Get string:org.freedesktop.UPower.Device string:Online
-```
-
-### Receive Filters
-You can filter received events by name. By default, only `org.freedesktop.DBus.Properties.PropertiesChanged` is matched. This prevents noisy signals. Additionally, power status changes are only propagated when the state actually changes, and template/link replacement only occurs when file contents differ.
-
-### Custom D-Bus Configuration
-
-You can customize which D-Bus signals to monitor:
-
-```toml
-[power_events]
-# Custom D-Bus signal match rules
-[[power_events.dbus_signal_match_rules]]
-interface = "org.freedesktop.DBus.Properties"
-member = "PropertiesChanged"
-object_path = "/org/freedesktop/UPower/devices/line_power_ACAD"
-
-# Custom signal filters
-[[power_events.dbus_signal_receive_filters]]
-name = "org.freedesktop.DBus.Properties.PropertiesChanged"
-
-# Custom UPower query for non-standard power managers
-[power_events.dbus_query_object]
-destination = "org.freedesktop.UPower"
-path = "/org/freedesktop/UPower"
-method = "org.freedesktop.DBus.Properties.Get"
-expected_discharging_value = "true"
-
-[[power_events.dbus_query_object.args]]
-arg = "org.freedesktop.UPower"
-
-[[power_events.dbus_query_object.args]]
-arg = "OnBattery"
-```
-
-The above query settings are equivalent to:
-```bash
-dbus-send --system --print-reply --dest=org.freedesktop.UPower \
-  /org/freedesktop/UPower org.freedesktop.DBus.Properties.Get string:org.freedesktop.UPower string:OnBattery
-```
-**Note**: This particular query is not recommended for production use!
-
-### Leave Empty Token
-
-To explicitly remove default values from D-Bus match rules, use the `leaveEmptyToken`:
-
-```toml
-[[power_events.dbus_signal_match_rules]]
-interface = "leaveEmptyToken"  # Removes interface match
-member = "PropertiesChanged"
-object_path = "/custom/path"
-```
-
-## Alternatives
+## Alternative software
 
 Most similar tools are more generic, working with any Wayland compositor. In contrast, `hyprdynamicmonitors` is specifically designed for Hyprland (using its IPC) but provides several advantages:
 

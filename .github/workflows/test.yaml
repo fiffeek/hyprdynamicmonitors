@@ -45,6 +45,9 @@ jobs:
                   python-version: 3.9
                   cache: pip
 
+            - run: make install/.toc.stamp
+              name: Install gh-md-toc
+
             - run: pip install -r requirements.txt
               name: Install python dependencies
 
