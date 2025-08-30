@@ -210,6 +210,30 @@ monitor=,preferred,auto,1
 - Only used when no regular profile matches the current setup
 - Regular matching profiles always take precedence over the fallback
 
+### User Callbacks (Exec Commands)
+
+HyprDynamicMonitors supports custom user commands that are executed before and after profile configuration changes. These commands can be defined globally or per-profile, allowing for custom actions like notifications, script execution, or system adjustments.
+
+```toml
+[general]
+# Global exec commands - run for all profile changes
+pre_apply_exec = "notify-send 'HyprDynamicMonitors' 'Switching monitor profile...'"
+post_apply_exec = "notify-send 'HyprDynamicMonitors' 'Profile applied successfully'"
+
+# Profile-specific exec commands override global settings
+[profiles.gaming_setup]
+config_file = "hyprconfigs/gaming.conf"
+pre_apply_exec = "notify-send 'Gaming Mode' 'Activating high-performance profile'"
+post_apply_exec = "/usr/local/bin/gaming-mode-on.sh"
+```
+
+**Key characteristics:**
+- **`pre_apply_exec`**: Executed before the new monitor configuration is applied
+- **`post_apply_exec`**: Executed after the new monitor configuration is successfully applied
+- **Profile-specific commands override global commands** for that profile
+- **Failure handling**: If exec commands fail, the service continues operating normally (no interruption to monitor configuration)
+- **Shell execution**: Commands are executed through `bash -c`, supporting shell features like pipes and environment variables
+
 ### Notifications
 
 HyprDynamicMonitors can show desktop notifications when configuration changes occur. Notifications are sent via D-Bus using the standard `org.freedesktop.Notifications` interface.

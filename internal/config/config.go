@@ -107,6 +107,8 @@ type DbusSignalMatchRule struct {
 type GeneralSection struct {
 	Destination    *string `toml:"destination"`
 	DebounceTimeMs *int    `toml:"debounce_time_ms"`
+	PostApplyExec  *string `toml:"post_apply_exec"`
+	PreApplyExec   *string `toml:"pre_apply_exec"`
 }
 
 type ScoringSection struct {
@@ -168,6 +170,8 @@ type Profile struct {
 	Conditions           ProfileCondition  `toml:"conditions"`
 	StaticTemplateValues map[string]string `toml:"static_template_values"`
 	IsFallbackProfile    bool
+	PostApplyExec        *string `toml:"post_apply_exec"`
+	PreApplyExec         *string `toml:"pre_apply_exec"`
 }
 
 type PowerStateType int

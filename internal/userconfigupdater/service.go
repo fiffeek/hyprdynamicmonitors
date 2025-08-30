@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os/exec"
 	"sync"
 	"time"
 
@@ -142,7 +143,7 @@ func (s *Service) RunOnce(ctx context.Context) error {
 	s.cachedPowerState = powerState
 	s.stateMu.Unlock()
 
-	if err := s.UpdateOnce(); err != nil {
+	if err := s.UpdateOnce(ctx); err != nil {
 		return fmt.Errorf("unable to update configuration: %w", err)
 	}
 
@@ -154,15 +155,15 @@ func (s *Service) debounceUpdate(ctx context.Context) error {
 	case <-ctx.Done():
 		return ctx.Err()
 	default:
-		return s.UpdateOnce()
+		return s.UpdateOnce(ctx)
 	}
 }
 
 func (s *Service) Handle(ctx context.Context) error {
-	return s.UpdateOnce()
+	return s.UpdateOnce(ctx)
 }
 
-func (s *Service) UpdateOnce() error {
+func (s *Service) UpdateOnce(ctx context.Context) error {
 	s.stateMu.RLock()
 	monitors := s.cachedMonitors
 	powerState := s.cachedPowerState
@@ -197,6 +198,8 @@ func (s *Service) UpdateOnce() error {
 
 	logrus.WithFields(profileFields).Info("Using profile")
 
+	s.tryExec(ctx, profile.PreApplyExec, s.config.Get().General.PreApplyExec)
+
 	destination := *s.config.Get().General.Destination
 	changed, err := s.generator.GenerateConfig(profile, monitors, powerState, destination)
 	if err != nil {
@@ -208,9 +211,29 @@ func (s *Service) UpdateOnce() error {
 		return nil
 	}
 
+	s.tryExec(ctx, profile.PostApplyExec, s.config.Get().General.PostApplyExec)
+
 	if err := s.notificationsService.NotifyProfileApplied(profile); err != nil {
 		logrus.WithFields(profileFields).WithError(err).Error("swallowing notification error")
 	}
 
 	return nil
+}
+
+func (*Service) tryExec(ctx context.Context, command, fallbackCommand *string) {
+	// fallback on a default command when it's not provided for a profile
+	if command == nil || *command == "" {
+		command = fallbackCommand
+	}
+	// if it's still empty then nothing to be done
+	if command == nil || *command == "" {
+		return
+	}
+
+	logrus.WithFields(logrus.Fields{"command": *command}).Info("Execuing user callback")
+	// nolint:gosec
+	out, err := exec.CommandContext(ctx, "bash", "-c", *command).CombinedOutput()
+	if err != nil {
+		logrus.Errorf("error %v while executing %s output %s, continuing as normal", err, *command, string(out))
+	}
 }

@@ -27,7 +27,7 @@ type fakeService struct {
 	updateCalls int
 }
 
-func (f *fakeService) UpdateOnce() error {
+func (f *fakeService) UpdateOnce(context.Context) error {
 	f.updateCalls++
 	return f.updateErr
 }

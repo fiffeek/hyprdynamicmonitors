@@ -17,7 +17,7 @@ type IPowerDetector interface {
 }
 
 type IService interface {
-	UpdateOnce() error
+	UpdateOnce(context.Context) error
 }
 
 type IFilewatcher interface {
@@ -58,7 +58,10 @@ func (s *Service) Reload(ctx context.Context) error {
 		{Fun: s.cfg.Reload, Name: "config reload", Err: "cant reload configuration"},
 		{Fun: s.filewatcher.Update, Name: "update filewatcher", Err: "cant update filewatcher"},
 		{Fun: func() error { return s.powerDetector.Reload(ctx) }, Name: "power detector reload", Err: "cant reload powerDetector"},
-		{Fun: s.service.UpdateOnce, Name: "updating user configuration", Err: "cant update user service"},
+		{
+			Fun:  func() error { return s.service.UpdateOnce(ctx) },
+			Name: "updating user configuration", Err: "cant update user service",
+		},
 	}
 
 	for _, update := range updates {
