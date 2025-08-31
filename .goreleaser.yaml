@@ -65,7 +65,7 @@ aurs:
           name: Filip Mikina
           email: filipmikina@gmail.con
       package: |-
-          local x86_64=amd64 i686=386 aarch64=arm64 armv6h=armv6 armv7h=armv7
+          local x86_64=x86_64 i686=i386 aarch64=arm64
           cd "hyprdynamicmonitors-${pkgver}-linux-${!CARCH}"
 
           # bin
