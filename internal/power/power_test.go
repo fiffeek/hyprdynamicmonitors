@@ -73,7 +73,7 @@ func TestPowerDetector_Integration(t *testing.T) {
 	service.SetProperty(power.ACPowerState)
 	err = service.EmitSignal()
 	require.NoError(t, err, "should be able to emit signal")
-	// but the new one does so we wait on the firt event after updates
+	// but the new one does so we wait on the first event after updates
 	service.SetProperty(power.BatteryPowerState)
 	err = service.EmitSignal()
 	require.NoError(t, err, "should be able to emit signal")

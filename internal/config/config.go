@@ -587,7 +587,7 @@ func (dr *DbusSignalMatchRule) Validate() error {
 
 func (d *DbusSignalReceiveFilter) Validate() error {
 	if d.Name == nil {
-		return errors.New("name cant be emtpy")
+		return errors.New("name cant be empty")
 	}
 
 	return nil

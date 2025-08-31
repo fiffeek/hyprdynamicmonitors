@@ -55,7 +55,7 @@ func Test__Run_Binary(t *testing.T) {
 
 		{
 			name:                     "basic templating",
-			description:              "when hypr returns the same monitors as defined in the configuraton, the template should match the golden file",
+			description:              "when hypr returns the same monitors as defined in the configuration, the template should match the golden file",
 			config:                   createBasicTestConfig(t),
 			hyprMonitorResponseFiles: []string{"testdata/hypr/server/basic_monitors.json"},
 			validateSideEffects: func(t *testing.T, cfg *config.RawConfig) {

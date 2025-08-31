@@ -31,6 +31,10 @@ repos:
       hooks:
           - id: shellcheck
             entry: shellcheck --shell=bash
+    - repo: https://github.com/crate-ci/typos
+      rev: v1.35.6
+      hooks:
+          - id: typos
     - repo: local
       hooks:
           - id: commintlint

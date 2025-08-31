@@ -1,4 +1,4 @@
-// Package app provides an applicaton runner.
+// Package app provides an application runner.
 package app
 
 import (
