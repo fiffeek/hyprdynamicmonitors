@@ -4,8 +4,11 @@
 
 An event-driven service that automatically manages Hyprland monitor configurations based on connected displays and power state.
 
+## Documentation
+
 <!--ts-->
 * [HyprDynamicMonitors](#hyprdynamicmonitors)
+   * [Documentation](#documentation)
    * [Features](#features)
    * [Design Philosophy](#design-philosophy)
    * [Installation](#installation)
@@ -43,6 +46,10 @@ An event-driven service that automatically manages Hyprland monitor configuratio
       * [Run on boot and let restarts do the job](#run-on-boot-and-let-restarts-do-the-job)
       * [Custom systemd target](#custom-systemd-target)
       * [Alternative: Wrapper script](#alternative-wrapper-script)
+   * [Development](#development)
+      * [Setup Development Environment](#setup-development-environment)
+      * [Development Commands](#development-commands)
+      * [Development Workflow](#development-workflow)
    * [Alternative software](#alternative-software)
 <!--te-->
 
@@ -109,6 +116,7 @@ sudo make DESTDIR=/usr/bin install
 
 ### Command Line
 
+<!-- START help -->
 ```text
 Usage: hyprdynamicmonitors [options] [command]
 
@@ -118,20 +126,27 @@ Commands:
 
 Options:
   -config string
-        Path to configuration file (default "$HOME/.config/hyprdynamicmonitors/config.toml")
+    	Path to configuration file (default "$HOME/.config/hyprdynamicmonitors/config.toml")
+  -connect-to-session-bus
+    	Connect to session bus instead of system bus for power events: https://wiki.archlinux.org/title/D-Bus. You can switch as long as you expose power line events in your user session bus.
   -debug
-        Enable debug logging
+    	Enable debug logging
   -disable-auto-hot-reload
-        Disable automatic hot reload (no file watchers)
+    	Disable automatic hot reload (no file watchers)
   -disable-power-events
-        Disable power events (dbus)
+    	Disable power events (dbus)
   -dry-run
-        Show what would be done without making changes
+    	Show what would be done without making changes
+  -enable-json-logs-format
+    	Enable structured logging
+  -run-once
+    	Run once and exit immediately
   -verbose
-        Enable verbose logging
+    	Enable verbose logging
   -version
-        Show version information
+    	Show version information
 ```
+<!-- END help -->
 
 **Validate configuration:**
 ```bash
@@ -182,7 +197,10 @@ use systemd (see [Running with systemd](#running-with-systemd)) or a wrapper scr
 
 ## Examples
 
-See `examples/` directory for complete configuration examples including basic setups and comprehensive configurations with all features.
+See [`examples/`](https://github.com/fiffeek/hyprdynamicmonitors/tree/main/examples) directory for complete configuration
+examples including basic setups and comprehensive configurations with all features.
+Most notably, [`examples/full/config.toml`](https://github.com/fiffeek/hyprdynamicmonitors/blob/main/examples/full/config.toml)
+contains all available configuration options reference.
 
 ## Runtime requirements
 
@@ -607,6 +625,68 @@ Then execute it from Hyprland:
 ```
 exec-once = /path/to/the/script.sh
 ```
+
+## Development
+
+### Setup Development Environment
+
+Set up the complete development environment with all dependencies:
+
+```bash
+make dev
+```
+
+This installs:
+- asdf version manager with required tool versions
+- Go toolchain and dependencies
+- Python virtual environment for pre-commit hooks
+- Node.js dependencies for commit linting
+- Pre-commit hooks configuration
+- Documentation generation tools
+
+### Development Commands
+
+**Code quality and testing:**
+```bash
+make fmt          # Format code and tidy modules
+make lint         # Run linting checks
+make test         # Run all tests (unit + integration)
+make pre-push     # Run complete CI pipeline (fmt + lint + test)
+```
+
+**Testing specific areas:**
+```bash
+make test/unit                    # Run only unit tests
+make test/integration             # Run only integration tests
+make test/integration/regenerate  # Regenerate test fixtures
+```
+
+**Running selected tests** (runs with `-debug` for log output):
+```bash
+# Run subset of integration tests
+make TEST_SELECTOR=Test__Run_Binary/power_events_triggers test/integration/selected
+
+# Run subset of unit tests
+make TEST_SELECTOR="TestIPC_Run/happy_path$" PACKAGE_SELECTOR=hypr/... test/unit/selected
+```
+
+**Building:**
+```bash
+make release/local    # Build release binaries for all platforms
+make build/test       # Build test binary for integration tests
+```
+
+**Documentation:**
+```bash
+make help/generate    # Generate help documentation from binary
+```
+
+### Development Workflow
+
+1. **Initial setup**: `make dev` (one-time setup)
+2. **Development cycle**: Make changes, then run `make pre-push` before committing
+3. **Testing**: Use `make test` for full test suite, or specific test targets for focused testing
+4. **Pre-commit hooks**: Automatically run on commit (installed by `make dev`)
 
 ## Alternative software
 

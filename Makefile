@@ -101,7 +101,7 @@ test/integration: build/test
 test/integration/regenerate: build/test
 	@HDM_BINARY_PATH=$(TEST_EXECUTABLE_NAME) $(GOLANG_BIN) test -v ./test/... --regenerate
 
-test/integration/selector: build/test
+test/integration/selected: build/test
 	@HDM_BINARY_PATH=$(TEST_EXECUTABLE_NAME) $(GOLANG_BIN) test -v -run $(TEST_SELECTOR) ./test/... --debug
 
 test: test/unit test/integration
@@ -114,3 +114,6 @@ lint:
 	@$(GOLANGCI_LINT_BIN) run
 
 pre-push: fmt lint test/unit test/integration
+
+help/generate: build/test
+	@scripts/autohelp.sh
