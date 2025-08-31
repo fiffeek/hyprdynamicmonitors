@@ -58,9 +58,8 @@ aurs:
       license: MIT
       private_key: '{{ .Env.AUR_KEY }}'
       git_url: ssh://aur@aur.archlinux.org/hyprdynamicmonitors-bin.git
-      depends:
-          - hyprland
       optdepends:
+          - hyprland
           - upower
       commit_author:
           name: Filip Mikina
