@@ -12,6 +12,17 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
+type Interrupted struct{ sig os.Signal }
+
+func (i Interrupted) Error() string { return "interrupted by " + i.sig.String() }
+
+func (i Interrupted) ExitCode() int {
+	if s, ok := i.sig.(syscall.Signal); ok {
+		return 128 + int(s)
+	}
+	return 1
+}
+
 type SIGUSR1Handler interface {
 	Handle(context.Context) error
 }
@@ -73,12 +84,12 @@ func (h *Handler) Run(ctx context.Context) error {
 					}
 				case syscall.SIGTERM, syscall.SIGINT:
 					logrus.WithField("signal", sig).Info("Received termination signal, shutting down gracefully")
-					h.cancelCause(context.Canceled)
-					return context.Canceled
+					h.cancelCause(&Interrupted{sig})
+					return &Interrupted{sig}
 				}
 			case <-ctx.Done():
 				logrus.Debug("Signal handler context done, exiting")
-				return ctx.Err()
+				return context.Cause(ctx)
 			}
 		}
 	})

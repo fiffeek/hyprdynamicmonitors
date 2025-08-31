@@ -34,7 +34,7 @@ func setupFilewatcherTest(t *testing.T) *config.Config {
 			"profile1": {
 				Name:       "profile1",
 				ConfigFile: configFile1,
-				Conditions: config.ProfileCondition{
+				Conditions: &config.ProfileCondition{
 					PowerState: utils.JustPtr(config.BAT),
 					RequiredMonitors: []*config.RequiredMonitor{
 						{Name: utils.StringPtr("eDP-1")},
@@ -44,7 +44,7 @@ func setupFilewatcherTest(t *testing.T) *config.Config {
 			"profile2": {
 				Name:       "profile2",
 				ConfigFile: configFile2,
-				Conditions: config.ProfileCondition{
+				Conditions: &config.ProfileCondition{
 					PowerState: utils.JustPtr(config.AC),
 					RequiredMonitors: []*config.RequiredMonitor{
 						{Name: utils.StringPtr("DP-1")},
@@ -118,7 +118,7 @@ func TestFilewatcher_Integration(t *testing.T) {
 					"profile3": {
 						Name:       "profile3",
 						ConfigFile: configFile3,
-						Conditions: config.ProfileCondition{
+						Conditions: &config.ProfileCondition{
 							PowerState: utils.JustPtr(config.BAT),
 							RequiredMonitors: []*config.RequiredMonitor{
 								{Name: utils.StringPtr("eDP-1")},

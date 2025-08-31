@@ -59,7 +59,7 @@ func (m *Matcher) returnNoneOrFallback(cfg *config.RawConfig) (bool, *config.Pro
 	return false, nil
 }
 
-func (m *Matcher) scoreProfile(cfg *config.RawConfig, conditions config.ProfileCondition,
+func (m *Matcher) scoreProfile(cfg *config.RawConfig, conditions *config.ProfileCondition,
 	powerState power.PowerState, connectedMonitors []*hypr.MonitorSpec,
 ) int {
 	profileScore := 0
@@ -81,7 +81,7 @@ func (m *Matcher) scoreProfile(cfg *config.RawConfig, conditions config.ProfileC
 	return profileScore
 }
 
-func (m *Matcher) calcFullProfileScore(cfg *config.RawConfig, conditions config.ProfileCondition) int {
+func (m *Matcher) calcFullProfileScore(cfg *config.RawConfig, conditions *config.ProfileCondition) int {
 	fullMatchScore := 0
 	if conditions.PowerState != nil {
 		fullMatchScore += *cfg.Scoring.PowerStateMatch

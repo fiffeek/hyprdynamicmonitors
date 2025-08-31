@@ -91,7 +91,7 @@ func (d *Debouncer) Run(ctx context.Context) error {
 					cancelPending()
 				}
 				stopTimer()
-				return ctx.Err()
+				return context.Cause(ctx)
 
 			case m := <-d.ch:
 				logrus.WithFields(logrus.Fields{"op": m.op}).Debug("Received debouncer message")
@@ -163,7 +163,7 @@ func (d *Debouncer) Run(ctx context.Context) error {
 					select {
 					case <-jobCtx.Done():
 						logrus.WithFields(logrus.Fields{"fun": GetFunctionName(fn)}).Debug("Job context cancelled")
-						return jobCtx.Err()
+						return context.Cause(jobCtx)
 					default:
 					}
 					logrus.WithFields(logrus.Fields{"fun": GetFunctionName(fn)}).Debug("Executing debounced function")

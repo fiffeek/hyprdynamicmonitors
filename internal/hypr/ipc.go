@@ -9,6 +9,7 @@ import (
 	"os"
 	"reflect"
 	"slices"
+	"sync"
 
 	"github.com/fiffeek/hyprdynamicmonitors/internal/dial"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/utils"
@@ -20,9 +21,11 @@ type IPC struct {
 	instanceSignature string
 	xdgRuntimeDir     string
 	events            chan MonitorSpecs
+	monitors          MonitorSpecs
+	mu                sync.RWMutex
 }
 
-func NewIPC() (*IPC, error) {
+func NewIPC(ctx context.Context) (*IPC, error) {
 	signature := os.Getenv("HYPRLAND_INSTANCE_SIGNATURE")
 	if signature == "" {
 		return nil, errors.New("HYPRLAND_INSTANCE_SIGNATURE environment variable not set - are you running under Hyprland?")
@@ -33,11 +36,20 @@ func NewIPC() (*IPC, error) {
 		return nil, fmt.Errorf("cant get xdg runtime dir: %w", err)
 	}
 
-	return &IPC{
+	ipc := &IPC{
 		instanceSignature: signature,
 		xdgRuntimeDir:     xdgRuntimeDir,
 		events:            make(chan MonitorSpecs, 10),
-	}, nil
+		mu:                sync.RWMutex{},
+	}
+
+	monitors, err := ipc.queryConnectedMonitors(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("cant query current monitors: %w", err)
+	}
+	ipc.monitors = monitors
+
+	return ipc, nil
 }
 
 // Listen sends ALL present (not ENABLED) monitors in each message
@@ -58,7 +70,7 @@ func (h *IPC) RunEventLoop(ctx context.Context) error {
 		<-ctx.Done()
 		logrus.Debug("Hypr IPC context cancelled, closing connection to unblock scanner")
 		connTeardown()
-		return ctx.Err()
+		return context.Cause(ctx)
 	})
 
 	eg.Go(func() error {
@@ -72,7 +84,7 @@ func (h *IPC) RunEventLoop(ctx context.Context) error {
 			select {
 			case <-ctx.Done():
 				logrus.Debug("Hypr IPC context cancelled during processing")
-				return ctx.Err()
+				return context.Cause(ctx)
 			default:
 			}
 
@@ -92,7 +104,12 @@ func (h *IPC) RunEventLoop(ctx context.Context) error {
 
 			// refetch the current state, it's unknown whether monitorremoved
 			// event means disabled or physically removed
-			monitors, err := h.QueryConnectedMonitors(ctx)
+			monitors, err := h.queryConnectedMonitors(ctx)
+
+			h.mu.Lock()
+			h.monitors = monitors
+			h.mu.Unlock()
+
 			if err != nil {
 				return fmt.Errorf("cant get monitors spec: %w", err)
 			}
@@ -101,7 +118,7 @@ func (h *IPC) RunEventLoop(ctx context.Context) error {
 				continue
 			}
 
-			logrus.Info("Monitors state changed")
+			logrus.WithFields(logrus.Fields{"monitors": len(monitors)}).Info("Monitors state changed")
 
 			select {
 			case h.events <- monitors:
@@ -109,7 +126,7 @@ func (h *IPC) RunEventLoop(ctx context.Context) error {
 				logrus.Debug("Monitors event sent")
 			case <-ctx.Done():
 				logrus.Debug("Hypr IPC context cancelled during event send")
-				return ctx.Err()
+				return context.Cause(ctx)
 			}
 		}
 
@@ -127,7 +144,13 @@ func (h *IPC) RunEventLoop(ctx context.Context) error {
 	return nil
 }
 
-func (h *IPC) QueryConnectedMonitors(ctx context.Context) (MonitorSpecs, error) {
+func (h *IPC) GetConnectedMonitors() MonitorSpecs {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+	return h.monitors
+}
+
+func (h *IPC) queryConnectedMonitors(ctx context.Context) (MonitorSpecs, error) {
 	logrus.Debug("Querying connected monitors")
 	socketPath := GetHyprSocket(h.xdgRuntimeDir, h.instanceSignature)
 	conn, teardown, err := dial.GetUnixSocketConnection(ctx, socketPath)

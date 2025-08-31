@@ -1,0 +1,9 @@
+# Template reloaded test configuration
+# Generated with power state: {{.PowerState}}
+
+{{- range .Monitors}}
+monitor={{.Name}},{{.Description}}
+{{- end}}
+{{- range $tag, $monitor := .MonitorsByTag }}
+{{$tag}}={{$monitor.Name}},{{$monitor.Description}}
+{{- end }}

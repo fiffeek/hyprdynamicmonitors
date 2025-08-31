@@ -95,7 +95,7 @@ func Test_Validate_InvalidConfigs(t *testing.T) {
 		},
 	}
 
-	invalidConfigsDir := filepath.Join(basepath, "test", "testdata", "invalid")
+	invalidConfigsDir := filepath.Join(basepath, "test", "testdata", "app", "configs", "invalid")
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

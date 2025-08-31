@@ -45,6 +45,7 @@ linters:
         wrapcheck:
             extra-ignore-sigs:
                 - .Err(
+                - .Cause(
                 - .Wait(
 
         staticcheck:

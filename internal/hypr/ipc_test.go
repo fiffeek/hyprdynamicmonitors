@@ -1,22 +1,27 @@
 package hypr_test
 
 import (
-	"bufio"
 	"context"
 	"net"
 	"os"
-	"path/filepath"
 	"slices"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/fiffeek/hyprdynamicmonitors/internal/hypr"
+	"github.com/fiffeek/hyprdynamicmonitors/internal/testutils"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/utils"
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestIPC_Run(t *testing.T) {
+	if *debug {
+		logrus.SetLevel(logrus.DebugLevel)
+	}
+
 	tests := []struct {
 		name               string
 		mockEvents         []string
@@ -36,19 +41,21 @@ func TestIPC_Run(t *testing.T) {
 				"monitorremovedv2>>2,DP-1,External Monitor",
 			},
 			expectedCommands: []string{
-				"j/monitors all",
+				"j/monitors all", // initial setup
+				"j/monitors all", // first event
 				"j/monitors all",
 				"j/monitors all",
 			},
 			responsePaths: []string{
+				"testdata/monitors_response_valid_1.json", // initial setup
+				"testdata/monitors_response_valid_2.json", // first event
 				"testdata/monitors_response_valid_1.json",
 				"testdata/monitors_response_valid_2.json",
-				"testdata/monitors_response_valid_1.json",
 			},
 			expectedEventPaths: []string{
-				"testdata/monitors_response_valid_1.json",
 				"testdata/monitors_response_valid_2.json",
 				"testdata/monitors_response_valid_1.json",
+				"testdata/monitors_response_valid_2.json",
 			},
 			expectError: false,
 			description: "Should successfully process monitor add/remove events",
@@ -61,18 +68,20 @@ func TestIPC_Run(t *testing.T) {
 				"monitoraddedv2>>2,DP-1,External Monitor",
 			},
 			expectedCommands: []string{
-				"j/monitors all",
+				"j/monitors all", // initial setup
+				"j/monitors all", // first event
 				"j/monitors all",
 				"j/monitors all",
 			},
 			responsePaths: []string{
-				"testdata/monitors_response_valid_1.json",
-				"testdata/monitors_response_valid_1.json",
-				"testdata/monitors_response_valid_2.json",
+				"testdata/monitors_response_valid_1.json", // initial setup
+				"testdata/monitors_response_valid_1.json", // first event
+				"testdata/monitors_response_valid_1.json", // second event
+				"testdata/monitors_response_valid_2.json", // third event
 			},
 			expectedEventPaths: []string{
-				"testdata/monitors_response_valid_1.json",
-				"testdata/monitors_response_valid_2.json",
+				"testdata/monitors_response_valid_1.json", // first event is always sent
+				"testdata/monitors_response_valid_2.json", // third event
 			},
 			expectError: false,
 			description: "Should not send events when data does not change",
@@ -125,17 +134,17 @@ func TestIPC_Run(t *testing.T) {
 				expectedEvents = append(expectedEvents, res)
 			}
 
-			xdgRuntimeDir, signature := setupEnvVars(t)
-			eventsListener, eventsSocketCleanUp := setupSocket(
+			xdgRuntimeDir, signature := testutils.SetupHyprEnvVars(t)
+			eventsListener, eventsSocketCleanUp := testutils.SetupHyprSocket(
 				ctx,
 				t,
 				xdgRuntimeDir,
 				signature,
 				hypr.GetHyprEventsSocket)
-			ipcListener, ipcCleanUp := setupSocket(ctx, t, xdgRuntimeDir, signature, hypr.GetHyprSocket)
-			writerDone := setupFakeHyprIPCWriter(t, ipcListener, responseData, tt.expectedCommands, tt.exitOnError)
-			ipc, err := hypr.NewIPC()
-			assert.Nil(t, err, "failed to create ipc")
+			ipcListener, ipcCleanUp := testutils.SetupHyprSocket(ctx, t, xdgRuntimeDir, signature, hypr.GetHyprSocket)
+			writerDone := testutils.SetupFakeHyprIPCWriter(t, ipcListener, responseData, tt.expectedCommands, tt.exitOnError)
+			ipc, err := hypr.NewIPC(ctx)
+			require.NoError(t, err, "failed to create ipc")
 			defer func() {
 				eventsSocketCleanUp()
 				ipcCleanUp()
@@ -179,23 +188,7 @@ func TestIPC_Run(t *testing.T) {
 func processIPCEvents(t *testing.T, ctx context.Context, cancel context.CancelFunc, listener net.Listener, mockEvents []string, ipc *hypr.IPC,
 	expectedEventCount int,
 ) (chan error, []hypr.MonitorSpecs) {
-	serverDone := make(chan struct{})
-	go func() {
-		defer close(serverDone)
-		conn, err := listener.Accept()
-		if err != nil {
-			t.Errorf("Failed to accept connection: %v", err)
-			return
-		}
-
-		for _, event := range mockEvents {
-			if _, err := conn.Write([]byte(event + "\n")); err != nil {
-				t.Errorf("Failed to write event: %v", err)
-				return
-			}
-			time.Sleep(10 * time.Millisecond)
-		}
-	}()
+	serverDone := testutils.SetupFakeHyprEventsServer(t, listener, mockEvents)
 
 	ipcDone := make(chan error, 1)
 	go func() {
@@ -251,12 +244,6 @@ func TestNewIPC_MissingEnvironmentVariables(t *testing.T) {
 			sigVar:  "test_sig",
 			wantErr: "XDG_RUNTIME_DIR environment variable not set",
 		},
-		{
-			name:    "both_present",
-			xdgVar:  "/tmp",
-			sigVar:  "test_sig",
-			wantErr: "",
-		},
 	}
 
 	for _, tt := range tests {
@@ -282,7 +269,9 @@ func TestNewIPC_MissingEnvironmentVariables(t *testing.T) {
 				_ = os.Setenv("HYPRLAND_INSTANCE_SIGNATURE", tt.sigVar)
 			}
 
-			ipc, err := hypr.NewIPC()
+			ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+			defer cancel()
+			ipc, err := hypr.NewIPC(ctx)
 
 			if tt.wantErr == "" {
 				if err != nil {
@@ -306,7 +295,7 @@ func TestNewIPC_MissingEnvironmentVariables(t *testing.T) {
 	}
 }
 
-func TestIPC_QueryConnectedMonitors(t *testing.T) {
+func TestIPC_GetConnectedMonitors(t *testing.T) {
 	tests := []struct {
 		name             string
 		responseFile     string
@@ -356,21 +345,22 @@ func TestIPC_QueryConnectedMonitors(t *testing.T) {
 			ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 			defer cancel()
 
-			xdgRuntimeDir, signature := setupEnvVars(t)
-			listener, teardown := setupSocket(ctx, t, xdgRuntimeDir, signature, hypr.GetHyprSocket)
+			xdgRuntimeDir, signature := testutils.SetupHyprEnvVars(t)
+			listener, teardown := testutils.SetupHyprSocket(ctx, t, xdgRuntimeDir, signature, hypr.GetHyprSocket)
 			defer teardown()
 
 			responseData, err := os.ReadFile(tt.responseFile)
 			assert.Nil(t, err, "Failed to read test response file %s: %w", tt.responseFile, err)
 
-			serverDone := setupFakeHyprIPCWriter(t, listener, [][]byte{responseData}, []string{"j/monitors all"}, false)
+			serverDone := testutils.SetupFakeHyprIPCWriter(t, listener, [][]byte{
+				responseData,
+			}, []string{"j/monitors all"}, false)
 
-			ipc, err := hypr.NewIPC()
-			if err != nil {
-				t.Fatalf("Failed to create IPC: %v", err)
+			ipc, err := hypr.NewIPC(ctx)
+			var monitors hypr.MonitorSpecs
+			if ipc != nil {
+				monitors = ipc.GetConnectedMonitors()
 			}
-
-			monitors, err := ipc.QueryConnectedMonitors(ctx)
 
 			select {
 			case <-serverDone:
@@ -390,71 +380,4 @@ func TestIPC_QueryConnectedMonitors(t *testing.T) {
 			assert.Equal(t, tt.expectedMonitors, monitors, tt.description)
 		})
 	}
-}
-
-func setupFakeHyprIPCWriter(t *testing.T, listener net.Listener, responseData [][]byte,
-	expectedCommands []string, exitOnError bool,
-) chan struct{} {
-	serverDone := make(chan struct{})
-	go func() {
-		defer close(serverDone)
-		for i, command := range expectedCommands {
-			respondToIPC(t, listener, exitOnError, command, responseData, i)
-		}
-	}()
-	return serverDone
-}
-
-func respondToIPC(t *testing.T, listener net.Listener, exitOnError bool, command string, responseData [][]byte, i int) {
-	conn, err := listener.Accept()
-	if err != nil && exitOnError {
-		return
-	}
-	defer func() { _ = conn.Close() }()
-	assert.Nil(t, err, "failed to accept connection")
-
-	t.Log("listener accepted a connection")
-
-	s := bufio.NewScanner(conn)
-	if !s.Scan() {
-		t.Errorf("no data to read")
-	}
-	buf := s.Bytes()
-	assert.Nil(t, err, "failded to read")
-	assert.Equal(t, command, string(buf), "wrong command")
-
-	_, err = conn.Write(responseData[i])
-	assert.Nil(t, err, "failded to write response")
-	t.Logf("wrote response to the client %s", string(responseData[i]))
-}
-
-func setupSocket(ctx context.Context, t *testing.T, xdgRuntimeDir, signature string,
-	hyprSocketFun func(string, string) string,
-) (net.Listener, func()) {
-	socketPath := hyprSocketFun(xdgRuntimeDir, signature)
-	lc := &net.ListenConfig{}
-	listener, err := lc.Listen(ctx, "unix", socketPath)
-	assert.Nil(t, err, "failed to create a test socket")
-	return listener, func() { _ = listener.Close() }
-}
-
-func setupEnvVars(t *testing.T) (string, string) {
-	tempDir := t.TempDir()
-	signature := "test_signature"
-	hyprDir := filepath.Join(tempDir, "hypr", signature)
-	//nolint:gosec
-	if err := os.MkdirAll(hyprDir, 0o755); err != nil {
-		t.Fatalf("Failed to create hypr directory: %v", err)
-	}
-
-	originalXDG := os.Getenv("XDG_RUNTIME_DIR")
-	originalSig := os.Getenv("HYPRLAND_INSTANCE_SIGNATURE")
-	t.Cleanup(func() {
-		_ = os.Setenv("XDG_RUNTIME_DIR", originalXDG)
-		_ = os.Setenv("HYPRLAND_INSTANCE_SIGNATURE", originalSig)
-	})
-
-	_ = os.Setenv("XDG_RUNTIME_DIR", tempDir)
-	_ = os.Setenv("HYPRLAND_INSTANCE_SIGNATURE", signature)
-	return tempDir, signature
 }
