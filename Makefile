@@ -15,6 +15,8 @@ TEST_EXECUTABLE_NAME := ./dist/hdmtest
 GH_MD_TOC_FILE := "https://raw.githubusercontent.com/ekalinin/github-markdown-toc/master/gh-md-toc"
 DEV_BINARIES_DIR := "./bin"
 GH_MD_TOC_BIN := "gh-md-toc"
+TEST_SELECTOR ?=
+PACKAGE_SELECTOR ?= "..."
 
 .PHONY: install test fmt lint release/local
 
@@ -86,12 +88,21 @@ test/unit:
 	@$(GORELEASER_BIN) check
 	@$(GOLANG_BIN) test ./internal/... -v
 
+test/unit/selected:
+	$(GOLANG_BIN) test ./internal/$(PACKAGE_SELECTOR) -v -run $(TEST_SELECTOR) -debug
+
 build/test:
 	@mkdir -p ./dist/
 	@$(GOLANG_BIN) build -v -o $(TEST_EXECUTABLE_NAME) ./cmd/main.go
 
 test/integration: build/test
-	@HDM_BINARY_PATH=$(TEST_EXECUTABLE_NAME) $(GOLANG_BIN) test -v ./test/...
+	@HDM_BINARY_PATH=$(TEST_EXECUTABLE_NAME) $(GOLANG_BIN) test -v ./test/... --debug
+
+test/integration/regenerate: build/test
+	@HDM_BINARY_PATH=$(TEST_EXECUTABLE_NAME) $(GOLANG_BIN) test -v ./test/... --regenerate
+
+test/integration/selector: build/test
+	@HDM_BINARY_PATH=$(TEST_EXECUTABLE_NAME) $(GOLANG_BIN) test -v -run $(TEST_SELECTOR) ./test/... --debug
 
 test: test/unit test/integration
 

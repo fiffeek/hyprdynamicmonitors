@@ -21,13 +21,13 @@ import (
 )
 
 type IPowerDetector interface {
-	GetCurrentState(context.Context) (power.PowerState, error)
+	GetCurrentState() power.PowerState
 	Listen() <-chan power.PowerEvent
 }
 
 type IMonitorDetector interface {
 	Listen() <-chan hypr.MonitorSpecs
-	QueryConnectedMonitors(context.Context) (hypr.MonitorSpecs, error)
+	GetConnectedMonitors() hypr.MonitorSpecs
 }
 
 type Service struct {
@@ -81,7 +81,7 @@ func (s *Service) Run(ctx context.Context) error {
 		<-ctx.Done()
 		s.debouncer.Cancel()
 		logrus.Debug("Context cancelled for service, shutting down")
-		return ctx.Err()
+		return context.Cause(ctx)
 	})
 
 	eg.Go(func() error {
@@ -117,7 +117,7 @@ func (s *Service) Run(ctx context.Context) error {
 
 			case <-ctx.Done():
 				logrus.Debug("Event processor context cancelled, shutting down")
-				return ctx.Err()
+				return context.Cause(ctx)
 			}
 		}
 	})
@@ -129,14 +129,8 @@ func (s *Service) Run(ctx context.Context) error {
 }
 
 func (s *Service) RunOnce(ctx context.Context) error {
-	monitors, err := s.monitorDetector.QueryConnectedMonitors(ctx)
-	if err != nil {
-		return fmt.Errorf("unable to query current monitors: %w", err)
-	}
-	powerState, err := s.powerDetector.GetCurrentState(ctx)
-	if err != nil {
-		return fmt.Errorf("unable to fetch power state: %w", err)
-	}
+	monitors := s.monitorDetector.GetConnectedMonitors()
+	powerState := s.powerDetector.GetCurrentState()
 
 	s.stateMu.Lock()
 	s.cachedMonitors = monitors
@@ -153,7 +147,7 @@ func (s *Service) RunOnce(ctx context.Context) error {
 func (s *Service) debounceUpdate(ctx context.Context) error {
 	select {
 	case <-ctx.Done():
-		return ctx.Err()
+		return context.Cause(ctx)
 	default:
 		return s.UpdateOnce(ctx)
 	}
@@ -195,13 +189,14 @@ func (s *Service) UpdateOnce(ctx context.Context) error {
 	}
 
 	if s.serviceConfig.DryRun {
-		logrus.WithFields(profileFields).Info("[DRY RUN] Would use profile")
+		logrus.WithFields(utils.NewLogrusCustomFields(profileFields).WithLogID(utils.DryRunLogID)).
+			Info("[DRY RUN] Would use profile")
 		return nil
 	}
 
 	logrus.WithFields(profileFields).Info("Using profile")
 
-	s.tryExec(ctx, profile.PreApplyExec, cfg.General.PreApplyExec)
+	s.tryExec(ctx, profile.PreApplyExec, cfg.General.PreApplyExec, utils.PreExecLogID)
 
 	destination := *cfg.General.Destination
 	changed, err := s.generator.GenerateConfig(cfg, profile, monitors, powerState, destination)
@@ -214,7 +209,7 @@ func (s *Service) UpdateOnce(ctx context.Context) error {
 		return nil
 	}
 
-	s.tryExec(ctx, profile.PostApplyExec, cfg.General.PostApplyExec)
+	s.tryExec(ctx, profile.PostApplyExec, cfg.General.PostApplyExec, utils.PostExecLogID)
 
 	if err := s.notificationsService.NotifyProfileApplied(profile); err != nil {
 		logrus.WithFields(profileFields).WithError(err).Error("swallowing notification error")
@@ -223,7 +218,7 @@ func (s *Service) UpdateOnce(ctx context.Context) error {
 	return nil
 }
 
-func (*Service) tryExec(ctx context.Context, command, fallbackCommand *string) {
+func (*Service) tryExec(ctx context.Context, command, fallbackCommand *string, logID utils.LogID) {
 	// fallback on a default command when it's not provided for a profile
 	if command == nil || *command == "" {
 		command = fallbackCommand
@@ -233,7 +228,8 @@ func (*Service) tryExec(ctx context.Context, command, fallbackCommand *string) {
 		return
 	}
 
-	logrus.WithFields(logrus.Fields{"command": *command}).Info("Execuing user callback")
+	logrus.WithFields(
+		utils.NewLogrusCustomFields(logrus.Fields{"command": *command}).WithLogID(logID)).Info("Executing user callback")
 	// nolint:gosec
 	out, err := exec.CommandContext(ctx, "bash", "-c", *command).CombinedOutput()
 	if err != nil {

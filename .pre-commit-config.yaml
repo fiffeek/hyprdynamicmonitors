@@ -14,7 +14,9 @@ repos:
       rev: v0.9.3
       hooks:
           - id: taplo-format
+            files: ^internal/.*\.toml$
           - id: taplo-lint
+            files: ^internal/.*\.toml$
     - repo: https://github.com/jumanjihouse/pre-commit-hook-yamlfmt
       rev: 0.2.1
       hooks:

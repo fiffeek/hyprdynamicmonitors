@@ -46,6 +46,8 @@ type PowerDetector struct {
 	stateMu            sync.RWMutex
 	dbusMatchOptions   [][]dbus.MatchOption
 	disablePowerEvents bool
+	powerState         PowerState
+	powerStateMu       sync.RWMutex
 }
 
 func NewPowerDetector(ctx context.Context, cfg *config.Config, conn *dbus.Conn, disablePowerEvents bool) (*PowerDetector, error) {
@@ -55,19 +57,28 @@ func NewPowerDetector(ctx context.Context, cfg *config.Config, conn *dbus.Conn, 
 		events:             make(chan PowerEvent, 10),
 		signals:            make(chan *dbus.Signal, 10),
 		disablePowerEvents: disablePowerEvents,
+		powerStateMu:       sync.RWMutex{},
 	}
 
-	if _, err := detector.GetCurrentState(ctx); err != nil {
+	ps, err := detector.getCurrentState(ctx)
+	if err != nil {
 		_ = conn.Close()
 		return nil, fmt.Errorf("UPower not available or accessible: %w", err)
 	}
+	detector.powerState = ps
 
 	logrus.Info("UPower D-Bus power detection initialized")
 
 	return detector, nil
 }
 
-func (p *PowerDetector) GetCurrentState(ctx context.Context) (PowerState, error) {
+func (p *PowerDetector) GetCurrentState() PowerState {
+	p.powerStateMu.RLock()
+	defer p.powerStateMu.RUnlock()
+	return p.powerState
+}
+
+func (p *PowerDetector) getCurrentState(ctx context.Context) (PowerState, error) {
 	if p.disablePowerEvents {
 		logrus.WithFields(logrus.Fields{"default": ACPowerState.String()}).Debug(
 			"Power events are disabled, returning the default value")
@@ -175,7 +186,7 @@ func (p *PowerDetector) Run(ctx context.Context) error {
 		if p.conn != nil {
 			_ = p.conn.Close()
 		}
-		return ctx.Err()
+		return context.Cause(ctx)
 	})
 
 	if p.disablePowerEvents {
@@ -211,7 +222,10 @@ func (p *PowerDetector) Run(ctx context.Context) error {
 				var err error
 
 				if slices.Contains(p.getExpectedSignalNames(), signal.Name) {
-					currentState, err = p.GetCurrentState(ctx)
+					currentState, err = p.getCurrentState(ctx)
+					p.powerStateMu.Lock()
+					p.powerState = currentState
+					p.powerStateMu.Unlock()
 				} else {
 					logrus.WithField("signal_name", signal.Name).Debug("Ignoring unknown UPower signal")
 					continue
@@ -235,11 +249,11 @@ func (p *PowerDetector) Run(ctx context.Context) error {
 				case p.events <- PowerEvent{State: currentState}:
 					lastState = currentState
 				case <-ctx.Done():
-					return ctx.Err()
+					return context.Cause(ctx)
 				}
 			case <-ctx.Done():
 				logrus.Debug("Power detector context cancelled, shutting down")
-				return ctx.Err()
+				return context.Cause(ctx)
 			}
 		}
 	})

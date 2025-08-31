@@ -79,7 +79,7 @@ func (s *Service) Run(ctx context.Context) error {
 	eg.Go(func() error {
 		<-ctx.Done()
 		logrus.Debug("Context cancelled for reloader, shutting down")
-		return ctx.Err()
+		return context.Cause(ctx)
 	})
 
 	if s.disableAutoHotReload != nil && *s.disableAutoHotReload {
@@ -104,7 +104,7 @@ func (s *Service) Run(ctx context.Context) error {
 
 			case <-ctx.Done():
 				logrus.Debug("Reloader event processor context cancelled, shutting down")
-				return ctx.Err()
+				return context.Cause(ctx)
 
 			}
 		}

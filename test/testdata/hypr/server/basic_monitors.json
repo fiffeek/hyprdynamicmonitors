@@ -1,0 +1,14 @@
+[
+  {
+    "description": "BOE NE135A1M-NY1",
+    "disabled": false,
+    "id": 0,
+    "name": "eDP-1"
+  },
+  {
+    "description": "LG Electronics LG SDQHD 301NTBKDU037",
+    "disabled": false,
+    "id": 1,
+    "name": "DP-11"
+  }
+]

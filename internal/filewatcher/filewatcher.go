@@ -139,7 +139,7 @@ func (s *Service) Run(ctx context.Context) error {
 	eg.Go(func() error {
 		<-ctx.Done()
 		logrus.Debug("Context cancelled for filewatcher, shutting down")
-		return ctx.Err()
+		return context.Cause(ctx)
 	})
 
 	if s.disableAutoHotReload != nil && *s.disableAutoHotReload {
@@ -168,7 +168,7 @@ func (s *Service) Run(ctx context.Context) error {
 		if err := watcher.Close(); err != nil {
 			logrus.WithError(err).Error("Cant close watcher on exit")
 		}
-		return ctx.Err()
+		return context.Cause(ctx)
 	})
 
 	eg.Go(func() error {
@@ -212,7 +212,7 @@ func (s *Service) runServiceLoop(ctx context.Context, watcher *fsnotify.Watcher)
 			}
 		case <-ctx.Done():
 			logrus.Debug("Context cancelled, shutting fswatcher down")
-			return ctx.Err()
+			return context.Cause(ctx)
 		}
 	}
 }
@@ -221,7 +221,7 @@ func (s *Service) updateProcessor(ctx context.Context) error {
 	select {
 	case <-ctx.Done():
 		logrus.Debug("Config update processor context cancelled, shutting down")
-		return ctx.Err()
+		return context.Cause(ctx)
 	default:
 		logrus.Debug("Sending update event")
 		s.events <- true

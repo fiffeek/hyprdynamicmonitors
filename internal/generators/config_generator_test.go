@@ -87,7 +87,7 @@ func TestConfigGenerator_GenerateConfig_Template(t *testing.T) {
 	profile := &config.Profile{
 		ConfigFile: templateConfigPath,
 		ConfigType: configTypePtr(config.Template),
-		Conditions: config.ProfileCondition{
+		Conditions: &config.ProfileCondition{
 			RequiredMonitors: []*config.RequiredMonitor{
 				{
 					Name:       utils.StringPtr("eDP-1"),

@@ -167,7 +167,7 @@ type Profile struct {
 	ConfigFileDir        string
 	ConfigFile           string            `toml:"config_file"`
 	ConfigType           *ConfigFileType   `toml:"config_file_type"`
-	Conditions           ProfileCondition  `toml:"conditions"`
+	Conditions           *ProfileCondition `toml:"conditions"`
 	StaticTemplateValues map[string]string `toml:"static_template_values"`
 	IsFallbackProfile    bool
 	PostApplyExec        *string `toml:"post_apply_exec"`
@@ -237,6 +237,13 @@ func Load(configPath string) (*RawConfig, error) {
 	}
 
 	logrus.WithFields(logrus.Fields{"abs": absConfig}).Debug("Found absolute config path")
+
+	// nolint:gosec
+	contents, err := os.ReadFile(absConfig)
+	if err != nil {
+		return nil, fmt.Errorf("cant read config file %s: %w", absConfig, err)
+	}
+	logrus.Debugf("Config contents: %s", contents)
 
 	var config RawConfig
 	if _, err := toml.DecodeFile(configPath, &config); err != nil {
@@ -419,6 +426,10 @@ func (p *Profile) Validate(configPath string) error {
 	p.ConfigFileDir = filepath.Dir(p.ConfigFile)
 	p.ConfigFileModTime = fi.ModTime()
 
+	if p.Conditions == nil {
+		p.Conditions = &ProfileCondition{}
+	}
+
 	if p.IsFallbackProfile && !p.Conditions.IsEmpty() {
 		return errors.New("fallback profile cant define any conditions")
 	}
@@ -437,10 +448,17 @@ func (p *Profile) Validate(configPath string) error {
 }
 
 func (pc *ProfileCondition) IsEmpty() bool {
+	if pc == nil {
+		return true
+	}
 	return len(pc.RequiredMonitors) == 0 && pc.PowerState == nil
 }
 
 func (pc *ProfileCondition) Validate() error {
+	if pc == nil {
+		return errors.New("profile conditions cant be empty")
+	}
+
 	if len(pc.RequiredMonitors) == 0 {
 		return errors.New("at least one required_monitors must be specified")
 	}

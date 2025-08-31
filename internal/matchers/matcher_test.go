@@ -24,7 +24,7 @@ func TestMatcher_Match(t *testing.T) {
 			config: createTestConfig(t, map[string]*config.Profile{
 				"laptop_only": {
 					Name: "laptop_only",
-					Conditions: config.ProfileCondition{
+					Conditions: &config.ProfileCondition{
 						RequiredMonitors: []*config.RequiredMonitor{
 							{Name: utils.StringPtr("eDP-1")},
 						},
@@ -32,7 +32,7 @@ func TestMatcher_Match(t *testing.T) {
 				},
 				"dual_monitors": {
 					Name: "dual_monitors",
-					Conditions: config.ProfileCondition{
+					Conditions: &config.ProfileCondition{
 						RequiredMonitors: []*config.RequiredMonitor{
 							{Name: utils.StringPtr("eDP-1")},
 							{Name: utils.StringPtr("DP-1")},
@@ -53,7 +53,7 @@ func TestMatcher_Match(t *testing.T) {
 			config: createTestConfig(t, map[string]*config.Profile{
 				"external_only": {
 					Name: "external_only",
-					Conditions: config.ProfileCondition{
+					Conditions: &config.ProfileCondition{
 						RequiredMonitors: []*config.RequiredMonitor{
 							{Description: utils.StringPtr("External Monitor")},
 						},
@@ -72,7 +72,7 @@ func TestMatcher_Match(t *testing.T) {
 			config: createTestConfig(t, map[string]*config.Profile{
 				"battery_profile": {
 					Name: "battery_profile",
-					Conditions: config.ProfileCondition{
+					Conditions: &config.ProfileCondition{
 						PowerState: powerStateTypePtr(config.BAT),
 						RequiredMonitors: []*config.RequiredMonitor{
 							{Name: utils.StringPtr("eDP-1")},
@@ -81,7 +81,7 @@ func TestMatcher_Match(t *testing.T) {
 				},
 				"ac_profile": {
 					Name: "ac_profile",
-					Conditions: config.ProfileCondition{
+					Conditions: &config.ProfileCondition{
 						PowerState: powerStateTypePtr(config.AC),
 						RequiredMonitors: []*config.RequiredMonitor{
 							{Name: utils.StringPtr("eDP-1")},
@@ -101,7 +101,7 @@ func TestMatcher_Match(t *testing.T) {
 			config: createTestConfig(t, map[string]*config.Profile{
 				"partial_match": {
 					Name: "partial_match",
-					Conditions: config.ProfileCondition{
+					Conditions: &config.ProfileCondition{
 						RequiredMonitors: []*config.RequiredMonitor{
 							{Name: utils.StringPtr("eDP-1")},
 							{Name: utils.StringPtr("HDMI-1")}, // This won't match
@@ -121,7 +121,7 @@ func TestMatcher_Match(t *testing.T) {
 			config: createTestConfig(t, map[string]*config.Profile{
 				"hdmi_only": {
 					Name: "hdmi_only",
-					Conditions: config.ProfileCondition{
+					Conditions: &config.ProfileCondition{
 						RequiredMonitors: []*config.RequiredMonitor{
 							{Name: utils.StringPtr("HDMI-1")},
 						},
@@ -140,7 +140,7 @@ func TestMatcher_Match(t *testing.T) {
 			config: createTestConfig(t, map[string]*config.Profile{
 				"mixed_high_score": {
 					Name: "mixed_high_score",
-					Conditions: config.ProfileCondition{
+					Conditions: &config.ProfileCondition{
 						RequiredMonitors: []*config.RequiredMonitor{
 							{Name: utils.StringPtr("eDP-1")},                   // Name match: 10 points
 							{Description: utils.StringPtr("External Monitor")}, // Description match: 5 points
@@ -149,7 +149,7 @@ func TestMatcher_Match(t *testing.T) {
 				},
 				"name_only": {
 					Name: "name_only",
-					Conditions: config.ProfileCondition{
+					Conditions: &config.ProfileCondition{
 						RequiredMonitors: []*config.RequiredMonitor{
 							{Name: utils.StringPtr("eDP-1")}, // Name match: 10 points only
 						},
@@ -169,7 +169,7 @@ func TestMatcher_Match(t *testing.T) {
 			config: createTestConfig(t, map[string]*config.Profile{
 				"ac_only": {
 					Name: "ac_only",
-					Conditions: config.ProfileCondition{
+					Conditions: &config.ProfileCondition{
 						PowerState: powerStateTypePtr(config.AC),
 						RequiredMonitors: []*config.RequiredMonitor{
 							{Name: utils.StringPtr("eDP-1")},
@@ -189,7 +189,7 @@ func TestMatcher_Match(t *testing.T) {
 			config: createTestConfig(t, map[string]*config.Profile{
 				"hdmi_only": {
 					Name: "hdmi_only",
-					Conditions: config.ProfileCondition{
+					Conditions: &config.ProfileCondition{
 						RequiredMonitors: []*config.RequiredMonitor{
 							{Name: utils.StringPtr("HDMI-1")},
 						},
@@ -215,7 +215,7 @@ func TestMatcher_Match(t *testing.T) {
 			config: createTestConfig(t, map[string]*config.Profile{
 				"laptop_only": {
 					Name: "laptop_only",
-					Conditions: config.ProfileCondition{
+					Conditions: &config.ProfileCondition{
 						RequiredMonitors: []*config.RequiredMonitor{
 							{Name: utils.StringPtr("eDP-1")},
 						},
@@ -241,7 +241,7 @@ func TestMatcher_Match(t *testing.T) {
 			config: createTestConfig(t, map[string]*config.Profile{
 				"hdmi_only": {
 					Name: "hdmi_only",
-					Conditions: config.ProfileCondition{
+					Conditions: &config.ProfileCondition{
 						RequiredMonitors: []*config.RequiredMonitor{
 							{Name: utils.StringPtr("HDMI-1")},
 						},
