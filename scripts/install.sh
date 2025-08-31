@@ -1,7 +1,7 @@
 #!/bin/bash
 
 set -o pipefail
-set -eu
+set -e
 
 ARCH=$(uname -m)
 
