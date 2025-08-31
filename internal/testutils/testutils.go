@@ -133,7 +133,7 @@ func (t *TestConfig) WithConfigDir(dir string) *TestConfig {
 
 	cfgFile := filepath.Join(dir, "config.toml")
 
-	// only write emtpy config when the file does not already exist
+	// only write empty config when the file does not already exist
 	if _, err := os.Stat(cfgFile); err != nil {
 		// nolint:gosec
 		if _, err := os.Create(cfgFile); err != nil {

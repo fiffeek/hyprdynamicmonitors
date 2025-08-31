@@ -99,7 +99,7 @@ func (s *Service) Run(ctx context.Context) error {
 				}
 				logrus.Debug("Watcher event received")
 				if err := s.Reload(ctx); err != nil {
-					return fmt.Errorf("cant reload user configuraton: %w", err)
+					return fmt.Errorf("cant reload user configuration: %w", err)
 				}
 
 			case <-ctx.Done():

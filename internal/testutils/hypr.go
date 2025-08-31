@@ -75,11 +75,11 @@ func respondToHyprIPC(t *testing.T, listener net.Listener, exitOnError bool, com
 		t.Errorf("no data to read")
 	}
 	buf := s.Bytes()
-	assert.Nil(t, err, "failded to read")
+	assert.Nil(t, err, "failed to read")
 	assert.Equal(t, command, string(buf), "wrong command")
 
 	_, err = conn.Write(responseData[i])
-	assert.Nil(t, err, "failded to write response")
+	assert.Nil(t, err, "failed to write response")
 	t.Logf("wrote response to the client %s", string(responseData[i]))
 }
 

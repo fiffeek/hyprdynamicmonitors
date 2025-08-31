@@ -55,8 +55,8 @@ func (s *Service) Update() error {
 		return fmt.Errorf("cant track config: %w", err)
 	}
 
-	if s.checkIfAllPahtsAreAlreadyTracked() {
-		logrus.Info("All paths are tracked already, no update neeeded")
+	if s.checkIfAllPathsAreAlreadyTracked() {
+		logrus.Info("All paths are tracked already, no update needed")
 		return nil
 	}
 
@@ -104,7 +104,7 @@ func (s *Service) removeCurrentlyTrackedPaths() error {
 	return nil
 }
 
-func (s *Service) checkIfAllPahtsAreAlreadyTracked() bool {
+func (s *Service) checkIfAllPathsAreAlreadyTracked() bool {
 	allPathsTracked := true
 	for _, profile := range s.cfg.Get().Profiles {
 		if _, ok := s.watchedPaths[profile.ConfigFileDir]; !ok {
