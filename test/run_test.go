@@ -69,6 +69,21 @@ func Test__Run_Binary(t *testing.T) {
 		},
 
 		{
+			name:                     "basic templating",
+			description:              "when hypr returns disabled monitor it should still match the profile",
+			config:                   createBasicTestConfig(t),
+			hyprMonitorResponseFiles: []string{"testdata/hypr/server/basic_monitors_disabled.json"},
+			validateSideEffects: func(t *testing.T, cfg *config.RawConfig) {
+				testutils.AssertFileExists(t, *cfg.General.Destination)
+				compareWithFixture(t, *cfg.General.Destination,
+					"testdata/app/fixtures/basic_both_disabled.conf")
+			},
+			disablePowerEvents: true,
+			disableHotReload:   true,
+			runOnce:            true,
+		},
+
+		{
 			name:        "no matches",
 			description: "when no monitors match the configuration and there is no fallback, the service does nothing",
 			config: createBasicTestConfig(t).WithProfiles(
