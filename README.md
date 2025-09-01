@@ -206,7 +206,8 @@ contains all available configuration options reference.
 
 - Hyprland with IPC support
 - UPower (optional, for power state monitoring)
-- Read-only access to system D-Bus (optional for notifications and power state monitoring; should already be your default)
+- Read-only access to system D-Bus (optional for power state monitoring; should already be your default)
+- Write access to system D-Bus for notifications (optional; should already be your default)
 
 ## Configuration
 
