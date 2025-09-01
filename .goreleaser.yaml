@@ -51,6 +51,7 @@ release:
 aurs:
     - description: Dynamic monitor configuration for Hyprland.
       skip_upload: false
+      homepage: https://github.com/fiffeek/hyprdynamicmonitors
       provides:
           - hyprdynamicmonitors-bin
       maintainers:
