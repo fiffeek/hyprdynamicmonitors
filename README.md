@@ -12,7 +12,7 @@ An event-driven service that automatically manages Hyprland monitor configuratio
    * [Features](#features)
    * [Design Philosophy](#design-philosophy)
       * [Reliability Through Restarts](#reliability-through-restarts)
-      * [Hot Reloading](#hot-reloading)
+      * [Hot Reloading With Graceful Restart](#hot-reloading-with-graceful-restart)
       * [Hyprland-Native Integration](#hyprland-native-integration)
    * [Installation](#installation)
       * [Binary Release](#binary-release)
@@ -41,7 +41,7 @@ An event-driven service that automatically manages Hyprland monitor configuratio
          * [Custom D-Bus Configuration](#custom-d-bus-configuration)
          * [Leave Empty Token](#leave-empty-token)
       * [Signals](#signals)
-      * [Hot Reloading](#hot-reloading-1)
+      * [Hot Reloading](#hot-reloading)
    * [Tests](#tests)
       * [Live Testing](#live-testing)
    * [Running with systemd](#running-with-systemd)
@@ -67,12 +67,12 @@ An event-driven service that automatically manages Hyprland monitor configuratio
 
 ## Design Philosophy
 
-HyprDynamicMonitors follows a **fail-fast architecture** designed for reliability and simplicity
+HyprDynamicMonitors follows a **fail-fast architecture** designed for reliability and simplicity.
 
 ### Reliability Through Restarts
 The service intentionally fails quickly on critical issues rather than attempting complex recovery. This design expects the service to run under systemd or a wrapper script that provides automatic restarts. Since configuration is applied on startup, restarts ensure the service remains operational even after encountering errors.
 
-### Hot Reloading
+### Hot Reloading With Graceful Restart
 For configuration changes, the service provides automatic hot reloading by watching configuration files. When hot reloading encounters issues, it gracefully falls back to the fail-fast behavior, prioritizing reliability over attempting risky recovery scenarios.
 
 ### Hyprland-Native Integration
@@ -208,6 +208,11 @@ monitor=eDP-1,2880x1920@120.00000,0x0,2.0,vrr,1
 **Run the service** using systemd (recommended - see [Running with systemd](#running-with-systemd)) or add to Hyprland config:
 ```conf
 exec-once = hyprdynamicmonitors
+```
+
+**Ensure you source the linked `destination` config file** (in `~/.config/hypr/hyprland.conf`):
+```conf
+source = ~/.config/hypr/monitors.conf
 ```
 
 **How it works**: When only the `eDP-1` monitor is detected, the service symlinks `hyprconfigs/laptop.conf` to `$HOME/.config/hypr/monitors.conf`, and Hyprland automatically applies the new configuration.
