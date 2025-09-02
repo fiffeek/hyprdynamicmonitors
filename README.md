@@ -11,13 +11,16 @@ An event-driven service that automatically manages Hyprland monitor configuratio
    * [Documentation](#documentation)
    * [Features](#features)
    * [Design Philosophy](#design-philosophy)
+      * [Reliability Through Restarts](#reliability-through-restarts)
+      * [Hot Reloading](#hot-reloading)
+      * [Hyprland-Native Integration](#hyprland-native-integration)
    * [Installation](#installation)
       * [Binary Release](#binary-release)
       * [AUR](#aur)
       * [Build from Source](#build-from-source)
    * [Usage](#usage)
       * [Command Line](#command-line)
-   * [Minimal example](#minimal-example)
+   * [Minimal Example](#minimal-example)
    * [Examples](#examples)
    * [Runtime requirements](#runtime-requirements)
    * [Configuration](#configuration)
@@ -38,7 +41,7 @@ An event-driven service that automatically manages Hyprland monitor configuratio
          * [Custom D-Bus Configuration](#custom-d-bus-configuration)
          * [Leave Empty Token](#leave-empty-token)
       * [Signals](#signals)
-      * [Hot Reloading](#hot-reloading)
+      * [Hot Reloading](#hot-reloading-1)
    * [Tests](#tests)
       * [Live Testing](#live-testing)
    * [Running with systemd](#running-with-systemd)
@@ -64,9 +67,21 @@ An event-driven service that automatically manages Hyprland monitor configuratio
 
 ## Design Philosophy
 
-The service is designed to fail fast on most issues, which means it should be run under systemd or a wrapper script for automatic restarts. It applies the configuration on startup, so restarts keep it operational even when critical failures occur.
+HyprDynamicMonitors follows a **fail-fast architecture** designed for reliability and simplicity
 
-For configuration changes, the service provides hot reloading that watches for file modifications and automatically applies updates without restart. When hot reloading encounters issues, the service gracefully falls back to its fail-fast behavior, ensuring reliability over attempting complex recovery scenarios.
+### Reliability Through Restarts
+The service intentionally fails quickly on critical issues rather than attempting complex recovery. This design expects the service to run under systemd or a wrapper script that provides automatic restarts. Since configuration is applied on startup, restarts ensure the service remains operational even after encountering errors.
+
+### Hot Reloading
+For configuration changes, the service provides automatic hot reloading by watching configuration files. When hot reloading encounters issues, it gracefully falls back to the fail-fast behavior, prioritizing reliability over attempting risky recovery scenarios.
+
+### Hyprland-Native Integration
+The service leverages Hyprland's native abstractions rather than working directly with Wayland protocols. It detects the desired configuration based on current monitor state and power supply, then either:
+- Generates a templated Hyprland config file at the specified destination
+- Or creates a symlink to a user-provided static configuration file
+
+Hyprland automatically detects and applies these configuration changes (granted it's not explicitly turned off, if so you have to use
+[the callbacks](https://github.com/fiffeek/hyprdynamicmonitors?tab=readme-ov-file#user-callbacks-exec-commands) to `hyprctl reload`), ensuring seamless integration with the compositor's built-in configuration system.
 
 ## Installation
 
@@ -161,22 +176,20 @@ hyprdynamicmonitors -debug validate
 ```
 
 
-## Minimal example
+## Minimal Example
 
-In `~/.config/hyprdynamicmonitors/config.toml` (assuming you have `eDP-1` display attached, see `hyprctl monitors` to query them):
+This example sets up basic laptop-only monitor configuration. First, check your display name with `hyprctl monitors`.
 
+**Configuration file** (`~/.config/hyprdynamicmonitors/config.toml`):
 ```toml
 [general]
 destination = "$HOME/.config/hypr/monitors.conf"
 
 [power_events]
-
 [power_events.dbus_query_object]
-# path to your line_power upower device
 path = "/org/freedesktop/UPower/devices/line_power_ACAD"
 
 [[power_events.dbus_signal_match_rules]]
-# path to your line_power upower device
 object_path = "/org/freedesktop/UPower/devices/line_power_ACAD"
 
 [profiles.laptop_only]
@@ -184,16 +197,20 @@ config_file = "hyprconfigs/laptop.conf"
 config_file_type = "static"
 
 [[profiles.laptop_only.conditions.required_monitors]]
-name = "eDP-1"
+name = "eDP-1"  # Replace with your display name from hyprctl monitors
 ```
 
-In `~/.config/hyprdynamicmonitors/hyprconfigs/laptop.conf`:
+**Monitor configuration** (`~/.config/hyprdynamicmonitors/hyprconfigs/laptop.conf`):
 ```hyprconfig
 monitor=eDP-1,2880x1920@120.00000,0x0,2.0,vrr,1
 ```
 
-Then run the service either in Hyprland (`exec-once`) or ideally
-use systemd (see [Running with systemd](#running-with-systemd)) or a wrapper script.
+**Run the service** using systemd (recommended - see [Running with systemd](#running-with-systemd)) or add to Hyprland config:
+```conf
+exec-once = hyprdynamicmonitors
+```
+
+**How it works**: When only the `eDP-1` monitor is detected, the service symlinks `hyprconfigs/laptop.conf` to `$HOME/.config/hypr/monitors.conf`, and Hyprland automatically applies the new configuration.
 
 ## Examples
 
