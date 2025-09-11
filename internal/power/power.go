@@ -79,6 +79,7 @@ func (p *PowerDetector) GetCurrentState() PowerState {
 }
 
 func (p *PowerDetector) getCurrentState(ctx context.Context) (PowerState, error) {
+	cfg := p.cfg.Get().PowerEvents
 	if p.disablePowerEvents {
 		logrus.WithFields(logrus.Fields{"default": ACPowerState.String()}).Debug(
 			"Power events are disabled, returning the default value")
@@ -86,23 +87,37 @@ func (p *PowerDetector) getCurrentState(ctx context.Context) (PowerState, error)
 	}
 
 	obj := p.conn.Object(
-		p.cfg.Get().PowerEvents.DbusQueryObject.Destination,
-		dbus.ObjectPath(p.cfg.Get().PowerEvents.DbusQueryObject.Path))
+		cfg.DbusQueryObject.Destination,
+		dbus.ObjectPath(cfg.DbusQueryObject.Path))
+
+	logrus.WithFields(logrus.Fields{
+		"destination": cfg.DbusQueryObject.Destination,
+		"path":        cfg.DbusQueryObject.Path,
+		"method":      cfg.DbusQueryObject.Method,
+		"args":        cfg.DbusQueryObject.CollectArgs(),
+	}).Debug("About to make D-Bus method call")
 
 	var onBattery dbus.Variant
-	err := obj.CallWithContext(ctx, p.cfg.Get().PowerEvents.DbusQueryObject.Method, 0,
-		p.cfg.Get().PowerEvents.DbusQueryObject.CollectArgs()...).Store(&onBattery)
+	err := obj.CallWithContext(ctx, cfg.DbusQueryObject.Method, 0,
+		cfg.DbusQueryObject.CollectArgs()...).Store(&onBattery)
 	if err != nil {
+		logrus.WithError(err).WithFields(logrus.Fields{
+			"destination": cfg.DbusQueryObject.Destination,
+			"path":        cfg.DbusQueryObject.Path,
+			"method":      cfg.DbusQueryObject.Method,
+		}).Error("D-Bus method call failed")
 		return BatteryPowerState, fmt.Errorf("failed to get property from UPower: %w", err)
 	}
+
+	logrus.Debug("D-Bus method call succeeded")
 
 	state := onBattery.String()
 
 	logrus.WithFields(logrus.Fields{
 		"upower_reported_state": state,
-		"expected":              p.cfg.Get().PowerEvents.DbusQueryObject.ExpectedDischargingValue,
+		"expected":              cfg.DbusQueryObject.ExpectedDischargingValue,
 	}).Debug("UPower state property")
-	if state == p.cfg.Get().PowerEvents.DbusQueryObject.ExpectedDischargingValue {
+	if state == cfg.DbusQueryObject.ExpectedDischargingValue {
 		return BatteryPowerState, nil
 	}
 	return ACPowerState, nil
@@ -222,17 +237,20 @@ func (p *PowerDetector) Run(ctx context.Context) error {
 				var err error
 
 				if slices.Contains(p.getExpectedSignalNames(), signal.Name) {
+					logrus.Debug("Signal matches expected name, calling getCurrentState")
 					currentState, err = p.getCurrentState(ctx)
+					if err != nil {
+						logrus.WithError(err).Error("getCurrentState failed")
+						return fmt.Errorf("failed to get power state after signal %s: %w", signal.Name, err)
+					}
+
+					logrus.WithFields(logrus.Fields{"state": currentState}).Debug("getCurrentState succeeded")
 					p.powerStateMu.Lock()
 					p.powerState = currentState
 					p.powerStateMu.Unlock()
 				} else {
 					logrus.WithField("signal_name", signal.Name).Debug("Ignoring unknown UPower signal")
 					continue
-				}
-
-				if err != nil {
-					return fmt.Errorf("failed to get power state after signal %s: %w", signal.Name, err)
 				}
 
 				if currentState == lastState {

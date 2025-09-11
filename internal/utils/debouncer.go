@@ -163,7 +163,7 @@ func (d *Debouncer) Run(ctx context.Context) error {
 					select {
 					case <-jobCtx.Done():
 						logrus.WithFields(logrus.Fields{"fun": GetFunctionName(fn)}).Debug("Job context cancelled")
-						return context.Cause(jobCtx)
+						return nil
 					default:
 					}
 					logrus.WithFields(logrus.Fields{"fun": GetFunctionName(fn)}).Debug("Executing debounced function")

@@ -202,8 +202,10 @@ func (s *Service) runServiceLoop(ctx context.Context, watcher *fsnotify.Watcher)
 			}).Debug("Received filewatcher event")
 
 			s.debouncer.Do(ctx, time.Duration(*s.cfg.Get().HotReload.UpdateDebounceTimer)*time.Millisecond, s.updateProcessor)
-			logrus.WithFields(logrus.Fields{"fun": s.updateProcessor}).Debug("Scheduled debounced update")
+			logrus.WithFields(logrus.Fields{"fun": utils.GetFunctionName(
+				s.updateProcessor)}).Debug("Scheduled debounced update")
 		case err, ok := <-watcher.Errors:
+			logrus.WithError(err).Debug("Watcher errored")
 			if !ok {
 				return errors.New("watcher error channel is closed")
 			}

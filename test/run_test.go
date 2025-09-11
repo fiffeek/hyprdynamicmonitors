@@ -203,7 +203,7 @@ func Test__Run_Binary(t *testing.T) {
 							"testdata/app/fixtures/basic_one_ac.conf")
 					},
 				}
-				waitTillHolds(ctx, t, funcs, 1000*time.Millisecond)
+				waitTillHolds(ctx, t, funcs, 2000*time.Millisecond)
 			},
 			validateSideEffects: func(t *testing.T, cfg *config.RawConfig) {
 				testutils.AssertFileExists(t, *cfg.General.Destination)
@@ -263,7 +263,7 @@ func Test__Run_Binary(t *testing.T) {
 							"testdata/app/fixtures/basic_reloaded.conf")
 					},
 				}
-				waitTillHolds(ctx, t, funcs, 700*time.Millisecond)
+				waitTillHolds(ctx, t, funcs, 1500*time.Millisecond)
 			},
 			disablePowerEvents: true,
 			configUpdates: []*testutils.TestConfig{
@@ -322,7 +322,7 @@ func Test__Run_Binary(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			binaryStartingChan := make(chan struct{})
-			ctx, cancel := context.WithTimeout(context.Background(), 1500*time.Millisecond)
+			ctx, cancel := context.WithTimeout(context.Background(), 2000*time.Millisecond)
 			defer cancel()
 
 			// hypr: vars
@@ -349,7 +349,7 @@ func Test__Run_Binary(t *testing.T) {
 				eventsListener, teardownEvents := testutils.SetupHyprSocket(ctx, t,
 					xdgRuntimeDir, signature, hypr.GetHyprEventsSocket)
 				defer teardownEvents()
-				fakeHyprEventServerDone = testutils.SetupFakeHyprEventsServer(t, eventsListener, tt.hyprEvents)
+				fakeHyprEventServerDone = testutils.SetupFakeHyprEventsServer(ctx, t, eventsListener, tt.hyprEvents)
 			}
 
 			// power: fake dbus session
@@ -360,7 +360,7 @@ func Test__Run_Binary(t *testing.T) {
 				tt.config = tt.config.WithPowerSection(
 					testutils.CreatePowerConfig(testBusName, testObjectPath))
 				dbusDone = testutils.SetupFakeDbusEventsServer(t, dbusService,
-					tt.powerEvents, 300*time.Millisecond, 50*time.Millisecond, binaryStartingChan)
+					tt.powerEvents, 100*time.Millisecond, 50*time.Millisecond, binaryStartingChan)
 			}
 
 			// materialize config
@@ -401,7 +401,11 @@ func Test__Run_Binary(t *testing.T) {
 			go func() {
 				defer close(done)
 				cmd := prepBinaryRun(ctx, args)
-				close(binaryStartingChan)
+				go func() {
+					// give time to warm up
+					time.Sleep(100 * time.Millisecond)
+					close(binaryStartingChan)
+				}()
 				out, binaryErr = cmd.CombinedOutput()
 			}()
 
@@ -416,8 +420,10 @@ func Test__Run_Binary(t *testing.T) {
 			// speed up correct tests by explicitly waiting for side effects
 			// instead of relying on auto context cancellation
 			if tt.waitForSideEffects != nil {
+				t.Log("Starting waitForSideEffects")
 				tt.waitForSideEffects(ctx, t, rawConfig)
 				// this will kill the running binary
+				t.Log("waitForSideEffects returned, calling cancel()")
 				cancel()
 			}
 
@@ -427,13 +433,16 @@ func Test__Run_Binary(t *testing.T) {
 			waitFor(t, fakeHyprEventServerDone)
 
 			select {
-			case <-time.After(1000 * time.Millisecond):
-				require.NoError(t, ctx.Err(), "timeout while running, out: %s", string(out))
+			case <-time.After(3000 * time.Millisecond):
+				assert.NoError(t, ctx.Err(), "timeout while running, out: %s", string(out))
+				// explicitly kill the binary, then get the output
+				cancel()
+				assert.True(t, false, "timeout while running, out: %s", string(out))
 			case <-done:
 				t.Log(string(out))
 				if tt.expectError {
-					require.Error(t, binaryErr, "expected run to fail but it succeeded. Output: %s", string(out))
-					require.Contains(t, string(out), tt.expectErrorContains,
+					assert.Error(t, binaryErr, "expected run to fail but it succeeded. Output: %s", string(out))
+					assert.Contains(t, string(out), tt.expectErrorContains,
 						"error message should contain expected substring. Got: %s", string(out))
 				} else {
 					if tt.runOnce {

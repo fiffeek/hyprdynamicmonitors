@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func SetupHyprEnvVars(t *testing.T) (string, string) {
@@ -17,9 +18,8 @@ func SetupHyprEnvVars(t *testing.T) (string, string) {
 	signature := "test_signature"
 	hyprDir := filepath.Join(tempDir, "hypr", signature)
 	//nolint:gosec
-	if err := os.MkdirAll(hyprDir, 0o755); err != nil {
-		t.Fatalf("Failed to create hypr directory: %v", err)
-	}
+	err := os.MkdirAll(hyprDir, 0o755)
+	require.NoError(t, err, "failed to create hypr directory")
 
 	originalXDG := os.Getenv("XDG_RUNTIME_DIR")
 	originalSig := os.Getenv("HYPRLAND_INSTANCE_SIGNATURE")
@@ -28,8 +28,10 @@ func SetupHyprEnvVars(t *testing.T) (string, string) {
 		_ = os.Setenv("HYPRLAND_INSTANCE_SIGNATURE", originalSig)
 	})
 
-	_ = os.Setenv("XDG_RUNTIME_DIR", tempDir)
-	_ = os.Setenv("HYPRLAND_INSTANCE_SIGNATURE", signature)
+	err = os.Setenv("XDG_RUNTIME_DIR", tempDir)
+	require.NoError(t, err, "failed to set env var")
+	err = os.Setenv("HYPRLAND_INSTANCE_SIGNATURE", signature)
+	require.NoError(t, err, "failed to set env var")
 	return tempDir, signature
 }
 
@@ -39,8 +41,11 @@ func SetupHyprSocket(ctx context.Context, t *testing.T, xdgRuntimeDir, signature
 	socketPath := hyprSocketFun(xdgRuntimeDir, signature)
 	lc := &net.ListenConfig{}
 	listener, err := lc.Listen(ctx, "unix", socketPath)
-	assert.NoError(t, err, "failed to create a test socket %s", socketPath)
-	return listener, func() { _ = listener.Close() }
+	require.NoError(t, err, "failed to create a test socket %s", socketPath)
+	return listener, func() {
+		err = listener.Close()
+		require.NoError(t, err, "cant close hypr socket")
+	}
 }
 
 func SetupFakeHyprIPCWriter(t *testing.T, listener net.Listener, responseData [][]byte,
@@ -83,26 +88,48 @@ func respondToHyprIPC(t *testing.T, listener net.Listener, exitOnError bool, com
 	t.Logf("wrote response to the client %s", string(responseData[i]))
 }
 
-func SetupFakeHyprEventsServer(t *testing.T, listener net.Listener, events []string) chan struct{} {
+func SetupFakeHyprEventsServer(ctx context.Context, t *testing.T, listener net.Listener, events []string) chan struct{} {
 	serverDone := make(chan struct{})
 	go func() {
-		defer close(serverDone)
+		defer func() {
+			Logf(t, "Fake Hypr events server goroutine exiting")
+			close(serverDone)
+		}()
+
+		Logf(t, "Fake Hypr events server: waiting for connection")
 		conn, err := listener.Accept()
 		if err != nil {
 			t.Errorf("Failed to accept connection: %v", err)
 			return
 		}
+		defer func() {
+			Logf(t, "Fake Hypr events server: closing connection")
+			if conn != nil {
+				_ = conn.Close()
+			}
+		}()
 
-		t.Log("Accepted connection on events socket")
+		Logf(t, "Fake Hypr events server: accepted connection, ready to send events")
 
-		for _, event := range events {
+		for i, event := range events {
+			select {
+			case <-ctx.Done():
+				Logf(t, "Fake Hypr events server: context cancelled while sending events")
+				return
+			default:
+			}
+
 			if _, err := conn.Write([]byte(event + "\n")); err != nil {
-				t.Errorf("Failed to write event: %v", err)
+				t.Errorf("Failed to write event %d: %v", i, err)
 				return
 			}
-			t.Log("Wrote event on the event socket")
+			Logf(t, "Wrote event %d on the event socket: %s", i, event)
 			time.Sleep(10 * time.Millisecond)
 		}
+
+		Logf(t, "Fake Hypr events server: finished sending %d events, waiting for context cancellation", len(events))
+		<-ctx.Done()
+		Logf(t, "Fake Hypr events server: context cancelled (%v), shutting down", context.Cause(ctx))
 	}()
 	return serverDone
 }

@@ -12,6 +12,7 @@ import (
 	"runtime"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/fiffeek/hyprdynamicmonitors/internal/app"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/config"
@@ -78,6 +79,7 @@ func main() {
 	if *enableJSONLogsFormat {
 		logrus.SetFormatter(&logrus.JSONFormatter{
 			DisableTimestamp: false,
+			TimestampFormat:  time.RFC3339Nano,
 		})
 	} else {
 		logrus.SetFormatter(&logrus.TextFormatter{

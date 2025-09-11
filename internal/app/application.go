@@ -124,7 +124,7 @@ func (a *Application) Run(ctx context.Context) error {
 			fields := logrus.Fields{"name": bg.Name, "fun": utils.GetFunctionName(bg.Fun)}
 			logrus.WithFields(fields).Debug("Starting")
 			if err := bg.Fun(ctx); err != nil {
-				logrus.WithFields(fields).Debug("Exited with error")
+				logrus.WithFields(fields).WithError(err).Errorf("Service failed %s", bg.Name)
 				return fmt.Errorf("%s failed: %w", bg.Name, err)
 			}
 			logrus.WithFields(fields).Debug("Finished")

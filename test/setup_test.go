@@ -33,6 +33,8 @@ func waitTillHolds(ctx context.Context, t *testing.T, funcs []func() error, time
 	ticker := time.NewTicker(10 * time.Millisecond)
 	defer ticker.Stop()
 
+	testutils.Logf(t, "waitTillHolds starting, deadline in %v", timeout)
+
 	for {
 		select {
 		case <-ticker.C:
@@ -43,17 +45,19 @@ func waitTillHolds(ctx context.Context, t *testing.T, funcs []func() error, time
 					break
 				}
 			}
-			t.Log("Conditions do not hold yet")
+			if !allPass {
+				testutils.Logf(t, "Conditions do not hold yet")
+			}
 			if allPass {
-				t.Log("All condition hold, returning")
+				testutils.Logf(t, "All conditions hold, returning")
 				return
 			}
 			if time.Now().After(deadline) {
-				t.Log("After deadline, exiting")
+				testutils.Logf(t, "After deadline, exiting")
 				return
 			}
 		case <-ctx.Done():
-			t.Log("Ctx is done, exiting")
+			testutils.Logf(t, "waitTillHolds: Context cancelled, cause: %v", context.Cause(ctx))
 			return
 		}
 	}

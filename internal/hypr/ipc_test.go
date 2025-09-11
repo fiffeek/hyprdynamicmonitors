@@ -188,7 +188,7 @@ func TestIPC_Run(t *testing.T) {
 func processIPCEvents(t *testing.T, ctx context.Context, cancel context.CancelFunc, listener net.Listener, mockEvents []string, ipc *hypr.IPC,
 	expectedEventCount int,
 ) (chan error, []hypr.MonitorSpecs) {
-	serverDone := testutils.SetupFakeHyprEventsServer(t, listener, mockEvents)
+	serverDone := testutils.SetupFakeHyprEventsServer(ctx, t, listener, mockEvents)
 
 	ipcDone := make(chan error, 1)
 	go func() {

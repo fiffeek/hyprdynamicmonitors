@@ -110,7 +110,7 @@ func SetupTestDbusService(t *testing.T) (*TestDbusService, string, string, func(
 
 	testBusName := GenerateTestBusName()
 	testObjectPath := GenerateTestObjectPath()
-	t.Logf("dbus, object: %s, bus: %s", testObjectPath, testBusName)
+	Logf(t, "dbus, object: %s, bus: %s", testObjectPath, testBusName)
 	reply, err := conn.RequestName(testBusName, dbus.NameFlagDoNotQueue)
 	require.NoError(t, err, "failed to request bus name")
 	require.Equal(t, dbus.RequestNameReplyPrimaryOwner, reply, "failed to become primary owner")
@@ -137,16 +137,16 @@ func SetupFakeDbusEventsServer(t *testing.T, service *TestDbusService, events []
 	serverDone := make(chan struct{})
 	go func() {
 		defer close(serverDone)
-		t.Log("Waiting for the server to start")
+		Logf(t, "Waiting for the server to start")
 		<-binaryStarting
-		t.Log("Starting fake dbus")
+		Logf(t, "Starting fake dbus")
 		time.Sleep(initialSleep)
-		t.Log("Will start sending events")
+		Logf(t, "Will start sending events")
 
 		for _, event := range events {
 			service.SetProperty(event)
 			require.NoError(t, service.EmitSignal(), "cant emit fake dbus signal")
-			t.Log("Emitted signal")
+			Logf(t, "Emitted signal")
 			time.Sleep(sleepBetweenEvents)
 		}
 	}()
