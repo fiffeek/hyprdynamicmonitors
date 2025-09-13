@@ -43,6 +43,7 @@ default_res = "2880x1920"
 # The code expects a single boolean as the result
 [power_events.dbus_query_object]
 destination = "org.freedesktop.UPower"
+# see `upower -e`
 path = "/org/freedesktop/UPower/devices/line_power_ACAD"
 method = "org.freedesktop.DBus.Properties.Get"
 # expected value returned from the query
@@ -67,6 +68,7 @@ arg = "Online"
 
 [[power_events.dbus_signal_match_rules]]
 interface = "org.freedesktop.DBus.Properties"
+# see `upower -e`
 object_path = "/org/freedesktop/UPower/devices/line_power_ACAD"
 member = "PropertiesChanged"
 # sender = "org.freedesktop.UPower"  # Optional: specific sender

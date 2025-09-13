@@ -1,0 +1,13 @@
+# Laptop template using global template variables
+{{- range .Monitors }}
+{{- if eq .Tag "laptop" }}
+monitor = {{ .Name }}, 1920x1080@{{ $.refresh_rate_ac }}, 0x0, {{ $.default_scaling }}
+misc {
+  vrr = {{ $.default_vrr }}
+}
+{{- end }}
+{{- end }}
+
+# Using brightness variable
+monitor = eDP-1, addreserved, 0, 0, 0, 0
+exec-once = brightnessctl set {{ .brightness_high }}
