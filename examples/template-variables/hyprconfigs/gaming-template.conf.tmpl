@@ -1,0 +1,22 @@
+# Gaming template with custom overridden variables
+{{- range .Monitors }}
+{{- if eq .Tag "laptop" }}
+monitor = {{ .Name }}, 1920x1080@{{ $.refresh_rate_ac }}, 0x0, {{ $.default_scaling }}
+misc {
+  vrr = {{ $.default_vrr }}
+}
+{{- end }}
+{{- end }}
+
+# Gaming-specific settings using custom variables
+{{- if eq .TemplateVariables.gaming_mode "true" }}
+decoration {
+  blur {
+    enabled = false  # Disable blur for performance
+  }
+}
+animations {
+  enabled = false       # Disable animations for performance
+}
+exec-once = brightnessctl set {{ .brightness_high }}
+{{- end }}

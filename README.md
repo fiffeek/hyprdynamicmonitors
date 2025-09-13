@@ -223,6 +223,8 @@ See [`examples/`](https://github.com/fiffeek/hyprdynamicmonitors/tree/main/examp
 examples including basic setups and comprehensive configurations with all features.
 Most notably, [`examples/full/config.toml`](https://github.com/fiffeek/hyprdynamicmonitors/blob/main/examples/full/config.toml)
 contains all available configuration options reference.
+An example for disabling a monitor depending on the
+detected setup is in [examples/disable-monitors](https://github.com/fiffeek/hyprdynamicmonitors/tree/main/examples/disable-monitors).
 
 ## Runtime requirements
 
@@ -256,6 +258,7 @@ monitor_tag = "laptop"  # Assign a tag for template use
 ```
 
 Use `hyprctl monitors` to see available monitors and their properties.
+To understand scoring and profile matching more see [examples/scoring](https://github.com/fiffeek/hyprdynamicmonitors/tree/main/examples/scoring).
 
 ### Configuration File Types
 
@@ -295,6 +298,8 @@ battery_scaling = "1.5"  # Profile-specific value
 # Use static values in templates
 monitor=eDP-1,{{.default_res}}@{{if isOnAC}}{{.refresh_rate_high}}{{else}}{{.refresh_rate_low}}{{end}},0x0,1,vrr,{{.default_vrr}}
 ```
+
+To understand template variables more see [examples/template-variables](https://github.com/fiffeek/hyprdynamicmonitors/tree/main/examples/template-variables).
 
 ### Template Functions
 
@@ -343,6 +348,8 @@ monitor=,preferred,auto,1
 - Only used when no regular profile matches the current setup
 - Regular matching profiles always take precedence over the fallback
 
+To understand fallback profiles more see [examples/fallback](https://github.com/fiffeek/hyprdynamicmonitors/tree/main/examples/fallback).
+
 ### User Callbacks (Exec Commands)
 
 HyprDynamicMonitors supports custom user commands that are executed before and after profile configuration changes. These commands can be defined globally or per-profile, allowing for custom actions like notifications, script execution, or system adjustments.
@@ -366,6 +373,8 @@ post_apply_exec = "/usr/local/bin/gaming-mode-on.sh"
 - **Profile-specific commands override global commands** for that profile
 - **Failure handling**: If exec commands fail, the service continues operating normally (no interruption to monitor configuration)
 - **Shell execution**: Commands are executed through `bash -c`, supporting shell features like pipes and environment variables
+
+To understand callbacks more see [examples/callbacks](https://github.com/fiffeek/hyprdynamicmonitors/tree/main/examples/callbacks).
 
 ### Notifications
 
