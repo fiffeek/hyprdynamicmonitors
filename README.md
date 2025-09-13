@@ -728,4 +728,9 @@ Most similar tools are more generic, working with any Wayland compositor. In con
 **Similar Tools:**
 - [kanshi](https://sr.ht/~emersion/kanshi/) - Generic Wayland output management
 - [shikane](https://github.com/hw0lff/shikane) - Another Wayland output manager
-- [nwg-displays](https://github.com/nwg-piotr/nwg-displays) - GUI-based display configuration tool
+- [nwg-displays](https://github.com/nwg-piotr/nwg-displays) - GUI-based display configuration tool for Sway/Hyprland
+- [hyprmon](https://github.com/erans/hyprmon) - TUI-based display configuration tool for Hyprland
+
+`hyprdynamicmonitors` can be used side-by-side with `nwg-displays` or `hyprmon`:
+- Tweak the configuration in either tool
+- Let `hyprdynamicmonitors` automatically write/link it to your hyprland's configuration directory
