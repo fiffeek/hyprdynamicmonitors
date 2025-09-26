@@ -25,6 +25,11 @@ release/local: \
 	$(INSTALL_DIR)/.asdf.stamp
 	@$(GORELEASER_BIN) release --snapshot --clean
 
+release/local/rc: \
+	$(INSTALL_DIR)/.dir.stamp \
+	$(INSTALL_DIR)/.asdf.stamp
+	@$(GORELEASER_BIN) release --snapshot --clean --config .goreleaser.rc.yaml
+
 install:
 	@mkdir -p "$(DESTDIR)"
 	@if [ "$$(uname -m)" = "x86_64" ]; then \

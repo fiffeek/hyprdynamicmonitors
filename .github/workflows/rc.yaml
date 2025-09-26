@@ -1,12 +1,12 @@
 ---
-name: Release a tag
+name: Release a candidate
 on:
+    workflow_dispatch: {}
     push:
         tags:
-            - v[0-9]+.[0-9]+.[0-9]+
-
+            - v*.*.*-rc*
 jobs:
-    release:
+    rc:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v5
@@ -21,7 +21,7 @@ jobs:
               uses: goreleaser/goreleaser-action@v6
               with:
                   version: 2.11.2
-                  args: release --clean --timeout=10m
+                  args: release --clean --timeout=10m --config .goreleaser.rc.yaml
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
                   AUR_KEY: ${{ secrets.AUR_KEY }}
