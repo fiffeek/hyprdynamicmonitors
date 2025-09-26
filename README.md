@@ -17,6 +17,7 @@ An event-driven service that automatically manages Hyprland monitor configuratio
    * [Installation](#installation)
       * [Binary Release](#binary-release)
       * [AUR](#aur)
+      * [Nix](#nix)
       * [Build from Source](#build-from-source)
    * [Usage](#usage)
       * [Command Line](#command-line)
@@ -113,6 +114,21 @@ $aurHelper -S hyprdynamicmonitors-bin
 git clone https://aur.archlinux.org/hyprdynamicmonitors-bin.git
 cd hyprdynamicmonitors-bin
 makepkg -si
+```
+
+### Nix
+
+For Nix and NixOS users:
+
+```bash
+# Run directly from GitHub
+nix run github:fiffeek/hyprdynamicmonitors
+
+# Or from specific tag/version (recommended)
+nix run github:fiffeek/hyprdynamicmonitors/v1.0.0
+
+# Install to profile
+nix profile install github:fiffeek/hyprdynamicmonitors
 ```
 
 ### Build from Source
