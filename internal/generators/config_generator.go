@@ -110,17 +110,30 @@ func (g *ConfigGenerator) createTemplateData(cfg *config.RawConfig, profile *con
 	connectedMonitors []*hypr.MonitorSpec, powerState power.PowerState,
 ) map[string]any {
 	data := make(map[string]any)
-	data["Monitors"] = connectedMonitors
+
+	// strip the data for templating, no need for extra fields such as the current resolution as that might confuse users too much
+	// and lead to e.g. infinite config applications
+	monitorsStripped := []*MonitorSpec{}
+	for _, monitor := range connectedMonitors {
+		monitorsStripped = append(monitorsStripped, &MonitorSpec{
+			Name:        monitor.Name,
+			Description: monitor.Description,
+			ID:          monitor.ID,
+			Disabled:    monitor.Disabled,
+		})
+	}
+
+	data["Monitors"] = monitorsStripped
 	data["PowerState"] = powerState.String()
 
-	monitorsByTag := make(map[string]*hypr.MonitorSpec)
+	monitorsByTag := make(map[string]*MonitorSpec)
 
 	for _, requiredMonitor := range profile.Conditions.RequiredMonitors {
 		if requiredMonitor.MonitorTag == nil {
 			continue
 		}
 
-		for _, connectedMonitor := range connectedMonitors {
+		for _, connectedMonitor := range monitorsStripped {
 			if g.monitorMatches(requiredMonitor, connectedMonitor) {
 				monitorsByTag[*requiredMonitor.MonitorTag] = connectedMonitor
 				logrus.WithFields(logrus.Fields{
@@ -176,7 +189,7 @@ func (g *ConfigGenerator) createTemplateData(cfg *config.RawConfig, profile *con
 	return data
 }
 
-func (g *ConfigGenerator) monitorMatches(required *config.RequiredMonitor, connected *hypr.MonitorSpec) bool {
+func (g *ConfigGenerator) monitorMatches(required *config.RequiredMonitor, connected *MonitorSpec) bool {
 	if required.Name != nil && *required.Name != connected.Name {
 		return false
 	}

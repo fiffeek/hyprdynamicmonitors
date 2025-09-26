@@ -54,8 +54,8 @@ func (c *Config) Reload() error {
 }
 
 type RawConfig struct {
-	ConfigDirPath        string
-	ConfigPath           string
+	ConfigDirPath        string              `toml:"-"`
+	ConfigPath           string              `toml:"-"`
 	Profiles             map[string]*Profile `toml:"profiles"`
 	FallbackProfile      *Profile            `toml:"fallback_profile"`
 	General              *GeneralSection     `toml:"general"`
@@ -162,16 +162,16 @@ func (e *ConfigFileType) MarshalTOML() ([]byte, error) {
 }
 
 type Profile struct {
-	Name                 string
-	ConfigFileModTime    time.Time
-	ConfigFileDir        string
+	Name                 string            `toml:"-"`
+	ConfigFileModTime    time.Time         `toml:"-"`
+	ConfigFileDir        string            `toml:"-"`
 	ConfigFile           string            `toml:"config_file"`
 	ConfigType           *ConfigFileType   `toml:"config_file_type"`
 	Conditions           *ProfileCondition `toml:"conditions"`
 	StaticTemplateValues map[string]string `toml:"static_template_values"`
-	IsFallbackProfile    bool
-	PostApplyExec        *string `toml:"post_apply_exec"`
-	PreApplyExec         *string `toml:"pre_apply_exec"`
+	IsFallbackProfile    bool              `toml:"-"`
+	PostApplyExec        *string           `toml:"post_apply_exec"`
+	PreApplyExec         *string           `toml:"pre_apply_exec"`
 }
 
 type PowerStateType int
@@ -391,18 +391,26 @@ func (s *ScoringSection) Validate() error {
 	return nil
 }
 
-func (p *Profile) Validate(configPath string) error {
+func (p *Profile) SetPath(configPath string) error {
 	if p.ConfigFile == "" {
 		return errors.New("config_file is required")
+	}
+
+	if !strings.HasPrefix(p.ConfigFile, "/") {
+		p.ConfigFile = filepath.Join(configPath, p.ConfigFile)
+	}
+
+	return nil
+}
+
+func (p *Profile) Validate(configPath string) error {
+	if err := p.SetPath(configPath); err != nil {
+		return fmt.Errorf("cant set config path: %w", err)
 	}
 
 	if p.ConfigType == nil {
 		defaultType := Static
 		p.ConfigType = &defaultType
-	}
-
-	if !strings.HasPrefix(p.ConfigFile, "/") {
-		p.ConfigFile = filepath.Join(configPath, p.ConfigFile)
 	}
 
 	logrus.WithFields(logrus.Fields{
@@ -419,7 +427,7 @@ func (p *Profile) Validate(configPath string) error {
 	p.ConfigFile = absConfigFile
 
 	fi, err := os.Stat(p.ConfigFile)
-	if os.IsNotExist(err) {
+	if os.IsNotExist(err) || fi == nil {
 		return fmt.Errorf("config file %s not found", p.ConfigFile)
 	}
 

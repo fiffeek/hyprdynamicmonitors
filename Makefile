@@ -89,7 +89,7 @@ test/unit:
 	@$(GOLANG_BIN) test ./internal/... -v
 
 test/unit/selected:
-	$(GOLANG_BIN) test ./internal/$(PACKAGE_SELECTOR) -v -run $(TEST_SELECTOR) -debug
+	$(GOLANG_BIN) test ./internal/$(PACKAGE_SELECTOR) -v -run $(TEST_SELECTOR)
 
 build/test:
 	@mkdir -p ./dist/
@@ -119,3 +119,4 @@ help/generate: build/test
 	@scripts/autohelp.sh $(TEST_EXECUTABLE_NAME)
 	@scripts/autohelp.sh $(TEST_EXECUTABLE_NAME) run
 	@scripts/autohelp.sh $(TEST_EXECUTABLE_NAME) validate
+	@scripts/autohelp.sh $(TEST_EXECUTABLE_NAME) freeze

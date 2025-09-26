@@ -147,7 +147,9 @@ func (t *TestConfig) WithConfigDir(dir string) *TestConfig {
 
 func (t *TestConfig) SaveToFile() *TestConfig {
 	buf := new(bytes.Buffer)
-	if err := toml.NewEncoder(buf).Encode(t.cfg); err != nil {
+	encoder := toml.NewEncoder(buf)
+	encoder.Indent = ""
+	if err := encoder.Encode(t.cfg); err != nil {
 		t.t.Fatal("cant encode config: %w", err)
 	}
 	require.NotNil(t.t, t.cfgFile, "cfgFile cant be nil")
