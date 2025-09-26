@@ -7,3 +7,4 @@ main
 dist/
 node_modules/
 bin/
+result

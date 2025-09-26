@@ -10,9 +10,9 @@ on:
             - main
 
 jobs:
-    ci:
+    tests:
         runs-on: ubuntu-latest
-        timeout-minutes: 20
+        timeout-minutes: 5
 
         steps:
             - name: Checkout
@@ -67,3 +67,21 @@ jobs:
 
             - name: Integration tests
               run: make test/integration
+
+    nix:
+        runs-on: ubuntu-latest
+        timeout-minutes: 5
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - uses: DeterminateSystems/nix-installer-action@main
+
+            - uses: DeterminateSystems/magic-nix-cache-action@main
+
+            - name: Test Nix build
+              run: |
+                  nix flake check
+                  nix build
+                  ./result/bin/hyprdynamicmonitors --version
