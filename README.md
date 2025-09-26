@@ -20,6 +20,8 @@ An event-driven service that automatically manages Hyprland monitor configuratio
       * [Build from Source](#build-from-source)
    * [Usage](#usage)
       * [Command Line](#command-line)
+   * [Run command](#run-command)
+   * [Validate command](#validate-command)
    * [Minimal Example](#minimal-example)
    * [Examples](#examples)
    * [Runtime requirements](#runtime-requirements)
@@ -133,35 +135,71 @@ sudo make DESTDIR=/usr/bin install
 
 <!-- START help -->
 ```text
-Usage: hyprdynamicmonitors [options] [command]
+HyprDynamicMonitors is a service that automatically switches between predefined Hyprland monitor configuration profiles based on connected monitors and power state.
 
-Commands:
-  run      Run the service (default)
-  validate Validate configuration file and exit
+Usage:
+  hyprdynamicmonitors [command]
 
-Options:
-  -config string
-    	Path to configuration file (default "$HOME/.config/hyprdynamicmonitors/config.toml")
-  -connect-to-session-bus
-    	Connect to session bus instead of system bus for power events: https://wiki.archlinux.org/title/D-Bus. You can switch as long as you expose power line events in your user session bus.
-  -debug
-    	Enable debug logging
-  -disable-auto-hot-reload
-    	Disable automatic hot reload (no file watchers)
-  -disable-power-events
-    	Disable power events (dbus)
-  -dry-run
-    	Show what would be done without making changes
-  -enable-json-logs-format
-    	Enable structured logging
-  -run-once
-    	Run once and exit immediately
-  -verbose
-    	Enable verbose logging
-  -version
-    	Show version information
+Available Commands:
+  completion  Generate the autocompletion script for the specified shell
+  help        Help about any command
+  run         Run the monitor configuration service
+  validate    Validate configuration file
+
+Flags:
+      --config string             Path to configuration file (default "$HOME/.config/hyprdynamicmonitors/config.toml")
+      --debug                     Enable debug logging
+      --enable-json-logs-format   Enable structured logging
+  -h, --help                      help for hyprdynamicmonitors
+      --verbose                   Enable verbose logging
+  -v, --version                   version for hyprdynamicmonitors
+
+Use "hyprdynamicmonitors [command] --help" for more information about a command.
 ```
 <!-- END help -->
+
+## Run command
+<!-- START runhelp -->
+```text
+Run the HyprDynamicMonitors service to continuously monitor for display changes and automatically apply matching configuration profiles.
+
+Usage:
+  hyprdynamicmonitors run [flags]
+
+Flags:
+      --connect-to-session-bus    Connect to session bus instead of system bus for power events: https://wiki.archlinux.org/title/D-Bus. You can switch as long as you expose power line events in your user session bus.
+      --disable-auto-hot-reload   Disable automatic hot reload (no file watchers)
+      --disable-power-events      Disable power events (dbus)
+      --dry-run                   Show what would be done without making changes
+  -h, --help                      help for run
+      --run-once                  Run once and exit immediately
+
+Global Flags:
+      --config string             Path to configuration file (default "$HOME/.config/hyprdynamicmonitors/config.toml")
+      --debug                     Enable debug logging
+      --enable-json-logs-format   Enable structured logging
+      --verbose                   Enable verbose logging
+```
+<!-- END runhelp -->
+
+## Validate command
+<!-- START validatehelp -->
+```text
+Validate the configuration file for syntax errors and logical consistency.
+
+Usage:
+  hyprdynamicmonitors validate [flags]
+
+Flags:
+  -h, --help   help for validate
+
+Global Flags:
+      --config string             Path to configuration file (default "$HOME/.config/hyprdynamicmonitors/config.toml")
+      --debug                     Enable debug logging
+      --enable-json-logs-format   Enable structured logging
+      --verbose                   Enable verbose logging
+```
+<!-- END validatehelp -->
 
 **Validate configuration:**
 ```bash

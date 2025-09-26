@@ -1,19 +1,21 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+BINARY="$1"
+COMMAND="${2:-""}"
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 
 README="README.md"
 TMP_FILE="$(mktemp)"
 
-"$SCRIPT_DIR"/../dist/hdmtest --help 2>"$TMP_FILE"
+"$SCRIPT_DIR"/../"$BINARY" $COMMAND --help >"$TMP_FILE" 2>&1
 
 sed -i 's/hdmtest/hyprdynamicmonitors/g' "$TMP_FILE"
 sed -i '1s/^/```text\n/' "$TMP_FILE"
 echo '```' >>"$TMP_FILE"
 
-START="<!-- START help -->"
-END="<!-- END help -->"
+START="<!-- START ${COMMAND}help -->"
+END="<!-- END ${COMMAND}help -->"
 
 awk -v start="$START" -v end="$END" -v file="$TMP_FILE" '
 BEGIN { inside=0 }

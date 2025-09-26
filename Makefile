@@ -93,7 +93,7 @@ test/unit/selected:
 
 build/test:
 	@mkdir -p ./dist/
-	@$(GOLANG_BIN) build -v -o $(TEST_EXECUTABLE_NAME) ./cmd/main.go
+	@$(GOLANG_BIN) build -v -o $(TEST_EXECUTABLE_NAME) ./main.go
 
 test/integration: build/test
 	@HDM_BINARY_PATH=$(TEST_EXECUTABLE_NAME) $(GOLANG_BIN) test -v ./test/... --debug
@@ -116,4 +116,6 @@ lint:
 pre-push: fmt lint test/unit test/integration
 
 help/generate: build/test
-	@scripts/autohelp.sh
+	@scripts/autohelp.sh $(TEST_EXECUTABLE_NAME)
+	@scripts/autohelp.sh $(TEST_EXECUTABLE_NAME) run
+	@scripts/autohelp.sh $(TEST_EXECUTABLE_NAME) validate
