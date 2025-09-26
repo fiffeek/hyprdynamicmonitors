@@ -15,7 +15,7 @@ builds:
           -X github.com/fiffeek/hyprdynamicmonitors/cmd.Version={{ .Version }}
           -X github.com/fiffeek/hyprdynamicmonitors/cmd.Commit={{ .ShortCommit }}
           -X github.com/fiffeek/hyprdynamicmonitors/cmd.BuildDate={{ .Date }}
-      binary: hyprdynamicmonitors
+      binary: hyprdynamicmonitors-rc
 
 archives:
     - formats: [tar.gz]
@@ -48,24 +48,25 @@ changelog:
             - Merge branch
 release:
     skip_upload: false
-    draft: false
-    prerelease: 'false'
-    replace_existing_draft: false
+    draft: true
+    replace_existing_draft: true
+    make_latest: false
+    prerelease: 'true'
     github:
         owner: fiffeek
         name: hyprdynamicmonitors
 
 aurs:
-    - description: Dynamic monitor configuration for Hyprland.
+    - description: Dynamic monitor configuration for Hyprland (release candidate).
       skip_upload: false
       homepage: https://github.com/fiffeek/hyprdynamicmonitors
       provides:
-          - hyprdynamicmonitors-bin
+          - hyprdynamicmonitors-rc-bin
       maintainers:
           - Filip Mikina <filipmikina at gmail dot com>
       license: MIT
       private_key: '{{ .Env.AUR_KEY }}'
-      git_url: ssh://aur@aur.archlinux.org/hyprdynamicmonitors-bin.git
+      git_url: ssh://aur@aur.archlinux.org/hyprdynamicmonitors-rc-bin.git
       optdepends:
           - hyprland
           - upower
@@ -74,7 +75,15 @@ aurs:
           email: filipmikina@gmail.con
       package: |-
           # bin
-          install -Dm755 "./hyprdynamicmonitors" "${pkgdir}/usr/bin/hyprdynamicmonitors"
+          install -Dm755 "./hyprdynamicmonitors-rc" "${pkgdir}/usr/bin/hyprdynamicmonitors-rc"
 
           # license
-          install -Dm644 "./LICENSE" "${pkgdir}/usr/share/licenses/hyprdynamicmonitors/LICENSE"
+          install -Dm644 "./LICENSE" "${pkgdir}/usr/share/licenses/hyprdynamicmonitors-rc/LICENSE"
+
+          # completions
+          mkdir -p "${pkgdir}/usr/share/bash-completion/completions/"
+          mkdir -p "${pkgdir}/usr/share/zsh/site-functions/"
+          mkdir -p "${pkgdir}/usr/share/fish/vendor_completions.d/"
+          ./hyprdynamicmonitors completion bash | install -Dm644 /dev/stdin "${pkgdir}/usr/share/bash-completion/completions/hyprdynamicmonitors-rc"
+          ./hyprdynamicmonitors completion zsh | install -Dm644 /dev/stdin "${pkgdir}/usr/share/zsh/site-functions/_hyprdynamicmonitors-rc"
+          ./hyprdynamicmonitors completion fish | install -Dm644 /dev/stdin "${pkgdir}/usr/share/fish/vendor_completions.d/hyprdynamicmonitors-rc.fish"
