@@ -19,9 +19,10 @@ import (
 )
 
 var (
-	Version   = "dev"
-	Commit    = "none"
-	BuildDate = "unknown"
+	Version    = "dev"
+	Commit     = "none"
+	BuildDate  = "unknown"
+	BinaryName = "hyprdynamicmonitors"
 )
 
 var (
@@ -30,7 +31,7 @@ var (
 	enableJSONLogsFormat bool
 	configPath           string
 	rootCmd              = &cobra.Command{
-		Use:              "hyprdynamicmonitors",
+		Use:              BinaryName,
 		Short:            "Dynamically manage Hyprland monitor configurations",
 		Long:             "HyprDynamicMonitors is a service that automatically switches between predefined Hyprland monitor configuration profiles based on connected monitors and power state.",
 		Version:          fmt.Sprintf("%s (commit %s, built %s)", Version, Commit, BuildDate),

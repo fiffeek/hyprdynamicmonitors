@@ -16,6 +16,7 @@ builds:
           -X github.com/fiffeek/hyprdynamicmonitors/cmd.Version={{ .Version }}
           -X github.com/fiffeek/hyprdynamicmonitors/cmd.Commit={{ .ShortCommit }}
           -X github.com/fiffeek/hyprdynamicmonitors/cmd.BuildDate={{ .Date }}
+          -X github.com/fiffeek/hyprdynamicmonitors/cmd.BinaryName=hyprdynamicmonitors-rc
       binary: hyprdynamicmonitors-rc
 
 archives:
