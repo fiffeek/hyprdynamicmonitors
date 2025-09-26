@@ -20,9 +20,9 @@ An event-driven service that automatically manages Hyprland monitor configuratio
       * [Build from Source](#build-from-source)
    * [Usage](#usage)
       * [Command Line](#command-line)
-   * [Run command](#run-command)
-   * [Validate command](#validate-command)
-   * [Freeze command](#freeze-command)
+      * [Run command](#run-command)
+      * [Validate command](#validate-command)
+      * [Freeze command](#freeze-command)
    * [Minimal Example](#minimal-example)
    * [Examples](#examples)
    * [Runtime requirements](#runtime-requirements)
@@ -47,6 +47,7 @@ An event-driven service that automatically manages Hyprland monitor configuratio
       * [Hot Reloading](#hot-reloading)
    * [Tests](#tests)
       * [Live Testing](#live-testing)
+      * [Integration Testing](#integration-testing)
    * [Running with systemd](#running-with-systemd)
       * [Hyprland under systemd](#hyprland-under-systemd)
       * [Run on boot and let restarts do the job](#run-on-boot-and-let-restarts-do-the-job)
@@ -161,7 +162,7 @@ Use "hyprdynamicmonitors [command] --help" for more information about a command.
 ```
 <!-- END help -->
 
-## Run command
+### Run command
 <!-- START runhelp -->
 ```text
 Run the HyprDynamicMonitors service to continuously monitor for display changes and automatically apply matching configuration profiles.
@@ -185,7 +186,7 @@ Global Flags:
 ```
 <!-- END runhelp -->
 
-## Validate command
+### Validate command
 <!-- START validatehelp -->
 ```text
 Validate the configuration file for syntax errors and logical consistency.
@@ -217,7 +218,7 @@ hyprdynamicmonitors --debug validate
 ```
 
 
-## Freeze command
+### Freeze command
 <!-- START freezehelp -->
 ```text
 Freeze the current Hyprland monitor configuration and save it as a new profile template.
@@ -634,6 +635,9 @@ Live tested on:
 - UPower v1.90.9
 
 You can see my configuration [here](https://github.com/fiffeek/.dotfiles.v2/blob/main/ansible/files/framework/dots/hyprdynamicmonitors/config.toml).
+
+### Integration Testing
+All features should be covered by integration tests. Run `make test/integration` locally to execute end-to-end CLI tests that build the binary and verify expected outputs. Test fixtures can be regenerated using `make test/integration/regenerate`.
 
 ## Running with systemd
 
