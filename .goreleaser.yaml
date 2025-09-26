@@ -78,3 +78,11 @@ aurs:
 
           # license
           install -Dm644 "./LICENSE" "${pkgdir}/usr/share/licenses/hyprdynamicmonitors/LICENSE"
+
+          # completions
+          mkdir -p "${pkgdir}/usr/share/bash-completion/completions/"
+          mkdir -p "${pkgdir}/usr/share/zsh/site-functions/"
+          mkdir -p "${pkgdir}/usr/share/fish/vendor_completions.d/"
+          ./hyprdynamicmonitors completion bash | install -Dm644 /dev/stdin "${pkgdir}/usr/share/bash-completion/completions/hyprdynamicmonitors"
+          ./hyprdynamicmonitors completion zsh | install -Dm644 /dev/stdin "${pkgdir}/usr/share/zsh/site-functions/_hyprdynamicmonitors"
+          ./hyprdynamicmonitors completion fish | install -Dm644 /dev/stdin "${pkgdir}/usr/share/fish/vendor_completions.d/hyprdynamicmonitors.fish"
