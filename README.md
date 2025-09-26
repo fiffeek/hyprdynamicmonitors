@@ -56,6 +56,7 @@ An event-driven service that automatically manages Hyprland monitor configuratio
       * [Setup Development Environment](#setup-development-environment)
       * [Development Commands](#development-commands)
       * [Development Workflow](#development-workflow)
+      * [Release Candidates](#release-candidates)
    * [Alternative software](#alternative-software)
 <!--te-->
 
@@ -209,10 +210,10 @@ Global Flags:
 hyprdynamicmonitors validate
 
 # Validate specific config file
-hyprdynamicmonitors -config /path/to/config.toml validate
+hyprdynamicmonitors --config /path/to/config.toml validate
 
 # Validate with debug output
-hyprdynamicmonitors -debug validate
+hyprdynamicmonitors --debug validate
 ```
 
 
@@ -802,6 +803,20 @@ make help/generate    # Generate help documentation from binary
 2. **Development cycle**: Make changes, then run `make pre-push` before committing
 3. **Testing**: Use `make test` for full test suite, or specific test targets for focused testing
 4. **Pre-commit hooks**: Automatically run on commit (installed by `make dev`)
+
+### Release Candidates
+
+Release candidates are published for testing new features before stable releases:
+
+- **GitHub Releases**: RC versions are marked as pre-releases on GitHub (e.g., `v0.2.0-rc1`)
+- **AUR Package**: Available as separate `hyprdynamicmonitors-rc-bin` package alongside the stable `hyprdynamicmonitors-bin`
+- **Binary Name**: RC builds use `hyprdynamicmonitors-rc` to avoid conflicts with stable installations
+- **Parallel Installation**: Both stable and RC versions can be installed simultaneously for testing
+
+To install the RC version from AUR:
+```bash
+yay -S hyprdynamicmonitors-rc-bin
+```
 
 ## Alternative software
 
