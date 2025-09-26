@@ -1,0 +1,12 @@
+# Generated with hyprdynamicmonitors freeze.
+# This is a template that you can edit, it is just a starter that pulled your current monitor setup,
+# adjust as needed.
+# You can use templates here etc, see https://github.com/fiffeek/hyprdynamicmonitors/blob/main/examples/basic/hyprconfigs/template.go.tmpl.
+# Monitors are given arbitrary tags (the "monitor" prefix and the ID coming from hyprland).
+{{- range .Monitors }}
+{{- if .Disabled }}
+monitor=desc:{{ .Description }},disable
+{{- else }}
+monitor=desc:{{ .Description }},{{ .Width }}x{{ .Height }}@{{ printf "%.5f" .RefreshRate }},{{ .X }}x{{ .Y }},{{ printf "%.2f" .Scale }},transform,{{ .Transform }}
+{{- end }}
+{{- end }}

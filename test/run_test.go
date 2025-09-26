@@ -40,6 +40,10 @@ func Test__Run_Binary(t *testing.T) {
 		runOnce             bool
 		configUpdates       []*testutils.TestConfig
 		sendSignal          *syscall.Signal
+		// disablePassingArgs works for options like disableHotReload, which additionally to changing the test behavior
+		// would add "--disable-auto-hot-reload" cli arg; in the context of anything but "run" it does not make sense, so this
+		// is an explicit knob to change this behavior
+		disablePassingArgs bool
 	}{
 		{
 			name:                     "dry run should succeed",
@@ -318,6 +322,72 @@ func Test__Run_Binary(t *testing.T) {
 			disableHotReload:   true,
 			runOnce:            true,
 		},
+
+		{
+			name:        "freeze fails for existing",
+			description: "when freezing the current settings the profile with the same name must not exist",
+			config: createBasicTestConfig(t).WithProfiles(map[string]*config.Profile{
+				"one": {
+					ConfigType: utils.JustPtr(config.Static),
+					Conditions: &config.ProfileCondition{
+						RequiredMonitors: []*config.RequiredMonitor{
+							{
+								Name: utils.StringPtr("nonexistentmonitor"),
+							},
+						},
+					},
+				},
+			},
+			),
+			extraArgs:                []string{"freeze", "--profile-name", "one"},
+			hyprMonitorResponseFiles: []string{"testdata/hypr/server/basic_monitors.json"},
+			expectError:              true,
+			disablePowerEvents:       true,
+			disableHotReload:         true,
+			runOnce:                  true,
+			disablePassingArgs:       true,
+			expectErrorContains:      "a profile with this name already exist",
+		},
+
+		{
+			name:                     "freeze current settings as profile",
+			description:              "when freezing the current profile we should see it appended to the current config",
+			config:                   testutils.NewTestConfig(t),
+			extraArgs:                []string{"freeze", "--profile-name", "hello"},
+			hyprMonitorResponseFiles: []string{"testdata/hypr/server/basic_monitors.json"},
+			validateSideEffects: func(t *testing.T, cfg *config.RawConfig) {
+				// reread the config since it changed
+				cfg, err := config.Load(cfg.ConfigPath)
+				require.NoError(t, err, "the new config should be parseable")
+				// hard to compare the golden files here since they rely on /tmp files
+				assert.Len(t, cfg.Profiles, 2, "a new profile should be added")
+				profile := cfg.Profiles["hello"]
+				assert.NotNil(t, profile, "hello profile should exist")
+				assert.Equal(t, utils.JustPtr(config.Template), profile.ConfigType)
+				assert.Equal(t, &config.ProfileCondition{
+					PowerState: nil,
+					RequiredMonitors: []*config.RequiredMonitor{
+						{
+							Description: utils.StringPtr("BOE NE135A1M-NY1"),
+							MonitorTag:  utils.StringPtr("monitor0"),
+						},
+						{
+							Description: utils.StringPtr("LG Electronics LG SDQHD 301NTBKDU037"),
+							MonitorTag:  utils.StringPtr("monitor1"),
+						},
+					},
+				}, profile.Conditions)
+				assert.NotNil(t, profile.ConfigFile, "the config file should be set")
+				testutils.AssertFileExists(t, profile.ConfigFile)
+				compareWithFixture(t, profile.ConfigFile,
+					"testdata/app/fixtures/frozen_current.conf")
+			},
+			expectError:        false,
+			disablePowerEvents: true,
+			disableHotReload:   true,
+			runOnce:            true,
+			disablePassingArgs: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -378,22 +448,24 @@ func Test__Run_Binary(t *testing.T) {
 				"--config", rawConfig.ConfigPath,
 				"--enable-json-logs-format",
 			}, tt.extraArgs...)
-			if tt.disableHotReload {
-				args = append(args, "--disable-auto-hot-reload")
-			}
-			if tt.disablePowerEvents {
-				args = append(args, "--disable-power-events")
-			}
-			if tt.runOnce {
-				args = append(args, "--run-once")
-			}
-			if tt.connectToSessionBus {
-				args = append(args, "--connect-to-session-bus")
-			}
-			if *debug {
-				args = append(args, "--debug")
-			}
+			if !tt.disablePassingArgs {
+				if tt.disableHotReload {
+					args = append(args, "--disable-auto-hot-reload")
+				}
+				if tt.disablePowerEvents {
+					args = append(args, "--disable-power-events")
+				}
+				if tt.runOnce {
+					args = append(args, "--run-once")
+				}
+				if tt.connectToSessionBus {
+					args = append(args, "--connect-to-session-bus")
+				}
+				if *debug {
+					args = append(args, "--debug")
+				}
 
+			}
 			done := make(chan struct{})
 			var out []byte
 			var binaryErr error
