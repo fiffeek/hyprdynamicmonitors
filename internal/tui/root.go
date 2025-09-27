@@ -12,9 +12,10 @@ import (
 )
 
 type Model struct {
-	config *config.Config
-	keys   keyMap
-	layout *Layout
+	config    *config.Config
+	keys      keyMap
+	layout    *Layout
+	rootState *RootState
 
 	// components
 	monitorsList list.Model
@@ -26,7 +27,7 @@ type keyMap struct {
 	Quit  key.Binding
 }
 
-var defaultKeyMap = keyMap{
+var rootKeyMap = keyMap{
 	Tab: key.NewBinding(
 		key.WithKeys("tab"),
 		key.WithHelp("tab", "switch view"),
@@ -54,7 +55,8 @@ func NewModel(cfg *config.Config, monitors hypr.MonitorSpecs) Model {
 
 	model := Model{
 		config:       cfg,
-		keys:         defaultKeyMap,
+		keys:         rootKeyMap,
+		rootState:    &RootState{},
 		layout:       NewLayout(),
 		monitorsList: monitorsList,
 	}
@@ -92,6 +94,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		case key.Matches(msg, m.keys.Tab):
 		}
+	}
+
+	switch m.rootState.CurrentView {
+	case MonitorsListView:
+		monitorsList, cmd := m.monitorsList.Update(msg)
+		m.monitorsList = monitorsList
+		cmds = append(cmds, cmd)
 	}
 
 	return m, tea.Batch(cmds...)
