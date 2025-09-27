@@ -67,7 +67,7 @@ func (m Model) View() string {
 	m.monitorsPreviewPane.SetWidth(m.layout.RightPanesWidth())
 	previewPane := InactiveStyle.Width(m.layout.RightPanesWidth()).Height(m.layout.RightPreviewHeight()).Render(m.monitorsPreviewPane.View())
 
-	if m.rootState.State == StateFullscreen {
+	if m.rootState.State.Fullscreen {
 		m.monitorsPreviewPane.SetHeight(m.layout.AvailableHeight())
 		m.monitorsPreviewPane.SetWidth(m.layout.AvailableWidth())
 		previewPane = InactiveStyle.Width(m.layout.AvailableWidth()).Height(m.layout.AvailableHeight()).Render(m.monitorsPreviewPane.View())
@@ -88,7 +88,7 @@ func (m Model) View() string {
 		rightPanels,
 	)
 
-	if m.rootState.State == StateFullscreen {
+	if m.rootState.State.Fullscreen {
 		view = previewPane
 	}
 
@@ -105,11 +105,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case MonitorSelected:
 		logrus.Debug("Monitor selected event in root")
-		m.rootState.ChangeState(StateEditingMonitor)
+		m.rootState.ToggleMonitortEdit()
 		stateChanged = true
 	case MonitorUnselected:
 		logrus.Debug("Monitor unselected event in root")
-		m.rootState.ChangeState(StateNavigating)
+		m.rootState.ToggleMonitortEdit()
 		stateChanged = true
 	case tea.WindowSizeMsg:
 		m.layout.SetHeight(msg.Height)
@@ -120,11 +120,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		case key.Matches(msg, m.keys.Pan):
 			logrus.Debug("Toggling pane mode")
-			m.rootState.ToggleState(StatePanning)
+			m.rootState.TooglePanning()
 			stateChanged = true
 		case key.Matches(msg, m.keys.Fullscreen):
 			logrus.Debug("Toggling fullscreen mode")
-			m.rootState.ToggleState(StateFullscreen)
+			m.rootState.ToogleFullscreen()
 			stateChanged = true
 		}
 	}

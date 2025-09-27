@@ -291,7 +291,7 @@ func (c *MonitorList) Update(msg tea.Msg) tea.Cmd {
 		c.monitorSelected = false
 	case StateChanged:
 		logrus.Debugf("Setting hijacked arrows: %v", msg)
-		c.hijackArrows = msg.state != StateNavigating
+		c.hijackArrows = msg.state.Editing()
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "up", "down", "left", "right":

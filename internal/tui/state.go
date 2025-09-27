@@ -1,6 +1,6 @@
 package tui
 
-import "fmt"
+import "strings"
 
 type ViewMode int
 
@@ -9,38 +9,31 @@ const (
 	ProfileView
 )
 
-type AppState int
-
-const (
-	StateNavigating AppState = iota
-	StateEditingMonitor
-	StatePanning
-	StateScaling
-	StateModeSelection
-	StateFullscreen
-)
+type AppState struct {
+	EditingMonitor bool
+	Panning        bool
+	Scaling        bool
+	ModeSelection  bool
+	Fullscreen     bool
+}
 
 func (s AppState) String() string {
-	switch s {
-	case StateNavigating:
-		return "Navigating"
-	case StateEditingMonitor:
-		return "Editing Monitor"
-	case StatePanning:
-		return "Panning"
-	case StateScaling:
-		return "Scaling"
-	case StateModeSelection:
-		return "Mode Selection"
-	case StateFullscreen:
-		return "Fullscreen"
-	default:
-		return fmt.Sprintf("Unknown (%d)", s)
+	modes := []string{}
+	if s.Fullscreen {
+		modes = append(modes, "Fullscreen")
 	}
+	if s.Panning {
+		modes = append(modes, "Panning")
+	}
+	return strings.Join(modes, " ")
+}
+
+func (s AppState) Editing() bool {
+	return s.EditingMonitor || s.Fullscreen || s.ModeSelection || s.Scaling || s.Panning
 }
 
 func (s AppState) IsPanning() bool {
-	return s == StatePanning
+	return s.Panning
 }
 
 type RootState struct {
@@ -51,19 +44,18 @@ type RootState struct {
 func NewState() *RootState {
 	return &RootState{
 		CurrentView: MonitorsListView,
-		State:       StateNavigating,
+		State:       AppState{},
 	}
 }
 
-func (r *RootState) ChangeState(state AppState) {
-	r.State = state
+func (r *RootState) ToogleFullscreen() {
+	r.State.Fullscreen = !r.State.Fullscreen
 }
 
-func (r *RootState) ToggleState(state AppState) bool {
-	if r.State == state {
-		r.State = StateNavigating
-		return false
-	}
-	r.ChangeState(state)
-	return true
+func (r *RootState) TooglePanning() {
+	r.State.Panning = !r.State.Panning
+}
+
+func (r *RootState) ToggleMonitortEdit() {
+	r.State.EditingMonitor = !r.State.EditingMonitor
 }

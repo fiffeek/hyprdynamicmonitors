@@ -3,22 +3,21 @@ package tui
 import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/fiffeek/hyprdynamicmonitors/internal/utils"
 	"github.com/sirupsen/logrus"
 )
 
 type Header struct {
 	title   string
-	warning *string
-	mode    *string
+	warning string
+	mode    string
 	width   int
 }
 
 func NewHeader(title string) *Header {
 	return &Header{
 		title:   title,
-		warning: nil,
-		mode:    nil,
+		warning: "",
+		mode:    "",
 		width:   0,
 	}
 }
@@ -27,11 +26,7 @@ func (h *Header) Update(msg tea.Msg) tea.Cmd {
 	logrus.Debugf("Header received message: %v", msg)
 	switch msg := msg.(type) {
 	case StateChanged:
-		if msg.state == StateNavigating {
-			h.mode = nil
-			return nil
-		}
-		h.mode = utils.StringPtr(msg.state.String())
+		h.mode = msg.state.String()
 	}
 	return nil
 }
@@ -46,15 +41,15 @@ func (h *Header) View() string {
 	sections = append(sections, header)
 
 	var mode string
-	if h.mode != nil {
-		mode = HeaderIndicatorStyle.Render(*h.mode)
+	if h.mode != "" {
+		mode = HeaderIndicatorStyle.Render(h.mode)
 		availableSpace -= lipgloss.Width(mode)
 	}
 
 	spacer := lipgloss.NewStyle().Width(availableSpace).Render("")
 	sections = append(sections, spacer)
 
-	if h.mode != nil {
+	if h.mode != "" {
 		sections = append(sections, mode)
 	}
 
