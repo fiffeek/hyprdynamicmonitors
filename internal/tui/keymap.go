@@ -7,6 +7,7 @@ type keyMap struct {
 	Enter         key.Binding
 	Quit          key.Binding
 	Up            key.Binding
+	Center        key.Binding
 	Down          key.Binding
 	Left          key.Binding
 	Right         key.Binding
@@ -60,5 +61,9 @@ var rootKeyMap = keyMap{
 	Fullscreen: key.NewBinding(
 		key.WithKeys("f"),
 		key.WithHelp("f", "fullscreen the preview"),
+	),
+	Center: key.NewBinding(
+		key.WithKeys("c"),
+		key.WithHelp("c", "moves the grid to 0, 0"),
 	),
 }

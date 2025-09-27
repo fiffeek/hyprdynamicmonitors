@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/sirupsen/logrus"
@@ -25,6 +26,8 @@ type MonitorsPreviewPane struct {
 	baseSpacing   int
 	minSpacingY   int
 	minSpacingX   int
+	panning       bool
+	panStep       int
 }
 
 func NewMonitorsPreviewPane(monitors []*MonitorSpec) *MonitorsPreviewPane {
@@ -38,6 +41,7 @@ func NewMonitorsPreviewPane(monitors []*MonitorSpec) *MonitorsPreviewPane {
 		baseSpacing:   200,
 		minSpacingY:   2,
 		minSpacingX:   4,
+		panStep:       100,
 	}
 }
 
@@ -48,6 +52,31 @@ func (p *MonitorsPreviewPane) Update(msg tea.Msg) tea.Cmd {
 		p.selectedIndex = msg.Index
 	case MonitorUnselected:
 		p.selectedIndex = -1
+	case StateChanged:
+		p.panning = msg.state.IsPanning()
+
+	case tea.KeyMsg:
+		switch {
+		case key.Matches(msg, rootKeyMap.Up):
+			if p.panning {
+				p.panY -= p.panStep
+			}
+		case key.Matches(msg, rootKeyMap.Down):
+			if p.panning {
+				p.panY += p.panStep
+			}
+		case key.Matches(msg, rootKeyMap.Left):
+			if p.panning {
+				p.panX -= p.panStep
+			}
+		case key.Matches(msg, rootKeyMap.Right):
+			if p.panning {
+				p.panX += p.panStep
+			}
+		case key.Matches(msg, rootKeyMap.Center):
+			p.panX = 0
+			p.panY = 0
+		}
 	}
 
 	return nil

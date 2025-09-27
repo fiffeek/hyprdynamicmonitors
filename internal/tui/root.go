@@ -152,5 +152,5 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m *Model) GlobalHelp() []key.Binding {
-	return []key.Binding{rootKeyMap.Pan, rootKeyMap.Fullscreen}
+	return []key.Binding{rootKeyMap.Pan, rootKeyMap.Fullscreen, rootKeyMap.Center}
 }

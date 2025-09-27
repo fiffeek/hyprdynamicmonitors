@@ -39,6 +39,10 @@ func (s AppState) String() string {
 	}
 }
 
+func (s AppState) IsPanning() bool {
+	return s == StatePanning
+}
+
 type RootState struct {
 	CurrentView ViewMode
 	State       AppState

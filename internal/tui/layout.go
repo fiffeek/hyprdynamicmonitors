@@ -13,7 +13,7 @@ func NewLayout() *Layout {
 	return &Layout{
 		visibleWidth:  0,
 		visibleHeight: 0,
-		reserved:      4,
+		reserved:      2,
 		reservedTop:   0,
 	}
 }
@@ -40,7 +40,7 @@ func (l *Layout) RightPanesWidth() int {
 }
 
 func (l *Layout) AvailableHeight() int {
-	return l.visibleHeight - l.reservedTop - 2
+	return l.visibleHeight - l.reservedTop - l.reserved
 }
 
 func (l *Layout) AvailableWidth() int {
