@@ -164,6 +164,7 @@ Available Commands:
   freeze      Freeze current monitor configuration as a new profile template
   help        Help about any command
   run         Run the monitor configuration service
+  tui         Launch interactive TUI for monitor configuration
   validate    Validate configuration file
 
 Flags:
