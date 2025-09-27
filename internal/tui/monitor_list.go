@@ -5,10 +5,12 @@ import (
 	"io"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/fiffeek/hyprdynamicmonitors/internal/hypr"
 	"github.com/sirupsen/logrus"
 )
 
@@ -20,7 +22,7 @@ type MonitorItem struct {
 }
 
 func (m MonitorItem) Title() string {
-	return fmt.Sprintf("%s %s%s", m.monitor.Name, m.MonitorDescription(), m.Indicator())
+	return m.monitor.Name
 }
 
 func (m MonitorItem) MonitorDescription() string {
@@ -94,17 +96,22 @@ func (m MonitorItem) FilterValue() string {
 }
 
 type MonitorListKeyMap struct {
-	choose     key.Binding
-	rotate     key.Binding
-	scale      key.Binding
-	changeMode key.Binding
+	selectMonitor key.Binding
+	unselect      key.Binding
+	rotate        key.Binding
+	scale         key.Binding
+	changeMode    key.Binding
 }
 
 func NewMonitorListKeyMap() *MonitorListKeyMap {
 	return &MonitorListKeyMap{
-		choose: key.NewBinding(
+		selectMonitor: key.NewBinding(
 			key.WithKeys("enter"),
-			key.WithHelp("enter", "edit monitor"),
+			key.WithHelp("enter", "edit a monitor"),
+		),
+		unselect: key.NewBinding(
+			key.WithKeys("enter"),
+			key.WithHelp("enter", "unselect a monitor"),
 		),
 		rotate: key.NewBinding(
 			key.WithKeys("r"),
@@ -121,20 +128,17 @@ func NewMonitorListKeyMap() *MonitorListKeyMap {
 	}
 }
 
-func (m MonitorListKeyMap) ShortHelp() []key.Binding {
-	return []key.Binding{
-		m.choose,
-	}
-}
-
-func (m MonitorListKeyMap) FullHelp() [][]key.Binding {
-	return [][]key.Binding{
-		{
-			m.choose,
+func (m MonitorListKeyMap) ShortHelp(selected bool) []key.Binding {
+	if selected {
+		return []key.Binding{
+			m.unselect,
 			m.rotate,
 			m.scale,
 			m.changeMode,
-		},
+		}
+	}
+	return []key.Binding{
+		m.selectMonitor,
 	}
 }
 
@@ -165,12 +169,25 @@ func (d MonitorDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd {
 	}
 	logrus.Debugf("Selected item %v", item)
 
+	var cmd tea.Cmd
+
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch {
-		case key.Matches(msg, d.keymap.choose):
-			logrus.Debugf("List called with choose")
+		case key.Matches(msg, d.keymap.selectMonitor), key.Matches(msg, d.keymap.unselect):
+			logrus.Debugf("List called with selection")
 			item.ToggleSelect()
+			if item.Editing() {
+				cmd = func() tea.Msg {
+					return MonitorSelected{
+						Index: m.Index(),
+					}
+				}
+			} else {
+				cmd = func() tea.Msg {
+					return MonitorUnselected{}
+				}
+			}
 		case key.Matches(msg, d.keymap.scale):
 			logrus.Debugf("List called with scale")
 			if !item.Editing() {
@@ -191,7 +208,7 @@ func (d MonitorDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd {
 	}
 	m.SetItem(m.Index(), item)
 
-	return nil
+	return cmd
 }
 
 func (d MonitorDelegate) Render(w io.Writer, m list.Model, index int, item list.Item) {
@@ -201,35 +218,122 @@ func (d MonitorDelegate) Render(w io.Writer, m list.Model, index int, item list.
 		return
 	}
 
-	// Styles
-	selectedStyle := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("212")).
-		Bold(true)
-
-	normalStyle := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("255"))
-
-	descStyle := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("243"))
-
 	var style lipgloss.Style
-	if index == m.Index() {
-		style = selectedStyle
-	} else {
-		style = normalStyle
+	switch {
+	case index == m.Index() && monitor.Editing():
+		style = MonitorEditingMode
+	case index == m.Index():
+		style = MonitorListSelected
+	default:
+		style = MonitorListTitle
 	}
-
-	title := style.Render(monitor.Title())
-	desc := descStyle.Render(monitor.Description())
+	title := fmt.Sprintf("%s %s%s", style.Render(monitor.Title()), monitor.MonitorDescription(), monitor.Indicator())
+	desc := MutedStyle.Render(monitor.Description())
 	content := fmt.Sprintf("%s\n%s", title, desc)
 
 	fmt.Fprintf(w, "%s", content)
 }
 
-func (d MonitorDelegate) ShortHelp() []key.Binding {
-	return []key.Binding{d.keymap.choose}
+type monitorListKeyMap struct {
+	Up    key.Binding
+	Down  key.Binding
+	Left  key.Binding
+	Right key.Binding
 }
 
-func (d MonitorDelegate) FullHelp() []key.Binding {
-	return []key.Binding{d.keymap.choose}
+func (m *monitorListKeyMap) Help() []key.Binding {
+	return []key.Binding{m.Left, m.Down, m.Up, m.Right}
+}
+
+type MonitorList struct {
+	L               list.Model
+	hijackArrows    bool
+	keys            *monitorListKeyMap
+	help            help.Model
+	delegate        MonitorDelegate
+	monitorSelected bool
+}
+
+func NewMonitorList(monitors hypr.MonitorSpecs) *MonitorList {
+	monitorItems := make([]list.Item, len(monitors))
+	for i, monitor := range monitors {
+		monitorItems[i] = MonitorItem{monitor: NewMonitorSpec(monitor)}
+	}
+
+	delegate := NewMonitorDelegate()
+	monitorsList := list.New(monitorItems, delegate, 0, 0)
+	monitorsList.Title = "Connected Monitors"
+	monitorsList.SetShowStatusBar(false)
+	monitorsList.SetFilteringEnabled(false)
+	monitorsList.SetShowHelp(false)
+
+	monitorsList.SetShowHelp(false)
+
+	return &MonitorList{
+		L:            monitorsList,
+		hijackArrows: false,
+		keys: &monitorListKeyMap{
+			Up:    rootKeyMap.Up,
+			Down:  rootKeyMap.Down,
+			Left:  rootKeyMap.Left,
+			Right: rootKeyMap.Right,
+		},
+		help:     help.New(),
+		delegate: delegate,
+	}
+}
+
+func (c *MonitorList) SetHijackArrows(v bool) {
+	logrus.Debugf("Setting hijacked arrows: %v", v)
+	c.hijackArrows = v
+}
+
+func (c *MonitorList) Update(msg tea.Msg) tea.Cmd {
+	logrus.Debugf("Update called on MonitorList: %v", msg)
+	switch msg := msg.(type) {
+	case MonitorSelected:
+		c.monitorSelected = true
+	case MonitorUnselected:
+		c.monitorSelected = false
+	case WindowResized:
+		logrus.Debug("Window resized")
+		c.L.SetWidth(msg.width)
+		c.L.SetHeight(msg.height)
+		return nil
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "up", "down", "left", "right":
+			if c.hijackArrows {
+				logrus.Debug("Arrows hijacked, not forwarding")
+				return nil
+			}
+			logrus.Debug("Arrows not hijacked")
+		}
+	}
+
+	var cmd tea.Cmd
+	c.L, cmd = c.L.Update(msg)
+	return cmd
+}
+
+func (c *MonitorList) View() string {
+	var (
+		sections    []string
+		availHeight = c.L.Height()
+	)
+
+	help := c.ShortHelp()
+	availHeight -= lipgloss.Height(help)
+	content := lipgloss.NewStyle().Height(availHeight).Render(c.L.View())
+
+	sections = append(sections, content)
+	sections = append(sections, help)
+
+	return lipgloss.JoinVertical(lipgloss.Left, sections...)
+}
+
+func (c *MonitorList) ShortHelp() string {
+	listHelp := HelpStyle.Render(c.help.ShortHelpView(c.keys.Help()))
+	delegateHelp := HelpStyle.Render(c.help.ShortHelpView(c.delegate.keymap.ShortHelp(c.monitorSelected)))
+	return lipgloss.JoinVertical(lipgloss.Left, listHelp, delegateHelp)
 }

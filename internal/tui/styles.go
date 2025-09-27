@@ -25,4 +25,13 @@ var (
 	MonitorModeSelectionMode = lipgloss.NewStyle().
 					Foreground(lipgloss.Color("208")).
 					Bold(true)
+	MutedStyle = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("243"))
+	MonitorListTitle = lipgloss.NewStyle().
+				Foreground(lipgloss.Color("255"))
+	MonitorListSelected = lipgloss.NewStyle().
+				Foreground(lipgloss.Color("212")).
+				Bold(true)
 )
+
+var HelpStyle = lipgloss.NewStyle().Padding(0, 0, 0, 2)

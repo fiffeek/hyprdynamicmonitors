@@ -3,7 +3,6 @@ package tui
 
 import (
 	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/config"
@@ -18,47 +17,18 @@ type Model struct {
 	rootState *RootState
 
 	// components
-	monitorsList list.Model
-}
-
-type keyMap struct {
-	Tab   key.Binding
-	Enter key.Binding
-	Quit  key.Binding
-}
-
-var rootKeyMap = keyMap{
-	Tab: key.NewBinding(
-		key.WithKeys("tab"),
-		key.WithHelp("tab", "switch view"),
-	),
-	Enter: key.NewBinding(
-		key.WithKeys("enter"),
-		key.WithHelp("enter", "select"),
-	),
-	Quit: key.NewBinding(
-		key.WithKeys("q", "ctrl+c"),
-		key.WithHelp("q", "quit"),
-	),
+	monitorsList *MonitorList
 }
 
 func NewModel(cfg *config.Config, monitors hypr.MonitorSpecs) Model {
-	monitorItems := make([]list.Item, len(monitors))
-	for i, monitor := range monitors {
-		monitorItems[i] = MonitorItem{monitor: NewMonitorSpec(monitor)}
-	}
-
-	monitorsList := list.New(monitorItems, NewMonitorDelegate(), 0, 0)
-	monitorsList.Title = "Connected Monitors"
-	monitorsList.SetShowStatusBar(false)
-	monitorsList.SetFilteringEnabled(false)
+	monitorList := NewMonitorList(monitors)
 
 	model := Model{
 		config:       cfg,
 		keys:         rootKeyMap,
 		rootState:    &RootState{},
 		layout:       NewLayout(),
-		monitorsList: monitorsList,
+		monitorsList: monitorList,
 	}
 
 	return model
@@ -80,26 +50,35 @@ func (m Model) View() string {
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	logrus.Debugf("Received a message in root: %v", msg)
 	var cmds []tea.Cmd
 
 	switch msg := msg.(type) {
+	case MonitorSelected:
+		logrus.Debug("Monitor selected event in root")
+		m.rootState.ChangeState(StateEditingMonitor)
+	case MonitorUnselected:
+		logrus.Debug("Monitor unselected event in root")
+		m.rootState.ChangeState(StateNavigating)
 	case tea.WindowSizeMsg:
 		m.layout.SetHeight(msg.Height)
 		m.layout.SetWidth(msg.Width)
-		m.monitorsList.SetWidth(m.layout.LeftPanesWidth())
-		m.monitorsList.SetHeight(m.layout.LeftMonitorsHeight())
+		m.monitorsList.Update(WindowResized{
+			width:  m.layout.LeftPanesWidth(),
+			height: m.layout.LeftMonitorsHeight(),
+		})
 	case tea.KeyMsg:
 		switch {
 		case key.Matches(msg, m.keys.Quit):
 			return m, tea.Quit
-		case key.Matches(msg, m.keys.Tab):
 		}
 	}
 
+	m.monitorsList.SetHijackArrows(m.rootState.State != StateNavigating)
+
 	switch m.rootState.CurrentView {
 	case MonitorsListView:
-		monitorsList, cmd := m.monitorsList.Update(msg)
-		m.monitorsList = monitorsList
+		cmd := m.monitorsList.Update(msg)
 		cmds = append(cmds, cmd)
 	}
 
