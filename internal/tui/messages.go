@@ -6,7 +6,6 @@ type MonitorSelected struct {
 
 type MonitorUnselected struct{}
 
-type WindowResized struct {
-	height int
-	width  int
+type StateChanged struct {
+	state AppState
 }

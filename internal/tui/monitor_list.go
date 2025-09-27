@@ -282,11 +282,6 @@ func NewMonitorList(monitors []*MonitorSpec) *MonitorList {
 	}
 }
 
-func (c *MonitorList) SetHijackArrows(v bool) {
-	logrus.Debugf("Setting hijacked arrows: %v", v)
-	c.hijackArrows = v
-}
-
 func (c *MonitorList) Update(msg tea.Msg) tea.Cmd {
 	logrus.Debugf("Update called on MonitorList: %v", msg)
 	switch msg := msg.(type) {
@@ -294,11 +289,9 @@ func (c *MonitorList) Update(msg tea.Msg) tea.Cmd {
 		c.monitorSelected = true
 	case MonitorUnselected:
 		c.monitorSelected = false
-	case WindowResized:
-		logrus.Debug("Window resized")
-		c.L.SetWidth(msg.width)
-		c.L.SetHeight(msg.height)
-		return nil
+	case StateChanged:
+		logrus.Debugf("Setting hijacked arrows: %v", msg)
+		c.hijackArrows = msg.state != StateNavigating
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "up", "down", "left", "right":
@@ -313,6 +306,10 @@ func (c *MonitorList) Update(msg tea.Msg) tea.Cmd {
 	var cmd tea.Cmd
 	c.L, cmd = c.L.Update(msg)
 	return cmd
+}
+
+func (c *MonitorList) SetHeight(height int) {
+	c.L.SetHeight(height)
 }
 
 func (c *MonitorList) View() string {

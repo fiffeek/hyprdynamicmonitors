@@ -12,6 +12,8 @@ type keyMap struct {
 	Right         key.Binding
 	ShowFullHelp  key.Binding
 	CloseFullHelp key.Binding
+	Pan           key.Binding
+	Fullscreen    key.Binding
 }
 
 var rootKeyMap = keyMap{
@@ -50,5 +52,13 @@ var rootKeyMap = keyMap{
 	CloseFullHelp: key.NewBinding(
 		key.WithKeys("?"),
 		key.WithHelp("?", "close help"),
+	),
+	Pan: key.NewBinding(
+		key.WithKeys("p"),
+		key.WithHelp("p", "pan (move freely on the grid)"),
+	),
+	Fullscreen: key.NewBinding(
+		key.WithKeys("f"),
+		key.WithHelp("f", "fullscreen the preview"),
 	),
 }

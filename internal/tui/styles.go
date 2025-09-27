@@ -10,6 +10,13 @@ var (
 	InactiveStyle = lipgloss.NewStyle().
 			BorderStyle(lipgloss.RoundedBorder()).
 			BorderForeground(lipgloss.Color("240"))
+	HeaderStyle = lipgloss.NewStyle().
+			Bold(true).
+			Foreground(lipgloss.Color("205"))
+	HeaderIndicatorStyle = lipgloss.NewStyle().
+				Bold(true).
+				Foreground(lipgloss.Color("226")).
+				Background(lipgloss.Color("235"))
 )
 
 var (

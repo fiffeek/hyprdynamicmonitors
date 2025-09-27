@@ -44,11 +44,6 @@ func NewMonitorsPreviewPane(monitors []*MonitorSpec) *MonitorsPreviewPane {
 func (p *MonitorsPreviewPane) Update(msg tea.Msg) tea.Cmd {
 	logrus.Debugf("Update called on MonitorsPreviewPane: %v", msg)
 	switch msg := msg.(type) {
-	case WindowResized:
-		logrus.Debug("Window resized")
-		p.width = msg.width
-		p.height = msg.height
-		return nil
 	case MonitorSelected:
 		p.selectedIndex = msg.Index
 	case MonitorUnselected:
@@ -58,7 +53,17 @@ func (p *MonitorsPreviewPane) Update(msg tea.Msg) tea.Cmd {
 	return nil
 }
 
+func (p *MonitorsPreviewPane) SetHeight(h int) {
+	p.height = h
+}
+
+func (p *MonitorsPreviewPane) SetWidth(w int) {
+	logrus.Debugf("Setting with to %d", w)
+	p.width = w
+}
+
 func (p *MonitorsPreviewPane) View() string {
+	logrus.Debugf("Rendering with %d, %d", p.width, p.height)
 	return p.Render(p.width, p.height)
 }
 

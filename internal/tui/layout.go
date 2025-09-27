@@ -1,17 +1,25 @@
 package tui
 
+import "github.com/sirupsen/logrus"
+
 type Layout struct {
 	visibleWidth  int
 	visibleHeight int
 	reserved      int
+	reservedTop   int
 }
 
 func NewLayout() *Layout {
 	return &Layout{
 		visibleWidth:  0,
 		visibleHeight: 0,
-		reserved:      2,
+		reserved:      4,
+		reservedTop:   0,
 	}
+}
+
+func (l *Layout) SetReservedTop(r int) {
+	l.reservedTop = r
 }
 
 func (l *Layout) SetWidth(width int) {
@@ -27,13 +35,18 @@ func (l *Layout) LeftPanesWidth() int {
 }
 
 func (l *Layout) RightPanesWidth() int {
+	logrus.Debugf("Reserved width %d", l.reserved)
 	return 2*l.visibleWidth/3 - l.reserved
 }
 
+func (l *Layout) AvailableHeight() int {
+	return l.visibleHeight - l.reservedTop
+}
+
 func (l *Layout) LeftMonitorsHeight() int {
-	return 3 * l.visibleHeight / 4
+	return 3 * l.AvailableHeight() / 4
 }
 
 func (l *Layout) RightPreviewHeight() int {
-	return 7 * l.visibleHeight / 8
+	return 7 * l.AvailableHeight() / 8
 }
