@@ -48,11 +48,11 @@ func NewState() *RootState {
 	}
 }
 
-func (r *RootState) ToogleFullscreen() {
+func (r *RootState) ToggleFullscreen() {
 	r.State.Fullscreen = !r.State.Fullscreen
 }
 
-func (r *RootState) TooglePanning() {
+func (r *RootState) TogglePanning() {
 	r.State.Panning = !r.State.Panning
 }
 
