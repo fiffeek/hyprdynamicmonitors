@@ -22,6 +22,7 @@ type Model struct {
 	monitorsPreviewPane *MonitorsPreviewPane
 	help                help.Model
 	header              *Header
+	hyprPreviewPane     *HyprPreviewPane
 }
 
 func NewModel(cfg *config.Config, hyprMonitors hypr.MonitorSpecs) Model {
@@ -39,6 +40,7 @@ func NewModel(cfg *config.Config, hyprMonitors hypr.MonitorSpecs) Model {
 		monitorsPreviewPane: NewMonitorsPreviewPane(monitors),
 		help:                help.New(),
 		header:              NewHeader("HyprDynamicMonitors"),
+		hyprPreviewPane:     NewHyprPreviewPane(monitors),
 	}
 
 	return model
@@ -50,6 +52,7 @@ func (m Model) Init() tea.Cmd {
 
 func (m Model) View() string {
 	logrus.Debug("Rendering the root model")
+	rightSections := []string{}
 
 	m.header.SetWidth(m.layout.visibleWidth)
 	header := m.header.View()
@@ -58,7 +61,7 @@ func (m Model) View() string {
 	globalHelp := HelpStyle.Width(m.layout.visibleWidth).Render(m.help.ShortHelpView(m.GlobalHelp()))
 	globalHelpHeight := lipgloss.Height(globalHelp)
 
-	m.layout.SetReservedTop(globalHelpHeight + headerHeight)
+	m.layout.SetReservedTop(globalHelpHeight + headerHeight + 2)
 
 	m.monitorsList.SetHeight(m.layout.LeftMonitorsHeight())
 	monitorView := InactiveStyle.Width(m.layout.LeftPanesWidth()).Height(m.layout.LeftMonitorsHeight()).Render(m.monitorsList.View())
@@ -73,13 +76,19 @@ func (m Model) View() string {
 		previewPane = InactiveStyle.Width(m.layout.AvailableWidth()).Height(m.layout.AvailableHeight()).Render(m.monitorsPreviewPane.View())
 	}
 
+	rightSections = append(rightSections, previewPane)
+	if !m.rootState.State.Fullscreen {
+		hyprPreview := InactiveStyle.Width(m.layout.RightPanesWidth()).Height(m.layout.RightHyprHeight()).Render(m.hyprPreviewPane.View())
+		rightSections = append(rightSections, hyprPreview)
+	}
+
 	leftPanels := lipgloss.JoinVertical(
 		lipgloss.Left,
 		monitorView,
 	)
 	rightPanels := lipgloss.JoinVertical(
 		lipgloss.Left,
-		previewPane,
+		rightSections...,
 	)
 
 	view := lipgloss.JoinHorizontal(

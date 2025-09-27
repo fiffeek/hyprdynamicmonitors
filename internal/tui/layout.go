@@ -52,5 +52,9 @@ func (l *Layout) LeftMonitorsHeight() int {
 }
 
 func (l *Layout) RightPreviewHeight() int {
-	return 7 * l.AvailableHeight() / 8
+	return 6 * l.AvailableHeight() / 7
+}
+
+func (l *Layout) RightHyprHeight() int {
+	return l.AvailableHeight() / 7
 }

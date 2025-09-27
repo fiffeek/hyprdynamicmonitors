@@ -332,6 +332,7 @@ func (c *MonitorList) Update(msg tea.Msg) tea.Cmd {
 	case tea.KeyMsg:
 		switch {
 		case key.Matches(msg, c.delegate.keymap.rotate):
+			// TODO only when a monitor is editing
 			c.editor.RotateMonitor(c.selectedMonitorIndex)
 		case key.Matches(msg, rootKeyMap.Down), key.Matches(msg, rootKeyMap.Up), key.Matches(msg, rootKeyMap.Left), key.Matches(msg, rootKeyMap.Right):
 			if c.state.Panning {

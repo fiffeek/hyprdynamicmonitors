@@ -20,6 +20,16 @@ var (
 )
 
 var (
+	HyprConfigTitleStyle = lipgloss.NewStyle().
+				Bold(true).
+				Foreground(lipgloss.Color("180"))
+
+	HyprCommandStyle = lipgloss.NewStyle().
+				Foreground(lipgloss.Color("255")).
+				Background(lipgloss.Color("235"))
+)
+
+var (
 	ItemSubtitle = lipgloss.NewStyle().
 			Foreground(lipgloss.Color("180")).
 			Italic(true)

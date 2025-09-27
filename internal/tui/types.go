@@ -103,6 +103,13 @@ func (m *MonitorSpec) NeedsDimensionsSwap() bool {
 	return m.Transform == 1 || m.Transform == 3
 }
 
+func (m *MonitorSpec) ToHypr() string {
+	if m.Disabled {
+		return fmt.Sprintf("desc:%s,disable", m.Description)
+	}
+	return fmt.Sprintf("desc:%s,%dx%d@%.5f,%dx%d,%.2f,transform,%d", m.Description, m.Width, m.Height, m.RefreshRate, m.X, m.Y, m.Scale, m.Transform)
+}
+
 type MonitorRectangle struct {
 	startX  int
 	startY  int
