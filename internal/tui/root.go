@@ -59,12 +59,19 @@ func (m Model) View() string {
 	globalHelpHeight := lipgloss.Height(globalHelp)
 
 	m.layout.SetReservedTop(globalHelpHeight + headerHeight)
+
 	m.monitorsList.SetHeight(m.layout.LeftMonitorsHeight())
 	monitorView := InactiveStyle.Width(m.layout.LeftPanesWidth()).Height(m.layout.LeftMonitorsHeight()).Render(m.monitorsList.View())
 
 	m.monitorsPreviewPane.SetHeight(m.layout.RightPreviewHeight())
 	m.monitorsPreviewPane.SetWidth(m.layout.RightPanesWidth())
 	previewPane := InactiveStyle.Width(m.layout.RightPanesWidth()).Height(m.layout.RightPreviewHeight()).Render(m.monitorsPreviewPane.View())
+
+	if m.rootState.State == StateFullscreen {
+		m.monitorsPreviewPane.SetHeight(m.layout.AvailableHeight())
+		m.monitorsPreviewPane.SetWidth(m.layout.AvailableWidth())
+		previewPane = InactiveStyle.Width(m.layout.AvailableWidth()).Height(m.layout.AvailableHeight()).Render(m.monitorsPreviewPane.View())
+	}
 
 	leftPanels := lipgloss.JoinVertical(
 		lipgloss.Left,
@@ -80,6 +87,10 @@ func (m Model) View() string {
 		leftPanels,
 		rightPanels,
 	)
+
+	if m.rootState.State == StateFullscreen {
+		view = previewPane
+	}
 
 	screen := lipgloss.JoinVertical(lipgloss.Top, header, globalHelp, view)
 

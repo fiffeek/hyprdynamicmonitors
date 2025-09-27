@@ -40,7 +40,11 @@ func (l *Layout) RightPanesWidth() int {
 }
 
 func (l *Layout) AvailableHeight() int {
-	return l.visibleHeight - l.reservedTop
+	return l.visibleHeight - l.reservedTop - 2
+}
+
+func (l *Layout) AvailableWidth() int {
+	return l.visibleWidth - l.reserved
 }
 
 func (l *Layout) LeftMonitorsHeight() int {
