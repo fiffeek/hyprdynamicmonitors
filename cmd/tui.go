@@ -9,9 +9,12 @@ import (
 	"github.com/fiffeek/hyprdynamicmonitors/internal/config"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/hypr"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/tui"
+	"github.com/fiffeek/hyprdynamicmonitors/internal/utils"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
+
+var mockedHyprMonitors string
 
 var tuiCmd = &cobra.Command{
 	Use:   "tui",
@@ -25,6 +28,7 @@ var tuiCmd = &cobra.Command{
 				fmt.Println("fatal:", err)
 				os.Exit(1)
 			}
+			logrus.SetOutput(f)
 			defer f.Close()
 		}
 
@@ -36,14 +40,9 @@ var tuiCmd = &cobra.Command{
 			return fmt.Errorf("failed to load config: %w", err)
 		}
 
-		hyprIPC, err := hypr.NewIPC(ctx)
+		monitors, err := getMonitors(ctx)
 		if err != nil {
-			return fmt.Errorf("failed to connect to Hyprland IPC: %w", err)
-		}
-
-		monitors := hyprIPC.GetConnectedMonitors()
-		if err := monitors.Validate(); err != nil {
-			return fmt.Errorf("failed to get valid monitor information: %w", err)
+			return fmt.Errorf("cant get the current monitors spec: %w", err)
 		}
 
 		model := tui.NewModel(cfg, monitors)
@@ -61,6 +60,41 @@ var tuiCmd = &cobra.Command{
 	},
 }
 
+func getMonitors(ctx context.Context) (hypr.MonitorSpecs, error) {
+	if mockedHyprMonitors != "" {
+		//nolint:gosec
+		contents, err := os.ReadFile(mockedHyprMonitors)
+		if err != nil {
+			return nil, fmt.Errorf("cant read the mocked hypr monitors file: %w", err)
+		}
+
+		var res hypr.MonitorSpecs
+		if err := utils.UnmarshalResponse(contents, &res); err != nil {
+			return nil, fmt.Errorf("failed to parse contents: %w", err)
+		}
+
+		return res, nil
+	}
+	hyprIPC, err := hypr.NewIPC(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect to Hyprland IPC: %w", err)
+	}
+
+	monitors := hyprIPC.GetConnectedMonitors()
+	if err := monitors.Validate(); err != nil {
+		return nil, fmt.Errorf("failed to get valid monitor information: %w", err)
+	}
+
+	return monitors, nil
+}
+
 func init() {
 	rootCmd.AddCommand(tuiCmd)
+
+	tuiCmd.Flags().StringVar(
+		&mockedHyprMonitors,
+		"hypr-monitors-override",
+		"",
+		"When used it fill parse the given file as hyprland monitors spec, used for testing.",
+	)
 }

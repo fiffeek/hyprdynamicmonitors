@@ -6,6 +6,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/config"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/hypr"
+	"github.com/sirupsen/logrus"
 )
 
 type Model struct {
@@ -48,6 +49,7 @@ func (m Model) Init() tea.Cmd {
 }
 
 func (m Model) View() string {
+	logrus.Debug("Rendering the root model")
 	return "none"
 }
 
