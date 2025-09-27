@@ -10,7 +10,6 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/fiffeek/hyprdynamicmonitors/internal/hypr"
 	"github.com/sirupsen/logrus"
 )
 
@@ -254,10 +253,10 @@ type MonitorList struct {
 	monitorSelected bool
 }
 
-func NewMonitorList(monitors hypr.MonitorSpecs) *MonitorList {
+func NewMonitorList(monitors []*MonitorSpec) *MonitorList {
 	monitorItems := make([]list.Item, len(monitors))
 	for i, monitor := range monitors {
-		monitorItems[i] = MonitorItem{monitor: NewMonitorSpec(monitor)}
+		monitorItems[i] = MonitorItem{monitor: monitor}
 	}
 
 	delegate := NewMonitorDelegate()
@@ -334,6 +333,7 @@ func (c *MonitorList) View() string {
 
 func (c *MonitorList) ShortHelp() string {
 	listHelp := HelpStyle.Render(c.help.ShortHelpView(c.keys.Help()))
-	delegateHelp := HelpStyle.Render(c.help.ShortHelpView(c.delegate.keymap.ShortHelp(c.monitorSelected)))
+	delegateHelp := HelpStyle.Render(c.help.ShortHelpView(
+		c.delegate.keymap.ShortHelp(c.monitorSelected)))
 	return lipgloss.JoinVertical(lipgloss.Left, listHelp, delegateHelp)
 }

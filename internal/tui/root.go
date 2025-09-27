@@ -17,18 +17,23 @@ type Model struct {
 	rootState *RootState
 
 	// components
-	monitorsList *MonitorList
+	monitorsList        *MonitorList
+	monitorsPreviewPane *MonitorsPreviewPane
 }
 
-func NewModel(cfg *config.Config, monitors hypr.MonitorSpecs) Model {
-	monitorList := NewMonitorList(monitors)
+func NewModel(cfg *config.Config, hyprMonitors hypr.MonitorSpecs) Model {
+	monitors := make([]*MonitorSpec, len(hyprMonitors))
+	for i, monitor := range hyprMonitors {
+		monitors[i] = NewMonitorSpec(monitor)
+	}
 
 	model := Model{
-		config:       cfg,
-		keys:         rootKeyMap,
-		rootState:    &RootState{},
-		layout:       NewLayout(),
-		monitorsList: monitorList,
+		config:              cfg,
+		keys:                rootKeyMap,
+		rootState:           &RootState{},
+		layout:              NewLayout(),
+		monitorsList:        NewMonitorList(monitors),
+		monitorsPreviewPane: NewMonitorsPreviewPane(monitors),
 	}
 
 	return model
@@ -42,11 +47,24 @@ func (m Model) View() string {
 	logrus.Debug("Rendering the root model")
 
 	monitorView := InactiveStyle.Width(m.layout.LeftPanesWidth()).Render(m.monitorsList.View())
+	previewPane := InactiveStyle.Width(m.layout.RightPanesWidth()).Render(m.monitorsPreviewPane.View())
 
-	return lipgloss.JoinVertical(
+	leftPanels := lipgloss.JoinVertical(
 		lipgloss.Left,
 		monitorView,
 	)
+	rightPanels := lipgloss.JoinVertical(
+		lipgloss.Left,
+		previewPane,
+	)
+
+	view := lipgloss.JoinHorizontal(
+		lipgloss.Left,
+		leftPanels,
+		rightPanels,
+	)
+
+	return lipgloss.Place(m.layout.visibleWidth, m.layout.visibleHeight, lipgloss.Center, lipgloss.Center, view)
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -63,10 +81,16 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.layout.SetHeight(msg.Height)
 		m.layout.SetWidth(msg.Width)
-		m.monitorsList.Update(WindowResized{
+		cmd := m.monitorsList.Update(WindowResized{
 			width:  m.layout.LeftPanesWidth(),
 			height: m.layout.LeftMonitorsHeight(),
 		})
+		cmds = append(cmds, cmd)
+		cmd = m.monitorsPreviewPane.Update(WindowResized{
+			width:  m.layout.RightPanesWidth(),
+			height: m.layout.RightPreviewHeight(),
+		})
+		cmds = append(cmds, cmd)
 	case tea.KeyMsg:
 		switch {
 		case key.Matches(msg, m.keys.Quit):
@@ -79,6 +103,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch m.rootState.CurrentView {
 	case MonitorsListView:
 		cmd := m.monitorsList.Update(msg)
+		cmds = append(cmds, cmd)
+		cmd = m.monitorsPreviewPane.Update(msg)
 		cmds = append(cmds, cmd)
 	}
 

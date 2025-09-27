@@ -83,3 +83,37 @@ func (m *MonitorSpec) Mode() string {
 		m.Height,
 		m.RefreshRate)
 }
+
+func (m *MonitorSpec) PositionArrowView() string {
+	switch m.Transform {
+	case 0: // Normal (0°) - top is up
+		return "↑"
+	case 1: // 90° clockwise - top is right
+		return "→"
+	case 2: // 180° - top is down
+		return "↓"
+	case 3: // 270° clockwise - top is left
+		return "←"
+	default:
+		return "↑" // Default to up
+	}
+}
+
+func (m *MonitorSpec) NeedsDimensionsSwap() bool {
+	return m.Transform == 1 || m.Transform == 3
+}
+
+func (m *MonitorSpec) isBottomEdge(x, y, startX, startY, endX, endY int) bool {
+	switch m.Transform {
+	case 0: // Normal (0°) - bottom is bottom
+		return (y == endY)
+	case 1: // 90° clockwise - bottom is now left
+		return (x == startX)
+	case 2: // 180° - bottom is now top
+		return (y == startY)
+	case 3: // 270° clockwise - bottom is now right
+		return (x == endX)
+	default:
+		return false
+	}
+}
