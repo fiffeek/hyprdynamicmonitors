@@ -15,6 +15,8 @@ type keyMap struct {
 	CloseFullHelp key.Binding
 	Pan           key.Binding
 	Fullscreen    key.Binding
+	ZoomIn        key.Binding
+	ZoomOut       key.Binding
 }
 
 var rootKeyMap = keyMap{
@@ -65,5 +67,13 @@ var rootKeyMap = keyMap{
 	Center: key.NewBinding(
 		key.WithKeys("c"),
 		key.WithHelp("c", "moves the grid to 0, 0"),
+	),
+	ZoomIn: key.NewBinding(
+		key.WithKeys("+"),
+		key.WithHelp("+", "zoom in"),
+	),
+	ZoomOut: key.NewBinding(
+		key.WithKeys("-"),
+		key.WithHelp("-", "zoom out"),
 	),
 }

@@ -76,6 +76,10 @@ func (p *MonitorsPreviewPane) Update(msg tea.Msg) tea.Cmd {
 		case key.Matches(msg, rootKeyMap.Center):
 			p.panX = 0
 			p.panY = 0
+		case key.Matches(msg, rootKeyMap.ZoomIn):
+			p.ZoomIn()
+		case key.Matches(msg, rootKeyMap.ZoomOut):
+			p.ZoomOut()
 		}
 	}
 
@@ -366,4 +370,28 @@ func (p *MonitorsPreviewPane) renderLegend() string {
 	}
 
 	return LegendStyle.Render(strings.Join(legendItems, "\n"))
+}
+
+func (p *MonitorsPreviewPane) ZoomIn() {
+	p.virtualWidth /= 2
+	p.virtualHeight /= 2
+	// Set minimum bounds
+	if p.virtualWidth < 1000 {
+		p.virtualWidth = 1000
+	}
+	if p.virtualHeight < 750 {
+		p.virtualHeight = 750
+	}
+}
+
+func (p *MonitorsPreviewPane) ZoomOut() {
+	p.virtualWidth *= 2
+	p.virtualHeight *= 2
+	// Set maximum bounds
+	if p.virtualWidth > 32000 {
+		p.virtualWidth = 32000
+	}
+	if p.virtualHeight > 24000 {
+		p.virtualHeight = 24000
+	}
 }
