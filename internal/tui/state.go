@@ -56,6 +56,12 @@ func (r *RootState) TogglePanning() {
 	r.State.Panning = !r.State.Panning
 }
 
-func (r *RootState) ToggleMonitortEdit() {
-	r.State.EditingMonitor = !r.State.EditingMonitor
+func (r *RootState) SetMonitorEditState(msg MonitorBeingEdited) {
+	r.State.EditingMonitor = true
+	r.State.Scaling = msg.Scaling
+}
+
+func (r *RootState) ClearMonitorEditState() {
+	r.State.Scaling = false
+	r.State.EditingMonitor = false
 }

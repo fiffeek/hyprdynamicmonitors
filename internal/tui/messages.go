@@ -1,7 +1,8 @@
 package tui
 
-type MonitorSelected struct {
-	Index int
+type MonitorBeingEdited struct {
+	Index   int
+	Scaling bool
 }
 
 type MonitorUnselected struct{}

@@ -103,13 +103,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	stateChanged := false
 
 	switch msg := msg.(type) {
-	case MonitorSelected:
+	case MonitorBeingEdited:
 		logrus.Debug("Monitor selected event in root")
-		m.rootState.ToggleMonitortEdit()
+		m.rootState.SetMonitorEditState(msg)
 		stateChanged = true
 	case MonitorUnselected:
 		logrus.Debug("Monitor unselected event in root")
-		m.rootState.ToggleMonitortEdit()
+		m.rootState.ClearMonitorEditState()
 		stateChanged = true
 	case tea.WindowSizeMsg:
 		m.layout.SetHeight(msg.Height)
