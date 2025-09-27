@@ -3,7 +3,9 @@ package tui
 
 import (
 	"github.com/charmbracelet/bubbles/key"
+	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/config"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/hypr"
 	"github.com/sirupsen/logrus"
@@ -12,6 +14,10 @@ import (
 type Model struct {
 	config *config.Config
 	keys   keyMap
+	layout *Layout
+
+	// components
+	monitorsList list.Model
 }
 
 type keyMap struct {
@@ -36,9 +42,21 @@ var defaultKeyMap = keyMap{
 }
 
 func NewModel(cfg *config.Config, monitors hypr.MonitorSpecs) Model {
+	monitorItems := make([]list.Item, len(monitors))
+	for i, monitor := range monitors {
+		monitorItems[i] = MonitorItem{monitor: NewMonitorSpec(monitor)}
+	}
+
+	monitorsList := list.New(monitorItems, NewMonitorDelegate(), 0, 0)
+	monitorsList.Title = "Connected Monitors"
+	monitorsList.SetShowStatusBar(false)
+	monitorsList.SetFilteringEnabled(false)
+
 	model := Model{
-		config: cfg,
-		keys:   defaultKeyMap,
+		config:       cfg,
+		keys:         defaultKeyMap,
+		layout:       NewLayout(),
+		monitorsList: monitorsList,
 	}
 
 	return model
@@ -50,7 +68,13 @@ func (m Model) Init() tea.Cmd {
 
 func (m Model) View() string {
 	logrus.Debug("Rendering the root model")
-	return "none"
+
+	monitorView := InactiveStyle.Width(m.layout.LeftPanesWidth()).Render(m.monitorsList.View())
+
+	return lipgloss.JoinVertical(
+		lipgloss.Left,
+		monitorView,
+	)
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -58,7 +82,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-
+		m.layout.SetHeight(msg.Height)
+		m.layout.SetWidth(msg.Width)
+		m.monitorsList.SetWidth(m.layout.LeftPanesWidth())
+		m.monitorsList.SetHeight(m.layout.LeftMonitorsHeight())
 	case tea.KeyMsg:
 		switch {
 		case key.Matches(msg, m.keys.Quit):
