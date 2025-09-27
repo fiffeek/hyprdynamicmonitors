@@ -109,11 +109,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		case key.Matches(msg, m.keys.Pan):
 			logrus.Debug("Toggling pane mode")
-			m.rootState.ToogleState(StatePanning)
+			m.rootState.ToggleState(StatePanning)
 			stateChanged = true
 		case key.Matches(msg, m.keys.Fullscreen):
 			logrus.Debug("Toggling fullscreen mode")
-			m.rootState.ToogleState(StateFullscreen)
+			m.rootState.ToggleState(StateFullscreen)
 			stateChanged = true
 		}
 	}

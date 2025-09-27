@@ -55,7 +55,7 @@ func (r *RootState) ChangeState(state AppState) {
 	r.State = state
 }
 
-func (r *RootState) ToogleState(state AppState) bool {
+func (r *RootState) ToggleState(state AppState) bool {
 	if r.State == state {
 		r.State = StateNavigating
 		return false
