@@ -4,6 +4,8 @@ import (
 	"fmt"
 )
 
+// TODO monitors store with mutation commands
+// // TODO grab monitor by its index
 // MonitorEditor handles all monitor editing operations
 type MonitorEditor struct {
 	monitors     []*MonitorSpec
@@ -621,51 +623,4 @@ func (e *MonitorEditor) snapMonitorToNearestEdge(monitorIndex int) {
 		monitor.X = snappedX
 		monitor.Y = snappedY
 	}
-}
-
-// findNearestConnectedPosition finds the nearest position where a monitor would be connected
-func (e *MonitorEditor) findNearestConnectedPosition(monitorIndex int) (int, int) {
-	monitor := e.monitors[monitorIndex]
-	currentX, currentY := monitor.X, monitor.Y
-
-	// If there's only one active monitor, stay at current position
-	activeMonitors := 0
-	for _, m := range e.monitors {
-		if !m.Disabled {
-			activeMonitors++
-		}
-	}
-	if activeMonitors <= 1 {
-		return currentX, currentY
-	}
-
-	monitorWidth, _ := e.getMonitorDimensions(monitor)
-
-	// Simple approach: just put it to the right of the first other monitor
-	for i, otherMonitor := range e.monitors {
-		if i == monitorIndex || otherMonitor.Disabled {
-			continue
-		}
-
-		otherWidth, _ := e.getMonitorDimensions(otherMonitor)
-
-		// Try right of other monitor first
-		newX := otherMonitor.X + otherWidth
-		newY := otherMonitor.Y
-
-		if e.hasConnectivity(monitorIndex, newX, newY) {
-			return newX, newY
-		}
-
-		// Try left of other monitor
-		newX = otherMonitor.X - monitorWidth
-		newY = otherMonitor.Y
-
-		if e.hasConnectivity(monitorIndex, newX, newY) {
-			return newX, newY
-		}
-	}
-
-	// If nothing worked, return current position
-	return currentX, currentY
 }

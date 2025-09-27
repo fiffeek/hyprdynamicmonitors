@@ -139,10 +139,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch m.rootState.CurrentView {
 	case MonitorsListView:
-		cmd := m.monitorsList.Update(msg)
-		cmds = append(cmds, cmd)
-		cmd = m.monitorsPreviewPane.Update(msg)
-		cmds = append(cmds, cmd)
+		switch m.rootState.State.Panning {
+		case true:
+			cmd := m.monitorsPreviewPane.Update(msg)
+			cmds = append(cmds, cmd)
+		case false:
+			cmd := m.monitorsList.Update(msg)
+			cmds = append(cmds, cmd)
+		}
 	}
 
 	cmd := m.header.Update(msg)

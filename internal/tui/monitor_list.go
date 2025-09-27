@@ -100,6 +100,8 @@ type MonitorListKeyMap struct {
 	rotate        key.Binding
 	scale         key.Binding
 	changeMode    key.Binding
+	vrr           key.Binding
+	toggle        key.Binding
 }
 
 func NewMonitorListKeyMap() *MonitorListKeyMap {
@@ -120,6 +122,14 @@ func NewMonitorListKeyMap() *MonitorListKeyMap {
 			key.WithKeys("s"),
 			key.WithHelp("s", "scale"),
 		),
+		vrr: key.NewBinding(
+			key.WithKeys("v"),
+			key.WithHelp("v", "toggle vrr"),
+		),
+		toggle: key.NewBinding(
+			key.WithKeys("d"),
+			key.WithHelp("d", "enable/disable"),
+		),
 		changeMode: key.NewBinding(
 			key.WithKeys("m"),
 			key.WithHelp("m", "change mode"),
@@ -134,6 +144,8 @@ func (m MonitorListKeyMap) ShortHelp(selected bool) []key.Binding {
 			m.rotate,
 			m.scale,
 			m.changeMode,
+			m.vrr,
+			m.toggle,
 		}
 	}
 	return []key.Binding{
@@ -184,6 +196,18 @@ func (d MonitorDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd {
 					return MonitorUnselected{}
 				})
 			}
+		case key.Matches(msg, d.keymap.vrr):
+			logrus.Debugf("List called with vrr")
+			if !item.Editing() {
+				return nil
+			}
+			item.monitor.Vrr = !item.monitor.Vrr
+		case key.Matches(msg, d.keymap.toggle):
+			logrus.Debugf("List called with toggle")
+			if !item.Editing() {
+				return nil
+			}
+			item.monitor.Disabled = !item.monitor.Disabled
 		case key.Matches(msg, d.keymap.scale):
 			logrus.Debugf("List called with scale")
 			if !item.Editing() {
@@ -306,8 +330,14 @@ func (c *MonitorList) Update(msg tea.Msg) tea.Cmd {
 		c.hijackArrows = msg.state.Editing()
 		c.state = msg.state
 	case tea.KeyMsg:
-		switch msg.String() {
-		case "up", "down", "left", "right":
+		switch {
+		case key.Matches(msg, c.delegate.keymap.rotate):
+			c.editor.RotateMonitor(c.selectedMonitorIndex)
+		case key.Matches(msg, rootKeyMap.Down), key.Matches(msg, rootKeyMap.Up), key.Matches(msg, rootKeyMap.Left), key.Matches(msg, rootKeyMap.Right):
+			if c.state.Panning {
+				logrus.Debug("In panning mode, exiting")
+				return nil
+			}
 			if c.hijackArrows {
 				logrus.Debug("Arrows hijacked, not forwarding")
 				cmd := c.processArrows(msg)
@@ -331,29 +361,41 @@ func (c *MonitorList) processArrows(msg tea.KeyMsg) tea.Cmd {
 	if c.state.Scaling {
 		return c.handleScale(msg)
 	}
-	return nil
+	return c.handleMove(msg)
 }
 
 func (c *MonitorList) handleScale(msg tea.KeyMsg) tea.Cmd {
+	delta := 0.1
 	switch msg.String() {
 	case "up":
-		c.editor.ScaleMonitor(c.selectedMonitorIndex, +0.1)
+		delta = 0.1
 	case "down":
-		c.editor.ScaleMonitor(c.selectedMonitorIndex, -0.1)
+		delta = -0.1
 	}
 
-	item, ok := c.L.SelectedItem().(MonitorItem)
-	if !ok {
-		return nil
-	}
-	item.monitor.Scale = c.editor.GetMonitor(c.selectedMonitorIndex).Scale
-	logrus.Debugf("Setting scale to %f", item.monitor.Scale)
-	return c.L.SetItem(c.selectedMonitorIndex, item)
+	c.editor.ScaleMonitor(c.selectedMonitorIndex, delta)
+	return nil
 }
 
-// func (c *MonitorList) updateState() {
-// 	monitors := c.editor.GetMonitors()
-// }
+func (c *MonitorList) handleMove(msg tea.KeyMsg) tea.Cmd {
+	step := c.editor.GetPositionStep()
+	stepX := 0
+	stepY := 0
+
+	switch msg.String() {
+	case "up":
+		stepY = -step
+	case "down":
+		stepY = step
+	case "left":
+		stepX = -step
+	case "right":
+		stepX = step
+	}
+
+	_, _ = c.editor.MoveMonitor(c.selectedMonitorIndex, stepX, stepY)
+	return nil
+}
 
 func (c *MonitorList) SetHeight(height int) {
 	c.L.SetHeight(height)
