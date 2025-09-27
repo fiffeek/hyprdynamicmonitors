@@ -130,7 +130,12 @@ func (p *MonitorsPreviewPane) renderGrid(gridWidth, gridHeight int) string {
 		p.DrawMonitor(p.selectedIndex, p.monitors[p.selectedIndex], scaleX, scaleY, grid)
 	}
 
-	// Convert grid to styled string with colors
+	lines := p.ColorGrid(grid)
+	return strings.Join(lines, "\n")
+}
+
+// ColorGrid converts the grid cells to the colorized representation
+func (*MonitorsPreviewPane) ColorGrid(grid [][]gridCell) []string {
 	var lines []string
 	for _, row := range grid {
 		var line strings.Builder
@@ -166,8 +171,7 @@ func (p *MonitorsPreviewPane) renderGrid(gridWidth, gridHeight int) string {
 
 		lines = append(lines, line.String())
 	}
-
-	return strings.Join(lines, "\n")
+	return lines
 }
 
 func (p *MonitorsPreviewPane) DrawMonitor(i int, monitor *MonitorSpec, scaleX, scaleY float64, grid [][]gridCell) {
@@ -198,28 +202,10 @@ func (p *MonitorsPreviewPane) DrawMonitor(i int, monitor *MonitorSpec, scaleX, s
 	startY := centerY + int(float64(monitor.Y-p.panY)*scaleY)
 	endX := startX + int(float64(visualWidth)*scaleX)
 	endY := startY + int(float64(visualHeight)*scaleY)
-
-	// Ensure minimum size (at least 4x2 to be visible)
-	if endX <= startX {
-		endX = startX + 4
-	}
-	if endY <= startY {
-		endY = startY + 2
-	}
-
-	// Clamp to grid bounds
-	if startX < 0 {
-		startX = 0
-	}
-	if startY < 0 {
-		startY = 0
-	}
-	if endX >= gridWidth {
-		endX = gridWidth - 1
-	}
-	if endY >= gridHeight {
-		endY = gridHeight - 1
-	}
+	rectangle := NewMonitorRectangle(
+		startX, startY, endX, endY, monitor,
+	)
+	rectangle.Clamp(gridWidth, gridHeight)
 
 	// Skip if monitor is outside visible area
 	if startX >= gridWidth || startY >= gridHeight || endX < 0 || endY < 0 {
@@ -228,12 +214,11 @@ func (p *MonitorsPreviewPane) DrawMonitor(i int, monitor *MonitorSpec, scaleX, s
 
 	color := MonitorColors[i%len(MonitorColors)]
 	isSelected := i == p.selectedIndex
-
-	p.drawMonitorRectangle(isSelected, startY, endY, startX, endX, color, monitor, grid)
-	p.drawMonitorLabel(monitor, startY, endY, startX, endX, grid, color)
+	p.drawMonitorRectangle(isSelected, rectangle, color, grid)
+	p.drawMonitorLabel(monitor, rectangle, grid, color)
 }
 
-func (*MonitorsPreviewPane) drawMonitorLabel(monitor *MonitorSpec, startY, endY, startX, endX int, grid [][]gridCell, color string) {
+func (*MonitorsPreviewPane) drawMonitorLabel(monitor *MonitorSpec, rectangle *MonitorRectangle, grid [][]gridCell, color string) {
 	gridWidth := len(grid[0])
 	gridHeight := len(grid)
 
@@ -246,22 +231,21 @@ func (*MonitorsPreviewPane) drawMonitorLabel(monitor *MonitorSpec, startY, endY,
 	arrow := monitor.PositionArrowView()
 	fullLabel := label + arrow
 
-	labelY := (startY + endY) / 2
-	labelStartX := (startX + endX - len(fullLabel)) / 2
+	labelY := (rectangle.startY + rectangle.endY) / 2
+	labelStartX := (rectangle.startX + rectangle.endX - len(fullLabel)) / 2
 
-	if labelY >= 0 && labelY < gridHeight && labelStartX >= startX && labelStartX <= endX {
+	if labelY >= 0 && labelY < gridHeight && labelStartX >= rectangle.startX && labelStartX <= rectangle.endX {
 		for j, char := range fullLabel {
 			labelX := labelStartX + j
-			if labelX >= 0 && labelX < gridWidth && labelX >= startX && labelX <= endX {
+			if labelX >= 0 && labelX < gridWidth && labelX >= rectangle.startX && labelX <= rectangle.endX {
 				grid[labelY][labelX] = gridCell{char: char, color: color}
 			}
 		}
 	}
 }
 
-func (*MonitorsPreviewPane) drawMonitorRectangle(isSelected bool, startY, endY, startX,
-	endX int,
-	color string, monitor *MonitorSpec, grid [][]gridCell,
+func (*MonitorsPreviewPane) drawMonitorRectangle(isSelected bool, rectangle *MonitorRectangle,
+	color string, grid [][]gridCell,
 ) {
 	gridWidth := len(grid[0])
 	gridHeight := len(grid)
@@ -273,15 +257,16 @@ func (*MonitorsPreviewPane) drawMonitorRectangle(isSelected bool, startY, endY, 
 		fillChar = '▒'
 	}
 
-	for y := startY; y <= endY; y++ {
-		for x := startX; x <= endX; x++ {
+	for y := rectangle.startY; y <= rectangle.endY; y++ {
+		for x := rectangle.startX; x <= rectangle.endX; x++ {
 			if y >= 0 && y < gridHeight && x >= 0 && x < gridWidth {
 				// check bounds
-				if y == startY || y == endY || x == startX || x == endX {
+				if y == rectangle.startY || y == rectangle.endY ||
+					x == rectangle.startX || x == rectangle.endX {
 					// Use different color for the "bottom" edge based on rotation
 					edgeColor := color
 
-					if monitor.isBottomEdge(x, y, startX, startY, endY, endY) {
+					if rectangle.isBottomEdge(x, y) {
 						// Use a brighter/different shade for the bottom edge
 						edgeColor = GetBrightMonitorColor(color)
 					}

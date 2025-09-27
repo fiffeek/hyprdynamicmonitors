@@ -103,16 +103,59 @@ func (m *MonitorSpec) NeedsDimensionsSwap() bool {
 	return m.Transform == 1 || m.Transform == 3
 }
 
-func (m *MonitorSpec) isBottomEdge(x, y, startX, startY, endX, endY int) bool {
-	switch m.Transform {
+type MonitorRectangle struct {
+	startX  int
+	startY  int
+	endX    int
+	endY    int
+	monitor *MonitorSpec
+}
+
+func NewMonitorRectangle(startX, startY, endX, endY int, monitor *MonitorSpec) *MonitorRectangle {
+	rec := &MonitorRectangle{
+		startX:  startX,
+		startY:  startY,
+		endX:    endX,
+		endY:    endY,
+		monitor: monitor,
+	}
+
+	if rec.endX <= rec.startX {
+		rec.endX = rec.startX + 4
+	}
+	if rec.endY <= rec.startY {
+		rec.endY = rec.startY + 2
+	}
+
+	return rec
+}
+
+// Clamp to grid bounds
+func (m *MonitorRectangle) Clamp(gridWidth, gridHeight int) {
+	if m.startX < 0 {
+		m.startX = 0
+	}
+	if m.startY < 0 {
+		m.startY = 0
+	}
+	if m.endX >= gridWidth {
+		m.endX = gridWidth - 1
+	}
+	if m.endY >= gridHeight {
+		m.endY = gridHeight - 1
+	}
+}
+
+func (m *MonitorRectangle) isBottomEdge(x, y int) bool {
+	switch m.monitor.Transform {
 	case 0: // Normal (0°) - bottom is bottom
-		return (y == endY)
+		return (y == m.endY)
 	case 1: // 90° clockwise - bottom is now left
-		return (x == startX)
+		return (x == m.startX)
 	case 2: // 180° - bottom is now top
-		return (y == startY)
+		return (y == m.startY)
 	case 3: // 270° clockwise - bottom is now right
-		return (x == endX)
+		return (x == m.endX)
 	default:
 		return false
 	}
