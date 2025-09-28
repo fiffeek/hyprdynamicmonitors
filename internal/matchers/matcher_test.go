@@ -255,6 +255,29 @@ func TestMatcher_Match(t *testing.T) {
 			expectedProfile: "",
 			description:     "Should return no match when no profile matches and no fallback is configured",
 		},
+		{
+			name: "both_name_and_description_must_match_same_monitor",
+			config: createTestConfig(t, map[string]*config.Profile{
+				"strict_match": {
+					Name: "strict_match",
+					Conditions: &config.ProfileCondition{
+						RequiredMonitors: []*config.RequiredMonitor{
+							{
+								Name:        utils.StringPtr("eDP-1"),
+								Description: utils.StringPtr("External Monitor"),
+							},
+						},
+					},
+				},
+			}).Get(),
+			connectedMonitors: []*hypr.MonitorSpec{
+				{Name: "eDP-1", ID: utils.IntPtr(0), Description: "Built-in Display"},
+				{Name: "DP-1", ID: utils.IntPtr(1), Description: "External Monitor"},
+			},
+			powerState:      power.ACPowerState,
+			expectedProfile: "",
+			description:     "Profile should not match when name comes from one monitor and description from another",
+		},
 	}
 
 	for _, tt := range tests {

@@ -69,6 +69,12 @@ func (m *Matcher) scoreProfile(cfg *config.RawConfig, conditions *config.Profile
 
 	for _, condition := range conditions.RequiredMonitors {
 		for _, connectedMonitor := range connectedMonitors {
+			// if both are defined but there is a mismatch on either then skip
+			if condition.Name != nil && condition.Description != nil &&
+				(*condition.Name != connectedMonitor.Name ||
+					*condition.Description != connectedMonitor.Description) {
+				continue
+			}
 			if condition.Name != nil && *condition.Name == connectedMonitor.Name {
 				profileScore += *cfg.Scoring.NameMatch
 			}
