@@ -97,10 +97,10 @@ func (m Model) View() string {
 		m.layout.RightPreviewHeight()).Render(m.monitorsPreviewPane.View())
 
 	if m.rootState.State.Fullscreen {
-		m.monitorsPreviewPane.SetHeight(m.layout.AvailableHeight())
+		m.monitorsPreviewPane.SetHeight(m.layout.AvailableHeight() + 2)
 		m.monitorsPreviewPane.SetWidth(m.layout.AvailableWidth())
 		previewPane = InactiveStyle.Width(m.layout.AvailableWidth()).Height(
-			m.layout.AvailableHeight()).Render(m.monitorsPreviewPane.View())
+			m.layout.AvailableHeight() + 2).Render(m.monitorsPreviewPane.View())
 	}
 
 	rightSections = append(rightSections, previewPane)
@@ -147,9 +147,7 @@ func (m Model) View() string {
 		view = previewPane
 	}
 
-	screen := lipgloss.JoinVertical(lipgloss.Top, header, globalHelp, view)
-
-	return lipgloss.Place(m.layout.visibleWidth, m.layout.visibleHeight, lipgloss.Center, lipgloss.Center, screen)
+	return lipgloss.JoinVertical(lipgloss.Top, header, globalHelp, view)
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
