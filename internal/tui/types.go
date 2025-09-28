@@ -99,6 +99,18 @@ func (m *MonitorSpec) PositionArrowView() string {
 	}
 }
 
+func (m *MonitorSpec) Rotate() {
+	m.Transform = (m.Transform + 1) % 4
+}
+
+func (m *MonitorSpec) ToggleVRR() {
+	m.Vrr = !m.Vrr
+}
+
+func (m *MonitorSpec) ToggleMonitor() {
+	m.Disabled = !m.Disabled
+}
+
 func (m *MonitorSpec) NeedsDimensionsSwap() bool {
 	return m.Transform == 1 || m.Transform == 3
 }
@@ -107,7 +119,8 @@ func (m *MonitorSpec) ToHypr() string {
 	if m.Disabled {
 		return fmt.Sprintf("desc:%s,disable", m.Description)
 	}
-	return fmt.Sprintf("desc:%s,%dx%d@%.5f,%dx%d,%.2f,transform,%d", m.Description, m.Width, m.Height, m.RefreshRate, m.X, m.Y, m.Scale, m.Transform)
+	return fmt.Sprintf("desc:%s,%dx%d@%.5f,%dx%d,%.2f,transform,%d", m.Description, m.Width,
+		m.Height, m.RefreshRate, m.X, m.Y, m.Scale, m.Transform)
 }
 
 type MonitorRectangle struct {

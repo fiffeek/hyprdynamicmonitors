@@ -17,6 +17,7 @@ type keyMap struct {
 	Fullscreen    key.Binding
 	ZoomIn        key.Binding
 	ZoomOut       key.Binding
+	NextPage      key.Binding
 }
 
 var rootKeyMap = keyMap{
@@ -61,8 +62,8 @@ var rootKeyMap = keyMap{
 		key.WithHelp("p", "pan (move freely on the grid)"),
 	),
 	Fullscreen: key.NewBinding(
-		key.WithKeys("f"),
-		key.WithHelp("f", "fullscreen the preview"),
+		key.WithKeys("F"),
+		key.WithHelp("F", "fullscreen the preview"),
 	),
 	Center: key.NewBinding(
 		key.WithKeys("c"),
@@ -75,5 +76,9 @@ var rootKeyMap = keyMap{
 	ZoomOut: key.NewBinding(
 		key.WithKeys("-"),
 		key.WithHelp("-", "zoom out"),
+	),
+	NextPage: key.NewBinding(
+		key.WithKeys("right", "l", "pgdown", "f", "d"),
+		key.WithHelp("→/l/pgdn", "next page"),
 	),
 }

@@ -1,21 +1,24 @@
 package tui
 
 import (
+	"errors"
 	"fmt"
+
+	tea "github.com/charmbracelet/bubbletea"
 )
 
 // TODO monitors store with mutation commands
 // // TODO grab monitor by its index
-// MonitorEditor handles all monitor editing operations
-type MonitorEditor struct {
+// MonitorEditorStore handles all monitor editing operations
+type MonitorEditorStore struct {
 	monitors     []*MonitorSpec
 	positionStep int
 	scaleStep    float64
 	snapDistance int
 }
 
-func NewMonitorEditor(monitors []*MonitorSpec) *MonitorEditor {
-	return &MonitorEditor{
+func NewMonitorEditor(monitors []*MonitorSpec) *MonitorEditorStore {
+	return &MonitorEditorStore{
 		monitors:     monitors,
 		positionStep: 50,  // Move monitors by 50 pixels at a time
 		scaleStep:    0.1, // Adjust scale by 0.1 at a time
@@ -23,16 +26,8 @@ func NewMonitorEditor(monitors []*MonitorSpec) *MonitorEditor {
 	}
 }
 
-func (e *MonitorEditor) GetMonitors() []*MonitorSpec {
+func (e *MonitorEditorStore) GetMonitors() []*MonitorSpec {
 	return e.monitors
-}
-
-func (e *MonitorEditor) GetMonitor(i int) *MonitorSpec {
-	return e.monitors[i]
-}
-
-func (e *MonitorEditor) UpdateMonitors(monitors []*MonitorSpec) {
-	e.monitors = monitors
 }
 
 type MoveResult int
@@ -43,52 +38,37 @@ const (
 	MoveNoChange
 )
 
-// MoveMonitor moves a monitor by the given delta, phasing through overlaps and maintaining connectivity
-func (e *MonitorEditor) MoveMonitor(index int, dx, dy int) (MoveResult, error) {
-	if index < 0 || index >= len(e.monitors) {
-		return MoveNoChange, fmt.Errorf("invalid monitor index: %d", index)
+// TODO like in scale first check if not connected if so snap to nearest
+
+func (e *MonitorEditorStore) GetMoveDelta(delta Delta) int {
+	switch delta {
+	case DeltaLess:
+		return -e.positionStep
+	case DeltaMore:
+		return e.positionStep
 	}
-
-	monitor := e.monitors[index]
-	newX := monitor.X + dx
-	newY := monitor.Y + dy
-
-	// Phase through overlapping monitors to find final position
-	finalX, finalY := e.phaseThrough(index, newX, newY, dx, dy)
-
-	// Check if the final position maintains connectivity (touches another monitor)
-	if !e.hasConnectivity(index, finalX, finalY) {
-		// If no connectivity, don't move and return blocked status
-		return MoveBlockedByConnectivity, nil
-	}
-
-	// Apply snapping to final position
-	snappedX, snappedY := e.snapPosition(index, finalX, finalY)
-	monitor.X = snappedX
-	monitor.Y = snappedY
-
-	return MoveSuccess, nil
+	return 0
 }
 
-// MoveMonitorTo moves a monitor to absolute coordinates, phasing through overlaps and maintaining connectivity
-func (e *MonitorEditor) MoveMonitorTo(index int, x, y int) (MoveResult, error) {
-	if index < 0 || index >= len(e.monitors) {
-		return MoveNoChange, fmt.Errorf("invalid monitor index: %d", index)
+// MoveMonitor moves a monitor by the given delta, phasing through overlaps and maintaining connectivity
+func (e *MonitorEditorStore) MoveMonitor(monitorID int, dx, dy Delta) tea.Cmd {
+	monitor, index, err := e.FindByID(monitorID)
+	if err != nil {
+		return operationStatusCmd(OperationNameMove, err)
 	}
 
-	monitor := e.monitors[index]
-
-	// Calculate movement delta for phase-through logic
-	dx := x - monitor.X
-	dy := y - monitor.Y
+	dxValue := e.GetMoveDelta(dx)
+	dyValue := e.GetMoveDelta(dy)
+	newX := monitor.X + dxValue
+	newY := monitor.Y + dyValue
 
 	// Phase through overlapping monitors to find final position
-	finalX, finalY := e.phaseThrough(index, x, y, dx, dy)
+	finalX, finalY := e.phaseThrough(index, newX, newY, dxValue, dyValue)
 
 	// Check if the final position maintains connectivity (touches another monitor)
 	if !e.hasConnectivity(index, finalX, finalY) {
 		// If no connectivity, don't move and return blocked status
-		return MoveBlockedByConnectivity, nil
+		return nil
 	}
 
 	// Apply snapping to final position
@@ -96,17 +76,25 @@ func (e *MonitorEditor) MoveMonitorTo(index int, x, y int) (MoveResult, error) {
 	monitor.X = snappedX
 	monitor.Y = snappedY
 
-	return MoveSuccess, nil
+	return nil
 }
 
 // ScaleMonitor adjusts the scale of a monitor
-func (e *MonitorEditor) ScaleMonitor(index int, delta float64) error {
-	if index < 0 || index >= len(e.monitors) {
-		return fmt.Errorf("invalid monitor index: %d", index)
+func (e *MonitorEditorStore) ScaleMonitor(monitorID int, delta Delta) tea.Cmd {
+	monitor, index, err := e.FindByID(monitorID)
+	if err != nil {
+		return operationStatusCmd(OperationNameScale, err)
 	}
 
-	monitor := e.monitors[index]
-	newScale := monitor.Scale + delta
+	deltaValue := 0.0
+	switch delta {
+	case DeltaLess:
+		deltaValue = -0.1
+	case DeltaMore:
+		deltaValue = 0.1
+	}
+
+	newScale := monitor.Scale + deltaValue
 
 	// Ensure minimum scale of 0.1
 	if newScale >= 0.1 {
@@ -116,62 +104,49 @@ func (e *MonitorEditor) ScaleMonitor(index int, delta float64) error {
 		e.snapMonitorToNearestEdge(index)
 	}
 
-	return nil
-}
-
-// SetMonitorScale sets the absolute scale of a monitor
-func (e *MonitorEditor) SetMonitorScale(index int, scale float64) error {
-	if index < 0 || index >= len(e.monitors) {
-		return fmt.Errorf("invalid monitor index: %d", index)
-	}
-
-	if scale < 0.1 {
-		scale = 0.1
-	}
-
-	e.monitors[index].Scale = scale
-	return nil
+	return operationStatusCmd(OperationNameScale, err)
 }
 
 // RotateMonitor rotates a monitor by 90 degrees clockwise
-func (e *MonitorEditor) RotateMonitor(index int) error {
-	if index < 0 || index >= len(e.monitors) {
-		return fmt.Errorf("invalid monitor index: %d", index)
+func (e *MonitorEditorStore) RotateMonitor(monitorID int) tea.Cmd {
+	monitor, index, err := e.FindByID(monitorID)
+	if err != nil {
+		return operationStatusCmd(OperationNameRotate, err)
 	}
 
-	monitor := e.monitors[index]
-	monitor.Transform = (monitor.Transform + 1) % 4
+	monitor.Rotate()
 
 	// Snap the rotated monitor to the nearest edge if it's disconnected
 	e.snapMonitorToNearestEdge(index)
 
-	return nil
+	return operationStatusCmd(OperationNameRotate, nil)
 }
 
 // ToggleVRR toggles Variable Refresh Rate for a monitor
-func (e *MonitorEditor) ToggleVRR(index int) error {
-	if index < 0 || index >= len(e.monitors) {
-		return fmt.Errorf("invalid monitor index: %d", index)
+func (e *MonitorEditorStore) ToggleVRR(monitorID int) tea.Cmd {
+	monitor, _, err := e.FindByID(monitorID)
+	if err != nil {
+		return operationStatusCmd(OperationNameToggleVRR, err)
 	}
 
-	monitor := e.monitors[index]
-	monitor.Vrr = !monitor.Vrr
-	return nil
+	monitor.ToggleVRR()
+
+	return operationStatusCmd(OperationNameToggleVRR, nil)
 }
 
 // ToggleDisable toggles the disabled state of a monitor
-func (e *MonitorEditor) ToggleDisable(index int) error {
-	if index < 0 || index >= len(e.monitors) {
-		return fmt.Errorf("invalid monitor index: %d", index)
+func (e *MonitorEditorStore) ToggleDisable(monitorID int) tea.Cmd {
+	monitor, _, err := e.FindByID(monitorID)
+	if err != nil {
+		return operationStatusCmd(OperationNameToggleMonitor, err)
 	}
 
-	monitor := e.monitors[index]
-	monitor.Disabled = !monitor.Disabled
-	return nil
+	monitor.ToggleMonitor()
+	return operationStatusCmd(OperationNameToggleMonitor, nil)
 }
 
 // SetMode sets the display mode for a monitor
-func (e *MonitorEditor) SetMode(index int, modeIndex int) error {
+func (e *MonitorEditorStore) SetMode(index, modeIndex int) error {
 	if index < 0 || index >= len(e.monitors) {
 		return fmt.Errorf("invalid monitor index: %d", index)
 	}
@@ -204,7 +179,7 @@ func (e *MonitorEditor) SetMode(index int, modeIndex int) error {
 }
 
 // FindCurrentModeIndex finds the index of the current monitor mode in AvailableModes
-func (e *MonitorEditor) FindCurrentModeIndex(index int) int {
+func (e *MonitorEditorStore) FindCurrentModeIndex(index int) int {
 	if index < 0 || index >= len(e.monitors) {
 		return 0
 	}
@@ -222,20 +197,8 @@ func (e *MonitorEditor) FindCurrentModeIndex(index int) int {
 	return 0
 }
 
-// GetPositionStep returns the current position step size
-func (e *MonitorEditor) GetPositionStep() int {
-	return e.positionStep
-}
-
-// SetPositionStep sets the position step size
-func (e *MonitorEditor) SetPositionStep(step int) {
-	if step > 0 {
-		e.positionStep = step
-	}
-}
-
 // snapPosition attempts to snap the monitor position to nearby monitors
-func (e *MonitorEditor) snapPosition(monitorIndex int, newX, newY int) (int, int) {
+func (e *MonitorEditorStore) snapPosition(monitorIndex, newX, newY int) (int, int) {
 	if monitorIndex < 0 || monitorIndex >= len(e.monitors) {
 		return newX, newY
 	}
@@ -274,30 +237,38 @@ func (e *MonitorEditor) snapPosition(monitorIndex int, newX, newY int) (int, int
 		otherLeft, otherRight, otherTop, otherBottom := e.getMonitorEdges(otherMonitor)
 
 		// Check horizontal snapping - only snap if we weren't already close before
-		if abs(currentRight-otherLeft) <= e.snapDistance && abs(oldRight-otherLeft) > e.snapDistance/2 {
+		if abs(currentRight-otherLeft) <= e.snapDistance &&
+			abs(oldRight-otherLeft) > e.snapDistance/2 {
 			snappedX = otherLeft - scaledWidth
 		}
-		if abs(currentLeft-otherRight) <= e.snapDistance && abs(oldLeft-otherRight) > e.snapDistance/2 {
+		if abs(currentLeft-otherRight) <= e.snapDistance &&
+			abs(oldLeft-otherRight) > e.snapDistance/2 {
 			snappedX = otherRight
 		}
-		if abs(currentLeft-otherLeft) <= e.snapDistance && abs(oldLeft-otherLeft) > e.snapDistance/2 {
+		if abs(currentLeft-otherLeft) <= e.snapDistance &&
+			abs(oldLeft-otherLeft) > e.snapDistance/2 {
 			snappedX = otherLeft
 		}
-		if abs(currentRight-otherRight) <= e.snapDistance && abs(oldRight-otherRight) > e.snapDistance/2 {
+		if abs(currentRight-otherRight) <= e.snapDistance &&
+			abs(oldRight-otherRight) > e.snapDistance/2 {
 			snappedX = otherRight - scaledWidth
 		}
 
 		// Check vertical snapping - only snap if we weren't already close before
-		if abs(currentBottom-otherTop) <= e.snapDistance && abs(oldBottom-otherTop) > e.snapDistance/2 {
+		if abs(currentBottom-otherTop) <= e.snapDistance &&
+			abs(oldBottom-otherTop) > e.snapDistance/2 {
 			snappedY = otherTop - scaledHeight
 		}
-		if abs(currentTop-otherBottom) <= e.snapDistance && abs(oldTop-otherBottom) > e.snapDistance/2 {
+		if abs(currentTop-otherBottom) <= e.snapDistance &&
+			abs(oldTop-otherBottom) > e.snapDistance/2 {
 			snappedY = otherBottom
 		}
-		if abs(currentTop-otherTop) <= e.snapDistance && abs(oldTop-otherTop) > e.snapDistance/2 {
+		if abs(currentTop-otherTop) <= e.snapDistance &&
+			abs(oldTop-otherTop) > e.snapDistance/2 {
 			snappedY = otherTop
 		}
-		if abs(currentBottom-otherBottom) <= e.snapDistance && abs(oldBottom-otherBottom) > e.snapDistance/2 {
+		if abs(currentBottom-otherBottom) <= e.snapDistance &&
+			abs(oldBottom-otherBottom) > e.snapDistance/2 {
 			snappedY = otherBottom - scaledHeight
 		}
 	}
@@ -306,7 +277,7 @@ func (e *MonitorEditor) snapPosition(monitorIndex int, newX, newY int) (int, int
 }
 
 // getMonitorEdges returns the edges of a monitor accounting for scale and rotation
-func (e *MonitorEditor) getMonitorEdges(monitor *MonitorSpec) (left, right, top, bottom int) {
+func (e *MonitorEditorStore) getMonitorEdges(monitor *MonitorSpec) (left, right, top, bottom int) {
 	// Calculate scaled dimensions
 	scaledWidth := int(float64(monitor.Width) / monitor.Scale)
 	scaledHeight := int(float64(monitor.Height) / monitor.Scale)
@@ -333,7 +304,7 @@ func abs(x int) int {
 }
 
 // phaseThrough calculates the final position when phasing through overlapping monitors
-func (e *MonitorEditor) phaseThrough(movingIndex int, targetX, targetY, dx, dy int) (int, int) {
+func (e *MonitorEditorStore) phaseThrough(movingIndex, targetX, targetY, dx, dy int) (int, int) {
 	// If there's no overlap at target position, just return it
 	if !e.hasOverlapAt(movingIndex, targetX, targetY) {
 		return targetX, targetY
@@ -372,7 +343,7 @@ func (e *MonitorEditor) phaseThrough(movingIndex int, targetX, targetY, dx, dy i
 }
 
 // calculatePhaseDistance calculates how far to move to completely phase through overlapping monitors
-func (e *MonitorEditor) calculatePhaseDistance(movingIndex int, startX, startY, dx, dy int) int {
+func (e *MonitorEditorStore) calculatePhaseDistance(movingIndex, startX, startY, dx, dy int) int {
 	movingMonitor := e.monitors[movingIndex]
 	movingWidth, movingHeight := e.getMonitorDimensions(movingMonitor)
 
@@ -416,12 +387,12 @@ func (e *MonitorEditor) calculatePhaseDistance(movingIndex int, startX, startY, 
 }
 
 // wouldOverlap checks if two rectangles would overlap
-func (e *MonitorEditor) wouldOverlap(x1, y1, w1, h1, x2, y2, w2, h2 int) bool {
+func (e *MonitorEditorStore) wouldOverlap(x1, y1, w1, h1, x2, y2, w2, h2 int) bool {
 	return x1 < x2+w2 && x1+w1 > x2 && y1 < y2+h2 && y1+h1 > y2
 }
 
 // hasOverlapAt checks if a monitor would overlap with any other monitor at the given position
-func (e *MonitorEditor) hasOverlapAt(movingIndex int, x, y int) bool {
+func (e *MonitorEditorStore) hasOverlapAt(movingIndex, x, y int) bool {
 	movingMonitor := e.monitors[movingIndex]
 	movingWidth, movingHeight := e.getMonitorDimensions(movingMonitor)
 
@@ -452,12 +423,12 @@ func (e *MonitorEditor) hasOverlapAt(movingIndex int, x, y int) bool {
 }
 
 // rectanglesOverlap checks if two rectangles overlap
-func (e *MonitorEditor) rectanglesOverlap(x1, y1, x2, y2, x3, y3, x4, y4 int) bool {
+func (e *MonitorEditorStore) rectanglesOverlap(x1, y1, x2, y2, x3, y3, x4, y4 int) bool {
 	return x1 < x4 && x2 > x3 && y1 < y4 && y2 > y3
 }
 
 // hasConnectivity checks if a monitor at the given position touches at least one other monitor
-func (e *MonitorEditor) hasConnectivity(movingIndex int, x, y int) bool {
+func (e *MonitorEditorStore) hasConnectivity(movingIndex, x, y int) bool {
 	// If there's only one monitor, it's always connected
 	activeMonitors := 0
 	for _, monitor := range e.monitors {
@@ -493,13 +464,15 @@ func (e *MonitorEditor) hasConnectivity(movingIndex int, x, y int) bool {
 
 		// Check if monitors are close enough to be considered connected
 		// Horizontal edges (top/bottom close)
-		if (abs(movingBottom-otherTop) <= tolerance || abs(movingTop-otherBottom) <= tolerance) &&
+		if (abs(movingBottom-otherTop) <= tolerance ||
+			abs(movingTop-otherBottom) <= tolerance) &&
 			!(movingRight <= otherLeft-tolerance || movingLeft >= otherRight+tolerance) {
 			return true
 		}
 
 		// Vertical edges (left/right close)
-		if (abs(movingRight-otherLeft) <= tolerance || abs(movingLeft-otherRight) <= tolerance) &&
+		if (abs(movingRight-otherLeft) <= tolerance ||
+			abs(movingLeft-otherRight) <= tolerance) &&
 			!(movingBottom <= otherTop-tolerance || movingTop >= otherBottom+tolerance) {
 			return true
 		}
@@ -515,7 +488,7 @@ func (e *MonitorEditor) hasConnectivity(movingIndex int, x, y int) bool {
 }
 
 // monitorsConnectedAtCorner checks if two monitors are connected at their corners
-func (e *MonitorEditor) monitorsConnectedAtCorner(x1, y1, x2, y2, x3, y3, x4, y4, tolerance int) bool {
+func (e *MonitorEditorStore) monitorsConnectedAtCorner(x1, y1, x2, y2, x3, y3, x4, y4, tolerance int) bool {
 	// Check if any corner of the first monitor is close to any corner of the second monitor
 	corners1 := [][2]int{{x1, y1}, {x2, y1}, {x1, y2}, {x2, y2}}
 	corners2 := [][2]int{{x3, y3}, {x4, y3}, {x3, y4}, {x4, y4}}
@@ -532,7 +505,7 @@ func (e *MonitorEditor) monitorsConnectedAtCorner(x1, y1, x2, y2, x3, y3, x4, y4
 }
 
 // getMonitorDimensions returns the effective width and height of a monitor accounting for scale and rotation
-func (e *MonitorEditor) getMonitorDimensions(monitor *MonitorSpec) (int, int) {
+func (e *MonitorEditorStore) getMonitorDimensions(monitor *MonitorSpec) (int, int) {
 	// Calculate scaled dimensions
 	scaledWidth := int(float64(monitor.Width) / monitor.Scale)
 	scaledHeight := int(float64(monitor.Height) / monitor.Scale)
@@ -546,7 +519,7 @@ func (e *MonitorEditor) getMonitorDimensions(monitor *MonitorSpec) (int, int) {
 }
 
 // snapMonitorToNearestEdge snaps a specific monitor to the nearest edge of another monitor if it's disconnected
-func (e *MonitorEditor) snapMonitorToNearestEdge(monitorIndex int) {
+func (e *MonitorEditorStore) snapMonitorToNearestEdge(monitorIndex int) {
 	if monitorIndex < 0 || monitorIndex >= len(e.monitors) {
 		return
 	}
@@ -623,4 +596,13 @@ func (e *MonitorEditor) snapMonitorToNearestEdge(monitorIndex int) {
 		monitor.X = snappedX
 		monitor.Y = snappedY
 	}
+}
+
+func (e *MonitorEditorStore) FindByID(monitorID int) (*MonitorSpec, int, error) {
+	for index, monitor := range e.monitors {
+		if *monitor.ID == monitorID {
+			return monitor, index, nil
+		}
+	}
+	return nil, 0, errors.New("cant find monitor")
 }

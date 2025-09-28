@@ -23,6 +23,9 @@ type Model struct {
 	help                help.Model
 	header              *Header
 	hyprPreviewPane     *HyprPreviewPane
+
+	// stores
+	monitorEditor *MonitorEditorStore
 }
 
 func NewModel(cfg *config.Config, hyprMonitors hypr.MonitorSpecs) Model {
@@ -41,6 +44,7 @@ func NewModel(cfg *config.Config, hyprMonitors hypr.MonitorSpecs) Model {
 		help:                help.New(),
 		header:              NewHeader("HyprDynamicMonitors"),
 		hyprPreviewPane:     NewHyprPreviewPane(monitors),
+		monitorEditor:       NewMonitorEditor(monitors),
 	}
 
 	return model
@@ -64,21 +68,25 @@ func (m Model) View() string {
 	m.layout.SetReservedTop(globalHelpHeight + headerHeight + 2)
 
 	m.monitorsList.SetHeight(m.layout.LeftMonitorsHeight())
-	monitorView := InactiveStyle.Width(m.layout.LeftPanesWidth()).Height(m.layout.LeftMonitorsHeight()).Render(m.monitorsList.View())
+	monitorView := InactiveStyle.Width(m.layout.LeftPanesWidth()).Height(
+		m.layout.LeftMonitorsHeight()).Render(m.monitorsList.View())
 
 	m.monitorsPreviewPane.SetHeight(m.layout.RightPreviewHeight())
 	m.monitorsPreviewPane.SetWidth(m.layout.RightPanesWidth())
-	previewPane := InactiveStyle.Width(m.layout.RightPanesWidth()).Height(m.layout.RightPreviewHeight()).Render(m.monitorsPreviewPane.View())
+	previewPane := InactiveStyle.Width(m.layout.RightPanesWidth()).Height(
+		m.layout.RightPreviewHeight()).Render(m.monitorsPreviewPane.View())
 
 	if m.rootState.State.Fullscreen {
 		m.monitorsPreviewPane.SetHeight(m.layout.AvailableHeight())
 		m.monitorsPreviewPane.SetWidth(m.layout.AvailableWidth())
-		previewPane = InactiveStyle.Width(m.layout.AvailableWidth()).Height(m.layout.AvailableHeight()).Render(m.monitorsPreviewPane.View())
+		previewPane = InactiveStyle.Width(m.layout.AvailableWidth()).Height(
+			m.layout.AvailableHeight()).Render(m.monitorsPreviewPane.View())
 	}
 
 	rightSections = append(rightSections, previewPane)
 	if !m.rootState.State.Fullscreen {
-		hyprPreview := InactiveStyle.Width(m.layout.RightPanesWidth()).Height(m.layout.RightHyprHeight()).Render(m.hyprPreviewPane.View())
+		hyprPreview := InactiveStyle.Width(m.layout.RightPanesWidth()).Height(
+			m.layout.RightHyprHeight()).Render(m.hyprPreviewPane.View())
 		rightSections = append(rightSections, hyprPreview)
 	}
 
@@ -120,6 +128,21 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		logrus.Debug("Monitor unselected event in root")
 		m.rootState.ClearMonitorEditState()
 		stateChanged = true
+	case MoveMonitorCommand:
+		logrus.Debug("Received a monitor move command")
+		cmds = append(cmds, m.monitorEditor.MoveMonitor(msg.monitorID, msg.stepX, msg.stepY))
+	case ToggleMonitorCommand:
+		logrus.Debug("Received a monitor toggle command")
+		cmds = append(cmds, m.monitorEditor.ToggleDisable(msg.monitorID))
+	case ToggleMonitorVRRCommand:
+		logrus.Debug("Received a monitor vrr command")
+		cmds = append(cmds, m.monitorEditor.ToggleVRR(msg.monitorID))
+	case RotateMonitorCommand:
+		logrus.Debug("Received a monitor rotate command")
+		cmds = append(cmds, m.monitorEditor.RotateMonitor(msg.monitorID))
+	case ScaleMonitorCommand:
+		logrus.Debug("Received a monitor scale command")
+		cmds = append(cmds, m.monitorEditor.ScaleMonitor(msg.monitorID, msg.delta))
 	case tea.WindowSizeMsg:
 		m.layout.SetHeight(msg.Height)
 		m.layout.SetWidth(msg.Width)
@@ -148,14 +171,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch m.rootState.CurrentView {
 	case MonitorsListView:
-		switch m.rootState.State.Panning {
-		case true:
-			cmd := m.monitorsPreviewPane.Update(msg)
-			cmds = append(cmds, cmd)
-		case false:
+		if !m.rootState.State.Panning {
 			cmd := m.monitorsList.Update(msg)
 			cmds = append(cmds, cmd)
 		}
+
+		cmd := m.monitorsPreviewPane.Update(msg)
+		cmds = append(cmds, cmd)
 	}
 
 	cmd := m.header.Update(msg)

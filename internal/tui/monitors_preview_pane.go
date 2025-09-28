@@ -49,7 +49,7 @@ func (p *MonitorsPreviewPane) Update(msg tea.Msg) tea.Cmd {
 	logrus.Debugf("Update called on MonitorsPreviewPane: %v", msg)
 	switch msg := msg.(type) {
 	case MonitorBeingEdited:
-		p.selectedIndex = msg.Index
+		p.selectedIndex = msg.ListIndex
 	case MonitorUnselected:
 		p.selectedIndex = -1
 	case StateChanged:

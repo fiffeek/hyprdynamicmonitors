@@ -35,6 +35,7 @@ var tuiCmd = &cobra.Command{
 		ctx, cancel := context.WithCancelCause(context.Background())
 		defer cancel(context.Canceled)
 
+		// TODO allow a command (another one? a flag?) to run without hyprdynamicmonitors config
 		cfg, err := config.NewConfig(configPath)
 		if err != nil {
 			return fmt.Errorf("failed to load config: %w", err)

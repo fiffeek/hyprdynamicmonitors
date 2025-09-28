@@ -61,15 +61,15 @@ func (m MonitorItem) Indicator() string {
 	}
 
 	if m.inModeSelection {
-		return MonitorModeSelectionMode.Render(" [CHANGE MODE]")
+		return MonitorModeSelectionMode.Render("[CHANGE MODE]")
 	}
 
 	if m.inScaleMode {
-		return MonitorScaleMode.Render(" [SCALE MODE]")
+		return MonitorScaleMode.Render("[SCALE MODE]")
 	}
 
 	if m.isSelectedForEditing {
-		return MonitorEditingMode.Render(" [EDITING]")
+		return MonitorEditingMode.Render("[EDITING]")
 	}
 
 	return ""
@@ -127,8 +127,8 @@ func NewMonitorListKeyMap() *MonitorListKeyMap {
 			key.WithHelp("v", "toggle vrr"),
 		),
 		toggle: key.NewBinding(
-			key.WithKeys("d"),
-			key.WithHelp("d", "enable/disable"),
+			key.WithKeys("e"),
+			key.WithHelp("e", "enable/disable"),
 		),
 		changeMode: key.NewBinding(
 			key.WithKeys("m"),
@@ -137,8 +137,8 @@ func NewMonitorListKeyMap() *MonitorListKeyMap {
 	}
 }
 
-func (m MonitorListKeyMap) ShortHelp(selected bool) []key.Binding {
-	if selected {
+func (m MonitorListKeyMap) ShortHelp(state AppState) []key.Binding {
+	if state.EditingMonitor {
 		return []key.Binding{
 			m.unselect,
 			m.rotate,
@@ -196,18 +196,24 @@ func (d MonitorDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd {
 					return MonitorUnselected{}
 				})
 			}
+		case key.Matches(msg, d.keymap.rotate):
+			logrus.Debugf("List called with rotate")
+			if !item.Editing() {
+				return nil
+			}
+			cmds = append(cmds, rotateMonitorCmd(item.monitor))
 		case key.Matches(msg, d.keymap.vrr):
 			logrus.Debugf("List called with vrr")
 			if !item.Editing() {
 				return nil
 			}
-			item.monitor.Vrr = !item.monitor.Vrr
+			cmds = append(cmds, toggleMonitorVRRCmd(item.monitor))
 		case key.Matches(msg, d.keymap.toggle):
 			logrus.Debugf("List called with toggle")
 			if !item.Editing() {
 				return nil
 			}
-			item.monitor.Disabled = !item.monitor.Disabled
+			cmds = append(cmds, toggleMonitorCmd(item.monitor))
 		case key.Matches(msg, d.keymap.scale):
 			logrus.Debugf("List called with scale")
 			if !item.Editing() {
@@ -233,8 +239,9 @@ func (d MonitorDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd {
 	if sendMonitorSelection {
 		cmds = append(cmds, func() tea.Msg {
 			return MonitorBeingEdited{
-				Index:   m.Index(),
-				Scaling: item.inScaleMode,
+				ListIndex: m.Index(),
+				Scaling:   item.inScaleMode,
+				MonitorID: *item.monitor.ID,
 			}
 		})
 	}
@@ -258,7 +265,8 @@ func (d MonitorDelegate) Render(w io.Writer, m list.Model, index int, item list.
 	default:
 		style = MonitorListTitle
 	}
-	title := fmt.Sprintf("%s %s%s", style.Render(monitor.Title()), monitor.MonitorDescription(), monitor.Indicator())
+	title := fmt.Sprintf("%s %s %s", style.Render(monitor.Title()),
+		monitor.MonitorDescription(), monitor.Indicator())
 	desc := MutedStyle.Render(monitor.Description())
 	content := fmt.Sprintf("%s\n%s", title, desc)
 
@@ -272,20 +280,24 @@ type monitorListKeyMap struct {
 	Right key.Binding
 }
 
-func (m *monitorListKeyMap) Help() []key.Binding {
+func (m *monitorListKeyMap) Help(state AppState) []key.Binding {
+	if !state.EditingMonitor {
+		return []key.Binding{m.Left, m.Down, m.Up, m.Right}
+	}
+	if state.Scaling {
+		return []key.Binding{m.Up, m.Down}
+	}
 	return []key.Binding{m.Left, m.Down, m.Up, m.Right}
 }
 
 type MonitorList struct {
 	L                    list.Model
-	hijackArrows         bool
 	state                AppState
 	keys                 *monitorListKeyMap
 	help                 help.Model
 	delegate             MonitorDelegate
 	monitorSelected      bool
 	selectedMonitorIndex int
-	editor               *MonitorEditor
 }
 
 func NewMonitorList(monitors []*MonitorSpec) *MonitorList {
@@ -300,10 +312,10 @@ func NewMonitorList(monitors []*MonitorSpec) *MonitorList {
 	monitorsList.SetShowStatusBar(false)
 	monitorsList.SetFilteringEnabled(false)
 	monitorsList.SetShowHelp(false)
+	monitorsList.SetShowTitle(false)
 
 	return &MonitorList{
-		L:            monitorsList,
-		hijackArrows: false,
+		L: monitorsList,
 		keys: &monitorListKeyMap{
 			Up:    rootKeyMap.Up,
 			Down:  rootKeyMap.Down,
@@ -312,7 +324,6 @@ func NewMonitorList(monitors []*MonitorSpec) *MonitorList {
 		},
 		help:     help.New(),
 		delegate: delegate,
-		editor:   NewMonitorEditor(monitors),
 	}
 }
 
@@ -321,26 +332,25 @@ func (c *MonitorList) Update(msg tea.Msg) tea.Cmd {
 	switch msg := msg.(type) {
 	case MonitorBeingEdited:
 		c.monitorSelected = true
-		c.selectedMonitorIndex = msg.Index
+		c.selectedMonitorIndex = msg.MonitorID
 	case MonitorUnselected:
 		c.monitorSelected = false
 		c.selectedMonitorIndex = -1
 	case StateChanged:
-		logrus.Debugf("Setting hijacked arrows: %v", msg)
-		c.hijackArrows = msg.state.Editing()
 		c.state = msg.state
 	case tea.KeyMsg:
 		switch {
-		case key.Matches(msg, c.delegate.keymap.rotate):
-			// TODO only when a monitor is editing
-			c.editor.RotateMonitor(c.selectedMonitorIndex)
-		case key.Matches(msg, rootKeyMap.Down), key.Matches(msg, rootKeyMap.Up), key.Matches(msg, rootKeyMap.Left), key.Matches(msg, rootKeyMap.Right):
+		case key.Matches(msg, rootKeyMap.Down),
+			key.Matches(msg, rootKeyMap.Up),
+			key.Matches(msg, rootKeyMap.Left),
+			key.Matches(msg, rootKeyMap.Right),
+			key.Matches(msg, rootKeyMap.NextPage):
 			if c.state.Panning {
 				logrus.Debug("In panning mode, exiting")
 				return nil
 			}
-			if c.hijackArrows {
-				logrus.Debug("Arrows hijacked, not forwarding")
+			if c.state.Editing() {
+				logrus.Debug("Arrows hijacked, not forwarding to the list")
 				cmd := c.processArrows(msg)
 				return cmd
 			}
@@ -366,36 +376,32 @@ func (c *MonitorList) processArrows(msg tea.KeyMsg) tea.Cmd {
 }
 
 func (c *MonitorList) handleScale(msg tea.KeyMsg) tea.Cmd {
-	delta := 0.1
-	switch msg.String() {
-	case "up":
-		delta = 0.1
-	case "down":
-		delta = -0.1
+	switch {
+	case key.Matches(msg, rootKeyMap.Up):
+		return scaleMonitorCmd(c.selectedMonitorIndex, DeltaMore)
+	case key.Matches(msg, rootKeyMap.Down):
+		return scaleMonitorCmd(c.selectedMonitorIndex, DeltaLess)
 	}
 
-	c.editor.ScaleMonitor(c.selectedMonitorIndex, delta)
 	return nil
 }
 
 func (c *MonitorList) handleMove(msg tea.KeyMsg) tea.Cmd {
-	step := c.editor.GetPositionStep()
-	stepX := 0
-	stepY := 0
+	stepX := DeltaNone
+	stepY := DeltaNone
 
-	switch msg.String() {
-	case "up":
-		stepY = -step
-	case "down":
-		stepY = step
-	case "left":
-		stepX = -step
-	case "right":
-		stepX = step
+	switch {
+	case key.Matches(msg, rootKeyMap.Up):
+		stepY = DeltaLess
+	case key.Matches(msg, rootKeyMap.Down):
+		stepY = DeltaMore
+	case key.Matches(msg, rootKeyMap.Left):
+		stepX = DeltaLess
+	case key.Matches(msg, rootKeyMap.Right):
+		stepX = DeltaMore
 	}
 
-	_, _ = c.editor.MoveMonitor(c.selectedMonitorIndex, stepX, stepY)
-	return nil
+	return moveMonitorCmd(c.selectedMonitorIndex, stepX, stepY)
 }
 
 func (c *MonitorList) SetHeight(height int) {
@@ -419,8 +425,14 @@ func (c *MonitorList) View() string {
 }
 
 func (c *MonitorList) ShortHelp() string {
-	listHelp := HelpStyle.Render(c.help.ShortHelpView(c.keys.Help()))
+	sections := []string{}
+
+	listHelp := HelpStyle.Render(c.help.ShortHelpView(c.keys.Help(c.state)))
+	sections = append(sections, listHelp)
+
 	delegateHelp := HelpStyle.Render(c.help.ShortHelpView(
-		c.delegate.keymap.ShortHelp(c.monitorSelected)))
-	return lipgloss.JoinVertical(lipgloss.Left, listHelp, delegateHelp)
+		c.delegate.keymap.ShortHelp(c.state)))
+	sections = append(sections, delegateHelp)
+
+	return lipgloss.JoinVertical(lipgloss.Left, sections...)
 }

@@ -20,7 +20,8 @@ func (h *HyprPreviewPane) View() string {
 	var sections []string
 
 	if len(h.monitors) == 0 {
-		sections = append(sections, HyprConfigTitleStyle.Render("Hyprland Config Preview\n\nNo monitors to configure"))
+		sections = append(sections, HyprConfigTitleStyle.Render(
+			"Hyprland Config Preview\n\nNo monitors to configure"))
 	} else {
 		sections = append(sections, HyprConfigTitleStyle.Render("Hyprland Config Preview"))
 	}
