@@ -163,11 +163,70 @@ func (e *MonitorEditorStore) SetMirror(monitorID int, mirrorOf string) tea.Cmd {
 		return operationStatusCmd(OperationNamePreviewMirror, errors.New("cant find mirrored monitor"))
 	}
 
-	// todo check loops in mirroring, should be impossible to add a mirror that causes loops
+	// Check for loops in mirroring chain
+	if e.wouldCreateMirrorLoop(monitor.Name, mirrorOf) {
+		return operationStatusCmd(OperationNamePreviewMirror, errors.New("would create mirror loop"))
+	}
 
 	monitor.SetMirror(mirrorOf)
 
 	return operationStatusCmd(OperationNamePreviewMirror, err)
+}
+
+// wouldCreateMirrorLoop checks if setting monitorName to mirror mirrorOf would create a loop
+func (e *MonitorEditorStore) wouldCreateMirrorLoop(monitorName, mirrorOf string) bool {
+	if mirrorOf == "none" {
+		return false
+	}
+
+	// Create a map of current mirror relationships for efficient lookup
+	mirrorMap := make(map[string]string)
+	for _, monitor := range e.monitors {
+		if monitor.Mirror != "none" && monitor.Mirror != "" {
+			mirrorMap[monitor.Name] = monitor.Mirror
+		}
+	}
+
+	// Simulate adding the new mirror relationship
+	mirrorMap[monitorName] = mirrorOf
+
+	// Check if this creates a cycle using DFS
+	visited := make(map[string]bool)
+	recStack := make(map[string]bool)
+
+	var hasCycle func(node string) bool
+	hasCycle = func(node string) bool {
+		if recStack[node] {
+			return true // Found a cycle
+		}
+		if visited[node] {
+			return false // Already processed this node
+		}
+
+		visited[node] = true
+		recStack[node] = true
+
+		// Follow the mirror chain
+		if next, exists := mirrorMap[node]; exists {
+			if hasCycle(next) {
+				return true
+			}
+		}
+
+		recStack[node] = false
+		return false
+	}
+
+	// Check for cycles starting from any node
+	for name := range mirrorMap {
+		if !visited[name] {
+			if hasCycle(name) {
+				return true
+			}
+		}
+	}
+
+	return false
 }
 
 func (e *MonitorEditorStore) SetMode(monitorID int, mode string) tea.Cmd {
