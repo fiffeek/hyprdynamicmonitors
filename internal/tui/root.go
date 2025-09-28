@@ -207,6 +207,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			logrus.Debug("Toggling fullscreen mode")
 			m.rootState.ToggleFullscreen()
 			stateChanged = true
+		case key.Matches(msg, m.keys.ToggleSnapping):
+			logrus.Debug("Toggling snapping")
+			m.rootState.ToggleSnapping()
+			m.monitorEditor.SetSnapping(m.rootState.State.Snapping)
+			stateChanged = true
 		}
 	}
 
@@ -244,5 +249,5 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m *Model) GlobalHelp() []key.Binding {
-	return []key.Binding{rootKeyMap.Pan, rootKeyMap.Fullscreen, rootKeyMap.Center, rootKeyMap.ZoomIn, rootKeyMap.ZoomOut}
+	return []key.Binding{rootKeyMap.Pan, rootKeyMap.Fullscreen, rootKeyMap.Center, rootKeyMap.ZoomIn, rootKeyMap.ZoomOut, rootKeyMap.ToggleSnapping}
 }

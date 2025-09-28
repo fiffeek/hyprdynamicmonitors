@@ -17,6 +17,7 @@ type AppState struct {
 	MirrorSelection        bool
 	Fullscreen             bool
 	MonitorEditedListIndex int
+	Snapping               bool
 }
 
 func (s AppState) String() string {
@@ -47,13 +48,19 @@ type RootState struct {
 func NewState(monitors []*MonitorSpec) *RootState {
 	return &RootState{
 		CurrentView: MonitorsListView,
-		State:       AppState{},
-		monitors:    monitors,
+		State: AppState{
+			Snapping: true,
+		},
+		monitors: monitors,
 	}
 }
 
 func (r *RootState) ToggleFullscreen() {
 	r.State.Fullscreen = !r.State.Fullscreen
+}
+
+func (r *RootState) ToggleSnapping() {
+	r.State.Snapping = !r.State.Snapping
 }
 
 func (r *RootState) TogglePanning() {

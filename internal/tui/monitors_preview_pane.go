@@ -28,6 +28,7 @@ type MonitorsPreviewPane struct {
 	minSpacingX   int
 	panning       bool
 	panStep       int
+	snapping      bool
 }
 
 func NewMonitorsPreviewPane(monitors []*MonitorSpec) *MonitorsPreviewPane {
@@ -42,6 +43,7 @@ func NewMonitorsPreviewPane(monitors []*MonitorSpec) *MonitorsPreviewPane {
 		minSpacingY:   2,
 		minSpacingX:   4,
 		panStep:       100,
+		snapping:      true,
 	}
 }
 
@@ -63,6 +65,7 @@ func (p *MonitorsPreviewPane) Update(msg tea.Msg) tea.Cmd {
 		p.selectedIndex = -1
 	case StateChanged:
 		p.panning = msg.state.IsPanning()
+		p.snapping = msg.state.Snapping
 
 	case tea.KeyMsg:
 		switch {
@@ -144,6 +147,9 @@ func (p *MonitorsPreviewPane) ScaleInfo() string {
 	scaleInfo := fmt.Sprintf("Virtual Area: %dx%d", p.virtualWidth, p.virtualHeight)
 	if p.panX != 0 || p.panY != 0 {
 		scaleInfo += fmt.Sprintf(" | Pan: (%d,%d)", p.panX, p.panY)
+	}
+	if p.snapping {
+		scaleInfo += " | Snapping"
 	}
 	return scaleInfo
 }

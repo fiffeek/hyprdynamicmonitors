@@ -12,6 +12,7 @@ type MonitorEditorStore struct {
 	positionStep int
 	scaleStep    float64
 	snapDistance int
+	snapping     bool
 }
 
 func NewMonitorEditor(monitors []*MonitorSpec) *MonitorEditorStore {
@@ -20,7 +21,12 @@ func NewMonitorEditor(monitors []*MonitorSpec) *MonitorEditorStore {
 		positionStep: 50,  // Move monitors by 50 pixels at a time
 		scaleStep:    0.1, // Adjust scale by 0.1 at a time
 		snapDistance: 50,  // Snap when within 50 pixels of another monitor
+		snapping:     true,
 	}
+}
+
+func (e *MonitorEditorStore) SetSnapping(snap bool) {
+	e.snapping = snap
 }
 
 type MoveResult int
@@ -54,6 +60,12 @@ func (e *MonitorEditorStore) MoveMonitor(monitorID int, dx, dy Delta) tea.Cmd {
 	dyValue := e.GetMoveDelta(dy)
 	newX := monitor.X + dxValue
 	newY := monitor.Y + dyValue
+
+	if !e.snapping {
+		monitor.X = newX
+		monitor.Y = newY
+		return nil
+	}
 
 	// Phase through overlapping monitors to find final position
 	finalX, finalY := e.phaseThrough(index, newX, newY, dxValue, dyValue)
@@ -247,6 +259,10 @@ func (e *MonitorEditorStore) SetMode(monitorID int, mode string) tea.Cmd {
 
 // snapPosition attempts to snap the monitor position to nearby monitors
 func (e *MonitorEditorStore) snapPosition(monitorIndex, newX, newY int) (int, int) {
+	if !e.snapping {
+		return newX, newY
+	}
+
 	if monitorIndex < 0 || monitorIndex >= len(e.monitors) {
 		return newX, newY
 	}
@@ -353,6 +369,9 @@ func abs(x int) int {
 
 // phaseThrough calculates the final position when phasing through overlapping monitors
 func (e *MonitorEditorStore) phaseThrough(movingIndex, targetX, targetY, dx, dy int) (int, int) {
+	if !e.snapping {
+		return targetX, targetY
+	}
 	// If there's no overlap at target position, just return it
 	if !e.hasOverlapAt(movingIndex, targetX, targetY) {
 		return targetX, targetY
@@ -568,6 +587,10 @@ func (e *MonitorEditorStore) getMonitorDimensions(monitor *MonitorSpec) (int, in
 
 // snapMonitorToNearestEdge snaps a specific monitor to the nearest edge of another monitor if it's disconnected
 func (e *MonitorEditorStore) snapMonitorToNearestEdge(monitorIndex int) {
+	if !e.snapping {
+		return
+	}
+
 	if monitorIndex < 0 || monitorIndex >= len(e.monitors) {
 		return
 	}
