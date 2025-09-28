@@ -6,10 +6,10 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
-	"html/template"
 	"os"
 	"path/filepath"
 	"strings"
+	"text/template"
 
 	"github.com/BurntSushi/toml"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/config"
@@ -20,6 +20,9 @@ import (
 
 //go:embed templates/monitors.go.tmpl
 var monitorsTemplate string
+
+//go:embed templates/tui.go.tmpl
+var tuiTemplate string
 
 type Service struct {
 	cfg *config.Config
@@ -34,9 +37,12 @@ func NewService(cfg *config.Config, ipc *hypr.IPC) *Service {
 }
 
 func (s *Service) FreezeCurrentAs(profileName, profileFileLocation string) error {
-	cfg := s.cfg.Get()
 	currentMonitors := s.ipc.GetConnectedMonitors()
+	return s.FreezeGivenAs(profileName, profileFileLocation, currentMonitors)
+}
 
+func (s *Service) FreezeGivenAs(profileName, profileFileLocation string, currentMonitors []*hypr.MonitorSpec) error {
+	cfg := s.cfg.Get()
 	profile, err := s.prepare(profileName, profileFileLocation, currentMonitors)
 	if err != nil {
 		return fmt.Errorf("cant create a new profile: %w", err)
@@ -68,6 +74,82 @@ func (s *Service) FreezeCurrentAs(profileName, profileFileLocation string) error
 	}
 
 	return nil
+}
+
+func (s *Service) EditExisting(profileName string, currentMonitors []*hypr.MonitorSpec) error {
+	cfg := s.cfg.Get()
+	profile, ok := cfg.Profiles[profileName]
+	if !ok {
+		return errors.New("profile not found")
+	}
+
+	tmpl, err := template.New("part").Parse(tuiTemplate)
+	if err != nil {
+		return fmt.Errorf("failed to parse template: %w", err)
+	}
+
+	templateData := map[string]any{
+		"Monitors": currentMonitors,
+	}
+
+	var rendered bytes.Buffer
+	if err := tmpl.Execute(&rendered, templateData); err != nil {
+		return fmt.Errorf("failed to execute template: %w", err)
+	}
+
+	err = s.updateConfigFileWithContent(profile.ConfigFile, rendered.String())
+	if err != nil {
+		return fmt.Errorf("failed to update config file: %w", err)
+	}
+
+	return nil
+}
+
+// updateConfigFileWithContent reads the config file, finds TUI AUTO markers and replaces content between them,
+// or appends the content to the end if markers are not found
+func (s *Service) updateConfigFileWithContent(configFile, newContent string) error {
+	const (
+		startMarker = "# <<<<< TUI AUTO START"
+		endMarker   = "# <<<<< TUI AUTO END"
+	)
+
+	existingContent, err := os.ReadFile(configFile)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return os.WriteFile(configFile, []byte(newContent), 0o644)
+		}
+		return fmt.Errorf("failed to read config file: %w", err)
+	}
+
+	content := string(existingContent)
+	finalContent := s.newMethod(content, startMarker, endMarker, newContent)
+	return utils.WriteAtomic(configFile, []byte(finalContent))
+}
+
+func (*Service) newMethod(content, startMarker, endMarker, newContent string) string {
+	startIdx := strings.Index(content, startMarker)
+	endIdx := strings.Index(content, endMarker)
+	if startIdx != -1 && endIdx != -1 && endIdx > startIdx {
+		beforeMarker := content[:startIdx]
+		afterMarker := content[endIdx+len(endMarker):]
+
+		if !strings.HasSuffix(beforeMarker, "\n") && beforeMarker != "" {
+			beforeMarker += "\n"
+		}
+		if !strings.HasPrefix(afterMarker, "\n") && afterMarker != "" {
+			afterMarker = "\n" + afterMarker
+		}
+
+		return beforeMarker + newContent + afterMarker
+	}
+
+	finalContent := content
+	if !strings.HasSuffix(finalContent, "\n") && finalContent != "" {
+		finalContent += "\n"
+	}
+	finalContent += newContent
+
+	return finalContent
 }
 
 func (s *Service) append(profileSpec *bytes.Buffer, cfg *config.RawConfig) error {

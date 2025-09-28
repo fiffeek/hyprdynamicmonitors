@@ -1,15 +1,14 @@
-package testutils
+package tui
 
 import (
 	"encoding/json"
 	"os"
 
 	"github.com/fiffeek/hyprdynamicmonitors/internal/hypr"
-	"github.com/fiffeek/hyprdynamicmonitors/internal/tui"
 )
 
 // LoadMonitorsFromJSON loads monitor specifications from a JSON file
-func LoadMonitorsFromJSON(filename string) ([]*tui.MonitorSpec, error) {
+func LoadMonitorsFromJSON(filename string) ([]*MonitorSpec, error) {
 	data, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, err
@@ -21,15 +20,10 @@ func LoadMonitorsFromJSON(filename string) ([]*tui.MonitorSpec, error) {
 		return nil, err
 	}
 
-	var monitors []*tui.MonitorSpec
+	var monitors []*MonitorSpec
 	for _, spec := range hyprSpecs {
-		monitors = append(monitors, tui.NewMonitorSpec(spec))
+		monitors = append(monitors, NewMonitorSpec(spec))
 	}
 
 	return monitors, nil
-}
-
-// IntPtr returns a pointer to the given int value
-func IntPtr(i int) *int {
-	return &i
 }

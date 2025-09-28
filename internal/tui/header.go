@@ -12,6 +12,7 @@ type Header struct {
 	mode    string
 	width   int
 	err     string
+	success string
 }
 
 func NewHeader(title string) *Header {
@@ -20,6 +21,7 @@ func NewHeader(title string) *Header {
 		warning: "",
 		mode:    "",
 		width:   0,
+		success: "",
 	}
 }
 
@@ -31,8 +33,14 @@ func (h *Header) Update(msg tea.Msg) tea.Cmd {
 	case OperationStatus:
 		if msg.IsError() {
 			h.err = msg.String()
+			h.success = ""
 		} else {
 			h.err = ""
+			if msg.showSuccessToUser {
+				h.success = msg.String()
+			} else {
+				h.success = ""
+			}
 		}
 	}
 	return nil
@@ -53,17 +61,27 @@ func (h *Header) View() string {
 		availableSpace -= lipgloss.Width(mode)
 	}
 
-	var status string
+	var statusError string
 	if h.err != "" {
-		status = ErrorStyle.Render(h.err)
-		availableSpace -= lipgloss.Width(status)
+		statusError = ErrorStyle.Render(h.err)
+		availableSpace -= lipgloss.Width(statusError)
+	}
+
+	var statusSuccess string
+	if h.success != "" {
+		statusSuccess = SuccessStyle.Render(h.success)
+		availableSpace -= lipgloss.Width(statusSuccess)
 	}
 
 	spacer := lipgloss.NewStyle().Width(availableSpace).Render("")
 	sections = append(sections, spacer)
 
+	if h.success != "" {
+		sections = append(sections, statusSuccess)
+	}
+
 	if h.err != "" {
-		sections = append(sections, status)
+		sections = append(sections, statusError)
 	}
 
 	if h.mode != "" {

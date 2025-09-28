@@ -5,13 +5,19 @@ import (
 	"os/exec"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/fiffeek/hyprdynamicmonitors/internal/hypr"
+	"github.com/fiffeek/hyprdynamicmonitors/internal/profilemaker"
 	"github.com/sirupsen/logrus"
 )
 
-type HyprApply struct{}
+type HyprApply struct {
+	profileMaker *profilemaker.Service
+}
 
-func NewHyprApply() *HyprApply {
-	return &HyprApply{}
+func NewHyprApply(profileMaker *profilemaker.Service) *HyprApply {
+	return &HyprApply{
+		profileMaker: profileMaker,
+	}
 }
 
 func (h *HyprApply) ApplyCurrent(monitors []*MonitorSpec) tea.Cmd {
@@ -25,4 +31,23 @@ func (h *HyprApply) ApplyCurrent(monitors []*MonitorSpec) tea.Cmd {
 	}
 
 	return operationStatusCmd(OperationNameEphemeralApply, lastError)
+}
+
+func (h *HyprApply) CreateProfile(monitors []*MonitorSpec, name, file string) tea.Cmd {
+	// todo extract the mapper
+	var hyprMonitors []*hypr.MonitorSpec
+	for _, monitor := range monitors {
+		hyprMonitors = append(hyprMonitors, monitor.ToHyprMonitors())
+	}
+	err := h.profileMaker.FreezeGivenAs(name, file, hyprMonitors)
+	return operationStatusCmd(OperationNameCreateProfile, err)
+}
+
+func (h *HyprApply) EditProfile(monitors []*MonitorSpec, name string) tea.Cmd {
+	var hyprMonitors []*hypr.MonitorSpec
+	for _, monitor := range monitors {
+		hyprMonitors = append(hyprMonitors, monitor.ToHyprMonitors())
+	}
+	err := h.profileMaker.EditExisting(name, hyprMonitors)
+	return operationStatusCmd(OperationNameCreateProfile, err)
 }

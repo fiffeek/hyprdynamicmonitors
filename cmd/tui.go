@@ -8,6 +8,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/config"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/hypr"
+	"github.com/fiffeek/hyprdynamicmonitors/internal/profilemaker"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/tui"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/utils"
 	"github.com/sirupsen/logrus"
@@ -35,18 +36,18 @@ var tuiCmd = &cobra.Command{
 		ctx, cancel := context.WithCancelCause(context.Background())
 		defer cancel(context.Canceled)
 
-		// TODO allow a command (another one? a flag?) to run without hyprdynamicmonitors config
 		cfg, err := config.NewConfig(configPath)
 		if err != nil {
-			return fmt.Errorf("failed to load config: %w", err)
+			logrus.WithError(err).Error("cant read config, ignoring")
 		}
 
-		monitors, err := getMonitors(ctx)
+		monitors, maker, err := getDeps(ctx, cfg)
 		if err != nil {
 			return fmt.Errorf("cant get the current monitors spec: %w", err)
 		}
 
-		model := tui.NewModel(cfg, monitors)
+		// TODO listen to monitor, config events
+		model := tui.NewModel(cfg, monitors, maker)
 		program := tea.NewProgram(
 			model,
 			tea.WithAltScreen(),
@@ -61,32 +62,34 @@ var tuiCmd = &cobra.Command{
 	},
 }
 
-func getMonitors(ctx context.Context) (hypr.MonitorSpecs, error) {
+func getDeps(ctx context.Context, cfg *config.Config) (hypr.MonitorSpecs, *profilemaker.Service, error) {
 	if mockedHyprMonitors != "" {
 		//nolint:gosec
 		contents, err := os.ReadFile(mockedHyprMonitors)
 		if err != nil {
-			return nil, fmt.Errorf("cant read the mocked hypr monitors file: %w", err)
+			return nil, nil, fmt.Errorf("cant read the mocked hypr monitors file: %w", err)
 		}
 
 		var res hypr.MonitorSpecs
 		if err := utils.UnmarshalResponse(contents, &res); err != nil {
-			return nil, fmt.Errorf("failed to parse contents: %w", err)
+			return nil, nil, fmt.Errorf("failed to parse contents: %w", err)
 		}
 
-		return res, nil
+		profileMaker := profilemaker.NewService(cfg, nil)
+
+		return res, profileMaker, nil
 	}
 	hyprIPC, err := hypr.NewIPC(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect to Hyprland IPC: %w", err)
+		return nil, nil, fmt.Errorf("failed to connect to Hyprland IPC: %w", err)
 	}
 
 	monitors := hyprIPC.GetConnectedMonitors()
 	if err := monitors.Validate(); err != nil {
-		return nil, fmt.Errorf("failed to get valid monitor information: %w", err)
+		return nil, nil, fmt.Errorf("failed to get valid monitor information: %w", err)
 	}
 
-	return monitors, nil
+	return monitors, profilemaker.NewService(cfg, hyprIPC), nil
 }
 
 func init() {

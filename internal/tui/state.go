@@ -1,12 +1,16 @@
 package tui
 
-import "strings"
+import (
+	"strings"
+
+	"github.com/fiffeek/hyprdynamicmonitors/internal/config"
+)
 
 type ViewMode int
 
 const (
 	MonitorsListView ViewMode = iota
-	ProfileView
+	ConfigView
 )
 
 type AppState struct {
@@ -40,18 +44,26 @@ func (s AppState) IsPanning() bool {
 }
 
 type RootState struct {
-	CurrentView ViewMode
-	State       AppState
-	monitors    []*MonitorSpec
+	CurrentViewIndex int
+	State            AppState
+	monitors         []*MonitorSpec
+	viewModes        []ViewMode
+	config           *config.Config
 }
 
-func NewState(monitors []*MonitorSpec) *RootState {
+func NewState(monitors []*MonitorSpec, cfg *config.Config) *RootState {
+	viewModes := []ViewMode{MonitorsListView}
+	if cfg != nil {
+		viewModes = append(viewModes, ConfigView)
+	}
 	return &RootState{
-		CurrentView: MonitorsListView,
+		CurrentViewIndex: 0,
 		State: AppState{
 			Snapping: true,
 		},
-		monitors: monitors,
+		monitors:  monitors,
+		config:    cfg,
+		viewModes: viewModes,
 	}
 }
 
@@ -81,4 +93,16 @@ func (r *RootState) ClearMonitorEditState() {
 	r.State.EditingMonitor = false
 	r.State.MonitorEditedListIndex = -1
 	r.State.MirrorSelection = false
+}
+
+func (r *RootState) CurrentView() ViewMode {
+	return r.viewModes[r.CurrentViewIndex%len(r.viewModes)]
+}
+
+func (r *RootState) NextView() {
+	r.CurrentViewIndex = (r.CurrentViewIndex + 1) % len(r.viewModes)
+}
+
+func (r *RootState) HasMoreThanOneView() bool {
+	return len(r.viewModes) > 1
 }

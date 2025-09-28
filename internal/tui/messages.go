@@ -1,6 +1,8 @@
 package tui
 
 import (
+	"slices"
+
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -30,11 +32,15 @@ const (
 	OperationNamePreviewMode
 	OperationNamePreviewMirror
 	OperationNameEphemeralApply
+	OperationNameCreateProfile
+	OperationNameMatchingProfile
+	OperationNameEditProfile
 )
 
 type OperationStatus struct {
-	name OperationName
-	err  error
+	name              OperationName
+	err               error
+	showSuccessToUser bool
 }
 
 func (o OperationStatus) IsError() bool {
@@ -48,9 +54,9 @@ func (o OperationStatus) String() string {
 	case OperationNameNone:
 		operationName = "None"
 	case OperationNameScale:
-		operationName = "Scale"
+		operationName = "Scale Apply"
 	case OperationNameRotate:
-		operationName = "Rotate"
+		operationName = "Rotate Apply"
 	case OperationNameToggleVRR:
 		operationName = "Toggle VRR"
 	case OperationNameToggleMonitor:
@@ -63,6 +69,12 @@ func (o OperationStatus) String() string {
 		operationName = "Preview Mirror"
 	case OperationNameEphemeralApply:
 		operationName = "Apply"
+	case OperationNameCreateProfile:
+		operationName = "Create Profile"
+	case OperationNameMatchingProfile:
+		operationName = "Matching Profile"
+	case OperationNameEditProfile:
+		operationName = "Edit Profile"
 	default:
 		operationName = "Operation"
 	}
@@ -74,18 +86,24 @@ func (o OperationStatus) String() string {
 		result += ": success"
 	}
 
-	if len(result) > 50 {
-		result = result[:50]
+	if len(result) > 100 {
+		result = result[:100]
 	}
 
 	return result
 }
 
 func operationStatusCmd(name OperationName, err error) tea.Cmd {
+	criticalOperations := []OperationName{
+		OperationNameEditProfile,
+		OperationNameCreateProfile,
+	}
+	showSuccessToUser := slices.Contains(criticalOperations, name)
 	return func() tea.Msg {
 		return OperationStatus{
-			name: name,
-			err:  err,
+			name:              name,
+			err:               err,
+			showSuccessToUser: showSuccessToUser,
 		}
 	}
 }
@@ -135,6 +153,32 @@ type ChangeMirrorCommand struct {
 
 type ChangeModeCommand struct {
 	mode string
+}
+
+type CreateNewProfileCommand struct {
+	name string
+	file string
+}
+
+type EditProfileCommand struct {
+	name string
+}
+
+func editProfileCmd(profile string) tea.Cmd {
+	return func() tea.Msg {
+		return EditProfileCommand{
+			name: profile,
+		}
+	}
+}
+
+func createNewProfileCmd(profile, file string) tea.Cmd {
+	return func() tea.Msg {
+		return CreateNewProfileCommand{
+			name: profile,
+			file: file,
+		}
+	}
 }
 
 func changeMirrorPreviewCmd(mirror string) tea.Cmd {

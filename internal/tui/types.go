@@ -147,6 +147,25 @@ func (m *MonitorSpec) NeedsDimensionsSwap() bool {
 	return m.Transform == 1 || m.Transform == 3
 }
 
+func (m *MonitorSpec) ToHyprMonitors() *hypr.MonitorSpec {
+	return &hypr.MonitorSpec{
+		Name:           m.Name,
+		ID:             m.ID,
+		Description:    m.Description,
+		Disabled:       m.Disabled,
+		Width:          m.Width,
+		Height:         m.Height,
+		RefreshRate:    m.RefreshRate,
+		Transform:      m.Transform,
+		Vrr:            m.Vrr,
+		Scale:          m.Scale,
+		X:              m.X,
+		Y:              m.Y,
+		AvailableModes: m.AvailableModes,
+		Mirror:         m.Mirror,
+	}
+}
+
 func (m *MonitorSpec) ToHypr() string {
 	if m.Disabled {
 		return fmt.Sprintf("desc:%s,disable", m.Description)

@@ -8,6 +8,8 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/config"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/hypr"
+	"github.com/fiffeek/hyprdynamicmonitors/internal/matchers"
+	"github.com/fiffeek/hyprdynamicmonitors/internal/profilemaker"
 	"github.com/sirupsen/logrus"
 )
 
@@ -25,15 +27,17 @@ type Model struct {
 	help                help.Model
 	header              *Header
 	hyprPreviewPane     *HyprPreviewPane
+	hdm                 *HDMConfigPane
 
 	// stores
 	monitorEditor *MonitorEditorStore
 
 	// actions
-	hyprApply *HyprApply
+	hyprApply    *HyprApply
+	profileMaker *profilemaker.Service
 }
 
-func NewModel(cfg *config.Config, hyprMonitors hypr.MonitorSpecs) Model {
+func NewModel(cfg *config.Config, hyprMonitors hypr.MonitorSpecs, profileMaker *profilemaker.Service) Model {
 	monitors := make([]*MonitorSpec, len(hyprMonitors))
 	for i, monitor := range hyprMonitors {
 		monitors[i] = NewMonitorSpec(monitor)
@@ -42,7 +46,7 @@ func NewModel(cfg *config.Config, hyprMonitors hypr.MonitorSpecs) Model {
 	model := Model{
 		config:              cfg,
 		keys:                rootKeyMap,
-		rootState:           NewState(monitors),
+		rootState:           NewState(monitors, cfg),
 		layout:              NewLayout(),
 		monitorsList:        NewMonitorList(monitors),
 		monitorsPreviewPane: NewMonitorsPreviewPane(monitors),
@@ -52,7 +56,9 @@ func NewModel(cfg *config.Config, hyprMonitors hypr.MonitorSpecs) Model {
 		monitorEditor:       NewMonitorEditor(monitors),
 		monitorModes:        NewMonitorModeList(monitors),
 		monitorMirrors:      NewMirrorList(monitors),
-		hyprApply:           NewHyprApply(),
+		hyprApply:           NewHyprApply(profileMaker),
+		hdm:                 NewHDMConfigPane(cfg, matchers.NewMatcher(), monitors),
+		profileMaker:        profileMaker,
 	}
 
 	return model
@@ -128,6 +134,12 @@ func (m Model) View() string {
 		left = append(left, pane)
 	}
 
+	if m.rootState.CurrentView() == ConfigView {
+		view := ActiveStyle.Width(m.layout.LeftPanesWidth()).Height(
+			leftMonitorsHeight).Render(m.hdm.View())
+		left = []string{view}
+	}
+
 	leftPanels := lipgloss.JoinVertical(
 		lipgloss.Left,
 		left...,
@@ -200,6 +212,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmds = append(cmds, m.monitorEditor.SetMode(
 			m.rootState.State.MonitorEditedListIndex, msg.mode))
 		cmds = append(cmds, m.monitorsList.Update(msg))
+	case CreateNewProfileCommand:
+		logrus.Debug("Received create new profile")
+		cmds = append(cmds, m.hyprApply.CreateProfile(m.monitorEditor.GetMonitors(), msg.name, msg.file))
+	case EditProfileCommand:
+		logrus.Debug("Received edit existing profile")
+		cmds = append(cmds, m.hyprApply.EditProfile(m.monitorEditor.GetMonitors(), msg.name))
 	case tea.WindowSizeMsg:
 		m.layout.SetHeight(msg.Height)
 		m.layout.SetWidth(msg.Width)
@@ -207,25 +225,34 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch {
 		case key.Matches(msg, m.keys.Quit):
 			return m, tea.Quit
-		case key.Matches(msg, m.keys.Pan):
-			logrus.Debug("Toggling pane mode")
-			m.rootState.TogglePanning()
-			stateChanged = true
-		case key.Matches(msg, m.keys.Fullscreen):
-			logrus.Debug("Toggling fullscreen mode")
-			m.rootState.ToggleFullscreen()
-			stateChanged = true
-		case key.Matches(msg, m.keys.ToggleSnapping):
-			logrus.Debug("Toggling snapping")
-			m.rootState.ToggleSnapping()
-			m.monitorEditor.SetSnapping(m.rootState.State.Snapping)
-			stateChanged = true
-		case key.Matches(msg, m.keys.ApplyHypr):
-			logrus.Debug("Would apply hypr settings")
-			cmds = append(cmds, m.hyprApply.ApplyCurrent(m.monitorEditor.GetMonitors()))
+		case key.Matches(msg, m.keys.Tab):
+			m.rootState.NextView()
 		}
 	}
 
+	if m.rootState.CurrentView() == MonitorsListView {
+		switch msg := msg.(type) {
+		case tea.KeyMsg:
+			switch {
+			case key.Matches(msg, m.keys.Pan):
+				logrus.Debug("Toggling pane mode")
+				m.rootState.TogglePanning()
+				stateChanged = true
+			case key.Matches(msg, m.keys.Fullscreen):
+				logrus.Debug("Toggling fullscreen mode")
+				m.rootState.ToggleFullscreen()
+				stateChanged = true
+			case key.Matches(msg, m.keys.ToggleSnapping):
+				logrus.Debug("Toggling snapping")
+				m.rootState.ToggleSnapping()
+				m.monitorEditor.SetSnapping(m.rootState.State.Snapping)
+				stateChanged = true
+			case key.Matches(msg, m.keys.ApplyHypr):
+				logrus.Debug("Would apply hypr settings")
+				cmds = append(cmds, m.hyprApply.ApplyCurrent(m.monitorEditor.GetMonitors()))
+			}
+		}
+	}
 	if stateChanged {
 		cmds = append(cmds, func() tea.Msg {
 			return StateChanged{
@@ -234,7 +261,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		})
 	}
 
-	switch m.rootState.CurrentView {
+	switch m.rootState.CurrentView() {
 	case MonitorsListView:
 		if !m.rootState.State.Panning {
 			if m.rootState.State.ModeSelection {
@@ -251,6 +278,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		cmd := m.monitorsPreviewPane.Update(msg)
 		cmds = append(cmds, cmd)
+	case ConfigView:
+		logrus.Debug("Update for config view")
+		cmds = append(cmds, m.hdm.Update(msg))
 	}
 
 	cmd := m.header.Update(msg)
@@ -260,9 +290,18 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m *Model) GlobalHelp() []key.Binding {
-	return []key.Binding{
-		rootKeyMap.Pan,
-		rootKeyMap.Fullscreen, rootKeyMap.Center, rootKeyMap.ZoomIn, rootKeyMap.ZoomOut,
-		rootKeyMap.ToggleSnapping, rootKeyMap.ApplyHypr,
+	bindings := []key.Binding{}
+	if m.rootState.HasMoreThanOneView() {
+		bindings = append(bindings, rootKeyMap.Tab)
 	}
+	if m.rootState.CurrentView() == MonitorsListView {
+		monitors := []key.Binding{
+			rootKeyMap.Pan,
+			rootKeyMap.Fullscreen, rootKeyMap.Center, rootKeyMap.ZoomIn, rootKeyMap.ZoomOut,
+			rootKeyMap.ToggleSnapping, rootKeyMap.ApplyHypr,
+		}
+		bindings = append(bindings, monitors...)
+
+	}
+	return bindings
 }

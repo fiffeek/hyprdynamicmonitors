@@ -18,3 +18,17 @@ config_file_type = "template"
 [[profiles.by_name.conditions.required_monitors]]
 name = "eDP-1"
 monitor_tag = "laptop"
+
+
+[profiles.hello]
+config_file = "/home/fmikina/personal/hyprdynamicmonitors-tui/examples/minimal/hyprconfigs/test.go.tmpl"
+config_file_type = "template"
+[profiles.hello.conditions]
+
+[[profiles.hello.conditions.required_monitors]]
+description = "BOE NE135A1M-NY1"
+monitor_tag = "monitor0"
+
+[[profiles.hello.conditions.required_monitors]]
+description = "LG Electronics LG SDQHD 301NTBKDU037"
+monitor_tag = "monitor1"

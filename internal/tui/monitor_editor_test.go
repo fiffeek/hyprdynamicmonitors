@@ -6,8 +6,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/fiffeek/hyprdynamicmonitors/internal/testutils"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/tui"
+	"github.com/fiffeek/hyprdynamicmonitors/internal/utils"
 )
 
 func TestSetMirror_LoopDetection(t *testing.T) {
@@ -52,7 +52,7 @@ func TestSetMirror_LoopDetection(t *testing.T) {
 				// Add MonitorD
 				monitorD := &tui.MonitorSpec{
 					Name:        "MonitorD",
-					ID:          testutils.IntPtr(3),
+					ID:          utils.JustPtr(3),
 					Description: "Monitor D",
 					Disabled:    false,
 					Mirror:      "none",
@@ -101,7 +101,7 @@ func TestSetMirror_LoopDetection(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			monitors, err := testutils.LoadMonitorsFromJSON(tc.setupFile)
+			monitors, err := tui.LoadMonitorsFromJSON(tc.setupFile)
 			require.NoError(t, err, "failed to load test data")
 
 			// Apply setup function if provided
@@ -176,7 +176,7 @@ func TestToggleDisable_MonitorStates(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			monitors, err := testutils.LoadMonitorsFromJSON(tc.setupFile)
+			monitors, err := tui.LoadMonitorsFromJSON(tc.setupFile)
 			require.NoError(t, err, "failed to load test data")
 
 			editor := tui.NewMonitorEditor(monitors)

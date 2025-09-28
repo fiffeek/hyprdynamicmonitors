@@ -21,6 +21,10 @@ var (
 			Bold(true).
 			Foreground(lipgloss.Color("196")).
 			Background(lipgloss.Color("235"))
+	SuccessStyle = lipgloss.NewStyle().
+			Bold(true).
+			Foreground(lipgloss.Color("82")).
+			Background(lipgloss.Color("235"))
 )
 
 var (
@@ -105,3 +109,25 @@ func GetBrightMonitorColor(color string) string {
 		return "255" // White as fallback
 	}
 }
+
+var (
+	configPaneBorderStyle = lipgloss.NewStyle()
+
+	configPaneWarningStyle = lipgloss.NewStyle().
+				Foreground(lipgloss.Color("196")).
+				Italic(true)
+
+	configPaneActionStyle = lipgloss.NewStyle().
+				Background(lipgloss.Color("235"))
+
+	configDetailStyle = lipgloss.NewStyle().
+				Foreground(lipgloss.Color("180"))
+
+	configDetailLabelStyle = lipgloss.NewStyle().
+				Foreground(lipgloss.Color("105")).
+				Bold(true)
+
+	configMonitorItemStyle = lipgloss.NewStyle().
+				Foreground(lipgloss.Color("243")).
+				MarginLeft(2)
+)
