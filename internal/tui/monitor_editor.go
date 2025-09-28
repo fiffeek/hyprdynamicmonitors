@@ -7,8 +7,6 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-// TODO monitors store with mutation commands
-// // TODO grab monitor by its index
 // MonitorEditorStore handles all monitor editing operations
 type MonitorEditorStore struct {
 	monitors     []*MonitorSpec
@@ -24,10 +22,6 @@ func NewMonitorEditor(monitors []*MonitorSpec) *MonitorEditorStore {
 		scaleStep:    0.1, // Adjust scale by 0.1 at a time
 		snapDistance: 50,  // Snap when within 50 pixels of another monitor
 	}
-}
-
-func (e *MonitorEditorStore) GetMonitors() []*MonitorSpec {
-	return e.monitors
 }
 
 type MoveResult int
@@ -89,15 +83,15 @@ func (e *MonitorEditorStore) ScaleMonitor(monitorID int, delta Delta) tea.Cmd {
 	deltaValue := 0.0
 	switch delta {
 	case DeltaLess:
-		deltaValue = -0.1
+		deltaValue = -e.scaleStep
 	case DeltaMore:
-		deltaValue = 0.1
+		deltaValue = e.scaleStep
 	}
 
 	newScale := monitor.Scale + deltaValue
 
 	// Ensure minimum scale of 0.1
-	if newScale >= 0.1 {
+	if newScale >= e.scaleStep {
 		monitor.Scale = newScale
 
 		// Snap the scaled monitor to the nearest edge if it's disconnected
