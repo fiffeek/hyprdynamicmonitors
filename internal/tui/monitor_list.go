@@ -184,6 +184,15 @@ func (d MonitorDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd {
 	sendMonitorSelection := false
 
 	switch msg := msg.(type) {
+	case ChangeModeCommand:
+		logrus.Debug("Received final change mode command")
+		if !item.Editing() {
+			return nil
+		}
+		previous := item.inModeSelection
+		item.RemoveSelectionModes()
+		item.inModeSelection = !previous
+		sendMonitorSelection = true
 	case tea.KeyMsg:
 		switch {
 		case key.Matches(msg, d.keymap.selectMonitor), key.Matches(msg, d.keymap.unselect):
@@ -239,9 +248,10 @@ func (d MonitorDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd {
 	if sendMonitorSelection {
 		cmds = append(cmds, func() tea.Msg {
 			return MonitorBeingEdited{
-				ListIndex: m.Index(),
-				Scaling:   item.inScaleMode,
-				MonitorID: *item.monitor.ID,
+				ListIndex:   m.Index(),
+				Scaling:     item.inScaleMode,
+				MonitorID:   *item.monitor.ID,
+				ModesEditor: item.inModeSelection,
 			}
 		})
 	}
@@ -298,6 +308,7 @@ type MonitorList struct {
 	delegate             MonitorDelegate
 	monitorSelected      bool
 	selectedMonitorIndex int
+	width                int
 }
 
 func NewMonitorList(monitors []*MonitorSpec) *MonitorList {
@@ -408,6 +419,11 @@ func (c *MonitorList) SetHeight(height int) {
 	c.L.SetHeight(height)
 }
 
+func (c *MonitorList) SetWidth(width int) {
+	c.L.SetWidth(width)
+	c.width = width
+}
+
 func (c *MonitorList) View() string {
 	var (
 		sections    []string
@@ -416,7 +432,8 @@ func (c *MonitorList) View() string {
 
 	help := c.ShortHelp()
 	availHeight -= lipgloss.Height(help)
-	content := lipgloss.NewStyle().Height(availHeight).Render(c.L.View())
+	logrus.Debugf("Help height: %d", lipgloss.Height(help))
+	content := lipgloss.NewStyle().Height(availHeight).Width(c.width).Render(c.L.View())
 
 	sections = append(sections, content)
 	sections = append(sections, help)
@@ -427,10 +444,10 @@ func (c *MonitorList) View() string {
 func (c *MonitorList) ShortHelp() string {
 	sections := []string{}
 
-	listHelp := HelpStyle.Render(c.help.ShortHelpView(c.keys.Help(c.state)))
+	listHelp := HelpStyle.Width(c.width).Render(c.help.ShortHelpView(c.keys.Help(c.state)))
 	sections = append(sections, listHelp)
 
-	delegateHelp := HelpStyle.Render(c.help.ShortHelpView(
+	delegateHelp := HelpStyle.Width(c.width).Render(c.help.ShortHelpView(
 		c.delegate.keymap.ShortHelp(c.state)))
 	sections = append(sections, delegateHelp)
 

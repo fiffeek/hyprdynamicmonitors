@@ -2,7 +2,6 @@ package tui
 
 import (
 	"errors"
-	"fmt"
 
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -139,56 +138,20 @@ func (e *MonitorEditorStore) ToggleDisable(monitorID int) tea.Cmd {
 	return operationStatusCmd(OperationNameToggleMonitor, nil)
 }
 
-// SetMode sets the display mode for a monitor
-func (e *MonitorEditorStore) SetMode(index, modeIndex int) error {
-	if index < 0 || index >= len(e.monitors) {
-		return fmt.Errorf("invalid monitor index: %d", index)
+func (e *MonitorEditorStore) SetMode(monitorID int, mode string) tea.Cmd {
+	monitor, index, err := e.FindByID(monitorID)
+	if err != nil {
+		return operationStatusCmd(OperationNamePreviewMode, err)
 	}
 
-	monitor := e.monitors[index]
-	if modeIndex < 0 || modeIndex >= len(monitor.AvailableModes) {
-		return fmt.Errorf("invalid mode index: %d", modeIndex)
+	err = monitor.SetMode(mode)
+	if err != nil {
+		return operationStatusCmd(OperationNamePreviewMode, err)
 	}
 
-	mode := monitor.AvailableModes[modeIndex]
-
-	// Parse mode string (format: "2880x1920@120.00Hz")
-	var width, height int
-	var refreshRate float64
-
-	n, err := fmt.Sscanf(mode, "%dx%d@%fHz", &width, &height, &refreshRate)
-	if err != nil || n != 3 {
-		return fmt.Errorf("failed to parse mode: %s", mode)
-	}
-
-	// Update monitor properties
-	monitor.Width = width
-	monitor.Height = height
-	monitor.RefreshRate = refreshRate
-
-	// Snap the monitor to the nearest edge if it's disconnected after mode change
 	e.snapMonitorToNearestEdge(index)
 
-	return nil
-}
-
-// FindCurrentModeIndex finds the index of the current monitor mode in AvailableModes
-func (e *MonitorEditorStore) FindCurrentModeIndex(index int) int {
-	if index < 0 || index >= len(e.monitors) {
-		return 0
-	}
-
-	monitor := e.monitors[index]
-	currentMode := fmt.Sprintf("%dx%d@%.2fHz", monitor.Width, monitor.Height, monitor.RefreshRate)
-
-	for i, mode := range monitor.AvailableModes {
-		if mode == currentMode {
-			return i
-		}
-	}
-
-	// If exact match not found, return 0 (first mode)
-	return 0
+	return operationStatusCmd(OperationNamePreviewMode, err)
 }
 
 // snapPosition attempts to snap the monitor position to nearby monitors

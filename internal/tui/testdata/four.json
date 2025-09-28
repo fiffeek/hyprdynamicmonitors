@@ -1,0 +1,288 @@
+[
+  {
+    "activeWorkspace": {
+      "id": 1,
+      "name": "1"
+    },
+    "activelyTearing": false,
+    "availableModes": [
+      "2880x1920@120.00Hz",
+      "2880x1920@60.00Hz",
+      "1920x1200@120.00Hz",
+      "1920x1080@120.00Hz",
+      "1600x1200@120.00Hz",
+      "1680x1050@120.00Hz",
+      "1280x1024@120.00Hz",
+      "1440x900@120.00Hz",
+      "1280x800@120.00Hz",
+      "1280x720@120.00Hz",
+      "1024x768@120.00Hz",
+      "800x600@120.00Hz",
+      "640x480@120.00Hz"
+    ],
+    "currentFormat": "XRGB8888",
+    "description": "BOE NE135A1M-NY1",
+    "directScanoutBlockedBy": [
+      "USER",
+      "CANDIDATE"
+    ],
+    "directScanoutTo": "0",
+    "disabled": false,
+    "dpmsStatus": true,
+    "focused": true,
+    "height": 1920,
+    "id": 0,
+    "make": "BOE",
+    "mirrorOf": "none",
+    "model": "NE135A1M-NY1",
+    "name": "eDP-1",
+    "physicalHeight": 190,
+    "physicalWidth": 290,
+    "refreshRate": 120.0,
+    "reserved": [
+      0,
+      14,
+      0,
+      0
+    ],
+    "scale": 2.0,
+    "serial": "BOE135A10001",
+    "solitary": "0",
+    "solitaryBlockedBy": [
+      "OPAQUE",
+      "SURFACES"
+    ],
+    "specialWorkspace": {
+      "id": 0,
+      "name": ""
+    },
+    "tearingBlockedBy": [
+      "NOT_TORN",
+      "USER",
+      "CANDIDATE"
+    ],
+    "transform": 0,
+    "vrr": true,
+    "width": 2880,
+    "x": 1920,
+    "y": 1080
+  },
+  {
+    "activeWorkspace": {
+      "id": 2,
+      "name": "2"
+    },
+    "activelyTearing": false,
+    "availableModes": [
+      "3840x2160@60.00Hz",
+      "3840x2160@59.94Hz",
+      "3840x2160@50.00Hz",
+      "3840x2160@30.00Hz",
+      "3840x2160@29.97Hz",
+      "3840x2160@25.00Hz",
+      "3840x2160@24.00Hz",
+      "3840x2160@23.98Hz",
+      "2560x1440@59.95Hz",
+      "1920x1080@60.00Hz",
+      "1920x1080@59.94Hz",
+      "1920x1080@50.00Hz",
+      "1680x1050@59.95Hz",
+      "1280x1024@75.02Hz",
+      "1280x800@59.81Hz",
+      "1024x768@75.00Hz",
+      "800x600@60.32Hz",
+      "640x480@59.94Hz"
+    ],
+    "currentFormat": "XRGB8888",
+    "description": "Dell Inc. DELL U2723QE 5YNK3H3",
+    "directScanoutBlockedBy": [
+      "USER",
+      "CANDIDATE"
+    ],
+    "directScanoutTo": "0",
+    "disabled": false,
+    "dpmsStatus": true,
+    "focused": false,
+    "height": 2160,
+    "id": 1,
+    "make": "Dell Inc.",
+    "mirrorOf": "none",
+    "model": "DELL U2723QE",
+    "name": "DP-1",
+    "physicalHeight": 336,
+    "physicalWidth": 597,
+    "refreshRate": 60.0,
+    "reserved": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "scale": 1.25,
+    "serial": "5YNK3H3",
+    "solitary": "0",
+    "solitaryBlockedBy": [
+      "WINDOWED",
+      "CANDIDATE"
+    ],
+    "specialWorkspace": {
+      "id": 0,
+      "name": ""
+    },
+    "tearingBlockedBy": [
+      "NOT_TORN",
+      "USER",
+      "CANDIDATE"
+    ],
+    "transform": 0,
+    "vrr": false,
+    "width": 3840,
+    "x": 0,
+    "y": 0
+  },
+  {
+    "activeWorkspace": {
+      "id": 3,
+      "name": "3"
+    },
+    "activelyTearing": false,
+    "availableModes": [
+      "1920x1080@60.00Hz",
+      "1920x1080@59.93Hz",
+      "1920x1080@50.00Hz",
+      "1680x1050@59.95Hz",
+      "1440x900@59.89Hz",
+      "1280x1024@75.02Hz",
+      "1280x1024@60.02Hz",
+      "1280x960@60.00Hz",
+      "1280x800@59.81Hz",
+      "1152x864@75.00Hz",
+      "1024x768@75.00Hz",
+      "1024x768@70.07Hz",
+      "1024x768@60.00Hz",
+      "832x624@74.55Hz",
+      "800x600@72.19Hz",
+      "800x600@60.32Hz",
+      "800x600@56.25Hz",
+      "640x480@75.00Hz",
+      "640x480@72.81Hz",
+      "640x480@66.67Hz",
+      "640x480@59.94Hz"
+    ],
+    "currentFormat": "XRGB8888",
+    "description": "Samsung Electric Company C27F390 HTHK500315",
+    "directScanoutBlockedBy": [
+      "USER",
+      "CANDIDATE"
+    ],
+    "directScanoutTo": "0",
+    "disabled": false,
+    "dpmsStatus": true,
+    "focused": false,
+    "height": 1080,
+    "id": 2,
+    "make": "Samsung Electric Company",
+    "mirrorOf": "none",
+    "model": "C27F390",
+    "name": "DP-2",
+    "physicalHeight": 336,
+    "physicalWidth": 598,
+    "refreshRate": 60.0,
+    "reserved": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "scale": 1.0,
+    "serial": "HTHK500315",
+    "solitary": "0",
+    "solitaryBlockedBy": [
+      "WINDOWED",
+      "CANDIDATE"
+    ],
+    "specialWorkspace": {
+      "id": 0,
+      "name": ""
+    },
+    "tearingBlockedBy": [
+      "NOT_TORN",
+      "USER",
+      "CANDIDATE"
+    ],
+    "transform": 0,
+    "vrr": false,
+    "width": 1920,
+    "x": 3840,
+    "y": 540
+  },
+  {
+    "activeWorkspace": {
+      "id": 4,
+      "name": "4"
+    },
+    "activelyTearing": false,
+    "availableModes": [
+      "1920x1080@60.00Hz",
+      "1680x1050@60.00Hz",
+      "1600x900@60.00Hz",
+      "1440x900@60.00Hz",
+      "1366x768@60.00Hz",
+      "1280x1024@60.00Hz",
+      "1280x800@60.00Hz",
+      "1280x720@60.00Hz",
+      "1024x768@60.00Hz",
+      "800x600@60.00Hz",
+      "640x480@60.00Hz"
+    ],
+    "currentFormat": "XRGB8888",
+    "description": "Headless Virtual Display",
+    "directScanoutBlockedBy": [
+      "USER",
+      "CANDIDATE",
+      "VIRTUAL"
+    ],
+    "directScanoutTo": "0",
+    "disabled": false,
+    "dpmsStatus": true,
+    "focused": false,
+    "height": 1080,
+    "id": 3,
+    "make": "Virtual",
+    "mirrorOf": "none",
+    "model": "HEADLESS-1",
+    "name": "HEADLESS-1",
+    "physicalHeight": 286,
+    "physicalWidth": 508,
+    "refreshRate": 60.0,
+    "reserved": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "scale": 1.0,
+    "serial": "VRT00001",
+    "solitary": "0",
+    "solitaryBlockedBy": [
+      "WINDOWED",
+      "CANDIDATE",
+      "VIRTUAL"
+    ],
+    "specialWorkspace": {
+      "id": 0,
+      "name": ""
+    },
+    "tearingBlockedBy": [
+      "NOT_TORN",
+      "USER",
+      "CANDIDATE",
+      "VIRTUAL"
+    ],
+    "transform": 0,
+    "vrr": false,
+    "width": 1920,
+    "x": 5760,
+    "y": 0
+  }
+]

@@ -10,11 +10,12 @@ const (
 )
 
 type AppState struct {
-	EditingMonitor bool
-	Panning        bool
-	Scaling        bool
-	ModeSelection  bool
-	Fullscreen     bool
+	EditingMonitor         bool
+	Panning                bool
+	Scaling                bool
+	ModeSelection          bool
+	Fullscreen             bool
+	MonitorEditedListIndex int
 }
 
 func (s AppState) String() string {
@@ -39,12 +40,14 @@ func (s AppState) IsPanning() bool {
 type RootState struct {
 	CurrentView ViewMode
 	State       AppState
+	monitors    []*MonitorSpec
 }
 
-func NewState() *RootState {
+func NewState(monitors []*MonitorSpec) *RootState {
 	return &RootState{
 		CurrentView: MonitorsListView,
 		State:       AppState{},
+		monitors:    monitors,
 	}
 }
 
@@ -59,9 +62,13 @@ func (r *RootState) TogglePanning() {
 func (r *RootState) SetMonitorEditState(msg MonitorBeingEdited) {
 	r.State.EditingMonitor = true
 	r.State.Scaling = msg.Scaling
+	r.State.ModeSelection = msg.ModesEditor
+	r.State.MonitorEditedListIndex = msg.ListIndex
 }
 
 func (r *RootState) ClearMonitorEditState() {
+	r.State.ModeSelection = false
 	r.State.Scaling = false
 	r.State.EditingMonitor = false
+	r.State.MonitorEditedListIndex = -1
 }

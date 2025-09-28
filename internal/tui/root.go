@@ -20,6 +20,7 @@ type Model struct {
 	// components
 	monitorsList        *MonitorList
 	monitorsPreviewPane *MonitorsPreviewPane
+	monitorModes        *MonitorModeList
 	help                help.Model
 	header              *Header
 	hyprPreviewPane     *HyprPreviewPane
@@ -37,7 +38,7 @@ func NewModel(cfg *config.Config, hyprMonitors hypr.MonitorSpecs) Model {
 	model := Model{
 		config:              cfg,
 		keys:                rootKeyMap,
-		rootState:           &RootState{},
+		rootState:           NewState(monitors),
 		layout:              NewLayout(),
 		monitorsList:        NewMonitorList(monitors),
 		monitorsPreviewPane: NewMonitorsPreviewPane(monitors),
@@ -45,6 +46,7 @@ func NewModel(cfg *config.Config, hyprMonitors hypr.MonitorSpecs) Model {
 		header:              NewHeader("HyprDynamicMonitors"),
 		hyprPreviewPane:     NewHyprPreviewPane(monitors),
 		monitorEditor:       NewMonitorEditor(monitors),
+		monitorModes:        NewMonitorModeList(monitors),
 	}
 
 	return model
@@ -68,7 +70,12 @@ func (m Model) View() string {
 	m.layout.SetReservedTop(globalHelpHeight + headerHeight + 2)
 
 	m.monitorsList.SetHeight(m.layout.LeftMonitorsHeight())
-	monitorView := InactiveStyle.Width(m.layout.LeftPanesWidth()).Height(
+	m.monitorsList.SetWidth(m.layout.LeftPanesWidth())
+	monitorViewStyle := ActiveStyle
+	if m.rootState.State.ModeSelection {
+		monitorViewStyle = InactiveStyle
+	}
+	monitorView := monitorViewStyle.Width(m.layout.LeftPanesWidth()).Height(
 		m.layout.LeftMonitorsHeight()).Render(m.monitorsList.View())
 
 	m.monitorsPreviewPane.SetHeight(m.layout.RightPreviewHeight())
@@ -90,9 +97,17 @@ func (m Model) View() string {
 		rightSections = append(rightSections, hyprPreview)
 	}
 
+	left := []string{monitorView}
+
+	if m.rootState.State.ModeSelection {
+		m.monitorModes.SetHeight(m.layout.LeftSubpaneHeight())
+		modeSelectionPane := ActiveStyle.Width(m.layout.LeftPanesWidth()).Height(m.layout.LeftSubpaneHeight()).Render(m.monitorModes.View())
+		left = append(left, modeSelectionPane)
+	}
+
 	leftPanels := lipgloss.JoinVertical(
 		lipgloss.Left,
-		monitorView,
+		left...,
 	)
 	rightPanels := lipgloss.JoinVertical(
 		lipgloss.Left,
@@ -124,9 +139,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		logrus.Debug("Monitor selected event in root")
 		m.rootState.SetMonitorEditState(msg)
 		stateChanged = true
+		cmds = append(cmds, m.monitorModes.SetItems(m.rootState.monitors[msg.ListIndex]))
 	case MonitorUnselected:
 		logrus.Debug("Monitor unselected event in root")
 		m.rootState.ClearMonitorEditState()
+		cmds = append(cmds, m.monitorModes.ClearItems())
 		stateChanged = true
 	case MoveMonitorCommand:
 		logrus.Debug("Received a monitor move command")
@@ -143,6 +160,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case ScaleMonitorCommand:
 		logrus.Debug("Received a monitor scale command")
 		cmds = append(cmds, m.monitorEditor.ScaleMonitor(msg.monitorID, msg.delta))
+	case ChangeModePreviewCommand:
+		logrus.Debug("Received preview change for monitor mode")
+		cmds = append(cmds, m.monitorEditor.SetMode(m.rootState.State.MonitorEditedListIndex, msg.mode))
+	case ChangeModeCommand:
+		logrus.Debug("Received preview change for monitor mode")
+		cmds = append(cmds, m.monitorEditor.SetMode(m.rootState.State.MonitorEditedListIndex, msg.mode))
+		cmds = append(cmds, m.monitorsList.Update(msg))
 	case tea.WindowSizeMsg:
 		m.layout.SetHeight(msg.Height)
 		m.layout.SetWidth(msg.Width)
@@ -172,8 +196,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch m.rootState.CurrentView {
 	case MonitorsListView:
 		if !m.rootState.State.Panning {
-			cmd := m.monitorsList.Update(msg)
-			cmds = append(cmds, cmd)
+			if m.rootState.State.ModeSelection {
+				cmd := m.monitorModes.Update(msg)
+				cmds = append(cmds, cmd)
+			} else {
+				cmd := m.monitorsList.Update(msg)
+				cmds = append(cmds, cmd)
+			}
 		}
 
 		cmd := m.monitorsPreviewPane.Update(msg)

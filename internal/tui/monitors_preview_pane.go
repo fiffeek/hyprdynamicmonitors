@@ -48,8 +48,17 @@ func NewMonitorsPreviewPane(monitors []*MonitorSpec) *MonitorsPreviewPane {
 func (p *MonitorsPreviewPane) Update(msg tea.Msg) tea.Cmd {
 	logrus.Debugf("Update called on MonitorsPreviewPane: %v", msg)
 	switch msg := msg.(type) {
+	// add a switch to follow monitor on move
+	// case MoveMonitorCommand:
+	// 	monitor := p.monitors[p.selectedIndex]
+	// 	p.panX = monitor.X
+	// 	p.panY = monitor.Y
 	case MonitorBeingEdited:
 		p.selectedIndex = msg.ListIndex
+		// set panning to the current monitor left top corner
+		monitor := p.monitors[p.selectedIndex]
+		p.panX = monitor.X
+		p.panY = monitor.Y
 	case MonitorUnselected:
 		p.selectedIndex = -1
 	case StateChanged:

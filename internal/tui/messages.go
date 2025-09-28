@@ -3,9 +3,10 @@ package tui
 import tea "github.com/charmbracelet/bubbletea"
 
 type MonitorBeingEdited struct {
-	ListIndex int
-	Scaling   bool
-	MonitorID int
+	ListIndex   int
+	Scaling     bool
+	MonitorID   int
+	ModesEditor bool
 }
 
 type MonitorUnselected struct{}
@@ -23,6 +24,7 @@ const (
 	OperationNameToggleVRR
 	OperationNameToggleMonitor
 	OperationNameMove
+	OperationNamePreviewMode
 )
 
 type OperationStatus struct {
@@ -65,6 +67,30 @@ type ToggleMonitorVRRCommand struct {
 
 type ToggleMonitorCommand struct {
 	monitorID int
+}
+
+type ChangeModePreviewCommand struct {
+	mode string
+}
+
+type ChangeModeCommand struct {
+	mode string
+}
+
+func changeModeCmd(mode string) tea.Cmd {
+	return func() tea.Msg {
+		return ChangeModeCommand{
+			mode: mode,
+		}
+	}
+}
+
+func changeModePreviewCmd(mode string) tea.Cmd {
+	return func() tea.Msg {
+		return ChangeModePreviewCommand{
+			mode: mode,
+		}
+	}
 }
 
 func scaleMonitorCmd(monitorID int, delta Delta) tea.Cmd {

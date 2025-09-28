@@ -84,6 +84,28 @@ func (m *MonitorSpec) Mode() string {
 		m.RefreshRate)
 }
 
+func (m *MonitorSpec) ModeForComparison() string {
+	return fmt.Sprintf("%dx%d@%.2fHz",
+		m.Width,
+		m.Height,
+		m.RefreshRate)
+}
+
+func (m *MonitorSpec) SetMode(mode string) error {
+	var width, height int
+	var refreshRate float64
+	n, err := fmt.Sscanf(mode, "%dx%d@%fHz", &width, &height, &refreshRate)
+	if err != nil || n != 3 {
+		return fmt.Errorf("failed to parse mode: %s", mode)
+	}
+
+	m.Width = width
+	m.Height = height
+	m.RefreshRate = refreshRate
+
+	return nil
+}
+
 func (m *MonitorSpec) PositionArrowView() string {
 	switch m.Transform {
 	case 0: // Normal (0°) - top is up
