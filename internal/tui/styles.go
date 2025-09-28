@@ -36,6 +36,9 @@ var (
 	MonitorScaleMode = lipgloss.NewStyle().
 				Foreground(lipgloss.Color("39")).
 				Bold(true)
+	MonitorMirroringMode = lipgloss.NewStyle().
+				Foreground(lipgloss.Color("140")).
+				Bold(true)
 	MonitorEditingMode = lipgloss.NewStyle().
 				Foreground(lipgloss.Color("226")).
 				Bold(true)

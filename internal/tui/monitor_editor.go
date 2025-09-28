@@ -138,6 +138,38 @@ func (e *MonitorEditorStore) ToggleDisable(monitorID int) tea.Cmd {
 	return operationStatusCmd(OperationNameToggleMonitor, nil)
 }
 
+func (e *MonitorEditorStore) SetMirror(monitorID int, mirrorOf string) tea.Cmd {
+	monitor, _, err := e.FindByID(monitorID)
+	if err != nil {
+		return operationStatusCmd(OperationNamePreviewMirror, err)
+	}
+
+	if monitor.Name == mirrorOf {
+		return operationStatusCmd(OperationNamePreviewMirror, errors.New("cant mirror itself"))
+	}
+
+	found := false
+	for _, monitor := range e.monitors {
+		if monitor.Name != mirrorOf {
+			continue
+		}
+		if monitor.Disabled {
+			return operationStatusCmd(OperationNamePreviewMirror, errors.New("cant mirror disabled monitor"))
+		}
+		found = true
+
+	}
+	if !found && mirrorOf != "none" {
+		return operationStatusCmd(OperationNamePreviewMirror, errors.New("cant find mirrored monitor"))
+	}
+
+	// todo check loops in mirroring, should be impossible to add a mirror that causes loops
+
+	monitor.SetMirror(mirrorOf)
+
+	return operationStatusCmd(OperationNamePreviewMirror, err)
+}
+
 func (e *MonitorEditorStore) SetMode(monitorID int, mode string) tea.Cmd {
 	monitor, index, err := e.FindByID(monitorID)
 	if err != nil {

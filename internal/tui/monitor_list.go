@@ -18,6 +18,7 @@ type MonitorItem struct {
 	isSelectedForEditing bool
 	inScaleMode          bool
 	inModeSelection      bool
+	inMirroringMode      bool
 }
 
 func (m MonitorItem) Title() string {
@@ -52,7 +53,7 @@ func (m *MonitorItem) RemoveSelectionModes() {
 }
 
 func (m MonitorItem) Editing() bool {
-	return m.isSelectedForEditing || m.inScaleMode || m.inModeSelection
+	return m.isSelectedForEditing || m.inScaleMode || m.inModeSelection || m.inMirroringMode
 }
 
 func (m MonitorItem) Indicator() string {
@@ -66,6 +67,10 @@ func (m MonitorItem) Indicator() string {
 
 	if m.inScaleMode {
 		return MonitorScaleMode.Render("[SCALE MODE]")
+	}
+
+	if m.inMirroringMode {
+		return MonitorMirroringMode.Render("[MIRRORING]")
 	}
 
 	if m.isSelectedForEditing {
@@ -83,6 +88,7 @@ func (m MonitorItem) DescriptionLines() []string {
 		m.monitor.VRRPretty(),
 		m.monitor.RotationPretty(),
 		m.monitor.PositionPretty(),
+		m.monitor.MirrorPretty(),
 	}
 }
 
@@ -102,6 +108,7 @@ type MonitorListKeyMap struct {
 	changeMode    key.Binding
 	vrr           key.Binding
 	toggle        key.Binding
+	mirror        key.Binding
 }
 
 func NewMonitorListKeyMap() *MonitorListKeyMap {
@@ -134,6 +141,10 @@ func NewMonitorListKeyMap() *MonitorListKeyMap {
 			key.WithKeys("m"),
 			key.WithHelp("m", "change mode"),
 		),
+		mirror: key.NewBinding(
+			key.WithKeys("i"),
+			key.WithHelp("i", "mirror"),
+		),
 	}
 }
 
@@ -146,6 +157,7 @@ func (m MonitorListKeyMap) ShortHelp(state AppState) []key.Binding {
 			m.changeMode,
 			m.vrr,
 			m.toggle,
+			m.mirror,
 		}
 	}
 	return []key.Binding{
@@ -164,7 +176,7 @@ func NewMonitorDelegate() MonitorDelegate {
 }
 
 func (d MonitorDelegate) Height() int {
-	return 8
+	return 9
 }
 
 func (d MonitorDelegate) Spacing() int {
@@ -192,6 +204,15 @@ func (d MonitorDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd {
 		previous := item.inModeSelection
 		item.RemoveSelectionModes()
 		item.inModeSelection = !previous
+		sendMonitorSelection = true
+	case ChangeMirrorCommand:
+		logrus.Debug("Received final change mirror command")
+		if !item.Editing() {
+			return nil
+		}
+		previous := item.inMirroringMode
+		item.RemoveSelectionModes()
+		item.inMirroringMode = !previous
 		sendMonitorSelection = true
 	case tea.KeyMsg:
 		switch {
@@ -232,6 +253,16 @@ func (d MonitorDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd {
 			item.RemoveSelectionModes()
 			item.inScaleMode = !previous
 			sendMonitorSelection = true
+		case key.Matches(msg, d.keymap.mirror):
+			logrus.Debugf("List called with mirror")
+			if !item.Editing() {
+				return nil
+			}
+			previous := item.inMirroringMode
+			item.RemoveSelectionModes()
+			item.inMirroringMode = !previous
+			logrus.Debugf("MirroringMode set to: %v", item.inMirroringMode)
+			sendMonitorSelection = true
 		case key.Matches(msg, d.keymap.changeMode):
 			logrus.Debugf("List called with changeMode")
 			if !item.Editing() {
@@ -248,10 +279,11 @@ func (d MonitorDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd {
 	if sendMonitorSelection {
 		cmds = append(cmds, func() tea.Msg {
 			return MonitorBeingEdited{
-				ListIndex:   m.Index(),
-				Scaling:     item.inScaleMode,
-				MonitorID:   *item.monitor.ID,
-				ModesEditor: item.inModeSelection,
+				ListIndex:     m.Index(),
+				Scaling:       item.inScaleMode,
+				MonitorID:     *item.monitor.ID,
+				ModesEditor:   item.inModeSelection,
+				MirroringMode: item.inMirroringMode,
 			}
 		})
 	}

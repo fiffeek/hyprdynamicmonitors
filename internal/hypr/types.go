@@ -23,6 +23,7 @@ type MonitorSpec struct {
 	X              int      `json:"x"`
 	Y              int      `json:"y"`
 	AvailableModes []string `json:"availableModes"`
+	Mirror         string   `json:"mirrorOf"`
 }
 
 func (m *MonitorSpec) Validate() error {

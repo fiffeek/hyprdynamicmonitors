@@ -1,12 +1,15 @@
 package tui
 
-import tea "github.com/charmbracelet/bubbletea"
+import (
+	tea "github.com/charmbracelet/bubbletea"
+)
 
 type MonitorBeingEdited struct {
-	ListIndex   int
-	Scaling     bool
-	MonitorID   int
-	ModesEditor bool
+	ListIndex     int
+	Scaling       bool
+	MonitorID     int
+	ModesEditor   bool
+	MirroringMode bool
 }
 
 type MonitorUnselected struct{}
@@ -25,16 +28,62 @@ const (
 	OperationNameToggleMonitor
 	OperationNameMove
 	OperationNamePreviewMode
+	OperationNamePreviewMirror
 )
 
 type OperationStatus struct {
-	name string
+	name OperationName
 	err  error
+}
+
+func (o OperationStatus) IsError() bool {
+	return o.err != nil
+}
+
+func (o OperationStatus) String() string {
+	operationName := ""
+
+	switch o.name {
+	case OperationNameNone:
+		operationName = "None"
+	case OperationNameScale:
+		operationName = "Scale"
+	case OperationNameRotate:
+		operationName = "Rotate"
+	case OperationNameToggleVRR:
+		operationName = "Toggle VRR"
+	case OperationNameToggleMonitor:
+		operationName = "Toggle Monitor"
+	case OperationNameMove:
+		operationName = "Move"
+	case OperationNamePreviewMode:
+		operationName = "Preview Mode"
+	case OperationNamePreviewMirror:
+		operationName = "Preview Mirror"
+	default:
+		operationName = "Operation"
+	}
+
+	result := operationName
+	if o.err != nil {
+		result += ": " + o.err.Error()
+	} else {
+		result += ": success"
+	}
+
+	if len(result) > 50 {
+		result = result[:50]
+	}
+
+	return result
 }
 
 func operationStatusCmd(name OperationName, err error) tea.Cmd {
 	return func() tea.Msg {
-		return OperationStatus{}
+		return OperationStatus{
+			name: name,
+			err:  err,
+		}
 	}
 }
 
@@ -73,8 +122,32 @@ type ChangeModePreviewCommand struct {
 	mode string
 }
 
+type ChangeMirrorPreviewCommand struct {
+	mirrorOf string
+}
+
+type ChangeMirrorCommand struct {
+	mirrorOf string
+}
+
 type ChangeModeCommand struct {
 	mode string
+}
+
+func changeMirrorPreviewCmd(mirror string) tea.Cmd {
+	return func() tea.Msg {
+		return ChangeMirrorPreviewCommand{
+			mirrorOf: mirror,
+		}
+	}
+}
+
+func changeMirrorCmd(mirror string) tea.Cmd {
+	return func() tea.Msg {
+		return ChangeMirrorCommand{
+			mirrorOf: mirror,
+		}
+	}
 }
 
 func changeModeCmd(mode string) tea.Cmd {

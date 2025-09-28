@@ -20,6 +20,7 @@ type MonitorSpec struct {
 	X              int      `json:"x"`
 	Y              int      `json:"y"`
 	AvailableModes []string `json:"availableModes"`
+	Mirror         string   `json:"mirrorOf"`
 }
 
 func NewMonitorSpec(spec *hypr.MonitorSpec) *MonitorSpec {
@@ -37,6 +38,7 @@ func NewMonitorSpec(spec *hypr.MonitorSpec) *MonitorSpec {
 		X:              spec.X,
 		Y:              spec.Y,
 		AvailableModes: spec.AvailableModes,
+		Mirror:         spec.Mirror,
 	}
 }
 
@@ -53,6 +55,10 @@ func (m *MonitorSpec) RotationPretty() string {
 	default:
 		return fmt.Sprintf("Transform: %d", m.Transform)
 	}
+}
+
+func (m *MonitorSpec) MirrorPretty() string {
+	return fmt.Sprintf("Mirror: %s", m.Mirror)
 }
 
 func (m *MonitorSpec) PositionPretty() string {
@@ -89,6 +95,10 @@ func (m *MonitorSpec) ModeForComparison() string {
 		m.Width,
 		m.Height,
 		m.RefreshRate)
+}
+
+func (m *MonitorSpec) SetMirror(mirrorOf string) {
+	m.Mirror = mirrorOf
 }
 
 func (m *MonitorSpec) SetMode(mode string) error {
@@ -141,8 +151,12 @@ func (m *MonitorSpec) ToHypr() string {
 	if m.Disabled {
 		return fmt.Sprintf("desc:%s,disable", m.Description)
 	}
-	return fmt.Sprintf("desc:%s,%dx%d@%.5f,%dx%d,%.2f,transform,%d", m.Description, m.Width,
+	line := fmt.Sprintf("desc:%s,%dx%d@%.5f,%dx%d,%.2f,transform,%d", m.Description, m.Width,
 		m.Height, m.RefreshRate, m.X, m.Y, m.Scale, m.Transform)
+	if m.Mirror != "none" {
+		line = fmt.Sprintf("%s,mirror,%s", line, m.Mirror)
+	}
+	return line
 }
 
 type MonitorRectangle struct {

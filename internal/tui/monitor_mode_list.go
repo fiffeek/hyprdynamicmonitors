@@ -27,14 +27,10 @@ func (m ModeItem) View() string {
 	return m.mode
 }
 
-type ModeDelegate struct {
-	keymap *MonitorListKeyMap
-}
+type ModeDelegate struct{}
 
 func NewModeDelegate() ModeDelegate {
-	return ModeDelegate{
-		keymap: NewMonitorListKeyMap(),
-	}
+	return ModeDelegate{}
 }
 
 func (d ModeDelegate) Height() int {
@@ -80,9 +76,8 @@ func (d ModeDelegate) Render(w io.Writer, m list.Model, index int, item list.Ite
 		style = MonitorListTitle
 	}
 	title := style.Render(modeItem.View())
-	content := fmt.Sprintf("%s", title)
 
-	fmt.Fprintf(w, "%s", content)
+	fmt.Fprintf(w, "%s", title)
 }
 
 func NewMonitorModeList(monitors []*MonitorSpec) *MonitorModeList {
@@ -124,10 +119,8 @@ func (m *MonitorModeList) ClearItems() tea.Cmd {
 }
 
 func (m *MonitorModeList) Update(msg tea.Msg) tea.Cmd {
-	var cmds []tea.Cmd
 	var cmd tea.Cmd
 	m.L, cmd = m.L.Update(msg)
-	cmds = append(cmds, cmd)
 	return cmd
 }
 

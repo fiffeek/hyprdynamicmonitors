@@ -14,6 +14,7 @@ type AppState struct {
 	Panning                bool
 	Scaling                bool
 	ModeSelection          bool
+	MirrorSelection        bool
 	Fullscreen             bool
 	MonitorEditedListIndex int
 }
@@ -30,7 +31,7 @@ func (s AppState) String() string {
 }
 
 func (s AppState) Editing() bool {
-	return s.EditingMonitor || s.Fullscreen || s.ModeSelection || s.Scaling || s.Panning
+	return s.EditingMonitor || s.Fullscreen || s.ModeSelection || s.Scaling || s.Panning || s.MirrorSelection
 }
 
 func (s AppState) IsPanning() bool {
@@ -64,6 +65,7 @@ func (r *RootState) SetMonitorEditState(msg MonitorBeingEdited) {
 	r.State.Scaling = msg.Scaling
 	r.State.ModeSelection = msg.ModesEditor
 	r.State.MonitorEditedListIndex = msg.ListIndex
+	r.State.MirrorSelection = msg.MirroringMode
 }
 
 func (r *RootState) ClearMonitorEditState() {
@@ -71,4 +73,5 @@ func (r *RootState) ClearMonitorEditState() {
 	r.State.Scaling = false
 	r.State.EditingMonitor = false
 	r.State.MonitorEditedListIndex = -1
+	r.State.MirrorSelection = false
 }
