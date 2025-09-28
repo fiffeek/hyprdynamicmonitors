@@ -28,6 +28,9 @@ type Model struct {
 
 	// stores
 	monitorEditor *MonitorEditorStore
+
+	// actions
+	hyprApply *HyprApply
 }
 
 func NewModel(cfg *config.Config, hyprMonitors hypr.MonitorSpecs) Model {
@@ -49,6 +52,7 @@ func NewModel(cfg *config.Config, hyprMonitors hypr.MonitorSpecs) Model {
 		monitorEditor:       NewMonitorEditor(monitors),
 		monitorModes:        NewMonitorModeList(monitors),
 		monitorMirrors:      NewMirrorList(monitors),
+		hyprApply:           NewHyprApply(),
 	}
 
 	return model
@@ -110,14 +114,16 @@ func (m Model) View() string {
 
 	if m.rootState.State.ModeSelection {
 		m.monitorModes.SetHeight(m.layout.LeftSubpaneHeight())
-		modeSelectionPane := ActiveStyle.Width(m.layout.LeftPanesWidth()).Height(m.layout.LeftSubpaneHeight()).Render(m.monitorModes.View())
+		modeSelectionPane := ActiveStyle.Width(m.layout.LeftPanesWidth()).Height(
+			m.layout.LeftSubpaneHeight()).Render(m.monitorModes.View())
 		logrus.Debugf("Mode selection pane height: %d", m.layout.LeftSubpaneHeight())
 		left = append(left, modeSelectionPane)
 	}
 
 	if m.rootState.State.MirrorSelection {
 		m.monitorMirrors.SetHeight(m.layout.LeftSubpaneHeight())
-		pane := ActiveStyle.Width(m.layout.LeftPanesWidth()).Height(m.layout.LeftSubpaneHeight()).Render(m.monitorMirrors.View())
+		pane := ActiveStyle.Width(m.layout.LeftPanesWidth()).Height(
+			m.layout.LeftSubpaneHeight()).Render(m.monitorMirrors.View())
 		logrus.Debugf("Mirrors pane height: %d", m.layout.LeftSubpaneHeight())
 		left = append(left, pane)
 	}
@@ -180,17 +186,21 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmds = append(cmds, m.monitorEditor.ScaleMonitor(msg.monitorID, msg.delta))
 	case ChangeMirrorPreviewCommand:
 		logrus.Debug("Received preview change for monitor mirror")
-		cmds = append(cmds, m.monitorEditor.SetMirror(m.rootState.State.MonitorEditedListIndex, msg.mirrorOf))
+		cmds = append(cmds, m.monitorEditor.SetMirror(
+			m.rootState.State.MonitorEditedListIndex, msg.mirrorOf))
 	case ChangeMirrorCommand:
 		logrus.Debug("Received change for monitor mirror")
-		cmds = append(cmds, m.monitorEditor.SetMirror(m.rootState.State.MonitorEditedListIndex, msg.mirrorOf))
+		cmds = append(cmds, m.monitorEditor.SetMirror(
+			m.rootState.State.MonitorEditedListIndex, msg.mirrorOf))
 		cmds = append(cmds, m.monitorsList.Update(msg))
 	case ChangeModePreviewCommand:
 		logrus.Debug("Received preview change for monitor mode")
-		cmds = append(cmds, m.monitorEditor.SetMode(m.rootState.State.MonitorEditedListIndex, msg.mode))
+		cmds = append(cmds, m.monitorEditor.SetMode(
+			m.rootState.State.MonitorEditedListIndex, msg.mode))
 	case ChangeModeCommand:
 		logrus.Debug("Received change for monitor mode")
-		cmds = append(cmds, m.monitorEditor.SetMode(m.rootState.State.MonitorEditedListIndex, msg.mode))
+		cmds = append(cmds, m.monitorEditor.SetMode(
+			m.rootState.State.MonitorEditedListIndex, msg.mode))
 		cmds = append(cmds, m.monitorsList.Update(msg))
 	case tea.WindowSizeMsg:
 		m.layout.SetHeight(msg.Height)
@@ -212,6 +222,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.rootState.ToggleSnapping()
 			m.monitorEditor.SetSnapping(m.rootState.State.Snapping)
 			stateChanged = true
+		case key.Matches(msg, m.keys.ApplyHypr):
+			logrus.Debug("Would apply hypr settings")
+			cmds = append(cmds, m.hyprApply.ApplyCurrent(m.monitorEditor.GetMonitors()))
 		}
 	}
 
@@ -249,5 +262,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m *Model) GlobalHelp() []key.Binding {
-	return []key.Binding{rootKeyMap.Pan, rootKeyMap.Fullscreen, rootKeyMap.Center, rootKeyMap.ZoomIn, rootKeyMap.ZoomOut, rootKeyMap.ToggleSnapping}
+	return []key.Binding{
+		rootKeyMap.Pan,
+		rootKeyMap.Fullscreen, rootKeyMap.Center, rootKeyMap.ZoomIn, rootKeyMap.ZoomOut,
+		rootKeyMap.ToggleSnapping, rootKeyMap.ApplyHypr,
+	}
 }

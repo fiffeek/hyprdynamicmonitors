@@ -151,7 +151,7 @@ func (m *MonitorSpec) ToHypr() string {
 	if m.Disabled {
 		return fmt.Sprintf("desc:%s,disable", m.Description)
 	}
-	line := fmt.Sprintf("desc:%s,%dx%d@%.5f,%dx%d,%.2f,transform,%d", m.Description, m.Width,
+	line := fmt.Sprintf("desc:%s,%dx%d@%.2f,%dx%d,%.2f,transform,%d", m.Description, m.Width,
 		m.Height, m.RefreshRate, m.X, m.Y, m.Scale, m.Transform)
 	if m.Mirror != "none" {
 		line = fmt.Sprintf("%s,mirror,%s", line, m.Mirror)

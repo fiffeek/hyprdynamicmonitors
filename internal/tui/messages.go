@@ -29,6 +29,7 @@ const (
 	OperationNameMove
 	OperationNamePreviewMode
 	OperationNamePreviewMirror
+	OperationNameEphemeralApply
 )
 
 type OperationStatus struct {
@@ -60,6 +61,8 @@ func (o OperationStatus) String() string {
 		operationName = "Preview Mode"
 	case OperationNamePreviewMirror:
 		operationName = "Preview Mirror"
+	case OperationNameEphemeralApply:
+		operationName = "Apply"
 	default:
 		operationName = "Operation"
 	}

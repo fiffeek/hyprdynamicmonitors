@@ -94,7 +94,7 @@ func GetBrightMonitorColor(color string) string {
 	case "208":
 		return "214" // Orange -> Bright orange
 	case "39":
-		return "46" // Green -> Bright green
+		return "42" // Blue -> Bright teal
 	case "226":
 		return "228" // Yellow -> Bright yellow
 	case "196":

@@ -19,12 +19,17 @@ type keyMap struct {
 	ZoomOut        key.Binding
 	NextPage       key.Binding
 	ToggleSnapping key.Binding
+	ApplyHypr      key.Binding
 }
 
 var rootKeyMap = keyMap{
 	ToggleSnapping: key.NewBinding(
 		key.WithKeys("S"),
 		key.WithHelp("S", "toggle snapping"),
+	),
+	ApplyHypr: key.NewBinding(
+		key.WithKeys("A"),
+		key.WithHelp("A", "apply (ephemeral)"),
 	),
 	Tab: key.NewBinding(
 		key.WithKeys("tab"),

@@ -29,6 +29,10 @@ func (e *MonitorEditorStore) SetSnapping(snap bool) {
 	e.snapping = snap
 }
 
+func (e *MonitorEditorStore) GetMonitors() []*MonitorSpec {
+	return e.monitors
+}
+
 type MoveResult int
 
 const (
@@ -182,13 +186,15 @@ func (e *MonitorEditorStore) SetMirror(monitorID int, mirrorOf string) tea.Cmd {
 			continue
 		}
 		if monitor.Disabled {
-			return operationStatusCmd(OperationNamePreviewMirror, errors.New("cant mirror disabled monitor"))
+			return operationStatusCmd(OperationNamePreviewMirror,
+				errors.New("cant mirror disabled monitor"))
 		}
 		found = true
 
 	}
 	if !found && mirrorOf != "none" {
-		return operationStatusCmd(OperationNamePreviewMirror, errors.New("cant find mirrored monitor"))
+		return operationStatusCmd(OperationNamePreviewMirror,
+			errors.New("cant find mirrored monitor"))
 	}
 
 	// Check for loops in mirroring chain
