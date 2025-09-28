@@ -11,7 +11,7 @@ type Header struct {
 	warning string
 	mode    string
 	width   int
-	status  string
+	err     string
 }
 
 func NewHeader(title string) *Header {
@@ -30,9 +30,9 @@ func (h *Header) Update(msg tea.Msg) tea.Cmd {
 		h.mode = msg.state.String()
 	case OperationStatus:
 		if msg.IsError() {
-			h.status = msg.String()
+			h.err = msg.String()
 		} else {
-			h.status = ""
+			h.err = ""
 		}
 	}
 	return nil
@@ -54,15 +54,15 @@ func (h *Header) View() string {
 	}
 
 	var status string
-	if h.status != "" {
-		status = HeaderIndicatorStyle.Render(h.status)
+	if h.err != "" {
+		status = ErrorStyle.Render(h.err)
 		availableSpace -= lipgloss.Width(status)
 	}
 
 	spacer := lipgloss.NewStyle().Width(availableSpace).Render("")
 	sections = append(sections, spacer)
 
-	if h.status != "" {
+	if h.err != "" {
 		sections = append(sections, status)
 	}
 

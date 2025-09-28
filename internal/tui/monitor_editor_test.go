@@ -126,3 +126,73 @@ func TestSetMirror_LoopDetection(t *testing.T) {
 		})
 	}
 }
+
+func TestToggleDisable_MonitorStates(t *testing.T) {
+	testCases := []struct {
+		name       string
+		setupFile  string
+		monitorID  int
+		shouldFail bool
+		reason     string
+	}{
+		// Valid operations
+		{
+			name:       "Disable monitor when multiple are enabled",
+			setupFile:  "testdata/monitors_all_enabled.json",
+			monitorID:  0,
+			shouldFail: false,
+			reason:     "should allow disabling when other monitors are enabled",
+		},
+		{
+			name:       "Enable disabled monitor",
+			setupFile:  "testdata/monitors_mixed_state.json",
+			monitorID:  1, // MonitorB is disabled
+			shouldFail: false,
+			reason:     "should allow enabling a disabled monitor",
+		},
+		{
+			name:       "Disable one of multiple enabled monitors",
+			setupFile:  "testdata/monitors_mixed_state.json",
+			monitorID:  2, // MonitorC is enabled, A is also enabled
+			shouldFail: false,
+			reason:     "should allow disabling when other monitors remain enabled",
+		},
+		// Invalid operations
+		{
+			name:       "Cannot disable last enabled monitor",
+			setupFile:  "testdata/monitors_one_enabled.json",
+			monitorID:  0, // MonitorA is the only enabled monitor
+			shouldFail: true,
+			reason:     "should prevent disabling the last enabled monitor",
+		},
+		{
+			name:       "Invalid monitor ID",
+			setupFile:  "testdata/monitors_all_enabled.json",
+			monitorID:  999,
+			shouldFail: true,
+			reason:     "should fail for non-existent monitor ID",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			monitors, err := testutils.LoadMonitorsFromJSON(tc.setupFile)
+			require.NoError(t, err, "failed to load test data")
+
+			editor := tui.NewMonitorEditor(monitors)
+			cmd := editor.ToggleDisable(tc.monitorID)
+
+			require.NotNil(t, cmd, "ToggleDisable should return a command")
+
+			msg := cmd()
+			operationStatus, ok := msg.(tui.OperationStatus)
+			require.True(t, ok, "command should return OperationStatus")
+
+			if tc.shouldFail {
+				assert.True(t, operationStatus.IsError(), "%s: %s", tc.reason, operationStatus.String())
+			} else {
+				assert.False(t, operationStatus.IsError(), "%s: %s", tc.reason, operationStatus.String())
+			}
+		})
+	}
+}

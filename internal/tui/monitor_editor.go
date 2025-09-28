@@ -146,6 +146,22 @@ func (e *MonitorEditorStore) ToggleDisable(monitorID int) tea.Cmd {
 		return operationStatusCmd(OperationNameToggleMonitor, err)
 	}
 
+	currentEnabled := false
+	anyOtherEnabled := false
+	for _, monitor := range e.monitors {
+		if *monitor.ID == monitorID {
+			currentEnabled = !monitor.Disabled
+			continue
+		}
+		if !monitor.Disabled {
+			anyOtherEnabled = true
+		}
+	}
+
+	if currentEnabled && !anyOtherEnabled {
+		return operationStatusCmd(OperationNameToggleMonitor, errors.New("only one monitor left"))
+	}
+
 	monitor.ToggleMonitor()
 	return operationStatusCmd(OperationNameToggleMonitor, nil)
 }
