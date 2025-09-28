@@ -58,6 +58,7 @@ func (m Model) Init() tea.Cmd {
 
 func (m Model) View() string {
 	logrus.Debug("Rendering the root model")
+	logrus.Debugf("Visible height: %d", m.layout.visibleHeight)
 	rightSections := []string{}
 
 	m.header.SetWidth(m.layout.visibleWidth)
@@ -68,15 +69,21 @@ func (m Model) View() string {
 	globalHelpHeight := lipgloss.Height(globalHelp)
 
 	m.layout.SetReservedTop(globalHelpHeight + headerHeight + 2)
+	logrus.Debugf("Available height: %d", m.layout.AvailableHeight())
 
-	m.monitorsList.SetHeight(m.layout.LeftMonitorsHeight())
+	leftMonitorsHeight := m.layout.AvailableHeight() + 2
+	if m.rootState.State.ModeSelection {
+		leftMonitorsHeight = m.layout.LeftMonitorsHeight()
+	}
+	m.monitorsList.SetHeight(leftMonitorsHeight)
 	m.monitorsList.SetWidth(m.layout.LeftPanesWidth())
+	logrus.Debugf("Monitors list height: %d", leftMonitorsHeight)
 	monitorViewStyle := ActiveStyle
 	if m.rootState.State.ModeSelection {
 		monitorViewStyle = InactiveStyle
 	}
 	monitorView := monitorViewStyle.Width(m.layout.LeftPanesWidth()).Height(
-		m.layout.LeftMonitorsHeight()).Render(m.monitorsList.View())
+		leftMonitorsHeight).Render(m.monitorsList.View())
 
 	m.monitorsPreviewPane.SetHeight(m.layout.RightPreviewHeight())
 	m.monitorsPreviewPane.SetWidth(m.layout.RightPanesWidth())
@@ -102,6 +109,7 @@ func (m Model) View() string {
 	if m.rootState.State.ModeSelection {
 		m.monitorModes.SetHeight(m.layout.LeftSubpaneHeight())
 		modeSelectionPane := ActiveStyle.Width(m.layout.LeftPanesWidth()).Height(m.layout.LeftSubpaneHeight()).Render(m.monitorModes.View())
+		logrus.Debugf("Mode selection pane height: %d", m.layout.LeftSubpaneHeight())
 		left = append(left, modeSelectionPane)
 	}
 

@@ -433,6 +433,7 @@ func (c *MonitorList) View() string {
 	help := c.ShortHelp()
 	availHeight -= lipgloss.Height(help)
 	logrus.Debugf("Help height: %d", lipgloss.Height(help))
+	c.L.SetHeight(availHeight)
 	content := lipgloss.NewStyle().Height(availHeight).Width(c.width).Render(c.L.View())
 
 	sections = append(sections, content)
