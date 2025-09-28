@@ -25,6 +25,15 @@ var (
 			Bold(true).
 			Foreground(lipgloss.Color("82")).
 			Background(lipgloss.Color("235"))
+	TabActiveStyle = lipgloss.NewStyle().
+			Bold(true).
+			Foreground(lipgloss.Color("255")).
+			Background(lipgloss.Color("105")).
+			Padding(0, 1)
+	TabInactiveStyle = lipgloss.NewStyle().
+				Foreground(lipgloss.Color("243")).
+				Background(lipgloss.Color("235")).
+				Padding(0, 1)
 )
 
 var (

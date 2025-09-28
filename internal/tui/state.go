@@ -13,6 +13,17 @@ const (
 	ConfigView
 )
 
+func (v ViewMode) String() string {
+	switch v {
+	case MonitorsListView:
+		return "Monitors"
+	case ConfigView:
+		return "Config"
+	default:
+		return "Unknown"
+	}
+}
+
 type AppState struct {
 	EditingMonitor         bool
 	Panning                bool

@@ -20,6 +20,18 @@ type StateChanged struct {
 	state AppState
 }
 
+type ViewChanged struct {
+	view ViewMode
+}
+
+func viewChangedCmd(view ViewMode) tea.Cmd {
+	return func() tea.Msg {
+		return ViewChanged{
+			view: view,
+		}
+	}
+}
+
 type OperationName int
 
 const (

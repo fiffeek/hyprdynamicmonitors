@@ -43,15 +43,17 @@ func NewModel(cfg *config.Config, hyprMonitors hypr.MonitorSpecs, profileMaker *
 		monitors[i] = NewMonitorSpec(monitor)
 	}
 
+	state := NewState(monitors, cfg)
+
 	model := Model{
 		config:              cfg,
 		keys:                rootKeyMap,
-		rootState:           NewState(monitors, cfg),
+		rootState:           state,
 		layout:              NewLayout(),
 		monitorsList:        NewMonitorList(monitors),
 		monitorsPreviewPane: NewMonitorsPreviewPane(monitors),
 		help:                help.New(),
-		header:              NewHeader("HyprDynamicMonitors"),
+		header:              NewHeader("HyprDynamicMonitors", state.viewModes),
 		hyprPreviewPane:     NewHyprPreviewPane(monitors),
 		monitorEditor:       NewMonitorEditor(monitors),
 		monitorModes:        NewMonitorModeList(monitors),
@@ -227,6 +229,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		case key.Matches(msg, m.keys.Tab):
 			m.rootState.NextView()
+			cmds = append(cmds, viewChangedCmd(m.rootState.CurrentView()))
 		}
 	}
 
