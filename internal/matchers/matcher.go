@@ -2,6 +2,8 @@
 package matchers
 
 import (
+	"slices"
+
 	"github.com/fiffeek/hyprdynamicmonitors/internal/config"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/hypr"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/power"
@@ -44,7 +46,11 @@ func (m *Matcher) Match(cfg *config.RawConfig, connectedMonitors []*hypr.Monitor
 		return ok, fallbackProfile, nil
 	}
 
-	for name, profile := range profiles {
+	// match from the last entry in the toml config
+	ascProfiles := cfg.OrderedProfileKeys()
+	slices.Reverse(ascProfiles)
+	for _, name := range ascProfiles {
+		profile := cfg.Profiles[name]
 		if score[name] == bestScore {
 			return true, profile, nil
 		}

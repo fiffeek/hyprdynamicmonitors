@@ -278,6 +278,33 @@ func TestMatcher_Match(t *testing.T) {
 			expectedProfile: "",
 			description:     "Profile should not match when name comes from one monitor and description from another",
 		},
+		{
+			name: "last_profile_wins_when_scores_equal",
+			config: createTestConfig(t, map[string]*config.Profile{
+				"first_profile": {
+					Name: "first_profile",
+					Conditions: &config.ProfileCondition{
+						RequiredMonitors: []*config.RequiredMonitor{
+							{Name: utils.StringPtr("eDP-1")},
+						},
+					},
+				},
+				"second_profile": {
+					Name: "second_profile",
+					Conditions: &config.ProfileCondition{
+						RequiredMonitors: []*config.RequiredMonitor{
+							{Name: utils.StringPtr("eDP-1")},
+						},
+					},
+				},
+			}).Get(),
+			connectedMonitors: []*hypr.MonitorSpec{
+				{Name: "eDP-1", ID: utils.IntPtr(0), Description: "Built-in Display"},
+			},
+			powerState:      power.ACPowerState,
+			expectedProfile: "second_profile",
+			description:     "When two profiles have equal scores, the last one in TOML order should win",
+		},
 	}
 
 	for _, tt := range tests {

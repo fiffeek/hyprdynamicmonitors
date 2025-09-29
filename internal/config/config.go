@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -64,6 +65,7 @@ type RawConfig struct {
 	HotReload            *HotReloadSection   `toml:"hot_reload_section"`
 	Notifications        *Notifications      `toml:"notifications"`
 	StaticTemplateValues map[string]string   `toml:"static_template_values"`
+	KeysOrder            []string            `toml:"-"`
 }
 
 type HotReloadSection struct {
@@ -172,6 +174,7 @@ type Profile struct {
 	IsFallbackProfile    bool              `toml:"-"`
 	PostApplyExec        *string           `toml:"post_apply_exec"`
 	PreApplyExec         *string           `toml:"pre_apply_exec"`
+	KeyOrder             int               `toml:"-"`
 }
 
 type PowerStateType int
@@ -246,12 +249,18 @@ func Load(configPath string) (*RawConfig, error) {
 	logrus.Debugf("Config contents: %s", contents)
 
 	var config RawConfig
-	if _, err := toml.DecodeFile(configPath, &config); err != nil {
+	m, err := toml.DecodeFile(configPath, &config)
+	if err != nil {
 		return nil, fmt.Errorf("failed to decode TOML: %w", err)
+	}
+	keys := []string{}
+	for _, k := range m.Keys() {
+		keys = append(keys, strings.Join(k, "."))
 	}
 
 	config.ConfigPath = absConfig
 	config.ConfigDirPath = filepath.Dir(config.ConfigPath)
+	config.KeysOrder = keys
 
 	if err := config.Validate(); err != nil {
 		return nil, fmt.Errorf("invalid configuration: %w", err)
@@ -260,6 +269,22 @@ func Load(configPath string) (*RawConfig, error) {
 	logrus.WithFields(logrus.Fields{"path": config.ConfigPath, "dir": config.ConfigDirPath}).Debug("Config is valid")
 
 	return &config, nil
+}
+
+// OrderedProfileKeys returns the profile names in the order they appear in the toml file
+func (c *RawConfig) OrderedProfileKeys() []string {
+	profileNames := make([]string, 0, len(c.Profiles))
+	for name := range c.Profiles {
+		profileNames = append(profileNames, name)
+	}
+
+	slices.SortFunc(profileNames, func(a, b string) int {
+		orderA := c.Profiles[a].KeyOrder
+		orderB := c.Profiles[b].KeyOrder
+		return orderA - orderB
+	})
+
+	return profileNames
 }
 
 func (c *RawConfig) Validate() error {
@@ -292,6 +317,8 @@ func (c *RawConfig) Validate() error {
 	for name, profile := range c.Profiles {
 		profile.Name = name
 		profile.IsFallbackProfile = false
+		profile.KeyOrder = slices.Index(c.KeysOrder, "profiles."+name)
+		logrus.Debugf("Profile %s has order %d", profile.Name, profile.KeyOrder)
 		if err := profile.Validate(c.ConfigDirPath); err != nil {
 			return fmt.Errorf("profile %s validation failed: %w", name, err)
 		}

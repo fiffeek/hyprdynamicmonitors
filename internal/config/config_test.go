@@ -984,6 +984,59 @@ func TestPowerSectionDbusQueryObjectDefaults(t *testing.T) {
 	assert.Equal(t, expectedCollectedArgs, collectedArgs, "collected args should match expected")
 }
 
+func TestOrderedProfileKeys(t *testing.T) {
+	tests := []struct {
+		name     string
+		profiles map[string]*config.Profile
+		expected []string
+	}{
+		{
+			name:     "empty profiles",
+			profiles: map[string]*config.Profile{},
+			expected: []string{},
+		},
+		{
+			name: "sorted by key order",
+			profiles: map[string]*config.Profile{
+				"third":  {Name: "third", KeyOrder: 2},
+				"first":  {Name: "first", KeyOrder: 0},
+				"second": {Name: "second", KeyOrder: 1},
+			},
+			expected: []string{"first", "second", "third"},
+		},
+		{
+			name: "negative key order comes first",
+			profiles: map[string]*config.Profile{
+				"missing": {Name: "missing", KeyOrder: -1},
+				"first":   {Name: "first", KeyOrder: 0},
+			},
+			expected: []string{"missing", "first"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			config := &config.RawConfig{Profiles: tt.profiles}
+			result := config.OrderedProfileKeys()
+
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+
+	// Test with actual TOML file
+	t.Run("order from TOML file", func(t *testing.T) {
+		cfg, err := config.Load(filepath.Join("testdata", "valid_basic.toml"))
+		if err != nil {
+			t.Fatalf("failed to load test config: %v", err)
+		}
+
+		result := cfg.OrderedProfileKeys()
+		expected := []string{"laptop_only", "dual_monitor", "ac_power_profile"}
+
+		assert.Equal(t, expected, result)
+	})
+}
+
 func containsString(haystack, needle string) bool {
 	return len(haystack) >= len(needle) &&
 		(haystack == needle ||
