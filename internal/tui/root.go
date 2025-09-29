@@ -199,9 +199,14 @@ func (m Model) leftPanels() []string {
 			leftMainPanelSize).Render(m.monitorsList.View())
 		left = append(left, monitorView)
 
+		subpaneStyle := InactiveStyle
+		if !m.rootState.State.Panning {
+			subpaneStyle = ActiveStyle
+		}
+
 		if m.rootState.State.ModeSelection {
 			m.monitorModes.SetHeight(m.layout.LeftSubpaneHeight())
-			modeSelectionPane := ActiveStyle.Width(m.layout.LeftPanesWidth()).Height(
+			modeSelectionPane := subpaneStyle.Width(m.layout.LeftPanesWidth()).Height(
 				m.layout.LeftSubpaneHeight()).Render(m.monitorModes.View())
 			logrus.Debugf("Mode selection pane height: %d", m.layout.LeftSubpaneHeight())
 			left = append(left, modeSelectionPane)
@@ -209,7 +214,7 @@ func (m Model) leftPanels() []string {
 
 		if m.rootState.State.MirrorSelection {
 			m.monitorMirrors.SetHeight(m.layout.LeftSubpaneHeight())
-			pane := ActiveStyle.Width(m.layout.LeftPanesWidth()).Height(
+			pane := subpaneStyle.Width(m.layout.LeftPanesWidth()).Height(
 				m.layout.LeftSubpaneHeight()).Render(m.monitorMirrors.View())
 			logrus.Debugf("Mirrors pane height: %d", m.layout.LeftSubpaneHeight())
 			left = append(left, pane)
@@ -217,7 +222,7 @@ func (m Model) leftPanels() []string {
 
 		if m.rootState.State.Scaling {
 			m.scaleSelector.SetHeight(m.layout.LeftSubpaneHeight())
-			scalingSelector := ActiveStyle.Width(m.layout.LeftPanesWidth()).Height(
+			scalingSelector := subpaneStyle.Width(m.layout.LeftPanesWidth()).Height(
 				m.layout.LeftSubpaneHeight()).Render(m.scaleSelector.View())
 			logrus.Debugf("Scaling selection pane height: %d", m.layout.LeftSubpaneHeight())
 			left = append(left, scalingSelector)
