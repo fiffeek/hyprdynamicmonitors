@@ -15,6 +15,7 @@ type scaleSelectorKeyMap struct {
 	Up     key.Binding
 	Down   key.Binding
 	Select key.Binding
+	Back   key.Binding
 }
 
 func (s *scaleSelectorKeyMap) Help() []key.Binding {
@@ -22,6 +23,7 @@ func (s *scaleSelectorKeyMap) Help() []key.Binding {
 		s.Up,
 		s.Down,
 		s.Select,
+		s.Back,
 	}
 }
 
@@ -58,6 +60,10 @@ func NewScaleSelector() *ScaleSelector {
 			Select: key.NewBinding(
 				key.WithKeys("enter"),
 				key.WithHelp("enter", "select"),
+			),
+			Back: key.NewBinding(
+				key.WithKeys("esc"),
+				key.WithHelp("esc", "back"),
 			),
 		},
 	}
@@ -130,7 +136,7 @@ func (s *ScaleSelector) Update(msg tea.Msg) tea.Cmd {
 		case key.Matches(msg, s.keyMap.Down):
 			s.adjustScale(-s.step)
 			cmds = append(cmds, previewScaleMonitorCmd(*s.monitor.ID, s.currentScale))
-		case key.Matches(msg, s.keyMap.Select):
+		case key.Matches(msg, s.keyMap.Select), key.Matches(msg, s.keyMap.Back):
 			logrus.Debug("Select in scale")
 			cmds = append(cmds, scaleMonitorCmd(*s.monitor.ID, s.currentScale))
 		}
