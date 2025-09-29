@@ -323,15 +323,18 @@ func (d MonitorDelegate) Render(w io.Writer, m list.Model, index int, item list.
 	}
 
 	var style lipgloss.Style
+	var prefix string
 	switch {
 	case index == m.Index() && monitor.Editing():
 		style = MonitorEditingMode
+		prefix = "► "
 	case index == m.Index():
 		style = MonitorListSelected
+		prefix = "► "
 	default:
 		style = MonitorListTitle
 	}
-	title := fmt.Sprintf("%s %s %s", style.Render(monitor.Title()),
+	title := fmt.Sprintf("%s%s %s %s", prefix, style.Render(monitor.Title()),
 		monitor.MonitorDescriptionTrunc(), monitor.Indicator())
 	desc := MutedStyle.Render(monitor.Description())
 	content := fmt.Sprintf("%s\n%s", title, desc)
