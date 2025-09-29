@@ -203,6 +203,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	stateChanged := false
 
 	switch msg := msg.(type) {
+	case ConfigReloaded:
+		logrus.Debug("Received config reloaded event in root")
 	case MonitorBeingEdited:
 		logrus.Debug("Monitor selected event in root")
 		m.rootState.SetMonitorEditState(msg)

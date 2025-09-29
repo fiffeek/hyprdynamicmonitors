@@ -62,6 +62,13 @@ func NewHDMConfigPane(cfg *config.Config, matcher *matchers.Matcher, monitors []
 func (h *HDMConfigPane) Update(msg tea.Msg) tea.Cmd {
 	cmds := []tea.Cmd{}
 
+	switch msg.(type) {
+	case ConfigReloaded:
+		logrus.Debug("Received config reloaded event")
+		h.pulldProfile = false
+		h.profile = nil
+	}
+
 	if !h.pulldProfile {
 		h.pulldProfile = true
 		_, profile, err := h.matcher.Match(h.cfg.Get(), h.convertToHyprMonitors(), power.ACPowerState)

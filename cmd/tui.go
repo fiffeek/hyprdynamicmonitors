@@ -2,17 +2,20 @@ package cmd
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/config"
+	"github.com/fiffeek/hyprdynamicmonitors/internal/filewatcher"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/hypr"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/profilemaker"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/tui"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/utils"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"golang.org/x/sync/errgroup"
 )
 
 var mockedHyprMonitors string
@@ -34,6 +37,7 @@ var tuiCmd = &cobra.Command{
 		}
 
 		ctx, cancel := context.WithCancelCause(context.Background())
+		eg, ctx := errgroup.WithContext(ctx)
 		defer cancel(context.Canceled)
 
 		cfg, err := config.NewConfig(configPath)
@@ -46,7 +50,6 @@ var tuiCmd = &cobra.Command{
 			return fmt.Errorf("cant get the current monitors spec: %w", err)
 		}
 
-		// TODO listen to monitor, config events
 		model := tui.NewModel(cfg, monitors, maker)
 		program := tea.NewProgram(
 			model,
@@ -54,11 +57,46 @@ var tuiCmd = &cobra.Command{
 			tea.WithMouseCellMotion(),
 		)
 
-		if _, err := program.Run(); err != nil {
-			return fmt.Errorf("failed to run TUI: %w", err)
+		if cfg != nil {
+			// todo rewrite
+			filewatcher := filewatcher.NewService(cfg, utils.BoolPtr(false))
+			eg.Go(func() error {
+				return filewatcher.Run(ctx)
+			})
+			eg.Go(func() error {
+				c := filewatcher.Listen()
+				for {
+					select {
+					case _, ok := <-c:
+						if !ok {
+							return errors.New("watcher event channel closed")
+						}
+						logrus.Debug("Watcher event received")
+						if err := cfg.Reload(); err != nil {
+							return fmt.Errorf("cant reload user configuration: %w", err)
+						}
+						program.Send(tui.ConfigReloaded{})
+
+					case <-ctx.Done():
+						logrus.Debug("Reloader event processor context cancelled, shutting down")
+						return context.Cause(ctx)
+					}
+				}
+			})
 		}
 
-		return nil
+		// TODO listen to monitor, config events
+
+		eg.Go(func() error {
+			if _, err := program.Run(); err != nil {
+				return fmt.Errorf("failed to run TUI: %w", err)
+			}
+			cancel(context.Canceled)
+			logrus.Debug("Exiting tea")
+			return nil
+		})
+
+		return eg.Wait()
 	},
 }
 

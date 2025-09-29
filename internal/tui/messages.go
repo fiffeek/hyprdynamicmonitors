@@ -32,6 +32,8 @@ func viewChangedCmd(view ViewMode) tea.Cmd {
 	}
 }
 
+type ConfigReloaded struct{}
+
 type ProfileNameToggled struct{}
 
 func profileNameToogled() tea.Cmd {
