@@ -1,6 +1,8 @@
 package tui
 
 import (
+	"fmt"
+
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/sirupsen/logrus"
@@ -15,9 +17,10 @@ type Header struct {
 	success        string
 	availableViews []ViewMode
 	currentView    ViewMode
+	version        string
 }
 
-func NewHeader(title string, availableViews []ViewMode) *Header {
+func NewHeader(title string, availableViews []ViewMode, version string) *Header {
 	return &Header{
 		title:          title,
 		warning:        "",
@@ -25,6 +28,7 @@ func NewHeader(title string, availableViews []ViewMode) *Header {
 		width:          0,
 		success:        "",
 		availableViews: availableViews,
+		version:        version,
 	}
 }
 
@@ -56,7 +60,9 @@ func (h *Header) View() string {
 	availableSpace := h.width
 	logrus.Debugf("Available header space: %d", availableSpace)
 
-	programName := HeaderStyle.Foreground(lipgloss.Color("0")).Background(lipgloss.Color("250")).Padding(0, 1).Render(h.title)
+	version := fmt.Sprintf("v. %s", h.version)
+	prog := fmt.Sprintf("%s [%s]", h.title, version)
+	programName := HeaderStyle.Foreground(lipgloss.Color("0")).Background(lipgloss.Color("250")).Padding(0, 1).Render(prog)
 	availableSpace -= lipgloss.Width(programName)
 	sections = append(sections, programName)
 

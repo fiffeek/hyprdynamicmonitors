@@ -47,7 +47,7 @@ type Model struct {
 	profileMaker *profilemaker.Service
 }
 
-func NewModel(cfg *config.Config, hyprMonitors hypr.MonitorSpecs, profileMaker *profilemaker.Service) Model {
+func NewModel(cfg *config.Config, hyprMonitors hypr.MonitorSpecs, profileMaker *profilemaker.Service, version string) Model {
 	monitors := make([]*MonitorSpec, len(hyprMonitors))
 	for i, monitor := range hyprMonitors {
 		monitors[i] = NewMonitorSpec(monitor)
@@ -64,7 +64,7 @@ func NewModel(cfg *config.Config, hyprMonitors hypr.MonitorSpecs, profileMaker *
 		monitorsList:        NewMonitorList(monitors),
 		monitorsPreviewPane: NewMonitorsPreviewPane(monitors),
 		help:                help.New(),
-		header:              NewHeader("HyprDynamicMonitors", state.viewModes),
+		header:              NewHeader("HyprDynamicMonitors", state.viewModes, version),
 		hyprPreviewPane:     NewHyprPreviewPane(monitors),
 		monitorEditor:       NewMonitorEditor(monitors),
 		monitorModes:        NewMonitorModeList(monitors),

@@ -50,7 +50,7 @@ var tuiCmd = &cobra.Command{
 			return fmt.Errorf("cant get the current monitors spec: %w", err)
 		}
 
-		model := tui.NewModel(cfg, monitors, maker)
+		model := tui.NewModel(cfg, monitors, maker, Version)
 		program := tea.NewProgram(
 			model,
 			tea.WithAltScreen(),
