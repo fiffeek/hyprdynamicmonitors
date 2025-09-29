@@ -274,6 +274,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		logrus.Debug("Monitor selected event in root")
 		m.rootState.SetMonitorEditState(msg)
 		stateChanged = true
+		// todo move this to the components, let them rely on the index, easier testing ?
 		cmds = append(cmds, m.monitorModes.SetItems(m.rootState.monitors[msg.ListIndex]))
 		cmds = append(cmds, m.monitorMirrors.SetItems(m.rootState.monitors[msg.ListIndex]))
 		cmds = append(cmds, m.scaleSelector.Set(m.rootState.monitors[msg.ListIndex]))
@@ -356,17 +357,22 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch {
 		case key.Matches(msg, m.keys.Quit):
 			return m, tea.Quit
-		case key.Matches(msg, m.keys.FollowMonitor):
-			m.rootState.ToggleFollowMonitorMode()
-			stateChanged = true
-		case key.Matches(msg, m.keys.EditHDMConfig):
-			if m.rootState.CurrentView() == ProfileView {
-				cmds = append(cmds, openEditor(m.config.Get().ConfigPath))
-			}
 		case key.Matches(msg, m.keys.Tab):
 			if !m.rootState.State.ShowConfirmationPrompt {
 				m.rootState.NextView()
 				cmds = append(cmds, viewChangedCmd(m.rootState.CurrentView()))
+			}
+		}
+	}
+
+	if m.rootState.CurrentView() == ProfileView {
+		// nolint:gocritic
+		switch msg := msg.(type) {
+		case tea.KeyMsg:
+			// nolint:gocritic
+			switch {
+			case key.Matches(msg, m.keys.EditHDMConfig):
+				cmds = append(cmds, openEditor(m.config.Get().ConfigPath))
 			}
 		}
 	}
@@ -376,6 +382,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg := msg.(type) {
 		case tea.KeyMsg:
 			switch {
+			case key.Matches(msg, m.keys.FollowMonitor):
+				m.rootState.ToggleFollowMonitorMode()
+				stateChanged = true
 			case key.Matches(msg, m.keys.Pan):
 				logrus.Debug("Toggling pane mode")
 				m.rootState.TogglePanning()
