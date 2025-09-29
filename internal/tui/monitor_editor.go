@@ -97,6 +97,10 @@ func (e *MonitorEditorStore) RotateMonitor(monitorID int) tea.Cmd {
 		return operationStatusCmd(OperationNameRotate, err)
 	}
 
+	if monitor.Disabled {
+		return operationStatusCmd(OperationNameRotate, ErrMonitorDisabled)
+	}
+
 	monitor.Rotate()
 
 	return operationStatusCmd(OperationNameRotate, nil)
@@ -106,6 +110,10 @@ func (e *MonitorEditorStore) ToggleVRR(monitorID int) tea.Cmd {
 	monitor, _, err := e.FindByID(monitorID)
 	if err != nil {
 		return operationStatusCmd(OperationNameToggleVRR, err)
+	}
+
+	if monitor.Disabled {
+		return operationStatusCmd(OperationNameToggleVRR, ErrMonitorDisabled)
 	}
 
 	monitor.ToggleVRR()
@@ -147,6 +155,10 @@ func (e *MonitorEditorStore) SetMirror(monitorID int, mirrorOf string) tea.Cmd {
 
 	if monitor.Name == mirrorOf {
 		return operationStatusCmd(OperationNamePreviewMirror, errors.New("cant mirror itself"))
+	}
+
+	if monitor.Disabled {
+		return operationStatusCmd(OperationNamePreviewMirror, ErrMonitorDisabled)
 	}
 
 	found := false
@@ -235,6 +247,10 @@ func (e *MonitorEditorStore) SetMode(monitorID int, mode string) tea.Cmd {
 	monitor, _, err := e.FindByID(monitorID)
 	if err != nil {
 		return operationStatusCmd(OperationNamePreviewMode, err)
+	}
+
+	if monitor.Disabled {
+		return operationStatusCmd(OperationNamePreviewMode, ErrMonitorDisabled)
 	}
 
 	err = monitor.SetMode(mode)
