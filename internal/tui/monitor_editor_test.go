@@ -356,8 +356,10 @@ func TestMoveMonitor(t *testing.T) {
 				}
 			}
 
-			assert.Equal(t, tc.expectedX, originalMonitor.X, "Expected X: %d, Actual X: %d", tc.expectedX, originalMonitor.X)
-			assert.Equal(t, tc.expectedY, originalMonitor.Y, "Expected Y: %d, Actual Y: %d", tc.expectedY, originalMonitor.Y)
+			assert.Equal(t, tc.expectedX, originalMonitor.X,
+				"Expected X: %d, Actual X: %d", tc.expectedX, originalMonitor.X)
+			assert.Equal(t, tc.expectedY, originalMonitor.Y,
+				"Expected Y: %d, Actual Y: %d", tc.expectedY, originalMonitor.Y)
 		})
 	}
 }
