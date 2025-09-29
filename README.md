@@ -361,6 +361,8 @@ monitor_tag = "laptop"  # Assign a tag for template use
 Use `hyprctl monitors` to see available monitors and their properties.
 To understand scoring and profile matching more see [`examples/scoring`](https://github.com/fiffeek/hyprdynamicmonitors/tree/main/examples/scoring).
 
+**Profile Selection**: When multiple profiles have equal scores, the last profile defined in the TOML configuration file is selected.
+
 ### Configuration File Types
 
 - **Static**: Creates symlinks to existing configuration files
