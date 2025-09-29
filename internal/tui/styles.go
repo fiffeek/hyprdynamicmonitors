@@ -86,9 +86,9 @@ var (
 	TitleStyle = lipgloss.NewStyle().
 			Bold(true).
 			Foreground(lipgloss.Color("105"))
-	ScaleInfoStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("108")).
-			Italic(true)
+	SubtitleInfoStyle = lipgloss.NewStyle().
+				Foreground(lipgloss.Color("108")).
+				Italic(true)
 )
 
 var GridDotColor = "240" // Grey color for grid dots

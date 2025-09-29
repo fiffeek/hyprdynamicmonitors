@@ -1,6 +1,8 @@
 package tui
 
 import (
+	"os"
+	"os/exec"
 	"slices"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -207,6 +209,19 @@ type ToggleConfirmationPromptCommand struct{}
 type CloseMonitorMirrorListCommand struct{}
 
 type CloseMonitorModeListCommand struct{}
+
+type editorFinishedMsg struct{ err error }
+
+func openEditor(file string) tea.Cmd {
+	editor := os.Getenv("EDITOR")
+	if editor == "" {
+		editor = "vim"
+	}
+	c := exec.Command(editor, file) //nolint:gosec
+	return tea.ExecProcess(c, func(err error) tea.Msg {
+		return editorFinishedMsg{err}
+	})
+}
 
 func closeMonitorModeListCmd() tea.Cmd {
 	return func() tea.Msg {

@@ -10,15 +10,15 @@ type ViewMode int
 
 const (
 	MonitorsListView ViewMode = iota
-	ConfigView
+	ProfileView
 )
 
 func (v ViewMode) String() string {
 	switch v {
 	case MonitorsListView:
 		return "Monitors"
-	case ConfigView:
-		return "Config"
+	case ProfileView:
+		return "Profile"
 	default:
 		return "Unknown"
 	}
@@ -67,7 +67,7 @@ type RootState struct {
 func NewState(monitors []*MonitorSpec, cfg *config.Config) *RootState {
 	viewModes := []ViewMode{MonitorsListView}
 	if cfg != nil {
-		viewModes = append(viewModes, ConfigView)
+		viewModes = append(viewModes, ProfileView)
 	}
 	return &RootState{
 		CurrentViewIndex: 0,

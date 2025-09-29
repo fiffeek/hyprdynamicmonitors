@@ -243,3 +243,11 @@ func (m *MonitorRectangle) isBottomEdge(x, y int) bool {
 		return false
 	}
 }
+
+func ConvertToHyprMonitors(monitors []*MonitorSpec) []*hypr.MonitorSpec {
+	var hyprMonitors []*hypr.MonitorSpec
+	for _, monitor := range monitors {
+		hyprMonitors = append(hyprMonitors, monitor.ToHyprMonitors())
+	}
+	return hyprMonitors
+}

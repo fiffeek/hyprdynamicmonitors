@@ -10,7 +10,6 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/config"
-	"github.com/fiffeek/hyprdynamicmonitors/internal/hypr"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/matchers"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/power"
 	"github.com/sirupsen/logrus"
@@ -19,12 +18,14 @@ import (
 type hdmKeyMap struct {
 	NewProfile   key.Binding
 	ApplyProfile key.Binding
+	EditorEdit   key.Binding
 }
 
 func (h *hdmKeyMap) Help() []key.Binding {
 	return []key.Binding{
 		h.NewProfile,
 		h.ApplyProfile,
+		h.EditorEdit,
 	}
 }
 
@@ -49,11 +50,15 @@ func NewHDMConfigPane(cfg *config.Config, matcher *matchers.Matcher, monitors []
 		keymap: &hdmKeyMap{
 			NewProfile: key.NewBinding(
 				key.WithKeys("n"),
-				key.WithHelp("n", "new config"),
+				key.WithHelp("n", "new profile"),
 			),
 			ApplyProfile: key.NewBinding(
 				key.WithKeys("a"),
-				key.WithHelp("a", "apply to existing config"),
+				key.WithHelp("a", "apply monitors to existing profile"),
+			),
+			EditorEdit: key.NewBinding(
+				key.WithKeys("e"),
+				key.WithHelp("e", "edit manually"),
 			),
 		},
 	}
@@ -71,7 +76,7 @@ func (h *HDMConfigPane) Update(msg tea.Msg) tea.Cmd {
 
 	if !h.pulldProfile {
 		h.pulldProfile = true
-		_, profile, err := h.matcher.Match(h.cfg.Get(), h.convertToHyprMonitors(), power.ACPowerState)
+		_, profile, err := h.matcher.Match(h.cfg.Get(), ConvertToHyprMonitors(h.monitors), power.ACPowerState)
 		cmds = append(cmds, operationStatusCmd(OperationNameMatchingProfile, err))
 		h.profile = profile
 	}
@@ -88,6 +93,8 @@ func (h *HDMConfigPane) Update(msg tea.Msg) tea.Cmd {
 		case key.Matches(msg, h.keymap.ApplyProfile):
 			logrus.Debug("Editing existing config")
 			cmds = append(cmds, editProfileConfirmationCmd(h.profile.Name))
+		case key.Matches(msg, h.keymap.EditorEdit):
+			cmds = append(cmds, openEditor(h.profile.ConfigFile))
 		}
 	}
 	return tea.Batch(cmds...)
@@ -111,7 +118,7 @@ func (h *HDMConfigPane) View() string {
 	title := TitleStyle.Margin(0, 0, 1, 0).Render("HyprDynamicMonitors Profile")
 
 	var content string
-	help := HelpStyle.Render(h.help.ShortHelpView(h.keymap.Help()))
+	help := HelpStyle.Width(h.width).Render(h.help.ShortHelpView(h.keymap.Help()))
 
 	if h.profile == nil {
 		content = h.renderNoMatchingProfile()
@@ -134,14 +141,6 @@ func (h *HDMConfigPane) View() string {
 
 func (h *HDMConfigPane) renderNoConfig() string {
 	return "No config"
-}
-
-func (h *HDMConfigPane) convertToHyprMonitors() []*hypr.MonitorSpec {
-	var hyprMonitors []*hypr.MonitorSpec
-	for _, monitor := range h.monitors {
-		hyprMonitors = append(hyprMonitors, monitor.ToHyprMonitors())
-	}
-	return hyprMonitors
 }
 
 func (h *HDMConfigPane) renderNoMatchingProfile() string {

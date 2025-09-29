@@ -37,6 +37,7 @@ type Model struct {
 	// components for config view
 	hdm               *HDMConfigPane
 	profileNamePicker *ProfileNamePicker
+	hdmProfilePreview *HDMProfilePreview
 
 	// stores
 	monitorEditor *MonitorEditorStore
@@ -53,6 +54,7 @@ func NewModel(cfg *config.Config, hyprMonitors hypr.MonitorSpecs, profileMaker *
 	}
 
 	state := NewState(monitors, cfg)
+	matcher := matchers.NewMatcher()
 
 	model := Model{
 		config:              cfg,
@@ -68,11 +70,12 @@ func NewModel(cfg *config.Config, hyprMonitors hypr.MonitorSpecs, profileMaker *
 		monitorModes:        NewMonitorModeList(monitors),
 		monitorMirrors:      NewMirrorList(monitors),
 		hyprApply:           NewHyprApply(profileMaker),
-		hdm:                 NewHDMConfigPane(cfg, matchers.NewMatcher(), monitors),
+		hdm:                 NewHDMConfigPane(cfg, matcher, monitors),
 		profileMaker:        profileMaker,
 		profileNamePicker:   NewProfileNamePicker(),
 		confirmationPrompt:  nil,
 		scaleSelector:       NewScaleSelector(),
+		hdmProfilePreview:   NewHDMProfilePreview(cfg, matcher, monitors),
 	}
 
 	return model
@@ -95,7 +98,6 @@ func (m Model) View() string {
 	}
 
 	logrus.Debugf("Visible height: %d", m.layout.visibleHeight)
-	rightSections := []string{}
 
 	m.header.SetWidth(m.layout.visibleWidth)
 	header := m.header.View()
@@ -107,30 +109,8 @@ func (m Model) View() string {
 	m.layout.SetReservedTop(globalHelpHeight + headerHeight + 2)
 	logrus.Debugf("Available height: %d", m.layout.AvailableHeight())
 
-	previewStyle := InactiveStyle
-	if m.rootState.State.Panning {
-		previewStyle = ActiveStyle
-	}
-	m.monitorsPreviewPane.SetHeight(m.layout.RightPreviewHeight())
-	m.monitorsPreviewPane.SetWidth(m.layout.RightPanesWidth())
-	previewPane := previewStyle.Width(m.layout.RightPanesWidth()).Height(
-		m.layout.RightPreviewHeight()).Render(m.monitorsPreviewPane.View())
-
-	if m.rootState.State.Fullscreen {
-		m.monitorsPreviewPane.SetHeight(m.layout.AvailableHeight() + 2)
-		m.monitorsPreviewPane.SetWidth(m.layout.AvailableWidth())
-		previewPane = previewStyle.Width(m.layout.AvailableWidth()).Height(
-			m.layout.AvailableHeight() + 2).Render(m.monitorsPreviewPane.View())
-	}
-
-	rightSections = append(rightSections, previewPane)
-	if !m.rootState.State.Fullscreen {
-		hyprPreview := InactiveStyle.Width(m.layout.RightPanesWidth()).Height(
-			m.layout.RightHyprHeight()).Render(m.hyprPreviewPane.View())
-		rightSections = append(rightSections, hyprPreview)
-	}
-
 	left := m.leftPanels()
+	right := m.rightPanels()
 
 	leftPanels := lipgloss.JoinVertical(
 		lipgloss.Left,
@@ -138,7 +118,7 @@ func (m Model) View() string {
 	)
 	rightPanels := lipgloss.JoinVertical(
 		lipgloss.Left,
-		rightSections...,
+		right...,
 	)
 
 	view := lipgloss.JoinHorizontal(
@@ -148,10 +128,52 @@ func (m Model) View() string {
 	)
 
 	if m.rootState.State.Fullscreen {
+		m.monitorsPreviewPane.SetHeight(m.layout.AvailableHeight() + 2)
+		m.monitorsPreviewPane.SetWidth(m.layout.AvailableWidth())
+		previewPane := ActiveStyle.Width(m.layout.AvailableWidth()).Height(
+			m.layout.AvailableHeight() + 2).Render(m.monitorsPreviewPane.View())
 		view = previewPane
 	}
 
 	return lipgloss.JoinVertical(lipgloss.Top, header, view, globalHelp)
+}
+
+func (m Model) rightPanels() []string {
+	rightSections := []string{}
+
+	if m.rootState.CurrentView() == ProfileView {
+		m.hdmProfilePreview.SetHeight(m.layout.RightPreviewHeight())
+		m.hdmProfilePreview.SetWidth(m.layout.RightPanesWidth())
+		profileCfg := InactiveStyle.Height(m.layout.AvailableHeight() + 2).Width(m.layout.RightPanesWidth()).Render(m.hdmProfilePreview.View())
+		rightSections = append(rightSections, profileCfg)
+	}
+
+	if m.rootState.CurrentView() == MonitorsListView {
+		previewStyle := InactiveStyle
+		if m.rootState.State.Panning {
+			previewStyle = ActiveStyle
+		}
+		m.monitorsPreviewPane.SetHeight(m.layout.RightPreviewHeight())
+		m.monitorsPreviewPane.SetWidth(m.layout.RightPanesWidth())
+		previewPane := previewStyle.Width(m.layout.RightPanesWidth()).Height(
+			m.layout.RightPreviewHeight()).Render(m.monitorsPreviewPane.View())
+
+		if m.rootState.State.Fullscreen {
+			m.monitorsPreviewPane.SetHeight(m.layout.AvailableHeight() + 2)
+			m.monitorsPreviewPane.SetWidth(m.layout.AvailableWidth())
+			previewPane = previewStyle.Width(m.layout.AvailableWidth()).Height(
+				m.layout.AvailableHeight() + 2).Render(m.monitorsPreviewPane.View())
+		}
+
+		rightSections = append(rightSections, previewPane)
+		if !m.rootState.State.Fullscreen {
+			hyprPreview := InactiveStyle.Width(m.layout.RightPanesWidth()).Height(
+				m.layout.RightHyprHeight()).Render(m.hyprPreviewPane.View())
+			rightSections = append(rightSections, hyprPreview)
+		}
+	}
+
+	return rightSections
 }
 
 func (m Model) leftPanels() []string {
@@ -159,7 +181,7 @@ func (m Model) leftPanels() []string {
 	leftMainPanelSize := m.layout.AvailableHeight() + 2
 
 	// config view, different panels
-	if m.rootState.CurrentView() == ConfigView {
+	if m.rootState.CurrentView() == ProfileView {
 		if m.rootState.State.ProfileNameRequested {
 			leftMainPanelSize = m.layout.LeftMonitorsHeight()
 		}
@@ -327,6 +349,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch {
 		case key.Matches(msg, m.keys.Quit):
 			return m, tea.Quit
+		case key.Matches(msg, m.keys.EditHDMConfig):
+			if m.rootState.CurrentView() == ProfileView {
+				cmds = append(cmds, openEditor(m.config.Get().ConfigPath))
+			}
 		case key.Matches(msg, m.keys.Tab):
 			if !m.rootState.State.ShowConfirmationPrompt {
 				m.rootState.NextView()
@@ -392,12 +418,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			cmd := m.monitorsPreviewPane.Update(msg)
 			cmds = append(cmds, cmd)
-		case ConfigView:
+		case ProfileView:
 			logrus.Debug("Update for config view")
 			if m.rootState.State.ProfileNameRequested {
 				cmds = append(cmds, m.profileNamePicker.Update(msg))
 			} else {
 				cmds = append(cmds, m.hdm.Update(msg))
+				cmds = append(cmds, m.hdmProfilePreview.Update(msg))
 			}
 		}
 	} else {
@@ -423,6 +450,12 @@ func (m *Model) GlobalHelp() []key.Binding {
 		}
 		bindings = append(bindings, monitors...)
 
+	}
+	if m.rootState.CurrentView() == ProfileView {
+		profile := []key.Binding{
+			rootKeyMap.EditHDMConfig,
+		}
+		bindings = append(bindings, profile...)
 	}
 	return bindings
 }

@@ -136,7 +136,7 @@ func (p *MonitorsPreviewPane) Render(availableWidth, availableHeight int) string
 			lipgloss.Left,
 			title,
 			lipgloss.NewStyle().Width(availableWidth-titleWidth-scaleInfoWidth).Render(""),
-			ScaleInfoStyle.Render(scaleInfo),
+			SubtitleInfoStyle.Render(scaleInfo),
 		),
 		grid,
 		legend,

@@ -21,6 +21,7 @@ type keyMap struct {
 	ToggleSnapping key.Binding
 	ApplyHypr      key.Binding
 	Back           key.Binding
+	EditHDMConfig  key.Binding
 }
 
 var rootKeyMap = keyMap{
@@ -95,5 +96,9 @@ var rootKeyMap = keyMap{
 	Back: key.NewBinding(
 		key.WithKeys("esc"),
 		key.WithHelp("esc", "close"),
+	),
+	EditHDMConfig: key.NewBinding(
+		key.WithKeys("C"),
+		key.WithHelp("C", "edit HyprDynamicMonitors config"),
 	),
 }
