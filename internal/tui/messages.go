@@ -143,9 +143,14 @@ const (
 	DeltaLess
 )
 
+type PreviewScaleMonitorCommand struct {
+	monitorID int
+	scale     float64
+}
+
 type ScaleMonitorCommand struct {
 	monitorID int
-	delta     Delta
+	scale     float64
 }
 
 type RotateMonitorCommand struct {
@@ -268,11 +273,20 @@ func changeModePreviewCmd(mode string) tea.Cmd {
 	}
 }
 
-func scaleMonitorCmd(monitorID int, delta Delta) tea.Cmd {
+func scaleMonitorCmd(monitorID int, scale float64) tea.Cmd {
 	return func() tea.Msg {
 		return ScaleMonitorCommand{
 			monitorID: monitorID,
-			delta:     delta,
+			scale:     scale,
+		}
+	}
+}
+
+func previewScaleMonitorCmd(monitorID int, scale float64) tea.Cmd {
+	return func() tea.Msg {
+		return PreviewScaleMonitorCommand{
+			monitorID: monitorID,
+			scale:     scale,
 		}
 	}
 }

@@ -89,27 +89,14 @@ func (e *MonitorEditorStore) MoveMonitor(monitorID int, dx, dy Delta) tea.Cmd {
 }
 
 // ScaleMonitor adjusts the scale of a monitor
-func (e *MonitorEditorStore) ScaleMonitor(monitorID int, delta Delta) tea.Cmd {
+func (e *MonitorEditorStore) ScaleMonitor(monitorID int, newScale float64) tea.Cmd {
 	monitor, index, err := e.FindByID(monitorID)
 	if err != nil {
 		return operationStatusCmd(OperationNameScale, err)
 	}
 
-	deltaValue := 0.0
-	switch delta {
-	case DeltaLess:
-		deltaValue = -e.scaleStep
-	case DeltaMore:
-		deltaValue = e.scaleStep
-	}
-
-	newScale := monitor.Scale + deltaValue
-
-	// Ensure minimum scale of 0.1
 	if newScale >= e.scaleStep {
 		monitor.Scale = newScale
-
-		// Snap the scaled monitor to the nearest edge if it's disconnected
 		e.snapMonitorToNearestEdge(index)
 	}
 

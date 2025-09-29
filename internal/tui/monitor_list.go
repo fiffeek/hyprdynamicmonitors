@@ -50,6 +50,7 @@ func (m *MonitorItem) ToggleSelect() {
 func (m *MonitorItem) RemoveSelectionModes() {
 	m.inScaleMode = false
 	m.inModeSelection = false
+	m.inMirroringMode = false
 }
 
 func (m MonitorItem) Editing() bool {
@@ -196,6 +197,15 @@ func (d MonitorDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd {
 	sendMonitorSelection := false
 
 	switch msg := msg.(type) {
+	case ScaleMonitorCommand:
+		logrus.Debugf("List called with scale cmd")
+		if !item.Editing() {
+			return nil
+		}
+		previous := item.inScaleMode
+		item.RemoveSelectionModes()
+		item.inScaleMode = !previous
+		sendMonitorSelection = true
 	case ChangeModeCommand:
 		logrus.Debug("Received final change mode command")
 		if !item.Editing() {
@@ -412,21 +422,7 @@ func (c *MonitorList) processArrows(msg tea.KeyMsg) tea.Cmd {
 		logrus.Debug("Not in editing mode, exit")
 		return nil
 	}
-	if c.state.Scaling {
-		return c.handleScale(msg)
-	}
 	return c.handleMove(msg)
-}
-
-func (c *MonitorList) handleScale(msg tea.KeyMsg) tea.Cmd {
-	switch {
-	case key.Matches(msg, rootKeyMap.Up):
-		return scaleMonitorCmd(c.selectedMonitorIndex, DeltaMore)
-	case key.Matches(msg, rootKeyMap.Down):
-		return scaleMonitorCmd(c.selectedMonitorIndex, DeltaLess)
-	}
-
-	return nil
 }
 
 func (c *MonitorList) handleMove(msg tea.KeyMsg) tea.Cmd {

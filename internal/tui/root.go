@@ -32,6 +32,7 @@ type Model struct {
 	help                help.Model
 	header              *Header
 	hyprPreviewPane     *HyprPreviewPane
+	scaleSelector       *ScaleSelector
 
 	// components for config view
 	hdm               *HDMConfigPane
@@ -71,6 +72,7 @@ func NewModel(cfg *config.Config, hyprMonitors hypr.MonitorSpecs, profileMaker *
 		profileMaker:        profileMaker,
 		profileNamePicker:   NewProfileNamePicker(),
 		confirmationPrompt:  nil,
+		scaleSelector:       NewScaleSelector(),
 	}
 
 	return model
@@ -179,14 +181,14 @@ func (m Model) leftPanels() []string {
 
 	// monitor view, different panels
 	if m.rootState.CurrentView() == MonitorsListView {
-		if m.rootState.State.ModeSelection || m.rootState.State.MirrorSelection {
+		if m.rootState.State.ModeSelection || m.rootState.State.MirrorSelection || m.rootState.State.Scaling {
 			leftMainPanelSize = m.layout.LeftMonitorsHeight()
 		}
 		m.monitorsList.SetHeight(leftMainPanelSize)
 		m.monitorsList.SetWidth(m.layout.LeftPanesWidth())
 		logrus.Debugf("Monitors list height: %d", leftMainPanelSize)
 		monitorViewStyle := ActiveStyle
-		if m.rootState.State.ModeSelection || m.rootState.State.MirrorSelection {
+		if m.rootState.State.ModeSelection || m.rootState.State.MirrorSelection || m.rootState.State.Scaling {
 			monitorViewStyle = InactiveStyle
 		}
 		monitorView := monitorViewStyle.Width(m.layout.LeftPanesWidth()).Height(
@@ -208,6 +210,14 @@ func (m Model) leftPanels() []string {
 			logrus.Debugf("Mirrors pane height: %d", m.layout.LeftSubpaneHeight())
 			left = append(left, pane)
 		}
+
+		if m.rootState.State.Scaling {
+			m.scaleSelector.SetHeight(m.layout.LeftSubpaneHeight())
+			scalingSelector := ActiveStyle.Width(m.layout.LeftPanesWidth()).Height(
+				m.layout.LeftSubpaneHeight()).Render(m.scaleSelector.View())
+			logrus.Debugf("Scaling selection pane height: %d", m.layout.LeftSubpaneHeight())
+			left = append(left, scalingSelector)
+		}
 	}
 
 	return left
@@ -228,10 +238,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		stateChanged = true
 		cmds = append(cmds, m.monitorModes.SetItems(m.rootState.monitors[msg.ListIndex]))
 		cmds = append(cmds, m.monitorMirrors.SetItems(m.rootState.monitors[msg.ListIndex]))
+		cmds = append(cmds, m.scaleSelector.Set(m.rootState.monitors[msg.ListIndex]))
 	case MonitorUnselected:
 		logrus.Debug("Monitor unselected event in root")
 		m.rootState.ClearMonitorEditState()
 		cmds = append(cmds, m.monitorModes.ClearItems())
+		cmds = append(cmds, m.monitorMirrors.ClearItems())
+		cmds = append(cmds, m.scaleSelector.Unset())
 		stateChanged = true
 	case MoveMonitorCommand:
 		logrus.Debug("Received a monitor move command")
@@ -245,9 +258,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case RotateMonitorCommand:
 		logrus.Debug("Received a monitor rotate command")
 		cmds = append(cmds, m.monitorEditor.RotateMonitor(msg.monitorID))
+	case PreviewScaleMonitorCommand:
+		logrus.Debug("Received a monitor scale command")
+		cmds = append(cmds, m.monitorEditor.ScaleMonitor(msg.monitorID, msg.scale))
 	case ScaleMonitorCommand:
 		logrus.Debug("Received a monitor scale command")
-		cmds = append(cmds, m.monitorEditor.ScaleMonitor(msg.monitorID, msg.delta))
+		cmds = append(cmds, m.monitorEditor.ScaleMonitor(msg.monitorID, msg.scale))
+		cmds = append(cmds, m.monitorsList.Update(msg))
 	case ChangeMirrorPreviewCommand:
 		logrus.Debug("Received preview change for monitor mirror")
 		cmds = append(cmds, m.monitorEditor.SetMirror(
@@ -352,6 +369,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					cmds = append(cmds, cmd)
 				} else if m.rootState.State.MirrorSelection {
 					cmd := m.monitorMirrors.Update(msg)
+					cmds = append(cmds, cmd)
+				} else if m.rootState.State.Scaling {
+					cmd := m.scaleSelector.Update(msg)
 					cmds = append(cmds, cmd)
 				} else {
 					cmd := m.monitorsList.Update(msg)
