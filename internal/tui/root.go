@@ -107,15 +107,19 @@ func (m Model) View() string {
 	m.layout.SetReservedTop(globalHelpHeight + headerHeight + 2)
 	logrus.Debugf("Available height: %d", m.layout.AvailableHeight())
 
+	previewStyle := InactiveStyle
+	if m.rootState.State.Panning {
+		previewStyle = ActiveStyle
+	}
 	m.monitorsPreviewPane.SetHeight(m.layout.RightPreviewHeight())
 	m.monitorsPreviewPane.SetWidth(m.layout.RightPanesWidth())
-	previewPane := InactiveStyle.Width(m.layout.RightPanesWidth()).Height(
+	previewPane := previewStyle.Width(m.layout.RightPanesWidth()).Height(
 		m.layout.RightPreviewHeight()).Render(m.monitorsPreviewPane.View())
 
 	if m.rootState.State.Fullscreen {
 		m.monitorsPreviewPane.SetHeight(m.layout.AvailableHeight() + 2)
 		m.monitorsPreviewPane.SetWidth(m.layout.AvailableWidth())
-		previewPane = InactiveStyle.Width(m.layout.AvailableWidth()).Height(
+		previewPane = previewStyle.Width(m.layout.AvailableWidth()).Height(
 			m.layout.AvailableHeight() + 2).Render(m.monitorsPreviewPane.View())
 	}
 
@@ -188,7 +192,7 @@ func (m Model) leftPanels() []string {
 		m.monitorsList.SetWidth(m.layout.LeftPanesWidth())
 		logrus.Debugf("Monitors list height: %d", leftMainPanelSize)
 		monitorViewStyle := ActiveStyle
-		if m.rootState.State.ModeSelection || m.rootState.State.MirrorSelection || m.rootState.State.Scaling {
+		if m.rootState.State.ModeSelection || m.rootState.State.MirrorSelection || m.rootState.State.Scaling || m.rootState.State.Panning {
 			monitorViewStyle = InactiveStyle
 		}
 		monitorView := monitorViewStyle.Width(m.layout.LeftPanesWidth()).Height(

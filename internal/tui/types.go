@@ -83,6 +83,11 @@ func (m *MonitorSpec) StatusPretty() string {
 	return "Active"
 }
 
+func (m *MonitorSpec) ModePretty() string {
+	return fmt.Sprintf("Mode: %s",
+		m.ModeForComparison())
+}
+
 func (m *MonitorSpec) Mode() string {
 	return fmt.Sprintf("%dx%d@%.5f",
 		m.Width,

@@ -84,7 +84,7 @@ func (m MonitorItem) Indicator() string {
 func (m MonitorItem) DescriptionLines() []string {
 	return []string{
 		m.monitor.StatusPretty(),
-		m.monitor.Mode(),
+		m.monitor.ModePretty(),
 		m.monitor.ScalePretty(),
 		m.monitor.VRRPretty(),
 		m.monitor.RotationPretty(),
