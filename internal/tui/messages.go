@@ -57,6 +57,7 @@ const (
 	OperationNameCreateProfile
 	OperationNameMatchingProfile
 	OperationNameEditProfile
+	OperationNameHDMConfigReloadRequested
 )
 
 type OperationStatus struct {
@@ -97,6 +98,8 @@ func (o OperationStatus) String() string {
 		operationName = "Matching Profile"
 	case OperationNameEditProfile:
 		operationName = "Edit Profile"
+	case OperationNameHDMConfigReloadRequested:
+		operationName = "HDM Config Reload"
 	default:
 		operationName = "Operation"
 	}
@@ -120,6 +123,7 @@ func operationStatusCmd(name OperationName, err error) tea.Cmd {
 		OperationNameEditProfile,
 		OperationNameCreateProfile,
 		OperationNameEphemeralApply,
+		OperationNameHDMConfigReloadRequested,
 	}
 	showSuccessToUser := slices.Contains(criticalOperations, name)
 	return func() tea.Msg {
