@@ -204,6 +204,14 @@ type ApplyEphemeralCommand struct{}
 
 type ToggleConfirmationPromptCommand struct{}
 
+type CloseMonitorModeListCommand struct{}
+
+func closeMonitorModeListCmd() tea.Cmd {
+	return func() tea.Msg {
+		return CloseMonitorModeListCommand{}
+	}
+}
+
 func editProfileConfirmationCmd(name string) tea.Cmd {
 	return func() tea.Msg {
 		return EditProfileConfirmationCommand{

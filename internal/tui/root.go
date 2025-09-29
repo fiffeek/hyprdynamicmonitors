@@ -278,6 +278,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		logrus.Debug("Received preview change for monitor mode")
 		cmds = append(cmds, m.monitorEditor.SetMode(
 			m.rootState.State.MonitorEditedListIndex, msg.mode))
+	case CloseMonitorModeListCommand:
+		cmds = append(cmds, m.monitorsList.Update(msg))
 	case ChangeModeCommand:
 		logrus.Debug("Received change for monitor mode")
 		cmds = append(cmds, m.monitorEditor.SetMode(

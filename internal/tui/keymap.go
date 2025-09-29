@@ -20,6 +20,7 @@ type keyMap struct {
 	NextPage       key.Binding
 	ToggleSnapping key.Binding
 	ApplyHypr      key.Binding
+	Back           key.Binding
 }
 
 var rootKeyMap = keyMap{
@@ -90,5 +91,9 @@ var rootKeyMap = keyMap{
 	NextPage: key.NewBinding(
 		key.WithKeys("right", "l", "pgdown", "f", "d"),
 		key.WithHelp("→/l/pgdn", "next page"),
+	),
+	Back: key.NewBinding(
+		key.WithKeys("esc"),
+		key.WithHelp("esc", "close"),
 	),
 }

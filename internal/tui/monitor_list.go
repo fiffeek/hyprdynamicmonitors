@@ -206,7 +206,7 @@ func (d MonitorDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd {
 		item.RemoveSelectionModes()
 		item.inScaleMode = !previous
 		sendMonitorSelection = true
-	case ChangeModeCommand:
+	case ChangeModeCommand, CloseMonitorModeListCommand:
 		logrus.Debug("Received final change mode command")
 		if !item.Editing() {
 			return nil
