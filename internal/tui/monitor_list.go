@@ -215,7 +215,7 @@ func (d MonitorDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd {
 		item.RemoveSelectionModes()
 		item.inModeSelection = !previous
 		sendMonitorSelection = true
-	case ChangeMirrorCommand:
+	case ChangeMirrorCommand, CloseMonitorMirrorListCommand:
 		logrus.Debug("Received final change mirror command")
 		if !item.Editing() {
 			return nil

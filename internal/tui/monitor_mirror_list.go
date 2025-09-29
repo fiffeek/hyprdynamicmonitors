@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/charmbracelet/bubbles/help"
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -17,6 +19,7 @@ type MirrorItem struct {
 type MirrorList struct {
 	L        list.Model
 	monitors []*MonitorSpec
+	help     help.Model
 }
 
 func (m MirrorItem) FilterValue() string {
@@ -88,12 +91,13 @@ func NewMirrorList(monitors []*MonitorSpec) *MirrorList {
 	modesList := list.New(modesItems, delegate, 0, 0)
 	modesList.SetShowStatusBar(false)
 	modesList.SetFilteringEnabled(false)
-	modesList.SetShowHelp(true)
+	modesList.SetShowHelp(false)
 	modesList.SetShowTitle(false)
 
 	return &MirrorList{
 		L:        modesList,
 		monitors: monitors,
+		help:     help.New(),
 	}
 }
 
@@ -129,16 +133,41 @@ func (m *MirrorList) ClearItems() tea.Cmd {
 }
 
 func (m *MirrorList) Update(msg tea.Msg) tea.Cmd {
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "esc":
+			logrus.Debug("Close monitor mirror list")
+			return closeMonitorMirrorListCmd()
+		}
+	}
 	var cmd tea.Cmd
 	m.L, cmd = m.L.Update(msg)
 	return cmd
 }
 
 func (m *MirrorList) View() string {
-	logrus.Debugf("Items: %v", m.L.Items())
+	sections := []string{}
 	availHeight := m.L.Height()
+
+	title := TitleStyle.Margin(0, 0, 1, 0).Render("Select a monitor mirror")
+	availHeight -= lipgloss.Height(title)
+	sections = append(sections, title)
+
+	logrus.Debugf("Items: %v", m.L.Items())
+
+	help := m.help.ShortHelpView([]key.Binding{
+		rootKeyMap.Up, rootKeyMap.Down, rootKeyMap.Enter, rootKeyMap.Back,
+	})
+	availHeight -= lipgloss.Height(help)
+
+	m.L.SetHeight(availHeight)
 	content := lipgloss.NewStyle().Height(availHeight).Render(m.L.View())
-	return content
+	sections = append(sections, content)
+
+	sections = append(sections, help)
+
+	return lipgloss.JoinVertical(lipgloss.Top, sections...)
 }
 
 func (m *MirrorList) SetHeight(height int) {

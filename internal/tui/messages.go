@@ -204,11 +204,19 @@ type ApplyEphemeralCommand struct{}
 
 type ToggleConfirmationPromptCommand struct{}
 
+type CloseMonitorMirrorListCommand struct{}
+
 type CloseMonitorModeListCommand struct{}
 
 func closeMonitorModeListCmd() tea.Cmd {
 	return func() tea.Msg {
 		return CloseMonitorModeListCommand{}
+	}
+}
+
+func closeMonitorMirrorListCmd() tea.Cmd {
+	return func() tea.Msg {
+		return CloseMonitorMirrorListCommand{}
 	}
 }
 
