@@ -101,7 +101,7 @@ func (m Model) View() string {
 	header := m.header.View()
 	headerHeight := lipgloss.Height(header)
 
-	globalHelp := HelpStyle.Width(m.layout.visibleWidth).Render(m.help.ShortHelpView(m.GlobalHelp()))
+	globalHelp := HelpStyle.Margin(0, 0, 1, 0).Width(m.layout.visibleWidth).Render(m.help.ShortHelpView(m.GlobalHelp()))
 	globalHelpHeight := lipgloss.Height(globalHelp)
 
 	m.layout.SetReservedTop(globalHelpHeight + headerHeight + 2)
