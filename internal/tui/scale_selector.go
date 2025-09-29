@@ -146,6 +146,14 @@ func (s *ScaleSelector) Update(msg tea.Msg) tea.Cmd {
 	return tea.Batch(cmds...)
 }
 
+func (s *ScaleSelector) GetCurrentScale() float64 {
+	return s.currentScale
+}
+
+func (s *ScaleSelector) GetSelectedMonitorIndex() int {
+	return s.selectedMonitorIndex
+}
+
 func (s *ScaleSelector) adjustScale(baseIncrement float64) {
 	now := time.Now()
 
