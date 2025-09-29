@@ -196,3 +196,177 @@ func TestToggleDisable_MonitorStates(t *testing.T) {
 		})
 	}
 }
+
+func TestMoveMonitor(t *testing.T) {
+	testCases := []struct {
+		name         string
+		setupFile    string
+		monitorID    int
+		dx           tui.Delta
+		dy           tui.Delta
+		expectedX    int
+		expectedY    int
+		shouldFail   bool
+		expectedErr  string
+		withSnapping bool
+	}{
+		{
+			name:         "Move monitor right with snapping disabled",
+			setupFile:    "testdata/monitors_for_movement.json",
+			monitorID:    0,
+			dx:           tui.DeltaMore,
+			dy:           tui.DeltaNone,
+			expectedX:    50,
+			expectedY:    0,
+			shouldFail:   false,
+			withSnapping: false,
+		},
+		{
+			name:         "Move monitor left with snapping disabled",
+			setupFile:    "testdata/monitors_for_movement.json",
+			monitorID:    1,
+			dx:           tui.DeltaLess,
+			dy:           tui.DeltaNone,
+			expectedX:    1870,
+			expectedY:    0,
+			shouldFail:   false,
+			withSnapping: false,
+		},
+		{
+			name:         "Move monitor down with snapping disabled",
+			setupFile:    "testdata/monitors_for_movement.json",
+			monitorID:    0,
+			dx:           tui.DeltaNone,
+			dy:           tui.DeltaMore,
+			expectedX:    0,
+			expectedY:    50,
+			shouldFail:   false,
+			withSnapping: false,
+		},
+		{
+			name:         "Move monitor up with snapping disabled",
+			setupFile:    "testdata/monitors_for_movement.json",
+			monitorID:    2,
+			dx:           tui.DeltaNone,
+			dy:           tui.DeltaLess,
+			expectedX:    0,
+			expectedY:    1030,
+			shouldFail:   false,
+			withSnapping: false,
+		},
+		{
+			name:         "Move monitor diagonally with snapping disabled",
+			setupFile:    "testdata/monitors_for_movement.json",
+			monitorID:    0,
+			dx:           tui.DeltaMore,
+			dy:           tui.DeltaMore,
+			expectedX:    50,
+			expectedY:    50,
+			shouldFail:   false,
+			withSnapping: false,
+		},
+		{
+			name:         "No movement when deltas are DeltaNone",
+			setupFile:    "testdata/monitors_for_movement.json",
+			monitorID:    0,
+			dx:           tui.DeltaNone,
+			dy:           tui.DeltaNone,
+			expectedX:    0,
+			expectedY:    0,
+			shouldFail:   false,
+			withSnapping: false,
+		},
+		{
+			name:         "Move monitor with snapping enabled",
+			setupFile:    "testdata/monitors_close_for_snapping.json",
+			monitorID:    0,
+			dx:           tui.DeltaMore,
+			dy:           tui.DeltaNone,
+			expectedX:    30,
+			expectedY:    0,
+			shouldFail:   false,
+			withSnapping: true,
+		},
+		{
+			name:        "Fail to move non-existent monitor",
+			setupFile:   "testdata/monitors_for_movement.json",
+			monitorID:   999,
+			dx:          tui.DeltaMore,
+			dy:          tui.DeltaNone,
+			shouldFail:  true,
+			expectedErr: "cant find monitor",
+		},
+		{
+			name:        "Fail to move disabled monitor",
+			setupFile:   "testdata/monitors_single_disabled.json",
+			monitorID:   0,
+			dx:          tui.DeltaMore,
+			dy:          tui.DeltaNone,
+			shouldFail:  true,
+			expectedErr: "monitor is disabled",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			monitors, err := tui.LoadMonitorsFromJSON(tc.setupFile)
+			require.NoError(t, err)
+
+			editor := tui.NewMonitorEditor(monitors)
+			editor.SetSnapping(tc.withSnapping)
+
+			originalMonitor := findMonitorByID(monitors, tc.monitorID)
+			if originalMonitor == nil {
+				cmd := editor.MoveMonitor(tc.monitorID, tc.dx, tc.dy)
+				require.NotNil(t, cmd)
+				msg := cmd()
+				operationStatus, ok := msg.(tui.OperationStatus)
+				require.True(t, ok)
+				assert.True(t, operationStatus.IsError())
+				return
+			}
+
+			originalX := originalMonitor.X
+			originalY := originalMonitor.Y
+			cmd := editor.MoveMonitor(tc.monitorID, tc.dx, tc.dy)
+
+			if tc.shouldFail {
+				require.NotNil(t, cmd)
+				msg := cmd()
+				operationStatus, ok := msg.(tui.OperationStatus)
+				require.True(t, ok)
+				assert.True(t, operationStatus.IsError())
+				if tc.expectedErr != "" {
+					assert.Contains(t, operationStatus.String(), tc.expectedErr)
+				}
+				assert.Equal(t, originalX, originalMonitor.X)
+				assert.Equal(t, originalY, originalMonitor.Y)
+				return
+			}
+
+			if cmd != nil {
+				msg := cmd()
+				switch m := msg.(type) {
+				case tui.OperationStatus:
+					assert.False(t, m.IsError(), "Operation failed: %s", m.String())
+				case tui.ShowGridLineCommand:
+					// Grid line command is expected for snapping
+				default:
+					t.Fatalf("Unexpected message type: %T", msg)
+				}
+			}
+
+			assert.Equal(t, tc.expectedX, originalMonitor.X, "Expected X: %d, Actual X: %d", tc.expectedX, originalMonitor.X)
+			assert.Equal(t, tc.expectedY, originalMonitor.Y, "Expected Y: %d, Actual Y: %d", tc.expectedY, originalMonitor.Y)
+		})
+	}
+}
+
+func findMonitorByID(monitors []*tui.MonitorSpec, id int) *tui.MonitorSpec {
+	for _, monitor := range monitors {
+		if monitor.ID != nil && *monitor.ID == id {
+			return monitor
+		}
+	}
+	return nil
+}

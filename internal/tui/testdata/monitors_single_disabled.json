@@ -1,0 +1,20 @@
+[
+  {
+    "availableModes": [
+      "1920x1080@60"
+    ],
+    "description": "Disabled Monitor",
+    "disabled": true,
+    "height": 1080,
+    "id": 0,
+    "mirrorOf": "none",
+    "name": "DisabledMonitor",
+    "refreshRate": 60.0,
+    "scale": 1.0,
+    "transform": 0,
+    "vrr": false,
+    "width": 1920,
+    "x": 0,
+    "y": 0
+  }
+]
