@@ -49,5 +49,5 @@ func (h *HyprApply) EditProfile(monitors []*MonitorSpec, name string) tea.Cmd {
 		hyprMonitors = append(hyprMonitors, monitor.ToHyprMonitors())
 	}
 	err := h.profileMaker.EditExisting(name, hyprMonitors)
-	return operationStatusCmd(OperationNameCreateProfile, err)
+	return operationStatusCmd(OperationNameEditProfile, err)
 }

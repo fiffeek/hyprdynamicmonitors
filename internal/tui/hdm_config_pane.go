@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -20,6 +21,13 @@ type hdmKeyMap struct {
 	ApplyProfile key.Binding
 }
 
+func (h *hdmKeyMap) Help() []key.Binding {
+	return []key.Binding{
+		h.NewProfile,
+		h.ApplyProfile,
+	}
+}
+
 type HDMConfigPane struct {
 	cfg          *config.Config
 	matcher      *matchers.Matcher
@@ -27,6 +35,9 @@ type HDMConfigPane struct {
 	keymap       *hdmKeyMap
 	profile      *config.Profile
 	pulldProfile bool
+	help         help.Model
+	height       int
+	width        int
 }
 
 func NewHDMConfigPane(cfg *config.Config, matcher *matchers.Matcher, monitors []*MonitorSpec) *HDMConfigPane {
@@ -34,6 +45,7 @@ func NewHDMConfigPane(cfg *config.Config, matcher *matchers.Matcher, monitors []
 		cfg:      cfg,
 		matcher:  matcher,
 		monitors: monitors,
+		help:     help.New(),
 		keymap: &hdmKeyMap{
 			NewProfile: key.NewBinding(
 				key.WithKeys("n"),
@@ -41,7 +53,7 @@ func NewHDMConfigPane(cfg *config.Config, matcher *matchers.Matcher, monitors []
 			),
 			ApplyProfile: key.NewBinding(
 				key.WithKeys("a"),
-				key.WithHelp("e", "apply to existing config"),
+				key.WithHelp("a", "apply to existing config"),
 			),
 		},
 	}
@@ -58,11 +70,14 @@ func (h *HDMConfigPane) Update(msg tea.Msg) tea.Cmd {
 	}
 
 	switch msg := msg.(type) {
+	case CreateNewProfileCommand:
+		logrus.Debug("Received create new profile")
+		cmds = append(cmds, profileNameToogled())
 	case tea.KeyMsg:
 		switch {
 		case key.Matches(msg, h.keymap.NewProfile):
 			logrus.Debug("Creating a new config")
-			cmds = append(cmds, createNewProfileCmd("hello", "hyprconfigs/test.go.tmpl"))
+			cmds = append(cmds, profileNameToogled())
 		case key.Matches(msg, h.keymap.ApplyProfile):
 			logrus.Debug("Editing existing config")
 			cmds = append(cmds, editProfileCmd(h.profile.Name))
@@ -71,16 +86,43 @@ func (h *HDMConfigPane) Update(msg tea.Msg) tea.Cmd {
 	return tea.Batch(cmds...)
 }
 
+func (h *HDMConfigPane) SetHeight(height int) {
+	h.height = height
+}
+
+func (h *HDMConfigPane) SetWidth(width int) {
+	h.width = width
+}
+
 func (h *HDMConfigPane) View() string {
 	if h.cfg == nil {
 		return h.renderNoConfig()
 	}
+	availableHeight := h.height
+	sections := []string{}
+
+	title := TitleStyle.Margin(0, 0, 1, 0).Render("HyprDynamicMonitors Profile")
+
+	var content string
+	help := HelpStyle.Render(h.help.ShortHelpView(h.keymap.Help()))
 
 	if h.profile == nil {
-		return h.renderNoMatchingProfile()
+		content = h.renderNoMatchingProfile()
+	} else {
+		content = h.renderMatchedProfile(h.profile)
 	}
+	availableHeight -= lipgloss.Height(content)
+	availableHeight -= lipgloss.Height(help)
+	availableHeight -= lipgloss.Height(title)
 
-	return h.renderMatchedProfile(h.profile)
+	spacer := lipgloss.NewStyle().Width(h.width).Height(availableHeight).Render("")
+
+	sections = append(sections, title)
+	sections = append(sections, content)
+	sections = append(sections, spacer)
+	sections = append(sections, help)
+
+	return lipgloss.JoinVertical(lipgloss.Top, sections...)
 }
 
 func (h *HDMConfigPane) renderNoConfig() string {
@@ -115,7 +157,7 @@ func (h *HDMConfigPane) renderMatchedProfile(profile *config.Profile) string {
 	var result strings.Builder
 
 	result.WriteString(HyprConfigTitleStyle.Render(
-		fmt.Sprintf("Matched Profile: %s", profile.Name)))
+		fmt.Sprintf("Profile: %s", profile.Name)))
 	result.WriteString("\n\n")
 
 	if h.hasMonitorCountMismatch(profile) {

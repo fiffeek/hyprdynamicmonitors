@@ -33,6 +33,7 @@ type AppState struct {
 	Fullscreen             bool
 	MonitorEditedListIndex int
 	Snapping               bool
+	ProfileNameRequested   bool
 }
 
 func (s AppState) String() string {
@@ -76,6 +77,10 @@ func NewState(monitors []*MonitorSpec, cfg *config.Config) *RootState {
 		config:    cfg,
 		viewModes: viewModes,
 	}
+}
+
+func (r *RootState) ToggleProfileNameRequested() {
+	r.State.ProfileNameRequested = !r.State.ProfileNameRequested
 }
 
 func (r *RootState) ToggleFullscreen() {

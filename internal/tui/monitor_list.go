@@ -462,12 +462,15 @@ func (c *MonitorList) View() string {
 		availHeight = c.L.Height()
 	)
 
+	title := TitleStyle.Margin(0, 0, 1, 0).Render("Connected Monitors")
 	help := c.ShortHelp()
 	availHeight -= lipgloss.Height(help)
+	availHeight -= lipgloss.Height(title)
 	logrus.Debugf("Help height: %d", lipgloss.Height(help))
 	c.L.SetHeight(availHeight)
 	content := lipgloss.NewStyle().Height(availHeight).Width(c.width).Render(c.L.View())
 
+	sections = append(sections, title)
 	sections = append(sections, content)
 	sections = append(sections, help)
 

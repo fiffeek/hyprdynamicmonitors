@@ -19,7 +19,7 @@ type Model struct {
 	layout    *Layout
 	rootState *RootState
 
-	// components
+	// components for monitor view
 	monitorsList        *MonitorList
 	monitorsPreviewPane *MonitorsPreviewPane
 	monitorModes        *MonitorModeList
@@ -27,7 +27,10 @@ type Model struct {
 	help                help.Model
 	header              *Header
 	hyprPreviewPane     *HyprPreviewPane
-	hdm                 *HDMConfigPane
+
+	// components for config view
+	hdm               *HDMConfigPane
+	profileNamePicker *ProfileNamePicker
 
 	// stores
 	monitorEditor *MonitorEditorStore
@@ -61,6 +64,7 @@ func NewModel(cfg *config.Config, hyprMonitors hypr.MonitorSpecs, profileMaker *
 		hyprApply:           NewHyprApply(profileMaker),
 		hdm:                 NewHDMConfigPane(cfg, matchers.NewMatcher(), monitors),
 		profileMaker:        profileMaker,
+		profileNamePicker:   NewProfileNamePicker(),
 	}
 
 	return model
@@ -85,20 +89,6 @@ func (m Model) View() string {
 	m.layout.SetReservedTop(globalHelpHeight + headerHeight + 2)
 	logrus.Debugf("Available height: %d", m.layout.AvailableHeight())
 
-	leftMonitorsHeight := m.layout.AvailableHeight() + 2
-	if m.rootState.State.ModeSelection || m.rootState.State.MirrorSelection {
-		leftMonitorsHeight = m.layout.LeftMonitorsHeight()
-	}
-	m.monitorsList.SetHeight(leftMonitorsHeight)
-	m.monitorsList.SetWidth(m.layout.LeftPanesWidth())
-	logrus.Debugf("Monitors list height: %d", leftMonitorsHeight)
-	monitorViewStyle := ActiveStyle
-	if m.rootState.State.ModeSelection || m.rootState.State.MirrorSelection {
-		monitorViewStyle = InactiveStyle
-	}
-	monitorView := monitorViewStyle.Width(m.layout.LeftPanesWidth()).Height(
-		leftMonitorsHeight).Render(m.monitorsList.View())
-
 	m.monitorsPreviewPane.SetHeight(m.layout.RightPreviewHeight())
 	m.monitorsPreviewPane.SetWidth(m.layout.RightPanesWidth())
 	previewPane := InactiveStyle.Width(m.layout.RightPanesWidth()).Height(
@@ -118,29 +108,7 @@ func (m Model) View() string {
 		rightSections = append(rightSections, hyprPreview)
 	}
 
-	left := []string{monitorView}
-
-	if m.rootState.State.ModeSelection {
-		m.monitorModes.SetHeight(m.layout.LeftSubpaneHeight())
-		modeSelectionPane := ActiveStyle.Width(m.layout.LeftPanesWidth()).Height(
-			m.layout.LeftSubpaneHeight()).Render(m.monitorModes.View())
-		logrus.Debugf("Mode selection pane height: %d", m.layout.LeftSubpaneHeight())
-		left = append(left, modeSelectionPane)
-	}
-
-	if m.rootState.State.MirrorSelection {
-		m.monitorMirrors.SetHeight(m.layout.LeftSubpaneHeight())
-		pane := ActiveStyle.Width(m.layout.LeftPanesWidth()).Height(
-			m.layout.LeftSubpaneHeight()).Render(m.monitorMirrors.View())
-		logrus.Debugf("Mirrors pane height: %d", m.layout.LeftSubpaneHeight())
-		left = append(left, pane)
-	}
-
-	if m.rootState.CurrentView() == ConfigView {
-		view := ActiveStyle.Width(m.layout.LeftPanesWidth()).Height(
-			leftMonitorsHeight).Render(m.hdm.View())
-		left = []string{view}
-	}
+	left := m.leftPanels()
 
 	leftPanels := lipgloss.JoinVertical(
 		lipgloss.Left,
@@ -162,6 +130,71 @@ func (m Model) View() string {
 	}
 
 	return lipgloss.JoinVertical(lipgloss.Top, header, globalHelp, view)
+}
+
+func (m Model) leftPanels() []string {
+	left := []string{}
+	leftMainPanelSize := m.layout.AvailableHeight() + 2
+
+	// config view, different panels
+	if m.rootState.CurrentView() == ConfigView {
+		if m.rootState.State.ProfileNameRequested {
+			leftMainPanelSize = m.layout.LeftMonitorsHeight()
+		}
+		m.hdm.SetHeight(leftMainPanelSize)
+		m.hdm.SetWidth(m.layout.LeftPanesWidth())
+		mainPanelStyle := ActiveStyle
+		if m.rootState.State.ProfileNameRequested {
+			mainPanelStyle = InactiveStyle
+		}
+		view := mainPanelStyle.Width(m.layout.LeftPanesWidth()).Height(
+			leftMainPanelSize).Render(m.hdm.View())
+		left = append(left, view)
+
+		if m.rootState.State.ProfileNameRequested {
+			m.profileNamePicker.SetHeight(m.layout.LeftSubpaneHeight())
+			m.profileNamePicker.SetWidth(m.layout.LeftPanesWidth())
+			namePicker := ActiveStyle.Width(m.layout.LeftPanesWidth()).Height(
+				m.layout.LeftSubpaneHeight()).Render(m.profileNamePicker.View())
+			left = append(left, namePicker)
+		}
+		return left
+	}
+
+	// monitor view, different panels
+	if m.rootState.CurrentView() == MonitorsListView {
+		if m.rootState.State.ModeSelection || m.rootState.State.MirrorSelection {
+			leftMainPanelSize = m.layout.LeftMonitorsHeight()
+		}
+		m.monitorsList.SetHeight(leftMainPanelSize)
+		m.monitorsList.SetWidth(m.layout.LeftPanesWidth())
+		logrus.Debugf("Monitors list height: %d", leftMainPanelSize)
+		monitorViewStyle := ActiveStyle
+		if m.rootState.State.ModeSelection || m.rootState.State.MirrorSelection {
+			monitorViewStyle = InactiveStyle
+		}
+		monitorView := monitorViewStyle.Width(m.layout.LeftPanesWidth()).Height(
+			leftMainPanelSize).Render(m.monitorsList.View())
+		left = append(left, monitorView)
+
+		if m.rootState.State.ModeSelection {
+			m.monitorModes.SetHeight(m.layout.LeftSubpaneHeight())
+			modeSelectionPane := ActiveStyle.Width(m.layout.LeftPanesWidth()).Height(
+				m.layout.LeftSubpaneHeight()).Render(m.monitorModes.View())
+			logrus.Debugf("Mode selection pane height: %d", m.layout.LeftSubpaneHeight())
+			left = append(left, modeSelectionPane)
+		}
+
+		if m.rootState.State.MirrorSelection {
+			m.monitorMirrors.SetHeight(m.layout.LeftSubpaneHeight())
+			pane := ActiveStyle.Width(m.layout.LeftPanesWidth()).Height(
+				m.layout.LeftSubpaneHeight()).Render(m.monitorMirrors.View())
+			logrus.Debugf("Mirrors pane height: %d", m.layout.LeftSubpaneHeight())
+			left = append(left, pane)
+		}
+	}
+
+	return left
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -217,9 +250,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case CreateNewProfileCommand:
 		logrus.Debug("Received create new profile")
 		cmds = append(cmds, m.hyprApply.CreateProfile(m.monitorEditor.GetMonitors(), msg.name, msg.file))
+		cmds = append(cmds, m.hdm.Update(msg))
 	case EditProfileCommand:
 		logrus.Debug("Received edit existing profile")
 		cmds = append(cmds, m.hyprApply.EditProfile(m.monitorEditor.GetMonitors(), msg.name))
+	case ProfileNameToggled:
+		logrus.Debug("Profile name requested")
+		m.rootState.ToggleProfileNameRequested()
+		stateChanged = true
 	case tea.WindowSizeMsg:
 		m.layout.SetHeight(msg.Height)
 		m.layout.SetWidth(msg.Width)
@@ -283,7 +321,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmds = append(cmds, cmd)
 	case ConfigView:
 		logrus.Debug("Update for config view")
-		cmds = append(cmds, m.hdm.Update(msg))
+		if m.rootState.State.ProfileNameRequested {
+			cmds = append(cmds, m.profileNamePicker.Update(msg))
+		} else {
+			cmds = append(cmds, m.hdm.Update(msg))
+		}
 	}
 
 	cmd := m.header.Update(msg)
