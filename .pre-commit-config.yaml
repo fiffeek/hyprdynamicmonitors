@@ -52,3 +52,4 @@ repos:
             entry: make help/generate
             language: system
             files: ^cmd.*
+            pass_filenames: false
