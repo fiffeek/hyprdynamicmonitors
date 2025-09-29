@@ -65,7 +65,6 @@ func (p *MonitorsPreviewPane) Update(msg tea.Msg) tea.Cmd {
 			p.panX = monitor.X
 			p.panY = monitor.Y
 		}
-	// todo maybe move preview on list change
 	case MonitorBeingEdited:
 		p.selectedIndex = msg.ListIndex
 		// set panning to the current monitor left top corner

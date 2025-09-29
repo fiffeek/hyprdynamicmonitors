@@ -55,7 +55,6 @@ func (d MirrorDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
-		// todo all keymaps here
 		case "up", "k", "down", "j":
 			logrus.Debugf("Setting mode to: %s", item.mirrorName)
 			cmds = append(cmds, changeMirrorPreviewCmd(item.mirrorName))
