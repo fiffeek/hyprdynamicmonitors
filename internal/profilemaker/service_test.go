@@ -88,6 +88,18 @@ func TestService_EditExisting(t *testing.T) {
 			expectError:   true,
 			errorContains: "profile not found",
 		},
+		{
+			name:         "Repeated calls should not accumulate newlines",
+			inputFile:    "testdata/existing_config_with_markers.conf",
+			expectedFile: "testdata/expected_replace_markers.conf",
+			profileName:  "test-profile",
+		},
+		{
+			name:         "Repeated calls with markers only should not accumulate newlines",
+			inputFile:    "testdata/markers_only.conf",
+			expectedFile: "testdata/expected_markers_only.conf",
+			profileName:  "test-profile",
+		},
 	}
 
 	for _, tc := range testCases {
@@ -128,7 +140,18 @@ func TestService_EditExisting(t *testing.T) {
 			}
 
 			service := profilemaker.NewService(cfg, nil)
-			err = service.EditExisting(tc.profileName, monitors)
+
+			// For repeated calls test, call EditExisting multiple times
+			if strings.Contains(tc.name, "Repeated calls") {
+				for i := 0; i < 3; i++ {
+					err = service.EditExisting(tc.profileName, monitors)
+					if err != nil {
+						break
+					}
+				}
+			} else {
+				err = service.EditExisting(tc.profileName, monitors)
+			}
 
 			if tc.expectError {
 				assert.Error(t, err)

@@ -136,8 +136,35 @@ func (*Service) newMethod(content, startMarker, endMarker, newContent string) st
 		if !strings.HasSuffix(beforeMarker, "\n") && beforeMarker != "" {
 			beforeMarker += "\n"
 		}
-		if !strings.HasPrefix(afterMarker, "\n") && afterMarker != "" {
-			afterMarker = "\n" + afterMarker
+
+		// Handle afterMarker content - prevent newline accumulation
+		if afterMarker == "" {
+			// No content after markers - template already ends with newline, don't add more
+			afterMarker = ""
+		} else if strings.TrimSpace(afterMarker) == "" {
+			// Only whitespace/newlines after markers (likely end of file) - don't accumulate
+			afterMarker = ""
+		} else {
+			// There is real content after the markers - preserve reasonable spacing
+			// Find the first non-newline character
+			firstNonNewline := 0
+			for i, r := range afterMarker {
+				if r != '\n' {
+					firstNonNewline = i
+					break
+				}
+			}
+			// If we found content, preserve up to 2 newlines (one for marker, one for spacing)
+			if firstNonNewline > 0 {
+				preservedNewlines := firstNonNewline
+				if preservedNewlines > 2 {
+					preservedNewlines = 2
+				}
+				afterMarker = strings.Repeat("\n", preservedNewlines) + strings.TrimLeft(afterMarker, "\n")
+			} else {
+				// No newlines at start, add one for spacing
+				afterMarker = "\n" + afterMarker
+			}
 		}
 
 		return beforeMarker + newContent + afterMarker
