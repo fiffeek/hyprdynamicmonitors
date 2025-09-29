@@ -32,7 +32,7 @@ type ConfirmationPrompt struct {
 	height   int
 }
 
-func NewConfirmationPrompt(title string, accepted tea.Cmd, rejected tea.Cmd) *ConfirmationPrompt {
+func NewConfirmationPrompt(title string, accepted, rejected tea.Cmd) *ConfirmationPrompt {
 	return &ConfirmationPrompt{
 		title:    title,
 		accepted: accepted,

@@ -84,7 +84,8 @@ func (h *HDMProfilePreview) View() string {
 	sections := []string{}
 	availableHeight := h.height
 
-	title := TitleStyle.Margin(0, 0, 0, 0).Render(fmt.Sprintf("Profile Config Preview (%s)", h.profile.ConfigType.Value()))
+	title := TitleStyle.Margin(0, 0, 0, 0).Render(
+		fmt.Sprintf("Profile Config Preview (%s)", h.profile.ConfigType.Value()))
 	availableHeight -= lipgloss.Height(title)
 	sections = append(sections, title)
 

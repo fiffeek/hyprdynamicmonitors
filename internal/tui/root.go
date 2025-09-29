@@ -94,7 +94,8 @@ func (m Model) View() string {
 		prompt := ActiveStyle.Width(m.layout.PromptWidth()).Height(
 			m.layout.PromptHeight()).Render(m.confirmationPrompt.View())
 
-		return lipgloss.Place(m.layout.AvailableWidth(), m.layout.AvailableHeight(), lipgloss.Center, lipgloss.Center, prompt)
+		return lipgloss.Place(m.layout.AvailableWidth(), m.layout.AvailableHeight(),
+			lipgloss.Center, lipgloss.Center, prompt)
 	}
 
 	logrus.Debugf("Visible height: %d", m.layout.visibleHeight)
@@ -144,7 +145,8 @@ func (m Model) rightPanels() []string {
 	if m.rootState.CurrentView() == ProfileView {
 		m.hdmProfilePreview.SetHeight(m.layout.RightPreviewHeight())
 		m.hdmProfilePreview.SetWidth(m.layout.RightPanesWidth())
-		profileCfg := InactiveStyle.Height(m.layout.AvailableHeight() + 2).Width(m.layout.RightPanesWidth()).Render(m.hdmProfilePreview.View())
+		profileCfg := InactiveStyle.Height(m.layout.AvailableHeight() + 2).Width(
+			m.layout.RightPanesWidth()).Render(m.hdmProfilePreview.View())
 		rightSections = append(rightSections, profileCfg)
 	}
 
@@ -214,7 +216,8 @@ func (m Model) leftPanels() []string {
 		m.monitorsList.SetWidth(m.layout.LeftPanesWidth())
 		logrus.Debugf("Monitors list height: %d", leftMainPanelSize)
 		monitorViewStyle := ActiveStyle
-		if m.rootState.State.ModeSelection || m.rootState.State.MirrorSelection || m.rootState.State.Scaling || m.rootState.State.Panning {
+		if m.rootState.State.ModeSelection || m.rootState.State.MirrorSelection ||
+			m.rootState.State.Scaling || m.rootState.State.Panning {
 			monitorViewStyle = InactiveStyle
 		}
 		monitorView := monitorViewStyle.Width(m.layout.LeftPanesWidth()).Height(

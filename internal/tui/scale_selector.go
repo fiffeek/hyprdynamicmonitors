@@ -101,7 +101,8 @@ func (s *ScaleSelector) View() string {
 	sections = append(sections, title)
 	availableSpace -= lipgloss.Height(title)
 
-	subtitle := SubtitleInfoStyle.Margin(0, 0, 1, 0).Render(fmt.Sprintf("Tip: Hold for acceleration, single tick is %.2f", s.step))
+	subtitle := SubtitleInfoStyle.Margin(0, 0, 1, 0).Render(
+		fmt.Sprintf("Tip: Hold for acceleration, single tick is %.2f", s.step))
 	sections = append(sections, subtitle)
 	availableSpace -= lipgloss.Height(subtitle)
 
