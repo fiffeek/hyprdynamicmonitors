@@ -2,6 +2,8 @@
 package tui
 
 import (
+	"fmt"
+
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
@@ -143,7 +145,7 @@ func (m Model) View() string {
 		view = previewPane
 	}
 
-	return lipgloss.JoinVertical(lipgloss.Top, header, globalHelp, view)
+	return lipgloss.JoinVertical(lipgloss.Top, header, view, globalHelp)
 }
 
 func (m Model) leftPanels() []string {
@@ -268,6 +270,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		logrus.Debug("Received create new profile")
 		cmds = append(cmds, m.hyprApply.CreateProfile(m.monitorEditor.GetMonitors(), msg.name, msg.file))
 		cmds = append(cmds, m.hdm.Update(msg))
+	case EditProfileConfirmationCommand:
+		logrus.Debug("Received edit existing profile confirm")
+		m.confirmationPrompt = NewConfirmationPrompt(
+			fmt.Sprintf("Apply edited settings to %s profile?", msg.name),
+			tea.Batch(toggleConfirmationPromptCmd(), editProfileCmd(msg.name)),
+			toggleConfirmationPromptCmd())
+		m.rootState.ToggleConfirmationPrompt()
+		stateChanged = true
 	case EditProfileCommand:
 		logrus.Debug("Received edit existing profile")
 		cmds = append(cmds, m.hyprApply.EditProfile(m.monitorEditor.GetMonitors(), msg.name))

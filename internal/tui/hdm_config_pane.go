@@ -87,7 +87,7 @@ func (h *HDMConfigPane) Update(msg tea.Msg) tea.Cmd {
 			cmds = append(cmds, profileNameToogled())
 		case key.Matches(msg, h.keymap.ApplyProfile):
 			logrus.Debug("Editing existing config")
-			cmds = append(cmds, editProfileCmd(h.profile.Name))
+			cmds = append(cmds, editProfileConfirmationCmd(h.profile.Name))
 		}
 	}
 	return tea.Batch(cmds...)

@@ -187,6 +187,10 @@ type CreateNewProfileCommand struct {
 	file string
 }
 
+type EditProfileConfirmationCommand struct {
+	name string
+}
+
 type EditProfileCommand struct {
 	name string
 }
@@ -194,6 +198,14 @@ type EditProfileCommand struct {
 type ApplyEphemeralCommand struct{}
 
 type ToggleConfirmationPromptCommand struct{}
+
+func editProfileConfirmationCmd(name string) tea.Cmd {
+	return func() tea.Msg {
+		return EditProfileConfirmationCommand{
+			name: name,
+		}
+	}
+}
 
 func applyEphemeralCmd() tea.Cmd {
 	return func() tea.Msg {
