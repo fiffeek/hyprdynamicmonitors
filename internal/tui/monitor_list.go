@@ -33,6 +33,15 @@ func (m MonitorItem) MonitorDescription() string {
 	return ItemSubtitle.Render(fmt.Sprintf("(%s)", m.monitor.Description))
 }
 
+func (m MonitorItem) MonitorDescriptionTrunc() string {
+	desc := m.monitor.Description
+	if len(desc) > 15 {
+		desc = desc[:15]
+		desc += "..."
+	}
+	return ItemSubtitle.Render(fmt.Sprintf("(%s)", desc))
+}
+
 func (m *MonitorItem) Unselect() {
 	m.inScaleMode = false
 	m.inModeSelection = false
@@ -168,12 +177,17 @@ func (m MonitorListKeyMap) ShortHelp(state AppState) []key.Binding {
 
 type MonitorDelegate struct {
 	keymap *MonitorListKeyMap
+	width  int
 }
 
 func NewMonitorDelegate() MonitorDelegate {
 	return MonitorDelegate{
 		keymap: NewMonitorListKeyMap(),
 	}
+}
+
+func (d *MonitorDelegate) SetWidth(width int) {
+	d.width = width
 }
 
 func (d MonitorDelegate) Height() int {
@@ -318,7 +332,7 @@ func (d MonitorDelegate) Render(w io.Writer, m list.Model, index int, item list.
 		style = MonitorListTitle
 	}
 	title := fmt.Sprintf("%s %s %s", style.Render(monitor.Title()),
-		monitor.MonitorDescription(), monitor.Indicator())
+		monitor.MonitorDescriptionTrunc(), monitor.Indicator())
 	desc := MutedStyle.Render(monitor.Description())
 	content := fmt.Sprintf("%s\n%s", title, desc)
 
@@ -450,6 +464,7 @@ func (c *MonitorList) SetHeight(height int) {
 func (c *MonitorList) SetWidth(width int) {
 	c.L.SetWidth(width)
 	c.width = width
+	c.delegate.SetWidth(width)
 }
 
 func (c *MonitorList) View() string {
