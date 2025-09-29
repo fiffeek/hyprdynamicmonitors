@@ -146,7 +146,7 @@ func (p *MonitorsPreviewPane) Render(availableWidth, availableHeight int) string
 func (p *MonitorsPreviewPane) ScaleInfo() string {
 	scaleInfo := fmt.Sprintf("Virtual Area: %dx%d", p.virtualWidth, p.virtualHeight)
 	if p.panX != 0 || p.panY != 0 {
-		scaleInfo += fmt.Sprintf(" | Pan: (%d,%d)", p.panX, p.panY)
+		scaleInfo += fmt.Sprintf(" | Center: (%d,%d)", p.panX, p.panY)
 	}
 	if p.snapping {
 		scaleInfo += " | Snapping"
