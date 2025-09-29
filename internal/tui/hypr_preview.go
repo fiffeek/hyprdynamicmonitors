@@ -1,8 +1,6 @@
 package tui
 
 import (
-	"fmt"
-
 	"github.com/charmbracelet/lipgloss"
 )
 
@@ -27,7 +25,7 @@ func (h *HyprPreviewPane) View() string {
 	}
 
 	for _, monitor := range h.monitors {
-		hyprCommand := fmt.Sprintf("monitor = %s", monitor.ToHypr())
+		hyprCommand := "monitor = " + monitor.ToHypr()
 		sections = append(sections, HyprCommandStyle.Render(hyprCommand))
 	}
 	return lipgloss.JoinVertical(lipgloss.Left, sections...)

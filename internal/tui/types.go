@@ -58,7 +58,7 @@ func (m *MonitorSpec) RotationPretty() string {
 }
 
 func (m *MonitorSpec) MirrorPretty() string {
-	return fmt.Sprintf("Mirror: %s", m.Mirror)
+	return "Mirror: " + m.Mirror
 }
 
 func (m *MonitorSpec) PositionPretty() string {
@@ -84,8 +84,8 @@ func (m *MonitorSpec) StatusPretty() string {
 }
 
 func (m *MonitorSpec) ModePretty() string {
-	return fmt.Sprintf("Mode: %s",
-		m.ModeForComparison())
+	return "Mode: " +
+		m.ModeForComparison()
 }
 
 func (m *MonitorSpec) Mode() string {
@@ -178,7 +178,7 @@ func (m *MonitorSpec) ToHypr() string {
 	line := fmt.Sprintf("desc:%s,%dx%d@%.2f,%dx%d,%.2f,transform,%d", m.Description, m.Width,
 		m.Height, m.RefreshRate, m.X, m.Y, m.Scale, m.Transform)
 	if m.Vrr {
-		line = fmt.Sprintf("%s,vrr,1", line)
+		line += ",vrr,1"
 	}
 	if m.Mirror != "none" {
 		line = fmt.Sprintf("%s,mirror,%s", line, m.Mirror)

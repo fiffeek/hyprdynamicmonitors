@@ -51,6 +51,7 @@ func (d ModeDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd {
 		logrus.Warning("Monitor delegate called with an item that is not a MonitorItem")
 		return nil
 	}
+	// nolint:gocritic
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -123,8 +124,10 @@ func (m *MonitorModeList) ClearItems() tea.Cmd {
 }
 
 func (m *MonitorModeList) Update(msg tea.Msg) tea.Cmd {
+	// nolint:gocritic
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
+		// nolint:gocritic
 		switch msg.String() {
 		case "esc":
 			return closeMonitorModeListCmd()

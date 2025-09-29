@@ -157,11 +157,12 @@ func (s *ScaleSelector) adjustScale(baseIncrement float64) {
 	s.lastKeyTime = now
 
 	multiplier := 1.0
-	if s.repeatCount > 5 {
+	switch {
+	case s.repeatCount > 5:
 		multiplier = 10.0
-	} else if s.repeatCount > 3 {
+	case s.repeatCount > 3:
 		multiplier = 5.0
-	} else if s.repeatCount > 1 {
+	case s.repeatCount > 1:
 		multiplier = 2.0
 	}
 

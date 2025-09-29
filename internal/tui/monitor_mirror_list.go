@@ -51,6 +51,7 @@ func (d MirrorDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd {
 		logrus.Warning("Mirror delegate called with an item that is not a MirrorItem")
 		return nil
 	}
+	// nolint:gocritic
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -133,8 +134,10 @@ func (m *MirrorList) ClearItems() tea.Cmd {
 }
 
 func (m *MirrorList) Update(msg tea.Msg) tea.Cmd {
+	// nolint:gocritic
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
+		// nolint:gocritic
 		switch msg.String() {
 		case "esc":
 			logrus.Debug("Close monitor mirror list")

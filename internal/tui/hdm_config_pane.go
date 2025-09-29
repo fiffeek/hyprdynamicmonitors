@@ -171,7 +171,7 @@ func (h *HDMConfigPane) renderMatchedProfile(profile *config.Profile) string {
 	var result strings.Builder
 
 	result.WriteString(HyprConfigTitleStyle.Render(
-		fmt.Sprintf("Profile: %s", profile.Name)))
+		"Profile: " + profile.Name))
 	result.WriteString("\n\n")
 
 	if h.hasMonitorCountMismatch(profile) {
@@ -233,7 +233,7 @@ func (h *HDMConfigPane) renderProfileDetails(profile *config.Profile) string {
 	if profile.ConfigType != nil {
 		content.WriteString(configDetailLabelStyle.Render("Config Type: "))
 		content.WriteString(configDetailStyle.Render(
-			fmt.Sprintf("%v", profile.ConfigType.Value())))
+			profile.ConfigType.Value()))
 		content.WriteString("\n")
 	}
 
@@ -257,14 +257,14 @@ func (h *HDMConfigPane) renderProfileDetails(profile *config.Profile) string {
 func (h *HDMConfigPane) renderRequiredMonitor(monitor *config.RequiredMonitor) string {
 	var parts []string
 	if monitor.Name != nil {
-		parts = append(parts, fmt.Sprintf("Name: %s", *monitor.Name))
+		parts = append(parts, "Name: "+*monitor.Name)
 	}
 	if monitor.Description != nil {
-		parts = append(parts, fmt.Sprintf("Desc: %s",
-			h.truncateString(*monitor.Description, 25)))
+		parts = append(parts, "Desc: "+
+			h.truncateString(*monitor.Description, 25))
 	}
 	if monitor.MonitorTag != nil {
-		parts = append(parts, fmt.Sprintf("Tag: %s", *monitor.MonitorTag))
+		parts = append(parts, "Tag: "+*monitor.MonitorTag)
 	}
 
 	content := "(no constraints)"

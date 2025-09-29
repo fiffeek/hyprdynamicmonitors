@@ -41,8 +41,6 @@ const (
 	MoveNoChange
 )
 
-// TODO like in scale first check if not connected if so snap to nearest
-
 func (e *MonitorEditorStore) GetMoveDelta(delta Delta) int {
 	switch delta {
 	case DeltaLess:
@@ -439,16 +437,17 @@ func (e *MonitorEditorStore) calculatePhaseDistance(movingIndex, startX, startY,
 
 			// Calculate distance needed to clear this monitor
 			var distance int
-			if dx > 0 {
+			switch {
+			case dx > 0:
 				// Moving right: need to clear the right edge
 				distance = (otherMonitor.X + otherWidth) - startX
-			} else if dx < 0 {
+			case dx < 0:
 				// Moving left: need to clear the left edge
 				distance = startX - otherMonitor.X + movingWidth
-			} else if dy > 0 {
+			case dy > 0:
 				// Moving down: need to clear the bottom edge
 				distance = (otherMonitor.Y + otherHeight) - startY
-			} else if dy < 0 {
+			case dy < 0:
 				// Moving up: need to clear the top edge
 				distance = startY - otherMonitor.Y + movingHeight
 			}
@@ -542,14 +541,14 @@ func (e *MonitorEditorStore) hasConnectivity(movingIndex, x, y int) bool {
 		// Horizontal edges (top/bottom close)
 		if (abs(movingBottom-otherTop) <= tolerance ||
 			abs(movingTop-otherBottom) <= tolerance) &&
-			!(movingRight <= otherLeft-tolerance || movingLeft >= otherRight+tolerance) {
+			movingRight > otherLeft-tolerance && movingLeft < otherRight+tolerance {
 			return true
 		}
 
 		// Vertical edges (left/right close)
 		if (abs(movingRight-otherLeft) <= tolerance ||
 			abs(movingLeft-otherRight) <= tolerance) &&
-			!(movingBottom <= otherTop-tolerance || movingTop >= otherBottom+tolerance) {
+			movingBottom > otherTop-tolerance && movingTop < otherBottom+tolerance {
 			return true
 		}
 

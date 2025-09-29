@@ -60,7 +60,7 @@ func (h *Header) View() string {
 	availableSpace := h.width
 	logrus.Debugf("Available header space: %d", availableSpace)
 
-	version := fmt.Sprintf("v. %s", h.version)
+	version := "v. " + h.version
 	prog := fmt.Sprintf("%s [%s]", h.title, version)
 	programName := HeaderStyle.Foreground(lipgloss.Color("0")).Background(lipgloss.Color("250")).Padding(0, 1).Render(prog)
 	availableSpace -= lipgloss.Width(programName)

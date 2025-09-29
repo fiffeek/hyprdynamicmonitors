@@ -24,6 +24,7 @@ func (h *HyprApply) ApplyCurrent(monitors []*MonitorSpec) tea.Cmd {
 	var lastError error
 	for _, monitor := range monitors {
 		cmd := fmt.Sprintf("hyprctl keyword monitor \"%s\"", monitor.ToHypr())
+		// nolint:gosec,noctx
 		if err := exec.Command("sh", "-c", cmd).Run(); err != nil {
 			lastError = err
 			logrus.WithError(err).Error("cant apply hypr settings")

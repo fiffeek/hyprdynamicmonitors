@@ -48,7 +48,9 @@ type Model struct {
 	profileMaker *profilemaker.Service
 }
 
-func NewModel(cfg *config.Config, hyprMonitors hypr.MonitorSpecs, profileMaker *profilemaker.Service, version string, powerState power.PowerState) Model {
+func NewModel(cfg *config.Config, hyprMonitors hypr.MonitorSpecs,
+	profileMaker *profilemaker.Service, version string, powerState power.PowerState,
+) Model {
 	monitors := make([]*MonitorSpec, len(hyprMonitors))
 	for i, monitor := range hyprMonitors {
 		monitors[i] = NewMonitorSpec(monitor)
@@ -369,6 +371,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	if m.rootState.CurrentView() == MonitorsListView {
+		// nolint:gocritic
 		switch msg := msg.(type) {
 		case tea.KeyMsg:
 			switch {
@@ -408,16 +411,17 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch m.rootState.CurrentView() {
 		case MonitorsListView:
 			if !m.rootState.State.Panning {
-				if m.rootState.State.ModeSelection {
+				switch {
+				case m.rootState.State.ModeSelection:
 					cmd := m.monitorModes.Update(msg)
 					cmds = append(cmds, cmd)
-				} else if m.rootState.State.MirrorSelection {
+				case m.rootState.State.MirrorSelection:
 					cmd := m.monitorMirrors.Update(msg)
 					cmds = append(cmds, cmd)
-				} else if m.rootState.State.Scaling {
+				case m.rootState.State.Scaling:
 					cmd := m.scaleSelector.Update(msg)
 					cmds = append(cmds, cmd)
-				} else {
+				default:
 					cmd := m.monitorsList.Update(msg)
 					cmds = append(cmds, cmd)
 				}

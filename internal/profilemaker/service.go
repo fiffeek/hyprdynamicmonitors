@@ -113,17 +113,23 @@ func (s *Service) updateConfigFileWithContent(configFile, newContent string) err
 		endMarker   = "# <<<<< TUI AUTO END"
 	)
 
+	// nolint:gosec
 	existingContent, err := os.ReadFile(configFile)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return os.WriteFile(configFile, []byte(newContent), 0o644)
+			if err := utils.WriteAtomic(configFile, []byte(newContent)); err != nil {
+				return fmt.Errorf("cant write the config file: %w", err)
+			}
 		}
 		return fmt.Errorf("failed to read config file: %w", err)
 	}
 
 	content := string(existingContent)
 	finalContent := s.newMethod(content, startMarker, endMarker, newContent)
-	return utils.WriteAtomic(configFile, []byte(finalContent))
+	if err := utils.WriteAtomic(configFile, []byte(finalContent)); err != nil {
+		return fmt.Errorf("cant write new config: %w", err)
+	}
+	return nil
 }
 
 func (*Service) newMethod(content, startMarker, endMarker, newContent string) string {
@@ -138,13 +144,14 @@ func (*Service) newMethod(content, startMarker, endMarker, newContent string) st
 		}
 
 		// Handle afterMarker content - prevent newline accumulation
-		if afterMarker == "" {
+		switch {
+		case afterMarker == "":
 			// No content after markers - template already ends with newline, don't add more
 			afterMarker = ""
-		} else if strings.TrimSpace(afterMarker) == "" {
+		case strings.TrimSpace(afterMarker) == "":
 			// Only whitespace/newlines after markers (likely end of file) - don't accumulate
 			afterMarker = ""
-		} else {
+		default:
 			// There is real content after the markers - preserve reasonable spacing
 			// Find the first non-newline character
 			firstNonNewline := 0

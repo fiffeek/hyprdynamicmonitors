@@ -137,7 +137,7 @@ func TestService_EditExisting(t *testing.T) {
 			if tc.inputFile != "testdata/non_existent.conf" {
 				inputData, err := os.ReadFile(tc.inputFile)
 				require.NoError(t, err)
-				err = os.WriteFile(configFile, inputData, 0o644)
+				err = os.WriteFile(configFile, inputData, 0o600)
 				require.NoError(t, err)
 			}
 
@@ -165,9 +165,11 @@ func TestService_EditExisting(t *testing.T) {
 
 			assert.NoError(t, err)
 
+			// nolint:gosec
 			resultContent, err := os.ReadFile(configFile)
 			require.NoError(t, err)
 
+			// nolint:gosec
 			expectedContent, err := os.ReadFile(tc.expectedFile)
 			require.NoError(t, err)
 

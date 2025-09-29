@@ -135,8 +135,4 @@ var (
 	configDetailLabelStyle = lipgloss.NewStyle().
 				Foreground(lipgloss.Color("105")).
 				Bold(true)
-
-	configMonitorItemStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("243")).
-				MarginLeft(2)
 )

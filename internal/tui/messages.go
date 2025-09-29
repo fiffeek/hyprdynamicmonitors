@@ -228,7 +228,7 @@ func openEditor(file string) tea.Cmd {
 	if editor == "" {
 		editor = "vim"
 	}
-	c := exec.Command(editor, file) //nolint:gosec
+	c := exec.Command(editor, file) //nolint:gosec,noctx
 	return tea.ExecProcess(c, func(err error) tea.Msg {
 		return editorFinishedMsg{err}
 	})

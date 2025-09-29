@@ -26,8 +26,8 @@ type TUI struct {
 	pw        *power.PowerDetector
 }
 
-func NewTUI(ctx context.Context, configPath string, mockedHyprMonitors string,
-	version string, enablePowerEvents bool, connectToSessionBus bool,
+func NewTUI(ctx context.Context, configPath, mockedHyprMonitors string,
+	version string, enablePowerEvents, connectToSessionBus bool,
 ) (*TUI, error) {
 	cfg, err := config.NewConfig(configPath)
 	if err != nil {

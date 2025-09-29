@@ -57,6 +57,7 @@ func NewConfirmationPrompt(title string, accepted, rejected tea.Cmd) *Confirmati
 
 func (c *ConfirmationPrompt) Update(msg tea.Msg) tea.Cmd {
 	cmds := []tea.Cmd{}
+	// nolint:gocritic
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch {

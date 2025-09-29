@@ -67,6 +67,7 @@ func (p *ProfileNamePicker) SetHeight(height int) {
 
 func (p *ProfileNamePicker) Update(msg tea.Msg) tea.Cmd {
 	cmds := []tea.Cmd{}
+	// nolint:gocritic
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch {
