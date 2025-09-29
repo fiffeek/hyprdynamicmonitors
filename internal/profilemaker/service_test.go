@@ -28,6 +28,7 @@ func TestService_EditExisting(t *testing.T) {
 			Y:           0,
 			Scale:       1.5,
 			Transform:   0,
+			Vrr:         false,
 		},
 		{
 			ID:          utils.IntPtr(2),
@@ -40,6 +41,7 @@ func TestService_EditExisting(t *testing.T) {
 			Scale:       1.0,
 			Transform:   0,
 			Mirror:      "eDP-1",
+			Vrr:         true,
 		},
 	}
 
