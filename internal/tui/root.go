@@ -349,6 +349,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch {
 		case key.Matches(msg, m.keys.Quit):
 			return m, tea.Quit
+		case key.Matches(msg, m.keys.FollowMonitor):
+			m.rootState.ToggleFollowMonitorMode()
+			stateChanged = true
 		case key.Matches(msg, m.keys.EditHDMConfig):
 			if m.rootState.CurrentView() == ProfileView {
 				cmds = append(cmds, openEditor(m.config.Get().ConfigPath))
@@ -445,7 +448,7 @@ func (m *Model) GlobalHelp() []key.Binding {
 	if m.rootState.CurrentView() == MonitorsListView {
 		monitors := []key.Binding{
 			rootKeyMap.Pan,
-			rootKeyMap.Fullscreen, rootKeyMap.Center, rootKeyMap.ZoomIn, rootKeyMap.ZoomOut,
+			rootKeyMap.Fullscreen, rootKeyMap.FollowMonitor, rootKeyMap.Center, rootKeyMap.ZoomIn, rootKeyMap.ZoomOut,
 			rootKeyMap.ToggleSnapping, rootKeyMap.ApplyHypr,
 		}
 		bindings = append(bindings, monitors...)

@@ -22,6 +22,7 @@ type keyMap struct {
 	ApplyHypr      key.Binding
 	Back           key.Binding
 	EditHDMConfig  key.Binding
+	FollowMonitor  key.Binding
 }
 
 var rootKeyMap = keyMap{
@@ -100,5 +101,9 @@ var rootKeyMap = keyMap{
 	EditHDMConfig: key.NewBinding(
 		key.WithKeys("C"),
 		key.WithHelp("C", "edit HyprDynamicMonitors config"),
+	),
+	FollowMonitor: key.NewBinding(
+		key.WithKeys("o"),
+		key.WithHelp("o", "follow monitor"),
 	),
 }

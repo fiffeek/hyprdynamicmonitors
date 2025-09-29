@@ -29,6 +29,7 @@ type MonitorsPreviewPane struct {
 	panning       bool
 	panStep       int
 	snapping      bool
+	followMonitor bool
 }
 
 func NewMonitorsPreviewPane(monitors []*MonitorSpec) *MonitorsPreviewPane {
@@ -50,11 +51,12 @@ func NewMonitorsPreviewPane(monitors []*MonitorSpec) *MonitorsPreviewPane {
 func (p *MonitorsPreviewPane) Update(msg tea.Msg) tea.Cmd {
 	logrus.Debugf("Update called on MonitorsPreviewPane: %v", msg)
 	switch msg := msg.(type) {
-	// add a switch to follow monitor on move
-	// case MoveMonitorCommand:
-	// 	monitor := p.monitors[p.selectedIndex]
-	// 	p.panX = monitor.X
-	// 	p.panY = monitor.Y
+	case MoveMonitorCommand:
+		if p.followMonitor {
+			monitor := p.monitors[p.selectedIndex]
+			p.panX = monitor.X
+			p.panY = monitor.Y
+		}
 	case MonitorBeingEdited:
 		p.selectedIndex = msg.ListIndex
 		// set panning to the current monitor left top corner
@@ -66,6 +68,7 @@ func (p *MonitorsPreviewPane) Update(msg tea.Msg) tea.Cmd {
 	case StateChanged:
 		p.panning = msg.state.IsPanning()
 		p.snapping = msg.state.Snapping
+		p.followMonitor = msg.state.MonitorFollowMode
 
 	case tea.KeyMsg:
 		switch {
@@ -150,6 +153,9 @@ func (p *MonitorsPreviewPane) ScaleInfo() string {
 	}
 	if p.snapping {
 		scaleInfo += " | Snapping"
+	}
+	if p.followMonitor {
+		scaleInfo += " | Follow ON"
 	}
 	return scaleInfo
 }
