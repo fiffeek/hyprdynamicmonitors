@@ -250,6 +250,7 @@ func (m Model) leftPanels() []string {
 
 		if m.rootState.State.Scaling {
 			m.scaleSelector.SetHeight(m.layout.LeftSubpaneHeight())
+			m.scaleSelector.SetWidth(m.layout.LeftPanesWidth())
 			scalingSelector := subpaneStyle.Width(m.layout.LeftPanesWidth()).Height(
 				m.layout.LeftSubpaneHeight()).Render(m.scaleSelector.View())
 			logrus.Debugf("Scaling selection pane height: %d", m.layout.LeftSubpaneHeight())

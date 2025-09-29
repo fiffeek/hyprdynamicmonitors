@@ -213,6 +213,11 @@ type EditProfileCommand struct {
 	name string
 }
 
+type ShowGridLineCommand struct {
+	x *int
+	y *int
+}
+
 type ApplyEphemeralCommand struct{}
 
 type ToggleConfirmationPromptCommand struct{}
@@ -222,6 +227,15 @@ type CloseMonitorMirrorListCommand struct{}
 type CloseMonitorModeListCommand struct{}
 
 type editorFinishedMsg struct{ err error }
+
+func showGridLineCmd(x, y *int) tea.Cmd {
+	return func() tea.Msg {
+		return ShowGridLineCommand{
+			x: x,
+			y: y,
+		}
+	}
+}
 
 func openEditor(file string) tea.Cmd {
 	editor := os.Getenv("EDITOR")

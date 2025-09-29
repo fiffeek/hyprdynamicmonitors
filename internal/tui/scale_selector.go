@@ -106,11 +106,12 @@ func (s *ScaleSelector) View() string {
 	sections = append(sections, subtitle)
 	availableSpace -= lipgloss.Height(subtitle)
 
-	content := fmt.Sprintf("Scale: %.2f", s.currentScale)
+	content := fmt.Sprintf("Scale: %.2f", s.monitor.Scale)
 	sections = append(sections, content)
 	availableSpace -= lipgloss.Height(content)
 
-	help := s.help.ShortHelpView(s.keyMap.Help())
+	help := lipgloss.NewStyle().Width(s.width).Render(s.help.ShortHelpView(s.keyMap.Help()))
+	logrus.Debug("HELP", lipgloss.Height(help), lipgloss.Width(help), s.width)
 	availableSpace -= lipgloss.Height(help)
 
 	logrus.Debugf("spacer height: %d", availableSpace)

@@ -30,6 +30,8 @@ type MonitorsPreviewPane struct {
 	panStep       int
 	snapping      bool
 	followMonitor bool
+	snapGridX     *int
+	snapGridY     *int
 }
 
 func NewMonitorsPreviewPane(monitors []*MonitorSpec) *MonitorsPreviewPane {
@@ -51,12 +53,19 @@ func NewMonitorsPreviewPane(monitors []*MonitorSpec) *MonitorsPreviewPane {
 func (p *MonitorsPreviewPane) Update(msg tea.Msg) tea.Cmd {
 	logrus.Debugf("Update called on MonitorsPreviewPane: %v", msg)
 	switch msg := msg.(type) {
+	case ShowGridLineCommand:
+		logrus.Debugf("Show grid line: x=%v, y=%v", msg.x, msg.y)
+		p.snapGridX = msg.x
+		p.snapGridY = msg.y
 	case MoveMonitorCommand:
+		p.snapGridX = nil
+		p.snapGridY = nil
 		if p.followMonitor {
 			monitor := p.monitors[p.selectedIndex]
 			p.panX = monitor.X
 			p.panY = monitor.Y
 		}
+	// todo maybe move preview on list change
 	case MonitorBeingEdited:
 		p.selectedIndex = msg.ListIndex
 		// set panning to the current monitor left top corner
@@ -69,6 +78,10 @@ func (p *MonitorsPreviewPane) Update(msg tea.Msg) tea.Cmd {
 		p.panning = msg.state.IsPanning()
 		p.snapping = msg.state.Snapping
 		p.followMonitor = msg.state.MonitorFollowMode
+		if msg.state.MirrorSelection || msg.state.ModeSelection || msg.state.Scaling {
+			p.snapGridX = nil
+			p.snapGridY = nil
+		}
 
 	case tea.KeyMsg:
 		switch {
@@ -189,8 +202,42 @@ func (p *MonitorsPreviewPane) renderGrid(gridWidth, gridHeight int) string {
 		p.DrawMonitor(p.selectedIndex, p.monitors[p.selectedIndex], scaleX, scaleY, grid)
 	}
 
+	// draw snap grid lines if any
+	p.drawSnapGridLines(grid, scaleX, scaleY, gridWidth, gridHeight)
+
 	lines := p.ColorGrid(grid)
 	return strings.Join(lines, "\n")
+}
+
+func (p *MonitorsPreviewPane) drawSnapGridLines(grid [][]gridCell, scaleX, scaleY float64, gridWidth, gridHeight int) {
+	if p.snapGridX == nil && p.snapGridY == nil {
+		return
+	}
+
+	centerX := gridWidth / 2
+	centerY := gridHeight / 2
+
+	if p.snapGridX != nil {
+		lineX := centerX + int(float64(*p.snapGridX-p.panX)*scaleX)
+		if lineX >= 0 && lineX < gridWidth {
+			for y := 0; y < gridHeight; y++ {
+				if grid[y][lineX].char == ' ' || grid[y][lineX].char == '·' {
+					grid[y][lineX] = gridCell{char: '│', color: "243"} // Muted color
+				}
+			}
+		}
+	}
+
+	if p.snapGridY != nil {
+		lineY := centerY + int(float64(*p.snapGridY-p.panY)*scaleY)
+		if lineY >= 0 && lineY < gridHeight {
+			for x := 0; x < gridWidth; x++ {
+				if grid[lineY][x].char == ' ' || grid[lineY][x].char == '·' {
+					grid[lineY][x] = gridCell{char: '─', color: "243"} // Muted color
+				}
+			}
+		}
+	}
 }
 
 // ColorGrid converts the grid cells to the colorized representation
