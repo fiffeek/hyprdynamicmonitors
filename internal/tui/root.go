@@ -19,6 +19,9 @@ type Model struct {
 	layout    *Layout
 	rootState *RootState
 
+	// universal components
+	confirmationPrompt *ConfirmationPrompt
+
 	// components for monitor view
 	monitorsList        *MonitorList
 	monitorsPreviewPane *MonitorsPreviewPane
@@ -65,6 +68,7 @@ func NewModel(cfg *config.Config, hyprMonitors hypr.MonitorSpecs, profileMaker *
 		hdm:                 NewHDMConfigPane(cfg, matchers.NewMatcher(), monitors),
 		profileMaker:        profileMaker,
 		profileNamePicker:   NewProfileNamePicker(),
+		confirmationPrompt:  nil,
 	}
 
 	return model
@@ -76,6 +80,16 @@ func (m Model) Init() tea.Cmd {
 
 func (m Model) View() string {
 	logrus.Debug("Rendering the root model")
+
+	if m.rootState.State.ShowConfirmationPrompt {
+		m.confirmationPrompt.SetWidth(m.layout.PromptWidth())
+		m.confirmationPrompt.SetHeight(m.layout.PromptHeight())
+		prompt := ActiveStyle.Width(m.layout.PromptWidth()).Height(
+			m.layout.PromptHeight()).Render(m.confirmationPrompt.View())
+
+		return lipgloss.Place(m.layout.AvailableWidth(), m.layout.AvailableHeight(), lipgloss.Center, lipgloss.Center, prompt)
+	}
+
 	logrus.Debugf("Visible height: %d", m.layout.visibleHeight)
 	rightSections := []string{}
 
@@ -260,6 +274,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		logrus.Debug("Profile name requested")
 		m.rootState.ToggleProfileNameRequested()
 		stateChanged = true
+	case ApplyEphemeralCommand:
+		logrus.Debug("Applying hypr settings")
+		cmds = append(cmds, m.hyprApply.ApplyCurrent(m.monitorEditor.GetMonitors()))
+	case ToggleConfirmationPromptCommand:
+		logrus.Debug("Toggling confirmation prompt")
+		m.rootState.ToggleConfirmationPrompt()
+		stateChanged = true
 	case tea.WindowSizeMsg:
 		m.layout.SetHeight(msg.Height)
 		m.layout.SetWidth(msg.Width)
@@ -268,8 +289,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, m.keys.Quit):
 			return m, tea.Quit
 		case key.Matches(msg, m.keys.Tab):
-			m.rootState.NextView()
-			cmds = append(cmds, viewChangedCmd(m.rootState.CurrentView()))
+			if !m.rootState.State.ShowConfirmationPrompt {
+				m.rootState.NextView()
+				cmds = append(cmds, viewChangedCmd(m.rootState.CurrentView()))
+			}
 		}
 	}
 
@@ -291,8 +314,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.monitorEditor.SetSnapping(m.rootState.State.Snapping)
 				stateChanged = true
 			case key.Matches(msg, m.keys.ApplyHypr):
-				logrus.Debug("Would apply hypr settings")
-				cmds = append(cmds, m.hyprApply.ApplyCurrent(m.monitorEditor.GetMonitors()))
+				logrus.Debug("Toggling confirmationPrompt for hypr apply")
+				m.confirmationPrompt = NewConfirmationPrompt(
+					"Apply hypr settings now?",
+					tea.Batch(toggleConfirmationPromptCmd(), applyEphemeralCmd()),
+					toggleConfirmationPromptCmd())
+				m.rootState.ToggleConfirmationPrompt()
+				stateChanged = true
 			}
 		}
 	}
@@ -304,30 +332,34 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		})
 	}
 
-	switch m.rootState.CurrentView() {
-	case MonitorsListView:
-		if !m.rootState.State.Panning {
-			if m.rootState.State.ModeSelection {
-				cmd := m.monitorModes.Update(msg)
-				cmds = append(cmds, cmd)
-			} else if m.rootState.State.MirrorSelection {
-				cmd := m.monitorMirrors.Update(msg)
-				cmds = append(cmds, cmd)
+	if !m.rootState.State.ShowConfirmationPrompt {
+		switch m.rootState.CurrentView() {
+		case MonitorsListView:
+			if !m.rootState.State.Panning {
+				if m.rootState.State.ModeSelection {
+					cmd := m.monitorModes.Update(msg)
+					cmds = append(cmds, cmd)
+				} else if m.rootState.State.MirrorSelection {
+					cmd := m.monitorMirrors.Update(msg)
+					cmds = append(cmds, cmd)
+				} else {
+					cmd := m.monitorsList.Update(msg)
+					cmds = append(cmds, cmd)
+				}
+			}
+
+			cmd := m.monitorsPreviewPane.Update(msg)
+			cmds = append(cmds, cmd)
+		case ConfigView:
+			logrus.Debug("Update for config view")
+			if m.rootState.State.ProfileNameRequested {
+				cmds = append(cmds, m.profileNamePicker.Update(msg))
 			} else {
-				cmd := m.monitorsList.Update(msg)
-				cmds = append(cmds, cmd)
+				cmds = append(cmds, m.hdm.Update(msg))
 			}
 		}
-
-		cmd := m.monitorsPreviewPane.Update(msg)
-		cmds = append(cmds, cmd)
-	case ConfigView:
-		logrus.Debug("Update for config view")
-		if m.rootState.State.ProfileNameRequested {
-			cmds = append(cmds, m.profileNamePicker.Update(msg))
-		} else {
-			cmds = append(cmds, m.hdm.Update(msg))
-		}
+	} else {
+		cmds = append(cmds, m.confirmationPrompt.Update(msg))
 	}
 
 	cmd := m.header.Update(msg)

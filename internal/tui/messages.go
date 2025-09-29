@@ -119,6 +119,7 @@ func operationStatusCmd(name OperationName, err error) tea.Cmd {
 	criticalOperations := []OperationName{
 		OperationNameEditProfile,
 		OperationNameCreateProfile,
+		OperationNameEphemeralApply,
 	}
 	showSuccessToUser := slices.Contains(criticalOperations, name)
 	return func() tea.Msg {
@@ -184,6 +185,22 @@ type CreateNewProfileCommand struct {
 
 type EditProfileCommand struct {
 	name string
+}
+
+type ApplyEphemeralCommand struct{}
+
+type ToggleConfirmationPromptCommand struct{}
+
+func applyEphemeralCmd() tea.Cmd {
+	return func() tea.Msg {
+		return ApplyEphemeralCommand{}
+	}
+}
+
+func toggleConfirmationPromptCmd() tea.Cmd {
+	return func() tea.Msg {
+		return ToggleConfirmationPromptCommand{}
+	}
 }
 
 func editProfileCmd(profile string) tea.Cmd {

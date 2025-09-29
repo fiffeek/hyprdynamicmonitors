@@ -34,6 +34,7 @@ type AppState struct {
 	MonitorEditedListIndex int
 	Snapping               bool
 	ProfileNameRequested   bool
+	ShowConfirmationPrompt bool
 }
 
 func (s AppState) String() string {
@@ -93,6 +94,10 @@ func (r *RootState) ToggleSnapping() {
 
 func (r *RootState) TogglePanning() {
 	r.State.Panning = !r.State.Panning
+}
+
+func (r *RootState) ToggleConfirmationPrompt() {
+	r.State.ShowConfirmationPrompt = !r.State.ShowConfirmationPrompt
 }
 
 func (r *RootState) SetMonitorEditState(msg MonitorBeingEdited) {
