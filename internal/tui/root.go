@@ -11,6 +11,7 @@ import (
 	"github.com/fiffeek/hyprdynamicmonitors/internal/config"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/hypr"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/matchers"
+	"github.com/fiffeek/hyprdynamicmonitors/internal/power"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/profilemaker"
 	"github.com/sirupsen/logrus"
 )
@@ -47,7 +48,7 @@ type Model struct {
 	profileMaker *profilemaker.Service
 }
 
-func NewModel(cfg *config.Config, hyprMonitors hypr.MonitorSpecs, profileMaker *profilemaker.Service, version string) Model {
+func NewModel(cfg *config.Config, hyprMonitors hypr.MonitorSpecs, profileMaker *profilemaker.Service, version string, powerState power.PowerState) Model {
 	monitors := make([]*MonitorSpec, len(hyprMonitors))
 	for i, monitor := range hyprMonitors {
 		monitors[i] = NewMonitorSpec(monitor)
@@ -70,12 +71,12 @@ func NewModel(cfg *config.Config, hyprMonitors hypr.MonitorSpecs, profileMaker *
 		monitorModes:        NewMonitorModeList(monitors),
 		monitorMirrors:      NewMirrorList(monitors),
 		hyprApply:           NewHyprApply(profileMaker),
-		hdm:                 NewHDMConfigPane(cfg, matcher, monitors),
+		hdm:                 NewHDMConfigPane(cfg, matcher, monitors, powerState),
 		profileMaker:        profileMaker,
 		profileNamePicker:   NewProfileNamePicker(),
 		confirmationPrompt:  nil,
 		scaleSelector:       NewScaleSelector(),
-		hdmProfilePreview:   NewHDMProfilePreview(cfg, matcher, monitors),
+		hdmProfilePreview:   NewHDMProfilePreview(cfg, matcher, monitors, powerState),
 	}
 
 	return model

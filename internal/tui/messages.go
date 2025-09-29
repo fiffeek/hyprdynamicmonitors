@@ -6,6 +6,7 @@ import (
 	"slices"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/fiffeek/hyprdynamicmonitors/internal/power"
 )
 
 type MonitorBeingEdited struct {
@@ -31,6 +32,16 @@ func viewChangedCmd(view ViewMode) tea.Cmd {
 		return ViewChanged{
 			view: view,
 		}
+	}
+}
+
+type PowerStateChanged struct {
+	state power.PowerState
+}
+
+func PowerStateChangedCmd(state power.PowerState) tea.Msg {
+	return PowerStateChanged{
+		state: state,
 	}
 }
 

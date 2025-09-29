@@ -30,23 +30,25 @@ func (h *hdmKeyMap) Help() []key.Binding {
 }
 
 type HDMConfigPane struct {
-	cfg          *config.Config
-	matcher      *matchers.Matcher
-	monitors     []*MonitorSpec
-	keymap       *hdmKeyMap
-	profile      *config.Profile
-	pulldProfile bool
-	help         help.Model
-	height       int
-	width        int
+	cfg           *config.Config
+	matcher       *matchers.Matcher
+	monitors      []*MonitorSpec
+	keymap        *hdmKeyMap
+	profile       *config.Profile
+	pulledProfile bool
+	help          help.Model
+	height        int
+	width         int
+	powerState    power.PowerState
 }
 
-func NewHDMConfigPane(cfg *config.Config, matcher *matchers.Matcher, monitors []*MonitorSpec) *HDMConfigPane {
+func NewHDMConfigPane(cfg *config.Config, matcher *matchers.Matcher, monitors []*MonitorSpec, powerState power.PowerState) *HDMConfigPane {
 	return &HDMConfigPane{
-		cfg:      cfg,
-		matcher:  matcher,
-		monitors: monitors,
-		help:     help.New(),
+		cfg:        cfg,
+		matcher:    matcher,
+		monitors:   monitors,
+		powerState: powerState,
+		help:       help.New(),
 		keymap: &hdmKeyMap{
 			NewProfile: key.NewBinding(
 				key.WithKeys("n"),
@@ -67,16 +69,22 @@ func NewHDMConfigPane(cfg *config.Config, matcher *matchers.Matcher, monitors []
 func (h *HDMConfigPane) Update(msg tea.Msg) tea.Cmd {
 	cmds := []tea.Cmd{}
 
-	switch msg.(type) {
+	switch msg := msg.(type) {
 	case ConfigReloaded:
 		logrus.Debug("Received config reloaded event")
-		h.pulldProfile = false
+		h.pulledProfile = false
+		h.profile = nil
+	case PowerStateChanged:
+		logrus.Debug("Overriding the current power state")
+		h.powerState = msg.state
+		h.pulledProfile = false
 		h.profile = nil
 	}
 
-	if !h.pulldProfile {
-		h.pulldProfile = true
-		_, profile, err := h.matcher.Match(h.cfg.Get(), ConvertToHyprMonitors(h.monitors), power.ACPowerState)
+	if !h.pulledProfile {
+		logrus.Debugf("Current power state: %d", h.powerState)
+		h.pulledProfile = true
+		_, profile, err := h.matcher.Match(h.cfg.Get(), ConvertToHyprMonitors(h.monitors), h.powerState)
 		cmds = append(cmds, operationStatusCmd(OperationNameMatchingProfile, err))
 		h.profile = profile
 	}

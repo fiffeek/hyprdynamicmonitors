@@ -2,23 +2,19 @@ package cmd
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"os"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/fiffeek/hyprdynamicmonitors/internal/config"
-	"github.com/fiffeek/hyprdynamicmonitors/internal/filewatcher"
-	"github.com/fiffeek/hyprdynamicmonitors/internal/hypr"
-	"github.com/fiffeek/hyprdynamicmonitors/internal/profilemaker"
-	"github.com/fiffeek/hyprdynamicmonitors/internal/tui"
-	"github.com/fiffeek/hyprdynamicmonitors/internal/utils"
+	"github.com/fiffeek/hyprdynamicmonitors/internal/app"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"golang.org/x/sync/errgroup"
 )
 
-var mockedHyprMonitors string
+var (
+	mockedHyprMonitors string
+	enablePowerEvents  bool
+)
 
 var tuiCmd = &cobra.Command{
 	Use:   "tui",
@@ -37,97 +33,15 @@ var tuiCmd = &cobra.Command{
 		}
 
 		ctx, cancel := context.WithCancelCause(context.Background())
-		eg, ctx := errgroup.WithContext(ctx)
 		defer cancel(context.Canceled)
 
-		cfg, err := config.NewConfig(configPath)
+		app, err := app.NewTUI(ctx, configPath, mockedHyprMonitors, Version, enablePowerEvents, connectToSessionBus)
 		if err != nil {
-			logrus.WithError(err).Error("cant read config, ignoring")
+			return fmt.Errorf("cant init tui: %w", err)
 		}
 
-		monitors, maker, err := getDeps(ctx, cfg)
-		if err != nil {
-			return fmt.Errorf("cant get the current monitors spec: %w", err)
-		}
-
-		model := tui.NewModel(cfg, monitors, maker, Version)
-		program := tea.NewProgram(
-			model,
-			tea.WithAltScreen(),
-			tea.WithMouseCellMotion(),
-		)
-
-		if cfg != nil {
-			// todo rewrite
-			filewatcher := filewatcher.NewService(cfg, utils.BoolPtr(false))
-			eg.Go(func() error {
-				return filewatcher.Run(ctx)
-			})
-			eg.Go(func() error {
-				c := filewatcher.Listen()
-				for {
-					select {
-					case _, ok := <-c:
-						if !ok {
-							return errors.New("watcher event channel closed")
-						}
-						logrus.Debug("Watcher event received")
-						if err := cfg.Reload(); err != nil {
-							return fmt.Errorf("cant reload user configuration: %w", err)
-						}
-						program.Send(tui.ConfigReloaded{})
-
-					case <-ctx.Done():
-						logrus.Debug("Reloader event processor context cancelled, shutting down")
-						return context.Cause(ctx)
-					}
-				}
-			})
-		}
-
-		// TODO listen to monitor, config events
-
-		eg.Go(func() error {
-			if _, err := program.Run(); err != nil {
-				return fmt.Errorf("failed to run TUI: %w", err)
-			}
-			cancel(context.Canceled)
-			logrus.Debug("Exiting tea")
-			return nil
-		})
-
-		return eg.Wait()
+		return app.Run(ctx, cancel)
 	},
-}
-
-func getDeps(ctx context.Context, cfg *config.Config) (hypr.MonitorSpecs, *profilemaker.Service, error) {
-	if mockedHyprMonitors != "" {
-		//nolint:gosec
-		contents, err := os.ReadFile(mockedHyprMonitors)
-		if err != nil {
-			return nil, nil, fmt.Errorf("cant read the mocked hypr monitors file: %w", err)
-		}
-
-		var res hypr.MonitorSpecs
-		if err := utils.UnmarshalResponse(contents, &res); err != nil {
-			return nil, nil, fmt.Errorf("failed to parse contents: %w", err)
-		}
-
-		profileMaker := profilemaker.NewService(cfg, nil)
-
-		return res, profileMaker, nil
-	}
-	hyprIPC, err := hypr.NewIPC(ctx)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to connect to Hyprland IPC: %w", err)
-	}
-
-	monitors := hyprIPC.GetConnectedMonitors()
-	if err := monitors.Validate(); err != nil {
-		return nil, nil, fmt.Errorf("failed to get valid monitor information: %w", err)
-	}
-
-	return monitors, profilemaker.NewService(cfg, hyprIPC), nil
 }
 
 func init() {
@@ -138,5 +52,19 @@ func init() {
 		"hypr-monitors-override",
 		"",
 		"When used it fill parse the given file as hyprland monitors spec, used for testing.",
+	)
+
+	tuiCmd.Flags().BoolVar(
+		&enablePowerEvents,
+		"enable-power-events",
+		false,
+		"Enable power events (dbus), needs proper configuration",
+	)
+
+	tuiCmd.Flags().BoolVar(
+		&connectToSessionBus,
+		"connect-to-session-bus",
+		false,
+		"Connect to session bus instead of system bus",
 	)
 }

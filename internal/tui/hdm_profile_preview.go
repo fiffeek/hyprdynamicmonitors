@@ -14,24 +14,26 @@ import (
 )
 
 type HDMProfilePreview struct {
-	cfg      *config.Config
-	matcher  *matchers.Matcher
-	pulled   bool
-	profile  *config.Profile
-	monitors []*MonitorSpec
-	textarea textarea.Model
-	height   int
-	width    int
+	cfg        *config.Config
+	matcher    *matchers.Matcher
+	pulled     bool
+	profile    *config.Profile
+	monitors   []*MonitorSpec
+	textarea   textarea.Model
+	height     int
+	width      int
+	powerState power.PowerState
 }
 
-func NewHDMProfilePreview(cfg *config.Config, matcher *matchers.Matcher, monitors []*MonitorSpec) *HDMProfilePreview {
+func NewHDMProfilePreview(cfg *config.Config, matcher *matchers.Matcher, monitors []*MonitorSpec, powerState power.PowerState) *HDMProfilePreview {
 	ta := textarea.New()
 	return &HDMProfilePreview{
-		cfg:      cfg,
-		matcher:  matcher,
-		pulled:   false,
-		monitors: monitors,
-		textarea: ta,
+		cfg:        cfg,
+		powerState: powerState,
+		matcher:    matcher,
+		pulled:     false,
+		monitors:   monitors,
+		textarea:   ta,
 	}
 }
 
@@ -48,17 +50,22 @@ func (h *HDMProfilePreview) SetWidth(width int) {
 func (h *HDMProfilePreview) Update(msg tea.Msg) tea.Cmd {
 	cmds := []tea.Cmd{}
 
-	switch msg.(type) {
+	switch msg := msg.(type) {
 	case ConfigReloaded:
 		logrus.Debug("Received config reloaded event")
 		h.pulled = false
+		h.profile = nil
+		h.textarea.SetValue("")
+	case PowerStateChanged:
+		logrus.Debug("Overriding the current power state")
+		h.powerState = msg.state
 		h.profile = nil
 		h.textarea.SetValue("")
 	}
 
 	if !h.pulled {
 		h.pulled = true
-		_, profile, err := h.matcher.Match(h.cfg.Get(), ConvertToHyprMonitors(h.monitors), power.ACPowerState)
+		_, profile, err := h.matcher.Match(h.cfg.Get(), ConvertToHyprMonitors(h.monitors), h.powerState)
 		cmds = append(cmds, operationStatusCmd(OperationNameMatchingProfile, err))
 		h.profile = profile
 		if h.profile != nil {
