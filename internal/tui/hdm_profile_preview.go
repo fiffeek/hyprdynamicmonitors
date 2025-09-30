@@ -67,7 +67,7 @@ func (h *HDMProfilePreview) Update(msg tea.Msg) tea.Cmd {
 	if !h.pulled {
 		h.pulled = true
 		_, profile, err := h.matcher.Match(h.cfg.Get(), ConvertToHyprMonitors(h.monitors), h.powerState)
-		cmds = append(cmds, operationStatusCmd(OperationNameMatchingProfile, err))
+		cmds = append(cmds, OperationStatusCmd(OperationNameMatchingProfile, err))
 		h.profile = profile
 		if h.profile != nil {
 			contents, err := os.ReadFile(h.profile.ConfigFile)

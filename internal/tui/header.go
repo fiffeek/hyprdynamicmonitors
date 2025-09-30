@@ -128,3 +128,19 @@ func (h *Header) renderTabs() string {
 	}
 	return lipgloss.JoinHorizontal(lipgloss.Left, tabs...)
 }
+
+func (h *Header) GetMode() string {
+	return h.mode
+}
+
+func (h *Header) GetCurrentView() ViewMode {
+	return h.currentView
+}
+
+func (h *Header) GetError() string {
+	return h.err
+}
+
+func (h *Header) GetSuccess() string {
+	return h.success
+}

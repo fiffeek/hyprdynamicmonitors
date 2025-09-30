@@ -49,11 +49,11 @@ func (e *MonitorEditorStore) GetMoveDelta(delta Delta) int {
 func (e *MonitorEditorStore) MoveMonitor(monitorID int, dx, dy Delta) tea.Cmd {
 	monitor, index, err := e.FindByID(monitorID)
 	if err != nil {
-		return operationStatusCmd(OperationNameMove, err)
+		return OperationStatusCmd(OperationNameMove, err)
 	}
 
 	if monitor.Disabled {
-		return operationStatusCmd(OperationNameMove, ErrMonitorDisabled)
+		return OperationStatusCmd(OperationNameMove, ErrMonitorDisabled)
 	}
 
 	dxValue := e.GetMoveDelta(dx)
@@ -77,54 +77,54 @@ func (e *MonitorEditorStore) MoveMonitor(monitorID int, dx, dy Delta) tea.Cmd {
 func (e *MonitorEditorStore) ScaleMonitor(monitorID int, newScale float64) tea.Cmd {
 	monitor, _, err := e.FindByID(monitorID)
 	if err != nil {
-		return operationStatusCmd(OperationNameScale, err)
+		return OperationStatusCmd(OperationNameScale, err)
 	}
 
 	if monitor.Disabled {
-		return operationStatusCmd(OperationNameScale, ErrMonitorDisabled)
+		return OperationStatusCmd(OperationNameScale, ErrMonitorDisabled)
 	}
 
 	if newScale >= e.scaleStep {
 		monitor.Scale = newScale
 	}
 
-	return operationStatusCmd(OperationNameScale, err)
+	return OperationStatusCmd(OperationNameScale, err)
 }
 
 func (e *MonitorEditorStore) RotateMonitor(monitorID int) tea.Cmd {
 	monitor, _, err := e.FindByID(monitorID)
 	if err != nil {
-		return operationStatusCmd(OperationNameRotate, err)
+		return OperationStatusCmd(OperationNameRotate, err)
 	}
 
 	if monitor.Disabled {
-		return operationStatusCmd(OperationNameRotate, ErrMonitorDisabled)
+		return OperationStatusCmd(OperationNameRotate, ErrMonitorDisabled)
 	}
 
 	monitor.Rotate()
 
-	return operationStatusCmd(OperationNameRotate, nil)
+	return OperationStatusCmd(OperationNameRotate, nil)
 }
 
 func (e *MonitorEditorStore) ToggleVRR(monitorID int) tea.Cmd {
 	monitor, _, err := e.FindByID(monitorID)
 	if err != nil {
-		return operationStatusCmd(OperationNameToggleVRR, err)
+		return OperationStatusCmd(OperationNameToggleVRR, err)
 	}
 
 	if monitor.Disabled {
-		return operationStatusCmd(OperationNameToggleVRR, ErrMonitorDisabled)
+		return OperationStatusCmd(OperationNameToggleVRR, ErrMonitorDisabled)
 	}
 
 	monitor.ToggleVRR()
 
-	return operationStatusCmd(OperationNameToggleVRR, nil)
+	return OperationStatusCmd(OperationNameToggleVRR, nil)
 }
 
 func (e *MonitorEditorStore) ToggleDisable(monitorID int) tea.Cmd {
 	monitor, _, err := e.FindByID(monitorID)
 	if err != nil {
-		return operationStatusCmd(OperationNameToggleMonitor, err)
+		return OperationStatusCmd(OperationNameToggleMonitor, err)
 	}
 
 	currentEnabled := false
@@ -140,25 +140,25 @@ func (e *MonitorEditorStore) ToggleDisable(monitorID int) tea.Cmd {
 	}
 
 	if currentEnabled && !anyOtherEnabled {
-		return operationStatusCmd(OperationNameToggleMonitor, errors.New("only one monitor left"))
+		return OperationStatusCmd(OperationNameToggleMonitor, errors.New("only one monitor left"))
 	}
 
 	monitor.ToggleMonitor()
-	return operationStatusCmd(OperationNameToggleMonitor, nil)
+	return OperationStatusCmd(OperationNameToggleMonitor, nil)
 }
 
 func (e *MonitorEditorStore) SetMirror(monitorID int, mirrorOf string) tea.Cmd {
 	monitor, _, err := e.FindByID(monitorID)
 	if err != nil {
-		return operationStatusCmd(OperationNamePreviewMirror, err)
+		return OperationStatusCmd(OperationNamePreviewMirror, err)
 	}
 
 	if monitor.Name == mirrorOf {
-		return operationStatusCmd(OperationNamePreviewMirror, errors.New("cant mirror itself"))
+		return OperationStatusCmd(OperationNamePreviewMirror, errors.New("cant mirror itself"))
 	}
 
 	if monitor.Disabled {
-		return operationStatusCmd(OperationNamePreviewMirror, ErrMonitorDisabled)
+		return OperationStatusCmd(OperationNamePreviewMirror, ErrMonitorDisabled)
 	}
 
 	found := false
@@ -167,24 +167,24 @@ func (e *MonitorEditorStore) SetMirror(monitorID int, mirrorOf string) tea.Cmd {
 			continue
 		}
 		if monitor.Disabled {
-			return operationStatusCmd(OperationNamePreviewMirror,
+			return OperationStatusCmd(OperationNamePreviewMirror,
 				errors.New("cant mirror disabled monitor"))
 		}
 		found = true
 
 	}
 	if !found && mirrorOf != "none" {
-		return operationStatusCmd(OperationNamePreviewMirror,
+		return OperationStatusCmd(OperationNamePreviewMirror,
 			errors.New("cant find mirrored monitor"))
 	}
 
 	if e.wouldCreateMirrorLoop(monitor.Name, mirrorOf) {
-		return operationStatusCmd(OperationNamePreviewMirror, errors.New("would create mirror loop"))
+		return OperationStatusCmd(OperationNamePreviewMirror, errors.New("would create mirror loop"))
 	}
 
 	monitor.SetMirror(mirrorOf)
 
-	return operationStatusCmd(OperationNamePreviewMirror, err)
+	return OperationStatusCmd(OperationNamePreviewMirror, err)
 }
 
 // wouldCreateMirrorLoop checks if setting monitorName to mirror mirrorOf would create a loop
@@ -246,19 +246,19 @@ func (e *MonitorEditorStore) wouldCreateMirrorLoop(monitorName, mirrorOf string)
 func (e *MonitorEditorStore) SetMode(monitorID int, mode string) tea.Cmd {
 	monitor, _, err := e.FindByID(monitorID)
 	if err != nil {
-		return operationStatusCmd(OperationNamePreviewMode, err)
+		return OperationStatusCmd(OperationNamePreviewMode, err)
 	}
 
 	if monitor.Disabled {
-		return operationStatusCmd(OperationNamePreviewMode, ErrMonitorDisabled)
+		return OperationStatusCmd(OperationNamePreviewMode, ErrMonitorDisabled)
 	}
 
 	err = monitor.SetMode(mode)
 	if err != nil {
-		return operationStatusCmd(OperationNamePreviewMode, err)
+		return OperationStatusCmd(OperationNamePreviewMode, err)
 	}
 
-	return operationStatusCmd(OperationNamePreviewMode, err)
+	return OperationStatusCmd(OperationNamePreviewMode, err)
 }
 
 func abs(x int) int {

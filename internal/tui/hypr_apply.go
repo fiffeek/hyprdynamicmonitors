@@ -31,7 +31,7 @@ func (h *HyprApply) ApplyCurrent(monitors []*MonitorSpec) tea.Cmd {
 		}
 	}
 
-	return operationStatusCmd(OperationNameEphemeralApply, lastError)
+	return OperationStatusCmd(OperationNameEphemeralApply, lastError)
 }
 
 func (h *HyprApply) CreateProfile(monitors []*MonitorSpec, name, file string) tea.Cmd {
@@ -41,7 +41,7 @@ func (h *HyprApply) CreateProfile(monitors []*MonitorSpec, name, file string) te
 		hyprMonitors = append(hyprMonitors, monitor.ToHyprMonitors())
 	}
 	err := h.profileMaker.FreezeGivenAs(name, file, hyprMonitors)
-	return operationStatusCmd(OperationNameCreateProfile, err)
+	return OperationStatusCmd(OperationNameCreateProfile, err)
 }
 
 func (h *HyprApply) EditProfile(monitors []*MonitorSpec, name string) tea.Cmd {
@@ -50,5 +50,5 @@ func (h *HyprApply) EditProfile(monitors []*MonitorSpec, name string) tea.Cmd {
 		hyprMonitors = append(hyprMonitors, monitor.ToHyprMonitors())
 	}
 	err := h.profileMaker.EditExisting(name, hyprMonitors)
-	return operationStatusCmd(OperationNameEditProfile, err)
+	return OperationStatusCmd(OperationNameEditProfile, err)
 }

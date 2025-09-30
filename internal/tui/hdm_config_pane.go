@@ -85,7 +85,7 @@ func (h *HDMConfigPane) Update(msg tea.Msg) tea.Cmd {
 		logrus.Debugf("Current power state: %d", h.powerState)
 		h.pulledProfile = true
 		_, profile, err := h.matcher.Match(h.cfg.Get(), ConvertToHyprMonitors(h.monitors), h.powerState)
-		cmds = append(cmds, operationStatusCmd(OperationNameMatchingProfile, err))
+		cmds = append(cmds, OperationStatusCmd(OperationNameMatchingProfile, err))
 		h.profile = profile
 	}
 

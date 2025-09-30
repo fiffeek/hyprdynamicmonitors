@@ -269,7 +269,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case ConfigReloaded:
 		logrus.Debug("Received config reloaded event in root")
-		cmds = append(cmds, operationStatusCmd(OperationNameHDMConfigReloadRequested, nil))
+		cmds = append(cmds, OperationStatusCmd(OperationNameHDMConfigReloadRequested, nil))
 	case MonitorBeingEdited:
 		logrus.Debug("Monitor selected event in root")
 		m.rootState.SetMonitorEditState(msg)
@@ -360,7 +360,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, m.keys.Tab):
 			if !m.rootState.State.ShowConfirmationPrompt {
 				m.rootState.NextView()
-				cmds = append(cmds, viewChangedCmd(m.rootState.CurrentView()))
+				cmds = append(cmds, ViewChangedCmd(m.rootState.CurrentView()))
 			}
 		}
 	}

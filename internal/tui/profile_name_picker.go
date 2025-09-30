@@ -77,7 +77,7 @@ func (p *ProfileNamePicker) Update(msg tea.Msg) tea.Cmd {
 			text := p.textInput.Value()
 			// todo validate profile name, no spaces etc, check other profiles here from cfg
 			if text == "" {
-				cmds = append(cmds, operationStatusCmd(OperationNameCreateProfile,
+				cmds = append(cmds, OperationStatusCmd(OperationNameCreateProfile,
 					errors.New("cant create empty name profile")))
 			} else {
 				p.textInput.SetValue("")

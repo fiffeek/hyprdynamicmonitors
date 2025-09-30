@@ -27,7 +27,15 @@ type ViewChanged struct {
 	view ViewMode
 }
 
-func viewChangedCmd(view ViewMode) tea.Cmd {
+func StateChangedCmd(state AppState) tea.Cmd {
+	return func() tea.Msg {
+		return StateChanged{
+			state: state,
+		}
+	}
+}
+
+func ViewChangedCmd(view ViewMode) tea.Cmd {
 	return func() tea.Msg {
 		return ViewChanged{
 			view: view,
@@ -131,7 +139,7 @@ func (o OperationStatus) String() string {
 	return result
 }
 
-func operationStatusCmd(name OperationName, err error) tea.Cmd {
+func OperationStatusCmd(name OperationName, err error) tea.Cmd {
 	criticalOperations := []OperationName{
 		OperationNameEditProfile,
 		OperationNameCreateProfile,
