@@ -74,10 +74,10 @@ func (p *MonitorsPreviewPane) Update(msg tea.Msg) tea.Cmd {
 	case MonitorUnselected:
 		p.selectedIndex = -1
 	case StateChanged:
-		p.panning = msg.state.IsPanning()
-		p.snapping = msg.state.Snapping
-		p.followMonitor = msg.state.MonitorFollowMode
-		if msg.state.MirrorSelection || msg.state.ModeSelection || msg.state.Scaling {
+		p.panning = msg.State.IsPanning()
+		p.snapping = msg.State.Snapping
+		p.followMonitor = msg.State.MonitorFollowMode
+		if msg.State.MirrorSelection || msg.State.ModeSelection || msg.State.Scaling {
 			p.snapGridX = nil
 			p.snapGridY = nil
 		}

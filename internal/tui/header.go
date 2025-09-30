@@ -36,7 +36,7 @@ func (h *Header) Update(msg tea.Msg) tea.Cmd {
 	logrus.Debugf("Header received message: %v", msg)
 	switch msg := msg.(type) {
 	case StateChanged:
-		h.mode = msg.state.String()
+		h.mode = msg.State.String()
 	case ViewChanged:
 		h.currentView = msg.view
 	case OperationStatus:

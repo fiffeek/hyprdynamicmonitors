@@ -20,7 +20,7 @@ type MonitorBeingEdited struct {
 type MonitorUnselected struct{}
 
 type StateChanged struct {
-	state AppState
+	State AppState
 }
 
 type ViewChanged struct {
@@ -30,7 +30,7 @@ type ViewChanged struct {
 func StateChangedCmd(state AppState) tea.Cmd {
 	return func() tea.Msg {
 		return StateChanged{
-			state: state,
+			State: state,
 		}
 	}
 }
@@ -175,21 +175,21 @@ type ScaleMonitorCommand struct {
 }
 
 type RotateMonitorCommand struct {
-	monitorID int
+	MonitorID int
 }
 
 type MoveMonitorCommand struct {
-	monitorID int
-	stepX     Delta
-	stepY     Delta
+	MonitorID int
+	StepX     Delta
+	StepY     Delta
 }
 
 type ToggleMonitorVRRCommand struct {
-	monitorID int
+	MonitorID int
 }
 
 type ToggleMonitorCommand struct {
-	monitorID int
+	MonitorID int
 }
 
 type ChangeModePreviewCommand struct {
@@ -358,7 +358,7 @@ func previewScaleMonitorCmd(monitorID int, scale float64) tea.Cmd {
 func toggleMonitorCmd(monitor *MonitorSpec) tea.Cmd {
 	return func() tea.Msg {
 		return ToggleMonitorCommand{
-			monitorID: *monitor.ID,
+			MonitorID: *monitor.ID,
 		}
 	}
 }
@@ -366,7 +366,7 @@ func toggleMonitorCmd(monitor *MonitorSpec) tea.Cmd {
 func toggleMonitorVRRCmd(monitor *MonitorSpec) tea.Cmd {
 	return func() tea.Msg {
 		return ToggleMonitorVRRCommand{
-			monitorID: *monitor.ID,
+			MonitorID: *monitor.ID,
 		}
 	}
 }
@@ -375,7 +375,7 @@ func toggleMonitorVRRCmd(monitor *MonitorSpec) tea.Cmd {
 func rotateMonitorCmd(monitor *MonitorSpec) tea.Cmd {
 	return func() tea.Msg {
 		return RotateMonitorCommand{
-			monitorID: *monitor.ID,
+			MonitorID: *monitor.ID,
 		}
 	}
 }
@@ -383,9 +383,9 @@ func rotateMonitorCmd(monitor *MonitorSpec) tea.Cmd {
 func MoveMonitorCmd(monitorID int, stepX, stepY Delta) tea.Cmd {
 	return func() tea.Msg {
 		return MoveMonitorCommand{
-			monitorID: monitorID,
-			stepX:     stepX,
-			stepY:     stepY,
+			MonitorID: monitorID,
+			StepX:     stepX,
+			StepY:     stepY,
 		}
 	}
 }

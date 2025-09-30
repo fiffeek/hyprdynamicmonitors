@@ -287,16 +287,16 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		stateChanged = true
 	case MoveMonitorCommand:
 		logrus.Debug("Received a monitor move command")
-		cmds = append(cmds, m.monitorEditor.MoveMonitor(msg.monitorID, msg.stepX, msg.stepY))
+		cmds = append(cmds, m.monitorEditor.MoveMonitor(msg.MonitorID, msg.StepX, msg.StepY))
 	case ToggleMonitorCommand:
 		logrus.Debug("Received a monitor toggle command")
-		cmds = append(cmds, m.monitorEditor.ToggleDisable(msg.monitorID))
+		cmds = append(cmds, m.monitorEditor.ToggleDisable(msg.MonitorID))
 	case ToggleMonitorVRRCommand:
 		logrus.Debug("Received a monitor vrr command")
-		cmds = append(cmds, m.monitorEditor.ToggleVRR(msg.monitorID))
+		cmds = append(cmds, m.monitorEditor.ToggleVRR(msg.MonitorID))
 	case RotateMonitorCommand:
 		logrus.Debug("Received a monitor rotate command")
-		cmds = append(cmds, m.monitorEditor.RotateMonitor(msg.monitorID))
+		cmds = append(cmds, m.monitorEditor.RotateMonitor(msg.MonitorID))
 	case PreviewScaleMonitorCommand:
 		logrus.Debug("Received a monitor scale command")
 		cmds = append(cmds, m.monitorEditor.ScaleMonitor(msg.monitorID, msg.scale))
@@ -412,7 +412,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	if stateChanged {
 		cmds = append(cmds, func() tea.Msg {
 			return StateChanged{
-				state: m.rootState.State,
+				State: m.rootState.State,
 			}
 		})
 	}

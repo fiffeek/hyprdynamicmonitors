@@ -407,7 +407,7 @@ func (c *MonitorList) Update(msg tea.Msg) tea.Cmd {
 		c.monitorSelected = false
 		c.selectedMonitorIndex = -1
 	case StateChanged:
-		c.state = msg.state
+		c.state = msg.State
 	case tea.KeyMsg:
 		switch {
 		case key.Matches(msg, rootKeyMap.Down),
