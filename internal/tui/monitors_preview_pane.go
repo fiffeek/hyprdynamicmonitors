@@ -462,3 +462,43 @@ func (p *MonitorsPreviewPane) ZoomOut() {
 		p.virtualHeight = 24000
 	}
 }
+
+func (p *MonitorsPreviewPane) GetSelectedIndex() int {
+	return p.selectedIndex
+}
+
+func (p *MonitorsPreviewPane) GetSnapGridX() *int {
+	return p.snapGridX
+}
+
+func (p *MonitorsPreviewPane) GetSnapGridY() *int {
+	return p.snapGridY
+}
+
+func (p *MonitorsPreviewPane) GetPanning() bool {
+	return p.panning
+}
+
+func (p *MonitorsPreviewPane) GetSnapping() bool {
+	return p.snapping
+}
+
+func (p *MonitorsPreviewPane) GetFollowMonitor() bool {
+	return p.followMonitor
+}
+
+func (p *MonitorsPreviewPane) GetPanX() int {
+	return p.panX
+}
+
+func (p *MonitorsPreviewPane) GetPanY() int {
+	return p.panY
+}
+
+func (p *MonitorsPreviewPane) GetVirtualWidth() int {
+	return p.virtualWidth
+}
+
+func (p *MonitorsPreviewPane) GetVirtualHeight() int {
+	return p.virtualHeight
+}

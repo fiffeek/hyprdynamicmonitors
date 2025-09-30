@@ -236,7 +236,7 @@ type CloseMonitorModeListCommand struct{}
 
 type editorFinishedMsg struct{ err error }
 
-func showGridLineCmd(x, y *int) tea.Cmd {
+func ShowGridLineCmd(x, y *int) tea.Cmd {
 	return func() tea.Msg {
 		return ShowGridLineCommand{
 			x: x,
@@ -380,7 +380,7 @@ func rotateMonitorCmd(monitor *MonitorSpec) tea.Cmd {
 	}
 }
 
-func moveMonitorCmd(monitorID int, stepX, stepY Delta) tea.Cmd {
+func MoveMonitorCmd(monitorID int, stepX, stepY Delta) tea.Cmd {
 	return func() tea.Msg {
 		return MoveMonitorCommand{
 			monitorID: monitorID,

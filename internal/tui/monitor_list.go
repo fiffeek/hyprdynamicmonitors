@@ -457,7 +457,7 @@ func (c *MonitorList) handleMove(msg tea.KeyMsg) tea.Cmd {
 		stepX = DeltaMore
 	}
 
-	return moveMonitorCmd(c.selectedMonitorIndex, stepX, stepY)
+	return MoveMonitorCmd(c.selectedMonitorIndex, stepX, stepY)
 }
 
 func (c *MonitorList) SetHeight(height int) {

@@ -333,7 +333,7 @@ func (e *MonitorEditorStore) snapToEdges(monitorIndex, x, y int) (int, int, tea.
 		}
 	}
 
-	return newX, newY, showGridLineCmd(snappedX, snappedY)
+	return newX, newY, ShowGridLineCmd(snappedX, snappedY)
 }
 
 func (e *MonitorEditorStore) FindByID(monitorID int) (*MonitorSpec, int, error) {
