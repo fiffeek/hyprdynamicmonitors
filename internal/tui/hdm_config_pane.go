@@ -281,3 +281,11 @@ func (h *HDMConfigPane) truncateString(s string, maxLen int) string {
 	}
 	return s[:maxLen-3] + "..."
 }
+
+func (h *HDMConfigPane) GetPowerState() power.PowerState {
+	return h.powerState
+}
+
+func (h *HDMConfigPane) GetProfile() *config.Profile {
+	return h.profile
+}
