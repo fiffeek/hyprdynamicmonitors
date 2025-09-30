@@ -3,6 +3,7 @@ package tui
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
@@ -46,10 +47,14 @@ type Model struct {
 	// actions
 	hyprApply    *HyprApply
 	profileMaker *profilemaker.Service
+
+	// for tests
+	duration *time.Duration
+	start    time.Time
 }
 
 func NewModel(cfg *config.Config, hyprMonitors hypr.MonitorSpecs,
-	profileMaker *profilemaker.Service, version string, powerState power.PowerState,
+	profileMaker *profilemaker.Service, version string, powerState power.PowerState, duration *time.Duration,
 ) Model {
 	monitors := make([]*MonitorSpec, len(hyprMonitors))
 	for i, monitor := range hyprMonitors {
@@ -79,6 +84,8 @@ func NewModel(cfg *config.Config, hyprMonitors hypr.MonitorSpecs,
 		confirmationPrompt:  nil,
 		scaleSelector:       NewScaleSelector(),
 		hdmProfilePreview:   NewHDMProfilePreview(cfg, matcher, monitors, powerState),
+		start:               time.Now(),
+		duration:            duration,
 	}
 
 	return model
@@ -86,6 +93,14 @@ func NewModel(cfg *config.Config, hyprMonitors hypr.MonitorSpecs,
 
 func (m Model) Init() tea.Cmd {
 	return nil
+}
+
+func (m Model) timeLeft() time.Duration {
+	// infinite time effectively when no duration is passed
+	if m.duration == nil {
+		return time.Minute
+	}
+	return *m.duration - time.Since(m.start)
 }
 
 func (m Model) View() string {
@@ -262,6 +277,10 @@ func (m Model) leftPanels() []string {
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	if m.timeLeft() <= 0 {
+		return m, tea.Quit
+	}
+
 	logrus.Debugf("Received a message in root: %v", msg)
 	var cmds []tea.Cmd
 	stateChanged := false
