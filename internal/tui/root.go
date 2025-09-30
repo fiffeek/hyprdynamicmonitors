@@ -307,22 +307,22 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case ChangeMirrorPreviewCommand:
 		logrus.Debug("Received preview change for monitor mirror")
 		cmds = append(cmds, m.monitorEditor.SetMirror(
-			m.rootState.State.MonitorEditedListIndex, msg.mirrorOf))
+			m.rootState.State.MonitorEditedListIndex, msg.MirrorOf))
 	case ChangeMirrorCommand:
 		logrus.Debug("Received change for monitor mirror")
 		cmds = append(cmds, m.monitorEditor.SetMirror(
-			m.rootState.State.MonitorEditedListIndex, msg.mirrorOf))
+			m.rootState.State.MonitorEditedListIndex, msg.MirrorOf))
 		cmds = append(cmds, m.monitorsList.Update(msg))
 	case ChangeModePreviewCommand:
 		logrus.Debug("Received preview change for monitor mode")
 		cmds = append(cmds, m.monitorEditor.SetMode(
-			m.rootState.State.MonitorEditedListIndex, msg.mode))
+			m.rootState.State.MonitorEditedListIndex, msg.Mode))
 	case CloseMonitorModeListCommand, CloseMonitorMirrorListCommand:
 		cmds = append(cmds, m.monitorsList.Update(msg))
 	case ChangeModeCommand:
 		logrus.Debug("Received change for monitor mode")
 		cmds = append(cmds, m.monitorEditor.SetMode(
-			m.rootState.State.MonitorEditedListIndex, msg.mode))
+			m.rootState.State.MonitorEditedListIndex, msg.Mode))
 		cmds = append(cmds, m.monitorsList.Update(msg))
 	case CreateNewProfileCommand:
 		logrus.Debug("Received create new profile")

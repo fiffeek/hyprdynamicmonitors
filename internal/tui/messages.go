@@ -193,19 +193,19 @@ type ToggleMonitorCommand struct {
 }
 
 type ChangeModePreviewCommand struct {
-	mode string
+	Mode string
 }
 
 type ChangeMirrorPreviewCommand struct {
-	mirrorOf string
+	MirrorOf string
 }
 
 type ChangeMirrorCommand struct {
-	mirrorOf string
+	MirrorOf string
 }
 
 type ChangeModeCommand struct {
-	mode string
+	Mode string
 }
 
 type CreateNewProfileCommand struct {
@@ -256,13 +256,13 @@ func openEditor(file string) tea.Cmd {
 	})
 }
 
-func closeMonitorModeListCmd() tea.Cmd {
+func CloseMonitorModeListCmd() tea.Cmd {
 	return func() tea.Msg {
 		return CloseMonitorModeListCommand{}
 	}
 }
 
-func closeMonitorMirrorListCmd() tea.Cmd {
+func CloseMonitorMirrorListCmd() tea.Cmd {
 	return func() tea.Msg {
 		return CloseMonitorMirrorListCommand{}
 	}
@@ -305,34 +305,34 @@ func createNewProfileCmd(profile, file string) tea.Cmd {
 	}
 }
 
-func changeMirrorPreviewCmd(mirror string) tea.Cmd {
+func ChangeMirrorPreviewCmd(mirror string) tea.Cmd {
 	return func() tea.Msg {
 		return ChangeMirrorPreviewCommand{
-			mirrorOf: mirror,
+			MirrorOf: mirror,
 		}
 	}
 }
 
-func changeMirrorCmd(mirror string) tea.Cmd {
+func ChangeMirrorCmd(mirror string) tea.Cmd {
 	return func() tea.Msg {
 		return ChangeMirrorCommand{
-			mirrorOf: mirror,
+			MirrorOf: mirror,
 		}
 	}
 }
 
-func changeModeCmd(mode string) tea.Cmd {
+func ChangeModeCmd(mode string) tea.Cmd {
 	return func() tea.Msg {
 		return ChangeModeCommand{
-			mode: mode,
+			Mode: mode,
 		}
 	}
 }
 
-func changeModePreviewCmd(mode string) tea.Cmd {
+func ChangeModePreviewCmd(mode string) tea.Cmd {
 	return func() tea.Msg {
 		return ChangeModePreviewCommand{
-			mode: mode,
+			Mode: mode,
 		}
 	}
 }

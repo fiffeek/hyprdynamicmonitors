@@ -57,10 +57,10 @@ func (d MirrorDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd {
 		switch msg.String() {
 		case "up", "k", "down", "j":
 			logrus.Debugf("Setting mode to: %s", item.mirrorName)
-			cmds = append(cmds, changeMirrorPreviewCmd(item.mirrorName))
+			cmds = append(cmds, ChangeMirrorPreviewCmd(item.mirrorName))
 		case "enter":
 			logrus.Debugf("Setting final to: %s", item.mirrorName)
-			cmds = append(cmds, changeMirrorCmd(item.mirrorName))
+			cmds = append(cmds, ChangeMirrorCmd(item.mirrorName))
 		}
 	}
 	return tea.Batch(cmds...)
@@ -140,7 +140,7 @@ func (m *MirrorList) Update(msg tea.Msg) tea.Cmd {
 		switch msg.String() {
 		case "esc":
 			logrus.Debug("Close monitor mirror list")
-			return closeMonitorMirrorListCmd()
+			return CloseMonitorMirrorListCmd()
 		}
 	}
 	var cmd tea.Cmd

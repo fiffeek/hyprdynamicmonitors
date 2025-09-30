@@ -48,7 +48,7 @@ func (d ModeDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd {
 	cmds := []tea.Cmd{}
 	item, ok := m.SelectedItem().(ModeItem)
 	if !ok {
-		logrus.Warning("Monitor delegate called with an item that is not a MonitorItem")
+		logrus.Warning("Monitor delegate called with an item that is not a ModeItem")
 		return nil
 	}
 	// nolint:gocritic
@@ -57,10 +57,10 @@ func (d ModeDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd {
 		switch msg.String() {
 		case "up", "k", "down", "j":
 			logrus.Debugf("Setting mode to: %s", item.mode)
-			cmds = append(cmds, changeModePreviewCmd(item.mode))
+			cmds = append(cmds, ChangeModePreviewCmd(item.mode))
 		case "enter":
 			logrus.Debugf("Setting final to: %s", item.mode)
-			cmds = append(cmds, changeModeCmd(item.mode))
+			cmds = append(cmds, ChangeModeCmd(item.mode))
 		}
 	}
 	return tea.Batch(cmds...)
@@ -130,7 +130,7 @@ func (m *MonitorModeList) Update(msg tea.Msg) tea.Cmd {
 		// nolint:gocritic
 		switch msg.String() {
 		case "esc":
-			return closeMonitorModeListCmd()
+			return CloseMonitorModeListCmd()
 		}
 	}
 	var cmd tea.Cmd
