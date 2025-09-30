@@ -58,6 +58,7 @@ func (h *HDMProfilePreview) Update(msg tea.Msg) tea.Cmd {
 		h.textarea.SetValue("")
 	case PowerStateChanged:
 		logrus.Debug("Overriding the current power state")
+		h.pulled = false
 		h.powerState = msg.state
 		h.profile = nil
 		h.textarea.SetValue("")
@@ -105,4 +106,16 @@ func (h *HDMProfilePreview) View() string {
 	sections = append(sections, ta)
 
 	return lipgloss.JoinVertical(lipgloss.Top, sections...)
+}
+
+func (h *HDMProfilePreview) GetPowerState() power.PowerState {
+	return h.powerState
+}
+
+func (h *HDMProfilePreview) GetProfile() *config.Profile {
+	return h.profile
+}
+
+func (h *HDMProfilePreview) GetText() string {
+	return h.textarea.Value()
 }
