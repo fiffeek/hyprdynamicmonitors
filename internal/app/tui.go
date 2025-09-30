@@ -27,7 +27,7 @@ type TUI struct {
 }
 
 func NewTUI(ctx context.Context, configPath, mockedHyprMonitors string,
-	version string, enablePowerEvents, connectToSessionBus bool,
+	version string, disablePowerEvents, connectToSessionBus bool,
 ) (*TUI, error) {
 	cfg, err := config.NewConfig(configPath)
 	if err != nil {
@@ -67,7 +67,7 @@ func NewTUI(ctx context.Context, configPath, mockedHyprMonitors string,
 	if cfg != nil {
 		fw = filewatcher.NewService(cfg, utils.BoolPtr(false))
 	}
-	if cfg != nil && enablePowerEvents {
+	if cfg != nil && !disablePowerEvents {
 		var conn *dbus.Conn
 		if connectToSessionBus {
 			logrus.Debug("Trying to connect to session bus")
@@ -79,7 +79,7 @@ func NewTUI(ctx context.Context, configPath, mockedHyprMonitors string,
 		if err != nil {
 			return nil, fmt.Errorf("cant connect to dbus: %w", err)
 		}
-		pw, err = power.NewPowerDetector(ctx, cfg, conn, !enablePowerEvents)
+		pw, err = power.NewPowerDetector(ctx, cfg, conn, disablePowerEvents)
 		if err != nil {
 			return nil, fmt.Errorf("cant init power detector: %w", err)
 		}

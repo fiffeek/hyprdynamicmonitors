@@ -11,10 +11,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var (
-	mockedHyprMonitors string
-	enablePowerEvents  bool
-)
+var mockedHyprMonitors string
 
 var tuiCmd = &cobra.Command{
 	Use:   "tui",
@@ -35,7 +32,7 @@ var tuiCmd = &cobra.Command{
 		ctx, cancel := context.WithCancelCause(context.Background())
 		defer cancel(context.Canceled)
 
-		app, err := app.NewTUI(ctx, configPath, mockedHyprMonitors, Version, enablePowerEvents, connectToSessionBus)
+		app, err := app.NewTUI(ctx, configPath, mockedHyprMonitors, Version, disablePowerEvents, connectToSessionBus)
 		if err != nil {
 			return fmt.Errorf("cant init tui: %w", err)
 		}
@@ -55,16 +52,16 @@ func init() {
 	)
 
 	tuiCmd.Flags().BoolVar(
-		&enablePowerEvents,
-		"enable-power-events",
+		&disablePowerEvents,
+		"disable-power-events",
 		false,
-		"Enable power events (dbus), needs proper configuration",
+		"Disable power events (dbus)",
 	)
 
 	tuiCmd.Flags().BoolVar(
 		&connectToSessionBus,
 		"connect-to-session-bus",
 		false,
-		"Connect to session bus instead of system bus",
+		"Connect to session bus instead of system bus for power events: https://wiki.archlinux.org/title/D-Bus. You can switch as long as you expose power line events in your user session bus.",
 	)
 }
