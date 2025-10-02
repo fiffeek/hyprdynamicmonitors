@@ -251,7 +251,7 @@ func (h *HDMConfigPane) renderProfileDetails(profile *config.Profile) string {
 		}
 	}
 
-	return configPaneBorderStyle.Render(content.String())
+	return configPaneBorderStyle.Width(h.width).Render(content.String())
 }
 
 func (h *HDMConfigPane) renderRequiredMonitor(monitor *config.RequiredMonitor) string {

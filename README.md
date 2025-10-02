@@ -4,10 +4,14 @@
 
 An event-driven service that automatically manages Hyprland monitor configurations based on connected displays and power state.
 
+## Preview
+![demo](./preview/output/demo.gif)
+
 ## Documentation
 
 <!--ts-->
 * [HyprDynamicMonitors](#hyprdynamicmonitors)
+   * [Preview](#preview)
    * [Documentation](#documentation)
    * [Features](#features)
    * [Design Philosophy](#design-philosophy)
