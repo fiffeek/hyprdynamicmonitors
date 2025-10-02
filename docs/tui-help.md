@@ -4,9 +4,11 @@ The HyprDynamicMonitors TUI provides an interactive interface for managing Hyprl
 
 ## Preview
 
-[demo](../preview/output/demo.gif)
+![demo](../preview/output/demo.gif)
 
 ## Views
+
+![views](../preview/output/views.gif)
 
 The TUI has two main views that you can switch between using `Tab`:
 
@@ -22,6 +24,8 @@ The TUI has two main views that you can switch between using `Tab`:
 
 ## Monitors View
 
+![monitor_view](../preview/output/monitor_view.gif)
+
 The Monitors view shows connected monitors on the left and a visual preview on the right.
 
 ### Navigation
@@ -34,16 +38,22 @@ The Monitors view shows connected monitors on the left and a visual preview on t
 
 #### Panning Mode
 
+![panning](../preview/output/panning.gif)
+
 - `p` - Toggle panning mode (move freely around the monitor grid)
 - `h/j/k/l` or arrow keys - Pan the preview in panning mode
 - `c` - Center the view back to origin (0,0)
 
 #### Zoom
 
+![zoom](../preview/output/zoom.gif)
+
 - `+` - Zoom in on the preview
 - `-` - Zoom out on the preview
 
 #### Display Options
+
+![display_options](../preview/output/display_options.gif)
 
 - `F` - Toggle fullscreen preview mode
 - `o` - Toggle follow monitor mode (preview auto-centers on selected monitor)
@@ -51,9 +61,13 @@ The Monitors view shows connected monitors on the left and a visual preview on t
 
 ### Editing a Monitor
 
+![editing](../preview/output/editing.gif)
+
 Once you select a monitor with `Enter`, it enters **EDITING** mode. In this mode:
 
 #### Position
+
+![position](../preview/output/position.gif)
 
 - `h/j/k/l` or arrow keys - Move the monitor in 50px steps
   - With snapping enabled (default), monitors will snap to edges of other monitors within 50px
@@ -61,60 +75,62 @@ Once you select a monitor with `Enter`, it enters **EDITING** mode. In this mode
 
 #### Rotation
 
-<!-- GIF: rotating.gif -->
+![rotation](../preview/output/rotation.gif)
 
 - `r` - Rotate the monitor by 90 degrees (cycles through 0 -> 90 -> 180 -> 270 -> 0)
   - Cannot rotate disabled monitors
 
 #### Resolution and Refresh Rate
 
-<!-- GIF: mode_select.gif -->
+![resolution](../preview/output/resolution.gif)
 
 - `m` - Open mode selection menu
   - Shows all available modes for the selected monitor
   - `j/k` - Preview different modes (updates preview in real-time)
   - `Enter` - Apply the selected mode
-  - `Esc` - Close without applying changes
+  - `Esc` - Close (applying the last selection)
 
 #### Scaling
 
-<!-- GIF: scale.gif -->
+![scaling](../preview/output/scaling.gif)
 
 - `s` - Open scale selector
   - `k` - Increase scale by 0.1
   - `j` - Decrease scale by 0.1
   - `Enter` - Confirm scale change
-  - `Esc` - Close without applying
+  - `Esc` - Close (applying the last selection)
 
 #### Mirroring
 
-<!-- GIF: mirror.gif -->
+![mirroring](../preview/output/mirroring.gif)
 
 - `i` - Open mirror selection menu
   - Select which monitor this monitor should mirror
   - `j/k` - Navigate through available monitors to mirror
   - `Enter` - Apply mirror setting
-  - `Esc` - Close without applying
+  - `Esc` - Close (applying the last selection)
   - Mirror loops are prevented automatically
 
 #### Enable/Disable
 
-<!-- GIF: disable_monitor.gif -->
+![disable](../preview/output/disable.gif)
 
-- `e` - Toggle monitor enabled/disabled
+- `e` - Toggle monitor (e)nabled/disabled
   - Disabled monitors show as `disable` in the config preview
   - Cannot disable the last remaining monitor
   - Cannot edit settings of disabled monitors
 
 #### Variable Refresh Rate (VRR)
 
+![vrr](../preview/output/vrr.gif)
+
 - `v` - Toggle VRR on/off for the monitor
 
 ### Applying Changes
 
-<!-- GIF: apply_hypr.gif -->
+![apply_hupr](../preview/output/apply_hupr.gif)
 
-- `A` - Apply current monitor configuration to Hyprland (ephemeral)
+- `A` - Apply current monitor configuration to Hyprland (ephemeral, not persisted on disk)
   - Shows confirmation prompt
   - `Y` - Confirm and apply
   - `N` or `Esc` - Cancel
