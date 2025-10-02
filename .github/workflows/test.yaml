@@ -17,6 +17,14 @@ jobs:
         steps:
             - name: Checkout
               uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
+                  lfs: true
+
+            - name: Fetch and checkout LFS objects
+              run: |
+                  git lfs fetch --all
+                  git lfs checkout
 
             - name: Set up Go
               uses: actions/setup-go@v5
