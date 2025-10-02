@@ -12,10 +12,16 @@ jobs:
             - uses: actions/checkout@v5
               with:
                   fetch-depth: 0
+                  lfs: true
 
             - uses: actions/setup-go@v5
               with:
                   go-version-file: go.mod
+
+            - name: Fetch and checkout LFS objects
+              run: |
+                  git lfs fetch --all
+                  git lfs checkout
 
             - name: Create release
               uses: goreleaser/goreleaser-action@v6
