@@ -15,6 +15,9 @@ The TUI has two main views that you can switch between using `Tab`:
 1. **Monitors View** - Edit monitor layouts, positions, modes, and settings
 2. **Profile View** - Manage HyprDynamicMonitors profiles and configuration
 
+The profile view is available only when `--config` is a valid `hyprdynamicmonitors` configuration.
+Otherwise you still might play with the monitors and apply the settings, but not save them under `hyprdynamicmonitors`.
+
 ## Global Keybinds
 
 - `q` / `Ctrl+C` - Quit the TUI
@@ -179,6 +182,8 @@ The TUI shows different status messages:
 - **No Matching Profile** - No profile matches current monitor setup
 
 ### Configuration
+
+![hdm_c](../preview/output/hdm_c.gif)
 
 - `C` - Open the HyprDynamicMonitors config file in your default editor (defined by `$EDITOR`)
 
