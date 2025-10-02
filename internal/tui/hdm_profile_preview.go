@@ -3,6 +3,7 @@ package tui
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/charmbracelet/bubbles/textarea"
 	tea "github.com/charmbracelet/bubbletea"
@@ -14,26 +15,30 @@ import (
 )
 
 type HDMProfilePreview struct {
-	cfg        *config.Config
-	matcher    *matchers.Matcher
-	pulled     bool
-	profile    *config.Profile
-	monitors   []*MonitorSpec
-	textarea   textarea.Model
-	height     int
-	width      int
-	powerState power.PowerState
+	cfg              *config.Config
+	matcher          *matchers.Matcher
+	pulled           bool
+	profile          *config.Profile
+	monitors         []*MonitorSpec
+	textarea         textarea.Model
+	height           int
+	width            int
+	powerState       power.PowerState
+	runningUnderTest bool
 }
 
-func NewHDMProfilePreview(cfg *config.Config, matcher *matchers.Matcher, monitors []*MonitorSpec, powerState power.PowerState) *HDMProfilePreview {
+func NewHDMProfilePreview(cfg *config.Config,
+	matcher *matchers.Matcher, monitors []*MonitorSpec, powerState power.PowerState, runningUnderTest bool,
+) *HDMProfilePreview {
 	ta := textarea.New()
 	return &HDMProfilePreview{
-		cfg:        cfg,
-		powerState: powerState,
-		matcher:    matcher,
-		pulled:     false,
-		monitors:   monitors,
-		textarea:   ta,
+		cfg:              cfg,
+		powerState:       powerState,
+		matcher:          matcher,
+		pulled:           false,
+		monitors:         monitors,
+		textarea:         ta,
+		runningUnderTest: runningUnderTest,
 	}
 }
 
@@ -97,7 +102,15 @@ func (h *HDMProfilePreview) View() string {
 	availableHeight -= lipgloss.Height(title)
 	sections = append(sections, title)
 
-	subtitle := SubtitleInfoStyle.Margin(0, 0, 1, 0).Render(h.profile.ConfigFile)
+	// if running under test then just show the filename.
+	// Since all configs are generated in tmp with random prefix directories,
+	// it is easier to compare golden fixtures this way.
+	configFile := h.profile.ConfigFile
+	if h.runningUnderTest {
+		configFile = filepath.Base(configFile)
+	}
+
+	subtitle := SubtitleInfoStyle.Margin(0, 0, 1, 0).Render(configFile)
 	availableHeight -= lipgloss.Height(subtitle)
 	sections = append(sections, subtitle)
 

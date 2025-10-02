@@ -73,13 +73,15 @@ func (d MirrorDelegate) Render(w io.Writer, m list.Model, index int, item list.I
 	}
 
 	var style lipgloss.Style
+	var prefix string
 	switch {
 	case index == m.Index():
 		style = MonitorListSelected
+		prefix = "► "
 	default:
 		style = MonitorListTitle
 	}
-	title := style.Render(modeItem.View())
+	title := style.Render(prefix + modeItem.View())
 	content := title
 
 	fmt.Fprintf(w, "%s", content)

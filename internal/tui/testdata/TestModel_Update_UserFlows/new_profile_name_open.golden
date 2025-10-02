@@ -1,0 +1,46 @@
+ HyprDynamicMonitors [v. test-version]  Monitors  Profile                                                                                                       
+╭───────────────────────────────────────────────────╮╭────────────────────────────────────────────────────────────────────────────────────────────────────────╮ 
+│HyprDynamicMonitors Profile                        ││No profile config                                                                                       │ 
+│                                                   ││                                                                                                        │ 
+│No Matching Profile                                ││                                                                                                        │ 
+│                                                   ││                                                                                                        │ 
+│No configuration profile matches the current       ││                                                                                                        │ 
+│monitor setup.                                     ││                                                                                                        │ 
+│                                                   ││                                                                                                        │ 
+│Press 'n' to create a new profile                  ││                                                                                                        │ 
+│                                                   ││                                                                                                        │ 
+│                                                   ││                                                                                                        │ 
+│                                                   ││                                                                                                        │ 
+│                                                   ││                                                                                                        │ 
+│                                                   ││                                                                                                        │ 
+│                                                   ││                                                                                                        │ 
+│                                                   ││                                                                                                        │ 
+│                                                   ││                                                                                                        │ 
+│                                                   ││                                                                                                        │ 
+│                                                   ││                                                                                                        │ 
+│                                                   ││                                                                                                        │ 
+│                                                   ││                                                                                                        │ 
+│                                                   ││                                                                                                        │ 
+│                                                   ││                                                                                                        │ 
+│                                                   ││                                                                                                        │ 
+│                                                   ││                                                                                                        │ 
+│                                                   ││                                                                                                        │ 
+│                                                   ││                                                                                                        │ 
+│                                                   ││                                                                                                        │ 
+│  n new profile • a apply monitors to existing     ││                                                                                                        │ 
+│  profile • e edit manually                        ││                                                                                                        │ 
+╰───────────────────────────────────────────────────╯│                                                                                                        │ 
+╭───────────────────────────────────────────────────╮│                                                                                                        │ 
+│Type the profile name                              ││                                                                                                        │ 
+│                                                   ││                                                                                                        │ 
+│> hey                                              ││                                                                                                        │ 
+│                                                   ││                                                                                                        │ 
+│                                                   ││                                                                                                        │ 
+│                                                   ││                                                                                                        │ 
+│                                                   ││                                                                                                        │ 
+│                                                   ││                                                                                                        │ 
+│                                                   ││                                                                                                        │ 
+│enter create profile • esc return/back             │╰────────────────────────────────────────────────────────────────────────────────────────────────────────╯ 
+╰───────────────────────────────────────────────────╯                                                                                                           
+  tab switch view • C edit HyprDynamicMonitors config                                                                                                           
+                                                                                                                                                                

@@ -86,7 +86,7 @@ func NewTUI(ctx context.Context, configPath, mockedHyprMonitors string,
 		currentState = pw.GetCurrentState()
 	}
 
-	model := tui.NewModel(cfg, monitors, profileMaker, version, currentState, nil)
+	model := tui.NewModel(cfg, monitors, profileMaker, version, currentState, nil, false)
 	program := tea.NewProgram(
 		model,
 		tea.WithAltScreen(),

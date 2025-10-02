@@ -17,6 +17,7 @@ DEV_BINARIES_DIR := "./bin"
 GH_MD_TOC_BIN := "gh-md-toc"
 TEST_SELECTOR ?=
 PACKAGE_SELECTOR ?= "..."
+TUI_FLOWS ?= "TestModel_Update_UserFlows"
 
 .PHONY: install test fmt lint release/local
 
@@ -87,6 +88,12 @@ $(INSTALL_DIR)/.precommit.stamp: $(PRECOMMIT_FILE) $(INSTALL_DIR)/.venv.stamp
 	@. "$(VENV)/bin/activate"; pre-commit install && \
 		pre-commit install --hook-type commit-msg
 	@touch $@
+
+test/tui/flows/regenerate:
+	@$(GOLANG_BIN) test ./internal/tui -v -run $(TUI_FLOWS) -update
+
+test/tui/flows:
+	@$(GOLANG_BIN) test ./internal/tui -v -run $(TUI_FLOWS)
 
 test/unit:
 	@$(GOLANGCI_LINT_BIN) config verify

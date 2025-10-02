@@ -60,7 +60,7 @@ func TestHDMProfilePreview_Update(t *testing.T) {
 				{Name: "eDP-1"},
 			}
 
-			preview := tui.NewHDMProfilePreview(cfg, matcher, monitors, tt.initialPowerState)
+			preview := tui.NewHDMProfilePreview(cfg, matcher, monitors, tt.initialPowerState, true)
 			oldProfile := preview.GetProfile()
 
 			preview.Update(tt.msg)

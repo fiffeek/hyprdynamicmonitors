@@ -1,0 +1,143 @@
+[
+  {
+    "activeWorkspace": {
+      "id": 1,
+      "name": "1"
+    },
+    "activelyTearing": false,
+    "availableModes": [
+      "2880x1920@120.00Hz",
+      "2880x1920@60.00Hz",
+      "1920x1200@120.00Hz",
+      "1920x1080@120.00Hz",
+      "1600x1200@120.00Hz",
+      "1680x1050@120.00Hz",
+      "1280x1024@120.00Hz",
+      "1440x900@120.00Hz",
+      "1280x800@120.00Hz",
+      "1280x720@120.00Hz",
+      "1024x768@120.00Hz",
+      "800x600@120.00Hz",
+      "640x480@120.00Hz"
+    ],
+    "currentFormat": "XRGB8888",
+    "description": "BOE NE135A1M-NY1",
+    "directScanoutBlockedBy": [
+      "USER",
+      "CANDIDATE"
+    ],
+    "directScanoutTo": "0",
+    "disabled": false,
+    "dpmsStatus": true,
+    "focused": true,
+    "height": 1920,
+    "id": 0,
+    "make": "BOE",
+    "mirrorOf": "none",
+    "model": "NE135A1M-NY1",
+    "name": "eDP-1",
+    "physicalHeight": 190,
+    "physicalWidth": 290,
+    "refreshRate": 120.0,
+    "reserved": [
+      0,
+      14,
+      0,
+      0
+    ],
+    "scale": 2.0,
+    "serial": "BOE135A10001",
+    "solitary": "0",
+    "solitaryBlockedBy": [
+      "OPAQUE",
+      "SURFACES"
+    ],
+    "specialWorkspace": {
+      "id": 0,
+      "name": ""
+    },
+    "tearingBlockedBy": [
+      "NOT_TORN",
+      "USER",
+      "CANDIDATE"
+    ],
+    "transform": 0,
+    "vrr": true,
+    "width": 2880,
+    "x": 1920,
+    "y": 1080
+  },
+  {
+    "activeWorkspace": {
+      "id": 2,
+      "name": "2"
+    },
+    "activelyTearing": false,
+    "availableModes": [
+      "3840x2160@60.00Hz",
+      "3840x2160@59.94Hz",
+      "3840x2160@50.00Hz",
+      "3840x2160@30.00Hz",
+      "3840x2160@29.97Hz",
+      "3840x2160@25.00Hz",
+      "3840x2160@24.00Hz",
+      "3840x2160@23.98Hz",
+      "2560x1440@59.95Hz",
+      "1920x1080@60.00Hz",
+      "1920x1080@59.94Hz",
+      "1920x1080@50.00Hz",
+      "1680x1050@59.95Hz",
+      "1280x1024@75.02Hz",
+      "1280x800@59.81Hz",
+      "1024x768@75.00Hz",
+      "800x600@60.32Hz",
+      "640x480@59.94Hz"
+    ],
+    "currentFormat": "XRGB8888",
+    "description": "Dell Inc. DELL U2723QE 5YNK3H3",
+    "directScanoutBlockedBy": [
+      "USER",
+      "CANDIDATE"
+    ],
+    "directScanoutTo": "0",
+    "disabled": false,
+    "dpmsStatus": true,
+    "focused": false,
+    "height": 2160,
+    "id": 1,
+    "make": "Dell Inc.",
+    "mirrorOf": "none",
+    "model": "DELL U2723QE",
+    "name": "DP-1",
+    "physicalHeight": 336,
+    "physicalWidth": 597,
+    "refreshRate": 60.0,
+    "reserved": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "scale": 1.25,
+    "serial": "5YNK3H3",
+    "solitary": "0",
+    "solitaryBlockedBy": [
+      "WINDOWED",
+      "CANDIDATE"
+    ],
+    "specialWorkspace": {
+      "id": 0,
+      "name": ""
+    },
+    "tearingBlockedBy": [
+      "NOT_TORN",
+      "USER",
+      "CANDIDATE"
+    ],
+    "transform": 0,
+    "vrr": false,
+    "width": 3840,
+    "x": 0,
+    "y": 0
+  }
+]
