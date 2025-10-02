@@ -146,7 +146,7 @@ func (m Model) View() string {
 		rightPanels,
 	)
 
-	if m.rootState.State.Fullscreen {
+	if m.rootState.State.Fullscreen && m.rootState.CurrentView() == MonitorsListView {
 		m.monitorsPreviewPane.SetHeight(m.layout.AvailableHeight() + 2)
 		m.monitorsPreviewPane.SetWidth(m.layout.AvailableWidth())
 		previewPane := ActiveStyle.Width(m.layout.AvailableWidth()).Height(
