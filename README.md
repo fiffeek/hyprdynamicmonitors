@@ -76,6 +76,7 @@ An event-driven service that automatically manages Hyprland monitor configuratio
 ## Features
 
 - Event-driven architecture responding to monitor and power state changes in real-time
+- Interactive TUI for visual monitor configuration and profile management
 - Profile-based configuration with different settings for different monitor setups
 - Template support for dynamic configuration generation
 - Hot reloading: automatically detects and applies configuration changes without restart by watching config files (optional)
@@ -1039,14 +1040,15 @@ monitor={{$external.Name}},preferred,0x0,1
 Most similar tools are more generic, working with any Wayland compositor. In contrast, `hyprdynamicmonitors` is specifically designed for Hyprland (using its IPC) but provides several advantages:
 
 **Advantages of HyprDynamicMonitors:**
+- **Interactive TUI**: Built-in terminal interface for visual monitor configuration and profile management
 - **Full configuration control**: Instead of introducing another configuration format, you work directly with Hyprland's native config syntax
 - **Template system**: Dynamic configuration generation based on connected monitors and power state
 - **Power state awareness**: Built-in AC/battery detection for laptop users
+- **Event-driven automation**: Automatically responds to monitor connect/disconnect events
 
 **Trade-offs:**
 - Hyprland-specific (not generic Wayland)
 - Requires systemd or wrapper script for production use (fail-fast design)
-- More complex setup compared to simpler tools
 
 **Similar Tools:**
 - [kanshi](https://sr.ht/~emersion/kanshi/) - Generic Wayland output management
@@ -1054,6 +1056,6 @@ Most similar tools are more generic, working with any Wayland compositor. In con
 - [nwg-displays](https://github.com/nwg-piotr/nwg-displays) - GUI-based display configuration tool for Sway/Hyprland
 - [hyprmon](https://github.com/erans/hyprmon) - TUI-based display configuration tool for Hyprland
 
-`hyprdynamicmonitors` can be used side-by-side with `nwg-displays` or `hyprmon`:
-- Tweak the configuration in either tool
-- Let `hyprdynamicmonitors` automatically write/link it to your hyprland's configuration directory
+`hyprdynamicmonitors` can be used side-by-side with `nwg-displays`:
+- Tweak the configuration in `nwg-displays`
+- Let `hyprdynamicmonitors` automatically write/link it to your Hyprland configuration directory
