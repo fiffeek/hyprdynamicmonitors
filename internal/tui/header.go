@@ -88,33 +88,36 @@ func (h *Header) View() string {
 	var mode string
 	if h.mode != "" {
 		mode = HeaderIndicatorStyle.Render(h.mode)
-		availableSpace -= lipgloss.Width(mode)
+		availableSpace -= lipgloss.Width(mode) + 1
 	}
 
 	var statusError string
 	if h.err != "" {
 		statusError = ErrorStyle.Render(h.err)
-		availableSpace -= lipgloss.Width(statusError)
+		availableSpace -= lipgloss.Width(statusError) + 1
 	}
 
 	var statusSuccess string
 	if h.success != "" {
 		statusSuccess = SuccessStyle.Render(h.success)
-		availableSpace -= lipgloss.Width(statusSuccess)
+		availableSpace -= lipgloss.Width(statusSuccess) + 1
 	}
 
 	spacer := lipgloss.NewStyle().Width(availableSpace).Render("")
 	sections = append(sections, spacer)
 
 	if h.success != "" {
+		sections = append(sections, " ")
 		sections = append(sections, statusSuccess)
 	}
 
 	if h.err != "" {
+		sections = append(sections, " ")
 		sections = append(sections, statusError)
 	}
 
 	if h.mode != "" {
+		sections = append(sections, " ")
 		sections = append(sections, mode)
 	}
 

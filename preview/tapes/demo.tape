@@ -13,7 +13,7 @@ Sleep 500ms
 
 # preview scale
 Type "s"
-Sleep 500ms
+Sleep 1s
 Down 10
 Sleep 500ms
 Enter
@@ -53,7 +53,7 @@ Enter
 Type "m"
 Sleep 500ms
 Down
-Sleep 500ms
+Sleep 1s
 Enter
 Sleep 500ms
 
@@ -66,7 +66,7 @@ Sleep 500ms
 # mirror
 Sleep 500ms
 Type "i"
-Sleep 500ms
+Sleep 1s
 Down
 Sleep 500ms
 Enter
@@ -90,17 +90,42 @@ Sleep 500ms
 Left 10
 Sleep 500ms
 Down 10
+Sleep 500ms
 
 # mock apply
 Type "A"
-Sleep 500ms
+Sleep 1s
 Type "n"
 Sleep 500ms
 
 # tab to configs
+Sleep 1s
 Tab
+Sleep 1s
+Type "e"
 Sleep 500ms
+Type "o"
+Type "another line can be added, like: exec = notify-send 'hello'"
+Sleep 1s
+Escape
+Type ":wq"
+Enter
+Sleep 2s
 
+# create a new profile
+Type "n"
+Sleep 500ms
+Type "new_profile"
+Enter
+Sleep 2s
 
+# see config
+Type "C"
+Sleep 1s
+Type "G"
+Sleep 1s
+Type ":q"
+Enter
+Sleep 1s
 
 Sleep 1s

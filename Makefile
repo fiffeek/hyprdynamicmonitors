@@ -20,6 +20,7 @@ PACKAGE_SELECTOR ?= "..."
 TUI_FLOWS ?= "TestModel_Update_UserFlows"
 VHS_BIN ?= vhs
 DIST_DIR := $(abspath dist)
+RECORD_TARGET ?= demo
 
 export DIST_DIR
 export PATH := $(DIST_DIR):$(PATH)
@@ -140,4 +141,6 @@ help/generate: build/test
 
 # requires vhs to be installed, for now a manual action
 record/previews: build/test
-	@$(VHS_BIN) ./preview/tapes/demo.tape
+	@git checkout -- ./preview/tapes/configs/
+	@git clean -fd ./preview/tapes/configs/
+	@$(VHS_BIN) ./preview/tapes/$(RECORD_TARGET).tape

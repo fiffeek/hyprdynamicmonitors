@@ -1,4 +1,5 @@
 Require hdmtest
+Require nvim
 
 Set Shell "bash"
 Set FontFamily "Iosevka Nerd Font Propo"
