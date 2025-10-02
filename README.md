@@ -65,6 +65,11 @@ An event-driven service that automatically manages Hyprland monitor configuratio
       * [Development Commands](#development-commands)
       * [Development Workflow](#development-workflow)
       * [Release Candidates](#release-candidates)
+   * [FAQ](#faq)
+      * [How do I assign workspaces to specific monitors?](#how-do-i-assign-workspaces-to-specific-monitors)
+      * [How do I use the TUI to create or edit profiles?](#how-do-i-use-the-tui-to-create-or-edit-profiles)
+      * [Can I use the TUI without running the hyprdynamicmonitors daemon?](#can-i-use-the-tui-without-running-the-hyprdynamicmonitors-daemon)
+      * [Why are my comments becoming part of the configuration in templates?](#why-are-my-comments-becoming-part-of-the-configuration-in-templates)
    * [Alternative software](#alternative-software)
 <!--te-->
 
@@ -878,6 +883,156 @@ To install the RC version from AUR:
 ```bash
 yay -S hyprdynamicmonitors-rc-bin
 ```
+
+## FAQ
+
+### How do I assign workspaces to specific monitors?
+
+You can include workspace assignments directly in your profile configuration files. HyprDynamicMonitors generates or links Hyprland configuration files, so any valid Hyprland configuration syntax works.
+
+**Example with static configuration:**
+
+In your profile configuration file (e.g., `hyprconfigs/triple-monitor.conf`):
+```hyprconfig
+# Monitor configuration
+monitor=desc:BOE 0x0C6B,preferred,0x0,1
+monitor=desc:LG Electronics LG ULTRAWIDE 408NTVSDT319,preferred,1920x0,1
+monitor=desc:Dell Inc. DELL P2222H B2RY1H3,preferred,3840x0,1
+
+# Workspace assignments
+workspace=1,monitor:desc:BOE 0x0C6B,default:true
+workspace=2,monitor:desc:LG Electronics LG ULTRAWIDE 408NTVSDT319,default:true
+workspace=3,monitor:desc:Dell Inc. DELL P2222H B2RY1H3,default:true
+```
+
+**Example with templates:**
+
+In `hyprconfigs/dual-monitor.go.tmpl`:
+```go
+{{- $laptop := index .MonitorsByTag "laptop" -}}
+{{- $external := index .MonitorsByTag "external" -}}
+monitor={{$laptop.Name}},preferred,0x0,1
+monitor={{$external.Name}},preferred,1920x0,1
+
+workspace=1,monitor:{{$laptop.Name}},default:true
+workspace=2,monitor:{{$external.Name}},default:true
+workspace=3,monitor:{{$external.Name}}
+```
+
+You can also use the TUI (`hyprdynamicmonitors tui`) to create and edit profiles interactively.
+
+### How do I use the TUI to create or edit profiles?
+
+The TUI provides an interactive way to configure monitors and manage profiles. The workflow involves two main views:
+
+**Step 1: Configure monitors in the Monitors view**
+- Adjust your monitor settings (resolution, position, scale, etc.)
+- Apply the configuration with `a` to test it in Hyprland
+- Once satisfied with the layout, proceed to save it as a profile
+
+**Step 2: Switch to the HDM Profile view**
+- Press `Tab` to switch between Monitors view and HDM Profile view
+- Choose to either:
+  - **Edit existing profile**: Press `a` to apply the current monitor configuration to the selected profile
+  - **Create new profile**: Press `n` to create a new profile with the current monitor configuration
+
+**Understanding the generated configuration:**
+
+The TUI places generated configuration between comment markers in your profile config files:
+```hyprconfig
+# <<<<< TUI AUTO START
+monitor=eDP-1,2880x1920@120,0x0,1.5
+monitor=DP-1,3840x2160@60,2880x0,1
+# <<<<< TUI AUTO END
+```
+
+You can add additional settings outside these markers, and they will be preserved across TUI updates. This is useful for:
+- Overriding specific settings
+- Adding workspace assignments
+- Including additional Hyprland configuration
+
+**Manual editing:**
+
+From the HDM Profile view, you can manually edit files using your `$EDITOR`:
+- Edit the profile configuration file (the Hyprland config)
+- Edit the HDM configuration file (the TOML config)
+
+This allows you to fine-tune settings or add advanced configuration that the TUI doesn't directly support.
+
+For more details, see the [TUI documentation](./docs/tui-help.md).
+
+### Can I use the TUI without running the hyprdynamicmonitors daemon?
+
+Yes, the TUI can be used standalone without the daemon running. However, functionality is limited:
+
+**What works without the daemon:**
+- Experimenting with monitor configurations in the Monitors view
+- Applying configurations manually and ephemerally with `a` (changes are temporary until Hyprland restarts)
+- Testing different layouts and settings interactively
+
+**What requires a valid configuration:**
+- Saving profiles to HyprDynamicMonitors configuration (HDM Profile view features)
+- Persisting monitor configurations that automatically apply on monitor connect/disconnect
+- Power state-based profile switching
+
+**Typical standalone usage:**
+```bash
+# Use TUI to experiment with monitor layouts
+hyprdynamicmonitors tui
+
+# Configure monitors interactively, apply with 'a' to test
+# Changes are applied to Hyprland but not persisted
+```
+
+If you want to persist configurations created in the TUI, you need a valid HyprDynamicMonitors config file. You can start with a minimal config and build from there using the TUI's profile creation features.
+
+### Why are my comments becoming part of the configuration in templates?
+
+This is due to Go template whitespace trimming behavior. When you use `-}}`, it removes all whitespace (including newlines) after the template action.
+
+**Problem example:**
+```go
+# auto generated by hyprdynamicmonitors
+
+{{- $laptop := index .MonitorsByTag "LaptopMonitor" -}}
+{{- $external := index .MonitorsByTag "ExternalMonitor" -}}
+
+monitor={{$laptop.Name}}, disable
+# change to your preferred external monitor config
+monitor={{$external.Name}},preferred,0x0,1
+```
+
+The `-}}` after the variable definitions removes the newline, causing `monitor={{$laptop.Name}}, disable` to be pulled up into the comment above it, creating one long comment line.
+
+**Solution 1: Remove trailing dash from the last template action**
+```go
+# auto generated by hyprdynamicmonitors
+
+{{- $laptop := index .MonitorsByTag "LaptopMonitor" -}}
+{{- $external := index .MonitorsByTag "ExternalMonitor" }}
+
+monitor={{$laptop.Name}}, disable
+# change to your preferred external monitor config
+monitor={{$external.Name}},preferred,0x0,1
+```
+
+**Solution 2: Define all variables at the start, then add content**
+```go
+{{- $laptop := index .MonitorsByTag "LaptopMonitor" -}}
+{{- $external := index .MonitorsByTag "ExternalMonitor" -}}
+
+
+# auto generated by hyprdynamicmonitors
+# change to your preferred external monitor config
+monitor={{$laptop.Name}}, disable
+monitor={{$external.Name}},preferred,0x0,1
+```
+
+**Key points:**
+- `-}}` trims all whitespace **after** the action, including newlines
+- This can cause the next line to merge with whatever comes before the template action
+- Use `}}` (without trailing dash) on the last variable definition before your config
+- Or group all variable definitions at the top, separated from config with blank lines
 
 ## Alternative software
 
