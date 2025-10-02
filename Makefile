@@ -162,3 +162,4 @@ record/previews: build/test
 	$(MAKE) record/preview RECORD_TARGET=vrr
 	$(MAKE) record/preview RECORD_TARGET=apply
 	$(MAKE) record/preview RECORD_TARGET=create_profile
+	$(MAKE) record/preview RECORD_TARGET=edit_existing
