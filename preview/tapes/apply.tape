@@ -1,6 +1,7 @@
 Source ./preview/tapes/base.tape
-Output preview/output/apply_hupr.gif
+Output preview/output/apply.gif
 
+Sleep 1s
 Enter
 Sleep 500ms
 Type "e"
