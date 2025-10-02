@@ -18,7 +18,7 @@
           inherit version;
 
           src = ./.;
-          vendorHash = "sha256-irbpDD7hn2SWDQNtRE5TzkqklXyx03ie8dSF+6SR50A=";
+          vendorHash = "sha256-ldCP4+HsKeUAhlBOcHT3t5BP1AACNGAB8O0UFxtWa5I=";
 
           subPackages = [ "." ];
 

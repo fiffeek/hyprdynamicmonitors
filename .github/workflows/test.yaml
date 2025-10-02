@@ -57,7 +57,7 @@ jobs:
             - name: Format
               run: |
                   make fmt
-                  git diff --exit-code || (echo "Code is not formatted, run 'make fmt' locally" && exit 1)
+                  git diff --exit-code -- . ':(exclude)preview/output/*.gif' || (echo "Code is not formatted, run 'make fmt' locally" && exit 1)
 
             - name: Lint
               run: make lint

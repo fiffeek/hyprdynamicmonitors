@@ -8,3 +8,4 @@ dist/
 node_modules/
 bin/
 result
+debug.log

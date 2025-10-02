@@ -1,0 +1,45 @@
+ HyprDynamicMonitors [v. test-version]  Monitors  Profile                                                                                                       
+╭───────────────────────────────────────────────────╮╭────────────────────────────────────────────────────────────────────────────────────────────────────────╮ 
+│HyprDynamicMonitors Profile                        ││Profile Config Preview (template)                                                                       │ 
+│                                                   ││file                                                                                                    │ 
+│Profile: two                                       ││                                                                                                        │ 
+│                                                   ││┃   1                                                                                                   │ 
+│Profile Details                                    ││┃                                                                                                       │ 
+│Config File: file                                  ││┃                                                                                                       │ 
+│Config Type: template                              ││┃                                                                                                       │ 
+│Required Monitors:                                 ││┃                                                                                                       │ 
+│  • Desc: BOE NE135A1M-NY1                         ││┃                                                                                                       │ 
+│  • Desc: Dell Inc. DELL U2723QE...                ││┃                                                                                                       │ 
+│                                                   ││┃                                                                                                       │ 
+│New settings will be appended when saved           ││┃                                                                                                       │ 
+│                                                   ││┃                                                                                                       │ 
+│                                                   ││┃                                                                                                       │ 
+│                                                   ││┃                                                                                                       │ 
+│                                                   ││┃                                                                                                       │ 
+│                                                   ││┃                                                                                                       │ 
+│                                                   ││┃                                                                                                       │ 
+│                                                   ││┃                                                                                                       │ 
+│                                                   ││┃                                                                                                       │ 
+│                                                   ││┃                                                                                                       │ 
+│                                                   ││┃                                                                                                       │ 
+│                                                   ││┃                                                                                                       │ 
+│                                                   ││┃                                                                                                       │ 
+│                                                   ││┃                                                                                                       │ 
+│                                                   ││┃                                                                                                       │ 
+│                                                   ││┃                                                                                                       │ 
+│                                                   ││┃                                                                                                       │ 
+│                                                   ││┃                                                                                                       │ 
+│                                                   ││┃                                                                                                       │ 
+│                                                   ││┃                                                                                                       │ 
+│                                                   ││┃                                                                                                       │ 
+│                                                   ││                                                                                                        │ 
+│                                                   ││                                                                                                        │ 
+│                                                   ││                                                                                                        │ 
+│                                                   ││                                                                                                        │ 
+│                                                   ││                                                                                                        │ 
+│                                                   ││                                                                                                        │ 
+│  n new profile • a apply monitors to existing     ││                                                                                                        │ 
+│  profile • e edit manually                        ││                                                                                                        │ 
+╰───────────────────────────────────────────────────╯╰────────────────────────────────────────────────────────────────────────────────────────────────────────╯ 
+  tab switch view • C edit HyprDynamicMonitors config                                                                                                           
+                                                                                                                                                                

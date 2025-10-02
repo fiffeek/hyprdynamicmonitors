@@ -10,18 +10,20 @@ import (
 )
 
 type MonitorSpec struct {
-	Name        string  `json:"name"`
-	ID          *int    `json:"id"`
-	Description string  `json:"description"`
-	Disabled    bool    `json:"disabled"`
-	Width       int     `json:"width"`
-	Height      int     `json:"height"`
-	RefreshRate float64 `json:"refreshRate"`
-	Transform   int     `json:"transform"`
-	Vrr         bool    `json:"vrr"`
-	Scale       float64 `json:"scale"`
-	X           int     `json:"x"`
-	Y           int     `json:"y"`
+	Name           string   `json:"name"`
+	ID             *int     `json:"id"`
+	Description    string   `json:"description"`
+	Disabled       bool     `json:"disabled"`
+	Width          int      `json:"width"`
+	Height         int      `json:"height"`
+	RefreshRate    float64  `json:"refreshRate"`
+	Transform      int      `json:"transform"`
+	Vrr            bool     `json:"vrr"`
+	Scale          float64  `json:"scale"`
+	X              int      `json:"x"`
+	Y              int      `json:"y"`
+	AvailableModes []string `json:"availableModes"`
+	Mirror         string   `json:"mirrorOf"`
 }
 
 func (m *MonitorSpec) Validate() error {

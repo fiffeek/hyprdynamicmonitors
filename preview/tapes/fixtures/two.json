@@ -1,0 +1,122 @@
+[
+  {
+    "activeWorkspace": {
+      "id": 5,
+      "name": "5"
+    },
+    "activelyTearing": false,
+    "availableModes": [
+      "2880x1920@120.00Hz",
+      "2880x1920@60.00Hz",
+      "1920x1200@120.00Hz",
+      "1920x1080@120.00Hz",
+      "1600x1200@120.00Hz",
+      "1680x1050@120.00Hz",
+      "1280x1024@120.00Hz",
+      "1440x900@120.00Hz",
+      "1280x800@120.00Hz",
+      "1280x720@120.00Hz",
+      "1024x768@120.00Hz",
+      "800x600@120.00Hz",
+      "640x480@120.00Hz"
+    ],
+    "currentFormat": "XRGB8888",
+    "description": "BOE NE135A1M-NY1",
+    "directScanoutTo": "0",
+    "disabled": false,
+    "dpmsStatus": true,
+    "focused": false,
+    "height": 1920,
+    "id": 0,
+    "make": "BOE",
+    "mirrorOf": "none",
+    "model": "NE135A1M-NY1",
+    "name": "eDP-1",
+    "refreshRate": 120.0,
+    "reserved": [
+      0,
+      14,
+      0,
+      0
+    ],
+    "scale": 2.0,
+    "serial": "",
+    "solitary": "0",
+    "specialWorkspace": {
+      "id": 0,
+      "name": ""
+    },
+    "transform": 0,
+    "vrr": true,
+    "width": 2880,
+    "x": 0,
+    "y": 0
+  },
+  {
+    "activeWorkspace": {
+      "id": 3,
+      "name": "3"
+    },
+    "activelyTearing": false,
+    "availableModes": [
+      "2560x2880@59.97Hz",
+      "3840x2160@60.00Hz",
+      "3840x2160@59.94Hz",
+      "3840x2160@50.00Hz",
+      "3840x2160@30.00Hz",
+      "3840x2160@29.97Hz",
+      "3840x2160@25.00Hz",
+      "3840x2160@24.00Hz",
+      "3840x2160@23.98Hz",
+      "2560x2880@29.99Hz",
+      "1920x1080@60.00Hz",
+      "1920x1080@60.00Hz",
+      "1920x1080@59.94Hz",
+      "1920x1080@50.00Hz",
+      "1920x1080@30.00Hz",
+      "1920x1080@29.97Hz",
+      "1280x720@60.00Hz",
+      "1280x720@59.94Hz",
+      "1280x720@50.00Hz",
+      "1024x768@60.00Hz",
+      "800x600@60.32Hz",
+      "720x576@50.00Hz",
+      "720x480@60.00Hz",
+      "720x480@59.94Hz",
+      "640x480@60.00Hz",
+      "640x480@59.94Hz",
+      "640x480@59.94Hz"
+    ],
+    "currentFormat": "XRGB8888",
+    "description": "LG Electronics LG SDQHD 301NTBKDU037",
+    "directScanoutTo": "0",
+    "disabled": false,
+    "dpmsStatus": true,
+    "focused": true,
+    "height": 2880,
+    "id": 1,
+    "make": "LG Electronics",
+    "mirrorOf": "none",
+    "model": "LG SDQHD",
+    "name": "DP-11",
+    "refreshRate": 59.967,
+    "reserved": [
+      0,
+      14,
+      0,
+      0
+    ],
+    "scale": 1.6,
+    "serial": "301NTBKDU037",
+    "solitary": "0",
+    "specialWorkspace": {
+      "id": 0,
+      "name": ""
+    },
+    "transform": 3,
+    "vrr": false,
+    "width": 2560,
+    "x": -1800,
+    "y": 0
+  }
+]

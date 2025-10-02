@@ -1,2 +1,2 @@
 [files]
-extend-exclude = [".goreleaser.yaml", ".goreleaser.rc.yaml"]
+extend-exclude = [".goreleaser.yaml", ".goreleaser.rc.yaml", "internal/tui/testdata/", "internal/tui/testdata/**/*"]

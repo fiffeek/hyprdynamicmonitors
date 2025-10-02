@@ -4,7 +4,9 @@ repos:
       rev: v4.3.0
       hooks:
           - id: trailing-whitespace
+            exclude: ^internal/tui/testdata/
           - id: end-of-file-fixer
+            exclude: ^internal/tui/testdata/
           - id: check-yaml
           - id: check-added-large-files
           - id: pretty-format-json
@@ -52,3 +54,4 @@ repos:
             entry: make help/generate
             language: system
             files: ^cmd.*
+            pass_filenames: false

@@ -17,8 +17,15 @@ DEV_BINARIES_DIR := "./bin"
 GH_MD_TOC_BIN := "gh-md-toc"
 TEST_SELECTOR ?=
 PACKAGE_SELECTOR ?= "..."
+TUI_FLOWS ?= "TestModel_Update_UserFlows"
+VHS_BIN ?= vhs
+DIST_DIR := $(abspath dist)
+RECORD_TARGET ?= demo
 
-.PHONY: install test fmt lint release/local
+export DIST_DIR
+export PATH := $(DIST_DIR):$(PATH)
+
+.PHONY: install test fmt lint release/local record/previews
 
 release/local: \
 	$(INSTALL_DIR)/.dir.stamp \
@@ -88,6 +95,12 @@ $(INSTALL_DIR)/.precommit.stamp: $(PRECOMMIT_FILE) $(INSTALL_DIR)/.venv.stamp
 		pre-commit install --hook-type commit-msg
 	@touch $@
 
+test/tui/flows/regenerate:
+	@$(GOLANG_BIN) test ./internal/tui -v -run $(TUI_FLOWS) -update
+
+test/tui/flows:
+	@$(GOLANG_BIN) test ./internal/tui -v -run $(TUI_FLOWS)
+
 test/unit:
 	@$(GOLANGCI_LINT_BIN) config verify
 	@$(GORELEASER_BIN) check
@@ -125,3 +138,28 @@ help/generate: build/test
 	@scripts/autohelp.sh $(TEST_EXECUTABLE_NAME) run
 	@scripts/autohelp.sh $(TEST_EXECUTABLE_NAME) validate
 	@scripts/autohelp.sh $(TEST_EXECUTABLE_NAME) freeze
+	@scripts/autohelp.sh $(TEST_EXECUTABLE_NAME) tui
+
+# requires vhs to be installed, for now a manual action
+record/preview: build/test
+	@git checkout -- ./preview/tapes/configs/
+	@git clean -fd ./preview/tapes/configs/
+	@$(VHS_BIN) ./preview/tapes/$(RECORD_TARGET).tape
+
+record/previews: build/test
+	$(MAKE) record/preview RECORD_TARGET=views
+	$(MAKE) record/preview RECORD_TARGET=monitor_view
+	$(MAKE) record/preview RECORD_TARGET=panning
+	$(MAKE) record/preview RECORD_TARGET=zoom
+	$(MAKE) record/preview RECORD_TARGET=display_options
+	$(MAKE) record/preview RECORD_TARGET=editing
+	$(MAKE) record/preview RECORD_TARGET=position
+	$(MAKE) record/preview RECORD_TARGET=rotation
+	$(MAKE) record/preview RECORD_TARGET=resolution
+	$(MAKE) record/preview RECORD_TARGET=scaling
+	$(MAKE) record/preview RECORD_TARGET=mirroring
+	$(MAKE) record/preview RECORD_TARGET=disable
+	$(MAKE) record/preview RECORD_TARGET=vrr
+	$(MAKE) record/preview RECORD_TARGET=apply
+	$(MAKE) record/preview RECORD_TARGET=create_profile
+	$(MAKE) record/preview RECORD_TARGET=edit_existing

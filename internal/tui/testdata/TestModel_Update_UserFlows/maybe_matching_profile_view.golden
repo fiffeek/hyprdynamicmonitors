@@ -1,0 +1,45 @@
+ HyprDynamicMonitors [v. test-version]  Monitors  Profile                                                                                                       
+╭───────────────────────────────────────────────────╮╭────────────────────────────────────────────────────────────────────────────────────────────────────────╮ 
+│HyprDynamicMonitors Profile                        ││Profile Config Preview (template)                                                                       │ 
+│                                                   ││file                                                                                                    │ 
+│Profile: one                                       ││                                                                                                        │ 
+│                                                   ││┃   1                                                                                                   │ 
+│⚠ Monitor Count Mismatch                           ││┃                                                                                                       │ 
+│Expected: 1 monitors, Connected: 2                 ││┃                                                                                                       │ 
+│Consider creating a new profile (press 'n')        ││┃                                                                                                       │ 
+│                                                   ││┃                                                                                                       │ 
+│Profile Details                                    ││┃                                                                                                       │ 
+│Config File: file                                  ││┃                                                                                                       │ 
+│Config Type: template                              ││┃                                                                                                       │ 
+│Required Monitors:                                 ││┃                                                                                                       │ 
+│  • Desc: BOE NE135A1M-NY1                         ││┃                                                                                                       │ 
+│                                                   ││┃                                                                                                       │ 
+│                                                   ││┃                                                                                                       │ 
+│                                                   ││┃                                                                                                       │ 
+│                                                   ││┃                                                                                                       │ 
+│                                                   ││┃                                                                                                       │ 
+│                                                   ││┃                                                                                                       │ 
+│                                                   ││┃                                                                                                       │ 
+│                                                   ││┃                                                                                                       │ 
+│                                                   ││┃                                                                                                       │ 
+│                                                   ││┃                                                                                                       │ 
+│                                                   ││┃                                                                                                       │ 
+│                                                   ││┃                                                                                                       │ 
+│                                                   ││┃                                                                                                       │ 
+│                                                   ││┃                                                                                                       │ 
+│                                                   ││┃                                                                                                       │ 
+│                                                   ││┃                                                                                                       │ 
+│                                                   ││┃                                                                                                       │ 
+│                                                   ││┃                                                                                                       │ 
+│                                                   ││┃                                                                                                       │ 
+│                                                   ││                                                                                                        │ 
+│                                                   ││                                                                                                        │ 
+│                                                   ││                                                                                                        │ 
+│                                                   ││                                                                                                        │ 
+│                                                   ││                                                                                                        │ 
+│                                                   ││                                                                                                        │ 
+│  n new profile • a apply monitors to existing     ││                                                                                                        │ 
+│  profile • e edit manually                        ││                                                                                                        │ 
+╰───────────────────────────────────────────────────╯╰────────────────────────────────────────────────────────────────────────────────────────────────────────╯ 
+  tab switch view • C edit HyprDynamicMonitors config                                                                                                           
+                                                                                                                                                                
