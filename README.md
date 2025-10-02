@@ -308,7 +308,7 @@ Global Flags:
 TUI has the same flags as `run`. It can be used without the running daemon for ad-hoc changes.
 When the config is not passed or invalid you will be unable to persist the configuration in `hyprdynamicmonitors` config.
 You can however experiment with the monitors and apply the `hypr configuration`.
-Refer to [the TUI docs](./docs/tui.md) for more details.
+Refer to [the TUI docs](./docs/tui-help.md) for more details.
 
 
 ## Minimal Example
@@ -681,7 +681,7 @@ When disabled, you can still use `SIGHUP` signal for manual reloading.
 ### TUI
 
 A tui is available for ad-hoc changes as well as persisting the configuration under `hyprdynamicmonitors`.
-Refer to the [tui docs](./docs/tui.md) for more details.
+Refer to the [tui docs](./docs/tui-help.md) for more details.
 
 ## Tests
 
