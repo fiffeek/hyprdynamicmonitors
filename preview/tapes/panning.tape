@@ -1,6 +1,7 @@
 Source ./preview/tapes/base.tape
 Output preview/output/panning.gif
 
+Sleep 1s
 Sleep 500ms
 Type "p"
 Sleep 500ms

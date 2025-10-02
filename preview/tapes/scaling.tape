@@ -1,6 +1,7 @@
 Source ./preview/tapes/base.tape
 Output preview/output/scaling.gif
 
+Sleep 1s
 Enter
 Sleep 500ms
 Type "s"

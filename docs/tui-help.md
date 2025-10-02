@@ -128,7 +128,7 @@ Once you select a monitor with `Enter`, it enters **EDITING** mode. In this mode
 
 ### Applying Changes
 
-![apply_hupr](../preview/output/apply_hupr.gif)
+![apply](../preview/output/apply.gif)
 
 - `A` - Apply current monitor configuration to Hyprland (ephemeral, not persisted on disk)
   - Shows confirmation prompt
@@ -145,7 +145,7 @@ The Profile view shows your HyprDynamicMonitors configuration and lets you save 
 
 #### Creating a New Profile
 
-<!-- GIF: new_profile.gif -->
+![create_profile](../preview/output/create_profile.gif)
 
 - `n` - Create new profile from current monitor layout
   - Opens profile name input
@@ -159,7 +159,7 @@ The profile will include:
 
 #### Editing an Existing Profile
 
-<!-- GIF: edit_profile.gif -->
+![edit_existing](../preview/output/edit_existing.gif)
 
 When the current monitors match an existing profile:
 
@@ -168,6 +168,7 @@ When the current monitors match an existing profile:
   - `Y` - Confirm and update the profile
   - `N` or `Esc` - Cancel
   - After confirmation, the config is reloaded automatically
+- `e` - Edit the config file in your `$EDITOR`
 
 ### Profile Status Indicators
 
@@ -224,3 +225,4 @@ The TUI shows different status messages:
 ### Status Messages
 
 Success messages appear in the header and automatically clear after 2 seconds.
+Errors linger forever (until cleared by any other success).

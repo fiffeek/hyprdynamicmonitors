@@ -1,6 +1,7 @@
 Source ./preview/tapes/base.tape
 Output preview/output/display_options.gif
 
+Sleep 1s
 Type "o"
 Enter
 Sleep 500ms

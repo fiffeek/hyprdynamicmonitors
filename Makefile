@@ -141,7 +141,24 @@ help/generate: build/test
 	@scripts/autohelp.sh $(TEST_EXECUTABLE_NAME) tui
 
 # requires vhs to be installed, for now a manual action
-record/previews: build/test
+record/preview: build/test
 	@git checkout -- ./preview/tapes/configs/
 	@git clean -fd ./preview/tapes/configs/
 	@$(VHS_BIN) ./preview/tapes/$(RECORD_TARGET).tape
+
+record/previews: build/test
+	$(MAKE) record/preview RECORD_TARGET=views
+	$(MAKE) record/preview RECORD_TARGET=monitor_view
+	$(MAKE) record/preview RECORD_TARGET=panning
+	$(MAKE) record/preview RECORD_TARGET=zoom
+	$(MAKE) record/preview RECORD_TARGET=display_options
+	$(MAKE) record/preview RECORD_TARGET=editing
+	$(MAKE) record/preview RECORD_TARGET=position
+	$(MAKE) record/preview RECORD_TARGET=rotation
+	$(MAKE) record/preview RECORD_TARGET=resolution
+	$(MAKE) record/preview RECORD_TARGET=scaling
+	$(MAKE) record/preview RECORD_TARGET=mirroring
+	$(MAKE) record/preview RECORD_TARGET=disable
+	$(MAKE) record/preview RECORD_TARGET=vrr
+	$(MAKE) record/preview RECORD_TARGET=apply
+	$(MAKE) record/preview RECORD_TARGET=create_profile
