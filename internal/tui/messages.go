@@ -4,6 +4,7 @@ import (
 	"os"
 	"os/exec"
 	"slices"
+	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/power"
@@ -61,6 +62,14 @@ func profileNameToogled() tea.Cmd {
 	return func() tea.Msg {
 		return ProfileNameToggled{}
 	}
+}
+
+type clearStatusMsg struct{}
+
+func clearStatusAfter(d time.Duration) tea.Cmd {
+	return tea.Tick(d, func(t time.Time) tea.Msg {
+		return clearStatusMsg{}
+	})
 }
 
 type OperationName int
@@ -145,6 +154,8 @@ func OperationStatusCmd(name OperationName, err error) tea.Cmd {
 		OperationNameCreateProfile,
 		OperationNameEphemeralApply,
 		OperationNameHDMConfigReloadRequested,
+		OperationNameToggleMonitor,
+		OperationNameToggleVRR,
 	}
 	showSuccessToUser := slices.Contains(criticalOperations, name)
 	return func() tea.Msg {

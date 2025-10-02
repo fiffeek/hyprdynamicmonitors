@@ -97,11 +97,11 @@ func (s *ScaleSelector) View() string {
 	availableSpace := s.height
 	logrus.Debugf("availableSpace for ScaleSelector: %d", availableSpace)
 
-	title := TitleStyle.Render("Adjust scale")
+	title := TitleStyle.Width(s.width).Render("Adjust scale")
 	sections = append(sections, title)
 	availableSpace -= lipgloss.Height(title)
 
-	subtitle := SubtitleInfoStyle.Margin(0, 0, 1, 0).Render(
+	subtitle := SubtitleInfoStyle.Margin(0, 0, 1, 0).Width(s.width).Render(
 		fmt.Sprintf("Tip: Hold for acceleration, single tick is %.2f", s.step))
 	sections = append(sections, subtitle)
 	availableSpace -= lipgloss.Height(subtitle)

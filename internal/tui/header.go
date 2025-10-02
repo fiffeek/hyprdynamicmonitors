@@ -2,6 +2,7 @@ package tui
 
 import (
 	"fmt"
+	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -18,6 +19,8 @@ type Header struct {
 	availableViews []ViewMode
 	currentView    ViewMode
 	version        string
+	lastUpdate     time.Time
+	clearAfter     time.Duration
 }
 
 func NewHeader(title string, availableViews []ViewMode, version string) *Header {
@@ -29,12 +32,20 @@ func NewHeader(title string, availableViews []ViewMode, version string) *Header 
 		success:        "",
 		availableViews: availableViews,
 		version:        version,
+		lastUpdate:     time.Now(),
+		clearAfter:     2 * time.Second,
 	}
 }
 
 func (h *Header) Update(msg tea.Msg) tea.Cmd {
+	cmds := []tea.Cmd{}
 	logrus.Debugf("Header received message: %v", msg)
+
 	switch msg := msg.(type) {
+	case clearStatusMsg:
+		if time.Since(h.lastUpdate) >= h.clearAfter {
+			h.success = ""
+		}
 	case StateChanged:
 		h.mode = msg.State.String()
 	case ViewChanged:
@@ -47,12 +58,14 @@ func (h *Header) Update(msg tea.Msg) tea.Cmd {
 			h.err = ""
 			if msg.showSuccessToUser {
 				h.success = msg.String()
+				h.lastUpdate = time.Now()
+				cmds = append(cmds, clearStatusAfter(h.clearAfter))
 			} else {
 				h.success = ""
 			}
 		}
 	}
-	return nil
+	return tea.Batch(cmds...)
 }
 
 func (h *Header) View() string {

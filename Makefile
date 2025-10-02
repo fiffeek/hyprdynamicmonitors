@@ -18,8 +18,13 @@ GH_MD_TOC_BIN := "gh-md-toc"
 TEST_SELECTOR ?=
 PACKAGE_SELECTOR ?= "..."
 TUI_FLOWS ?= "TestModel_Update_UserFlows"
+VHS_BIN ?= vhs
+DIST_DIR := $(abspath dist)
 
-.PHONY: install test fmt lint release/local
+export DIST_DIR
+export PATH := $(DIST_DIR):$(PATH)
+
+.PHONY: install test fmt lint release/local record/previews
 
 release/local: \
 	$(INSTALL_DIR)/.dir.stamp \
@@ -132,3 +137,7 @@ help/generate: build/test
 	@scripts/autohelp.sh $(TEST_EXECUTABLE_NAME) run
 	@scripts/autohelp.sh $(TEST_EXECUTABLE_NAME) validate
 	@scripts/autohelp.sh $(TEST_EXECUTABLE_NAME) freeze
+
+# requires vhs to be installed, for now a manual action
+record/previews: build/test
+	@$(VHS_BIN) ./preview/tapes/demo.tape
