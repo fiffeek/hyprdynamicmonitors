@@ -57,11 +57,16 @@ uninstall:
 
 dev: \
 	$(INSTALL_DIR)/.dir.stamp \
+	$(INSTALL_DIR)/.git.stamp \
 	$(INSTALL_DIR)/.asdf.stamp \
 	$(INSTALL_DIR)/.venv.stamp \
 	$(INSTALL_DIR)/.npm.stamp \
 	$(INSTALL_DIR)/.precommit.stamp \
 	$(INSTALL_DIR)/.toc.stamp
+
+$(INSTALL_DIR)/.git.stamp: $(INSTALL_DIR)/.dir.stamp
+	@git lfs install
+	@touch $@
 
 $(INSTALL_DIR)/.toc.stamp: $(INSTALL_DIR)/.dir.stamp
 	@mkdir -p $(DEV_BINARIES_DIR)
