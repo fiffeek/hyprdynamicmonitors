@@ -138,6 +138,7 @@ help/generate: build/test
 	@scripts/autohelp.sh $(TEST_EXECUTABLE_NAME) run
 	@scripts/autohelp.sh $(TEST_EXECUTABLE_NAME) validate
 	@scripts/autohelp.sh $(TEST_EXECUTABLE_NAME) freeze
+	@scripts/autohelp.sh $(TEST_EXECUTABLE_NAME) tui
 
 # requires vhs to be installed, for now a manual action
 record/previews: build/test

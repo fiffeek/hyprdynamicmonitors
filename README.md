@@ -28,6 +28,7 @@ An event-driven service that automatically manages Hyprland monitor configuratio
       * [Run command](#run-command)
       * [Validate command](#validate-command)
       * [Freeze command](#freeze-command)
+      * [TUI command](#tui-command)
    * [Minimal Example](#minimal-example)
    * [Examples](#examples)
    * [Runtime requirements](#runtime-requirements)
@@ -50,6 +51,7 @@ An event-driven service that automatically manages Hyprland monitor configuratio
          * [Leave Empty Token](#leave-empty-token)
       * [Signals](#signals)
       * [Hot Reloading](#hot-reloading)
+      * [TUI](#tui)
    * [Tests](#tests)
       * [Live Testing](#live-testing)
       * [Integration Testing](#integration-testing)
@@ -280,6 +282,33 @@ Global Flags:
       --verbose                   Enable verbose logging
 ```
 <!-- END freezehelp -->
+
+### TUI command
+<!-- START tuihelp -->
+```text
+Launch an interactive terminal-based TUI for managing monitor configurations.
+
+Usage:
+  hyprdynamicmonitors tui [flags]
+
+Flags:
+      --connect-to-session-bus          Connect to session bus instead of system bus for power events: https://wiki.archlinux.org/title/D-Bus. You can switch as long as you expose power line events in your user session bus.
+      --disable-power-events            Disable power events (dbus)
+  -h, --help                            help for tui
+      --hypr-monitors-override string   When used it fill parse the given file as hyprland monitors spec, used for testing.
+
+Global Flags:
+      --config string             Path to configuration file (default "$HOME/.config/hyprdynamicmonitors/config.toml")
+      --debug                     Enable debug logging
+      --enable-json-logs-format   Enable structured logging
+      --verbose                   Enable verbose logging
+```
+<!-- END tuihelp -->
+
+TUI has the same flags as `run`. It can be used without the running daemon for ad-hoc changes.
+When the config is not passed or invalid you will be unable to persist the configuration in `hyprdynamicmonitors` config.
+You can however experiment with the monitors and apply the `hypr configuration`.
+Refer to [the TUI docs](./docs/tui.md) for more details.
 
 
 ## Minimal Example
@@ -648,6 +677,11 @@ hyprdynamicmonitors --disable-auto-hot-reload
 ```
 
 When disabled, you can still use `SIGHUP` signal for manual reloading.
+
+### TUI
+
+A tui is available for ad-hoc changes as well as persisting the configuration under `hyprdynamicmonitors`.
+Refer to the [tui docs](./docs/tui.md) for more details.
 
 ## Tests
 
