@@ -1,0 +1,23 @@
+[
+  {
+    "description": "Monitor A",
+    "disabled": false,
+    "id": 0,
+    "mirrorOf": "none",
+    "name": "MonitorA"
+  },
+  {
+    "description": "Monitor B",
+    "disabled": false,
+    "id": 1,
+    "mirrorOf": "none",
+    "name": "MonitorB"
+  },
+  {
+    "description": "Monitor C",
+    "disabled": false,
+    "id": 2,
+    "mirrorOf": "none",
+    "name": "MonitorC"
+  }
+]

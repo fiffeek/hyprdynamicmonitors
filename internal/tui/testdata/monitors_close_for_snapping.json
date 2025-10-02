@@ -1,0 +1,38 @@
+[
+  {
+    "availableModes": [
+      "1920x1080@60"
+    ],
+    "description": "Primary Monitor",
+    "disabled": false,
+    "height": 1080,
+    "id": 0,
+    "mirrorOf": "none",
+    "name": "MonitorA",
+    "refreshRate": 60.0,
+    "scale": 1.0,
+    "transform": 0,
+    "vrr": false,
+    "width": 1920,
+    "x": 0,
+    "y": 0
+  },
+  {
+    "availableModes": [
+      "1920x1080@60"
+    ],
+    "description": "Close Monitor",
+    "disabled": false,
+    "height": 1080,
+    "id": 1,
+    "mirrorOf": "none",
+    "name": "MonitorB",
+    "refreshRate": 60.0,
+    "scale": 1.0,
+    "transform": 0,
+    "vrr": false,
+    "width": 1920,
+    "x": 1950,
+    "y": 0
+  }
+]

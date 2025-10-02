@@ -6,10 +6,10 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
-	"html/template"
 	"os"
 	"path/filepath"
 	"strings"
+	"text/template"
 
 	"github.com/BurntSushi/toml"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/config"
@@ -20,6 +20,9 @@ import (
 
 //go:embed templates/monitors.go.tmpl
 var monitorsTemplate string
+
+//go:embed templates/tui.go.tmpl
+var tuiTemplate string
 
 type Service struct {
 	cfg *config.Config
@@ -34,9 +37,12 @@ func NewService(cfg *config.Config, ipc *hypr.IPC) *Service {
 }
 
 func (s *Service) FreezeCurrentAs(profileName, profileFileLocation string) error {
-	cfg := s.cfg.Get()
 	currentMonitors := s.ipc.GetConnectedMonitors()
+	return s.FreezeGivenAs(profileName, profileFileLocation, currentMonitors)
+}
 
+func (s *Service) FreezeGivenAs(profileName, profileFileLocation string, currentMonitors []*hypr.MonitorSpec) error {
+	cfg := s.cfg.Get()
 	profile, err := s.prepare(profileName, profileFileLocation, currentMonitors)
 	if err != nil {
 		return fmt.Errorf("cant create a new profile: %w", err)
@@ -68,6 +74,116 @@ func (s *Service) FreezeCurrentAs(profileName, profileFileLocation string) error
 	}
 
 	return nil
+}
+
+func (s *Service) EditExisting(profileName string, currentMonitors []*hypr.MonitorSpec) error {
+	cfg := s.cfg.Get()
+	profile, ok := cfg.Profiles[profileName]
+	if !ok {
+		return errors.New("profile not found")
+	}
+
+	tmpl, err := template.New("part").Parse(tuiTemplate)
+	if err != nil {
+		return fmt.Errorf("failed to parse template: %w", err)
+	}
+
+	templateData := map[string]any{
+		"Monitors": currentMonitors,
+	}
+
+	var rendered bytes.Buffer
+	if err := tmpl.Execute(&rendered, templateData); err != nil {
+		return fmt.Errorf("failed to execute template: %w", err)
+	}
+
+	err = s.updateConfigFileWithContent(profile.ConfigFile, rendered.String())
+	if err != nil {
+		return fmt.Errorf("failed to update config file: %w", err)
+	}
+
+	return nil
+}
+
+// updateConfigFileWithContent reads the config file, finds TUI AUTO markers and replaces content between them,
+// or appends the content to the end if markers are not found
+func (s *Service) updateConfigFileWithContent(configFile, newContent string) error {
+	const (
+		startMarker = "# <<<<< TUI AUTO START"
+		endMarker   = "# <<<<< TUI AUTO END"
+	)
+
+	// nolint:gosec
+	existingContent, err := os.ReadFile(configFile)
+	if err != nil {
+		if os.IsNotExist(err) {
+			if err := utils.WriteAtomic(configFile, []byte(newContent)); err != nil {
+				return fmt.Errorf("cant write the config file: %w", err)
+			}
+		}
+		return fmt.Errorf("failed to read config file: %w", err)
+	}
+
+	content := string(existingContent)
+	finalContent := s.newMethod(content, startMarker, endMarker, newContent)
+	if err := utils.WriteAtomic(configFile, []byte(finalContent)); err != nil {
+		return fmt.Errorf("cant write new config: %w", err)
+	}
+	return nil
+}
+
+func (*Service) newMethod(content, startMarker, endMarker, newContent string) string {
+	startIdx := strings.Index(content, startMarker)
+	endIdx := strings.Index(content, endMarker)
+	if startIdx != -1 && endIdx != -1 && endIdx > startIdx {
+		beforeMarker := content[:startIdx]
+		afterMarker := content[endIdx+len(endMarker):]
+
+		if !strings.HasSuffix(beforeMarker, "\n") && beforeMarker != "" {
+			beforeMarker += "\n"
+		}
+
+		// Handle afterMarker content - prevent newline accumulation
+		switch {
+		case afterMarker == "":
+			// No content after markers - template already ends with newline, don't add more
+			afterMarker = ""
+		case strings.TrimSpace(afterMarker) == "":
+			// Only whitespace/newlines after markers (likely end of file) - don't accumulate
+			afterMarker = ""
+		default:
+			// There is real content after the markers - preserve reasonable spacing
+			// Find the first non-newline character
+			firstNonNewline := 0
+			for i, r := range afterMarker {
+				if r != '\n' {
+					firstNonNewline = i
+					break
+				}
+			}
+			// If we found content, preserve up to 2 newlines (one for marker, one for spacing)
+			if firstNonNewline > 0 {
+				preservedNewlines := firstNonNewline
+				if preservedNewlines > 2 {
+					preservedNewlines = 2
+				}
+				afterMarker = strings.Repeat("\n", preservedNewlines) + strings.TrimLeft(afterMarker, "\n")
+			} else {
+				// No newlines at start, add one for spacing
+				afterMarker = "\n" + afterMarker
+			}
+		}
+
+		return beforeMarker + newContent + afterMarker
+	}
+
+	finalContent := content
+	if !strings.HasSuffix(finalContent, "\n") && finalContent != "" {
+		finalContent += "\n"
+	}
+	finalContent += newContent
+
+	return finalContent
 }
 
 func (s *Service) append(profileSpec *bytes.Buffer, cfg *config.RawConfig) error {
