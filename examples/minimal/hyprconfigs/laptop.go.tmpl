@@ -1,6 +1,5 @@
-# Configuration generated for power state: {{.PowerState}}
-
 {{- $laptop := index .MonitorsByTag "laptop" -}}
+# Configuration generated for power state: {{.PowerState}}
 
 {{- if $laptop -}}
 {{- if isOnBattery }}
