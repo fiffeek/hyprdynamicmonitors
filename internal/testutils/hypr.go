@@ -54,9 +54,12 @@ func SetupFakeHyprIPCWriter(t *testing.T, listener net.Listener, responseData []
 	serverDone := make(chan struct{})
 	go func() {
 		defer close(serverDone)
+		Logf(t, "Starting hypr server")
 		for i, command := range expectedCommands {
+			Logf(t, "Sending message hypr server")
 			respondToHyprIPC(t, listener, exitOnError, command, responseData, i)
 		}
+		Logf(t, "Ending hypr server")
 	}()
 	return serverDone
 }

@@ -103,6 +103,7 @@ func NewTUI(ctx context.Context, configPath, mockedHyprMonitors string,
 }
 
 func (t *TUI) Run(ctx context.Context, cancel context.CancelCauseFunc) error {
+	logrus.Debug("Starting TUI app")
 	eg, ctx := errgroup.WithContext(ctx)
 
 	// listen to fs events if the config is provided and valid

@@ -127,6 +127,9 @@ test/integration/regenerate: build/test
 test/integration/selected: build/test
 	@HDM_BINARY_PATH=$(TEST_EXECUTABLE_NAME) $(GOLANG_BIN) test -v -run $(TEST_SELECTOR) ./test/... --debug
 
+test/integration/selected/regenerate: build/test
+	@HDM_BINARY_PATH=$(TEST_EXECUTABLE_NAME) $(GOLANG_BIN) test -v -run $(TEST_SELECTOR) ./test/... --debug -regenerate -update
+
 test: test/unit test/integration
 
 fmt:
