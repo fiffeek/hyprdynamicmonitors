@@ -8,6 +8,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Netflix/go-expect"
+	"github.com/charmbracelet/x/exp/teatest"
+	"github.com/creack/pty"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/config"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/hypr"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/power"
@@ -15,6 +18,11 @@ import (
 	"github.com/fiffeek/hyprdynamicmonitors/internal/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+)
+
+var (
+	tuiHeight = 100
+	tuiWidth  = 400
 )
 
 func Test__Run_Binary(t *testing.T) {
@@ -44,6 +52,8 @@ func Test__Run_Binary(t *testing.T) {
 		// would add "--disable-auto-hot-reload" cli arg; in the context of anything but "run" it does not make sense, so this
 		// is an explicit knob to change this behavior
 		disablePassingArgs bool
+		tui                bool
+		validateTui        func(*testing.T, *expect.Console)
 	}{
 		{
 			name:                     "dry run should succeed",
@@ -55,6 +65,36 @@ func Test__Run_Binary(t *testing.T) {
 			disablePowerEvents:       true,
 			disableHotReload:         true,
 			runOnce:                  true,
+		},
+
+		{
+			name:                     "tui should load",
+			config:                   testutils.NewTestConfig(t),
+			extraArgs:                []string{},
+			hyprMonitorResponseFiles: []string{"testdata/hypr/server/basic_monitors.json"},
+			disablePowerEvents:       true,
+			tui:                      true,
+			validateTui: func(t *testing.T, c *expect.Console) {
+				assert.NotNil(t, c, "tui pane should not be nil")
+				assert.False(t, true, "hello")
+				time.Sleep(time.Second)
+
+				buf := make([]byte, 10)
+				testutils.Logf(t, "preread")
+				c.ExpectString("HyprDynamicMonitors")
+
+				if _, err := c.ExpectString("HyprDynamicMonitors"); err != nil {
+					t.Fatalf("didn't see welcome banner: %v", err)
+				}
+				n, err := c.Read(buf)
+				testutils.Logf(t, "read")
+				require.NoError(t, err, "should be able to read from tui pane")
+
+				teatest.RequireEqualOutput(t, buf)
+
+				output := string(buf[:n])
+				assert.Contains(t, output, "expected text", "tui output mismatch")
+			},
 		},
 
 		{
@@ -415,7 +455,7 @@ func Test__Run_Binary(t *testing.T) {
 
 			// hypr: fake ipc events server, only needs to be run when the app runs
 			var fakeHyprEventServerDone chan struct{}
-			if !tt.runOnce {
+			if !tt.runOnce && len(tt.hyprEvents) > 0 {
 				eventsListener, teardownEvents := testutils.SetupHyprSocket(ctx, t,
 					xdgRuntimeDir, signature, hypr.GetHyprEventsSocket)
 				defer teardownEvents()
@@ -449,6 +489,9 @@ func Test__Run_Binary(t *testing.T) {
 				"--enable-json-logs-format",
 			}, tt.extraArgs...)
 			if !tt.disablePassingArgs {
+				if tt.tui {
+					args = append(args, "tui")
+				}
 				if tt.disableHotReload {
 					args = append(args, "--disable-auto-hot-reload")
 				}
@@ -473,16 +516,35 @@ func Test__Run_Binary(t *testing.T) {
 			go func() {
 				defer close(done)
 				cmd := prepBinaryRun(ctx, args)
+				testutils.Logf(t, "Will run: %v", args)
 				go func() {
 					// give time to warm up
 					time.Sleep(100 * time.Millisecond)
 					close(binaryStartingChan)
 				}()
-				out, binaryErr = cmd.CombinedOutput()
+
+				if tt.tui {
+					c, err := expect.NewConsole()
+					require.NoError(t, err, "should get a new console tty")
+					cmd.Stdin = c.Tty()
+					cmd.Stdout = c.Tty()
+					cmd.Stderr = c.Tty()
+					err = pty.Setsize(c.Tty(), &pty.Winsize{
+						Rows: uint16(tuiHeight), // height
+						Cols: uint16(tuiWidth),  // width
+					})
+					require.NoError(t, err)
+					binaryErr = cmd.Start()
+
+					assert.False(t, true, "hey")
+					tt.validateTui(t, c)
+				} else {
+					out, binaryErr = cmd.CombinedOutput()
+				}
 			}()
 
 			// wait for filewatcher to write all files
-			waitFor(t, filewatcherDone)
+			waitFor(t, filewatcherDone, "file watcher")
 			if len(tt.configUpdates) > 0 {
 				// save the last config, its fine if a file materializes here
 				// since filewatcherDone means filewatcher finished writing anyway
@@ -500,9 +562,9 @@ func Test__Run_Binary(t *testing.T) {
 			}
 
 			// wait on fakes to finish
-			waitFor(t, dbusDone)
-			waitFor(t, fakeHyprServerDone)
-			waitFor(t, fakeHyprEventServerDone)
+			waitFor(t, dbusDone, "dbus")
+			waitFor(t, fakeHyprServerDone, "hypr server")
+			waitFor(t, fakeHyprEventServerDone, "hypr events server")
 
 			select {
 			case <-time.After(3000 * time.Millisecond):
@@ -532,7 +594,7 @@ func Test__Run_Binary(t *testing.T) {
 	}
 }
 
-func waitFor(t *testing.T, server chan struct{}) {
+func waitFor(t *testing.T, server chan struct{}, name string) {
 	if server == nil {
 		return
 	}
@@ -540,7 +602,7 @@ func waitFor(t *testing.T, server chan struct{}) {
 	select {
 	case <-server:
 	case <-time.After(800 * time.Millisecond):
-		assert.True(t, false, "Hypr fake server didn't finish in time")
+		assert.True(t, false, "%s didn't finish in time", name)
 	}
 }
 

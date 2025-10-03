@@ -6,7 +6,9 @@ import (
 	"os"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/app"
+	"github.com/muesli/termenv"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -19,7 +21,8 @@ var tuiCmd = &cobra.Command{
 	Long:  `Launch an interactive terminal-based TUI for managing monitor configurations.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if debug {
-			logrus.Debug("Running a debug log for tea")
+
+			lipgloss.SetColorProfile(termenv.Ascii)
 			f, err := tea.LogToFile("debug.log", "debug")
 			if err != nil {
 				fmt.Println("fatal:", err)
