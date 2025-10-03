@@ -68,6 +68,7 @@ An event-driven service that automatically manages Hyprland monitor configuratio
    * [FAQ](#faq)
       * [How do I assign workspaces to specific monitors?](#how-do-i-assign-workspaces-to-specific-monitors)
       * [How do I use the TUI to create or edit profiles?](#how-do-i-use-the-tui-to-create-or-edit-profiles)
+      * [How to disable all monitors not defined in the profile required monitors?](#how-to-disable-all-monitors-not-defined-in-the-profile-required-monitors)
       * [Can I use the TUI without running the hyprdynamicmonitors daemon?](#can-i-use-the-tui-without-running-the-hyprdynamicmonitors-daemon)
       * [Why are my comments becoming part of the configuration in templates?](#why-are-my-comments-becoming-part-of-the-configuration-in-templates)
    * [Alternative software](#alternative-software)
@@ -411,8 +412,10 @@ To understand scoring and profile matching more see [`examples/scoring`](https:/
 ### Template Variables
 
 ```go
-.PowerState          // "AC" or "BAT"
-.Monitors           // Array of connected monitors
+.PowerState         // "AC" or "BAT"
+.Monitors           // Array of all connected monitors returned by `hyprctl monitors`
+.ExtraMonitors      // Array of connected monitors not defined in the profile
+.RequiredMonitors   // Array of connected monitors defined in the profile
 .MonitorsByTag      // Map of tagged monitors (monitor_tag -> monitor)
 ```
 
@@ -961,6 +964,14 @@ From the HDM Profile view, you can manually edit files using your `$EDITOR`:
 This allows you to fine-tune settings or add advanced configuration that the TUI doesn't directly support.
 
 For more details, see the [TUI documentation](./docs/tui-help.md).
+
+### How to disable all monitors not defined in the profile required monitors?
+See [this example](examples/disable-monitors/hyprconfigs/other_disabled.go.tmpl), you can use `.ExtraMonitors` variable in the template:
+```go
+{{- range .ExtraMonitors}}
+monitor={{.Name}},disable
+{{- end }}
+```
 
 ### Can I use the TUI without running the hyprdynamicmonitors daemon?
 

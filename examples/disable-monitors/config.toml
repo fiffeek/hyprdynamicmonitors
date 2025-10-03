@@ -11,6 +11,18 @@ path = "/org/freedesktop/UPower/devices/line_power_ACAD"
 # path to your line_power upower device (see `upower -e`)
 object_path = "/org/freedesktop/UPower/devices/line_power_ACAD"
 
+# -- START: other_disabled --
+# A profile that disables all monitors not defined in the profile,
+# and keeps the defined monitor enabled
+[profiles.other_disabled]
+config_file = "hyprconfigs/other_disabled.go.tmpl"
+config_file_type = "template"
+
+[[profiles.other_disabled.conditions.required_monitors]]
+name = "eDP-11"
+monitor_tag = "SomeMonitor"
+# -- END: other_disabled --
+
 # -- START: laptop_disabled --
 # A profile that disables the laptop monitor,
 # and keeps the other monitor enabled

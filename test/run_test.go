@@ -73,6 +73,50 @@ func Test__Run_Binary(t *testing.T) {
 		},
 
 		{
+			name:        "disable templating extra",
+			description: "when hypr returns more monitors that are defined in the profile the template can use templating to reason about the state",
+			config: createBasicTestConfig(t).WithProfiles(
+				map[string]*config.Profile{
+					"one": {
+						ConfigType: utils.JustPtr(config.Template),
+						Conditions: &config.ProfileCondition{
+							RequiredMonitors: []*config.RequiredMonitor{
+								{
+									Name: utils.StringPtr("eDP-1"),
+								},
+							},
+						},
+					},
+				},
+			).FillProfileConfigFile("one", "testdata/app/templates/disable_templating.go.tmpl"),
+			hyprMonitorResponseFiles: []string{"testdata/hypr/server/basic_monitors.json"},
+			validateSideEffects: func(t *testing.T, cfg *config.RawConfig) {
+				testutils.AssertFileExists(t, *cfg.General.Destination)
+				compareWithFixture(t, *cfg.General.Destination,
+					"testdata/app/fixtures/disable_templating_extra_one.conf")
+			},
+			disablePowerEvents: true,
+			disableHotReload:   true,
+			runOnce:            true,
+		},
+
+		{
+			name:        "disable templating none",
+			description: "when hypr returns exadtly monitors that are defined in the profile the template can use templating to reason about the state",
+			config: createBasicTestConfig(t).FillProfileConfigFile("both",
+				"testdata/app/templates/disable_templating.go.tmpl"),
+			hyprMonitorResponseFiles: []string{"testdata/hypr/server/basic_monitors.json"},
+			validateSideEffects: func(t *testing.T, cfg *config.RawConfig) {
+				testutils.AssertFileExists(t, *cfg.General.Destination)
+				compareWithFixture(t, *cfg.General.Destination,
+					"testdata/app/fixtures/disable_templating_extra_none.conf")
+			},
+			disablePowerEvents: true,
+			disableHotReload:   true,
+			runOnce:            true,
+		},
+
+		{
 			name:                     "basic templating",
 			description:              "when hypr returns disabled monitor it should still match the profile",
 			config:                   createBasicTestConfig(t),

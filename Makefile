@@ -114,6 +114,9 @@ test/unit:
 test/unit/selected:
 	$(GOLANG_BIN) test ./internal/$(PACKAGE_SELECTOR) -v -run $(TEST_SELECTOR)
 
+test/unit/selected/regenerate:
+	$(GOLANG_BIN) test ./internal/$(PACKAGE_SELECTOR) -v  --regenerate -run $(TEST_SELECTOR)
+
 build/test:
 	@mkdir -p ./dist/
 	@$(GOLANG_BIN) build -v -o $(TEST_EXECUTABLE_NAME) ./main.go

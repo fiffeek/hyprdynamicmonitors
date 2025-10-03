@@ -1,7 +1,19 @@
 # Template test configuration for Hyprland
 # Generated with power state: {{.PowerState}}
 
+# All Monitors
 {{- range .Monitors}}
+monitor={{.Name}},auto,auto,1.0
+{{- end}}
+
+# RequiredMonitors
+{{- range .RequiredMonitors}}
+monitor={{.Name}},auto,auto,1.0
+{{- end}}
+
+
+# ExtraMonitors
+{{- range .ExtraMonitors}}
 monitor={{.Name}},auto,auto,1.0
 {{- end}}
 
