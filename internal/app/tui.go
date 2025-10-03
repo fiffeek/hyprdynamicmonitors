@@ -55,6 +55,7 @@ func NewTUI(ctx context.Context, configPath, mockedHyprMonitors string,
 		}
 
 		monitors = hyprIPC.GetConnectedMonitors()
+		profileMaker = profilemaker.NewService(cfg, hyprIPC)
 	}
 
 	if err := monitors.Validate(); err != nil {
