@@ -123,28 +123,49 @@ func (g *ConfigGenerator) createTemplateData(cfg *config.RawConfig, profile *con
 		})
 	}
 
+	// Monitors represents all connected monitors, might not be defined in the profile, might be disabled etc.
 	data["Monitors"] = monitorsStripped
 	data["PowerState"] = powerState.String()
+	requiredMonitors := []*MonitorSpec{}
+	extraMonitors := []*MonitorSpec{}
 
 	monitorsByTag := make(map[string]*MonitorSpec)
 
-	for _, requiredMonitor := range profile.Conditions.RequiredMonitors {
-		if requiredMonitor.MonitorTag == nil {
-			continue
-		}
-
-		for _, connectedMonitor := range monitorsStripped {
-			if g.monitorMatches(requiredMonitor, connectedMonitor) {
+	for _, connectedMonitor := range monitorsStripped {
+		matchesAny := false
+		for _, requiredMonitor := range profile.Conditions.RequiredMonitors {
+			if !g.monitorMatches(requiredMonitor, connectedMonitor) {
+				continue
+			}
+			matchesAny = true
+			if requiredMonitor.MonitorTag != nil {
 				monitorsByTag[*requiredMonitor.MonitorTag] = connectedMonitor
 				logrus.WithFields(logrus.Fields{
 					"tag":         *requiredMonitor.MonitorTag,
 					"name":        connectedMonitor.Name,
 					"description": connectedMonitor.Description,
 				}).Debug("Mapped monitor tag")
-				break
 			}
+			break
+		}
+
+		if !matchesAny {
+			extraMonitors = append(extraMonitors, connectedMonitor)
+		} else {
+			requiredMonitors = append(requiredMonitors, connectedMonitor)
 		}
 	}
+
+	data["ExtraMonitors"] = extraMonitors
+
+	for _, monitor := range requiredMonitors {
+		logrus.WithFields(logrus.Fields{
+			"name":        monitor.Name,
+			"description": monitor.Description,
+			"enabled":     !monitor.Disabled,
+		}).Debug("Required monitor")
+	}
+	data["RequiredMonitors"] = requiredMonitors
 
 	logrus.WithFields(logrus.Fields{
 		"monitor_count":        len(connectedMonitors),

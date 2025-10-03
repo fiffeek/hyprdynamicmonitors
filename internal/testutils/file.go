@@ -51,6 +51,14 @@ func ContentSameAsFixture(t *testing.T, targetFile, fixtureFile string) error {
 	return nil
 }
 
+func AssertFixture(t *testing.T, target, fixture string, regenerate bool) {
+	if regenerate {
+		UpdateFixture(t, target, fixture)
+		return
+	}
+	AssertContentsSameAsFixture(t, target, fixture)
+}
+
 func AssertContentsSameAsFixture(t *testing.T, targetFile, fixtureFile string) {
 	// nolint:gosec
 	targetContent, err := os.ReadFile(targetFile)

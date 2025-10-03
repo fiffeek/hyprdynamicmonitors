@@ -3,7 +3,6 @@ package generators_test
 import (
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 	"time"
 
@@ -108,6 +107,7 @@ func TestConfigGenerator_GenerateConfig_Template(t *testing.T) {
 	monitors := []*hypr.MonitorSpec{
 		{Name: "DP-1", ID: utils.IntPtr(0), Description: "External Monitor"},
 		{Name: "eDP-1", ID: utils.IntPtr(1), Description: "Built-in Display"},
+		{Name: "DP-11", ID: utils.IntPtr(2), Description: "Extra Monitor"},
 	}
 
 	// Test with battery power state
@@ -119,56 +119,7 @@ func TestConfigGenerator_GenerateConfig_Template(t *testing.T) {
 		t.Fatalf("file was not changed")
 	}
 
-	//nolint:gosec
-	content, err := os.ReadFile(destination)
-	if err != nil {
-		t.Fatalf("Failed to read generated config: %v", err)
-	}
-
-	contentStr := string(content)
-
-	// Verify template variables were substituted
-	if !strings.Contains(contentStr, "Generated with power state: BAT") {
-		t.Error("Expected power state BAT to be rendered")
-	}
-
-	// Verify all monitors were included
-	if !strings.Contains(contentStr, "monitor=DP-1,auto,auto,1.0") {
-		t.Error("Expected DP-1 monitor configuration")
-	}
-	if !strings.Contains(contentStr, "monitor=eDP-1,auto,auto,1.0") {
-		t.Error("Expected eDP-1 monitor configuration")
-	}
-
-	// Verify MonitorsByTag worked
-	if !strings.Contains(contentStr, "workspace=1,monitor:eDP-1") {
-		t.Error("Expected laptop monitor tag to resolve to eDP-1")
-	}
-	if !strings.Contains(contentStr, "workspace=2,monitor:DP-1") {
-		t.Error("Expected external monitor tag to resolve to DP-1")
-	}
-
-	// Verify power state functions worked
-	if !strings.Contains(contentStr, "decoration:blur:enabled = false") {
-		t.Error("Expected battery power optimizations")
-	}
-	if !strings.Contains(contentStr, "animation:enabled = false") {
-		t.Error("Expected battery animation disabled")
-	}
-	if !strings.Contains(contentStr, "Power state function test: BAT") {
-		t.Error("Expected powerState function to return BAT")
-	}
-
-	// Verify templates
-	if !strings.Contains(contentStr, "general_value = general") {
-		t.Error("Expected the template to use general_value from config")
-	}
-	if !strings.Contains(contentStr, "profile_value = profile") {
-		t.Error("Expected the template to use profile_value from config")
-	}
-	if !strings.Contains(contentStr, "overwritten_value = overwritten_profile") {
-		t.Error("Expected the template to use overwritten_value from config")
-	}
+	testutils.AssertFixture(t, destination, "testdata/fixtures/bat.conf", *regenerate)
 
 	// Test with AC power state
 	changed, err = generator.GenerateConfig(cfg.Get(), profile, monitors, power.ACPowerState, destination)
@@ -179,29 +130,7 @@ func TestConfigGenerator_GenerateConfig_Template(t *testing.T) {
 		t.Fatalf("file was not changed")
 	}
 
-	//nolint:gosec
-	acContent, err := os.ReadFile(destination)
-	if err != nil {
-		t.Fatalf("Failed to read AC generated config: %v", err)
-	}
-
-	acContentStr := string(acContent)
-
-	// Verify AC power state
-	if !strings.Contains(acContentStr, "Generated with power state: AC") {
-		t.Error("Expected power state AC to be rendered")
-	}
-
-	// Verify AC power functions worked
-	if !strings.Contains(acContentStr, "decoration:blur:enabled = true") {
-		t.Error("Expected AC power blur enabled")
-	}
-	if !strings.Contains(acContentStr, "animation:enabled = true") {
-		t.Error("Expected AC power animation enabled")
-	}
-	if !strings.Contains(acContentStr, "Power state function test: AC") {
-		t.Error("Expected powerState function to return AC")
-	}
+	testutils.AssertFixture(t, destination, "testdata/fixtures/ac.conf", *regenerate)
 
 	changed, err = generator.GenerateConfig(cfg.Get(), profile, monitors, power.ACPowerState, destination)
 	if err != nil {
@@ -210,6 +139,8 @@ func TestConfigGenerator_GenerateConfig_Template(t *testing.T) {
 	if changed {
 		t.Fatalf("file was changed")
 	}
+
+	testutils.AssertFixture(t, destination, "testdata/fixtures/ac.conf", *regenerate)
 }
 
 func configTypePtr(c config.ConfigFileType) *config.ConfigFileType {

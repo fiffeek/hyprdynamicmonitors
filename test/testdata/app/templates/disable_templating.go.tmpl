@@ -1,0 +1,14 @@
+# disable 'ExtraMonitors' (not defined in the profile but currently present in `hyprctl monitors`)
+{{- range .ExtraMonitors}}
+monitor={{.Name}},disable
+{{- end }}
+
+# the rest of the monitors
+{{- range .RequiredMonitors }}
+monitor={{.Name}},{{.Description}}
+{{- end }}
+
+# all monitors
+{{- range .Monitors }}
+monitor={{.Name}},{{.Description}}
+{{- end }}
