@@ -77,6 +77,7 @@ func prepBinaryRun(ctx context.Context, args []string) *exec.Cmd {
 		ctx,
 		filepath.Join(basepath, binaryPath),
 		args...)
+	cmd.Dir = basepath
 	cmd.Env = append(os.Environ(), "GOCOVERDIR=.coverdata")
 	return cmd
 }

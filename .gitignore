@@ -9,3 +9,8 @@ node_modules/
 bin/
 result
 debug.log
+coverage.txt
+unit.txt
+integration.txt
+.coverdata
+coverage.html

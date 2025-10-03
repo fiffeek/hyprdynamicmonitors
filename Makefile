@@ -109,23 +109,29 @@ test/tui/flows:
 test/unit:
 	@$(GOLANGCI_LINT_BIN) config verify
 	@$(GORELEASER_BIN) check
-	@$(GOLANG_BIN) test ./internal/... -v
+	@$(GOLANG_BIN) test ./internal/... -v -coverprofile=unit.txt
 
 test/unit/selected:
 	$(GOLANG_BIN) test ./internal/$(PACKAGE_SELECTOR) -v -run $(TEST_SELECTOR)
 
 build/test:
 	@mkdir -p ./dist/
-	@$(GOLANG_BIN) build -v -o $(TEST_EXECUTABLE_NAME) ./main.go
+	@$(GOLANG_BIN) build -v -cover -o $(TEST_EXECUTABLE_NAME) ./main.go
 
 test/integration: build/test
-	@HDM_BINARY_PATH=$(TEST_EXECUTABLE_NAME) $(GOLANG_BIN) test -v ./test/... --debug
+	@mkdir -p .coverdata
+	@HDM_BINARY_PATH=$(TEST_EXECUTABLE_NAME) $(GOLANG_BIN) test -v ./test/... --debug --count=1
+	@go tool covdata textfmt -i=.coverdata -o=integration.txt
 
 test/integration/regenerate: build/test
 	@HDM_BINARY_PATH=$(TEST_EXECUTABLE_NAME) $(GOLANG_BIN) test -v ./test/... --regenerate
 
 test/integration/selected: build/test
 	@HDM_BINARY_PATH=$(TEST_EXECUTABLE_NAME) $(GOLANG_BIN) test -v -run $(TEST_SELECTOR) ./test/... --debug
+
+coverage:
+	@go tool gocovmerge integration.txt unit.txt > coverage.txt
+	@go tool cover -html=coverage.txt -o coverage.html
 
 test: test/unit test/integration
 
