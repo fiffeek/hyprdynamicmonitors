@@ -109,7 +109,7 @@ test/tui/flows:
 test/unit:
 	@$(GOLANGCI_LINT_BIN) config verify
 	@$(GORELEASER_BIN) check
-	@$(GOLANG_BIN) test ./internal/... -v
+	@$(GOLANG_BIN) test ./internal/... -v -coverprofile=unit.txt
 
 test/unit/selected:
 	$(GOLANG_BIN) test ./internal/$(PACKAGE_SELECTOR) -v -run $(TEST_SELECTOR)
@@ -117,18 +117,31 @@ test/unit/selected:
 test/unit/selected/regenerate:
 	$(GOLANG_BIN) test ./internal/$(PACKAGE_SELECTOR) -v  --regenerate -run $(TEST_SELECTOR)
 
-build/test:
+build/docs:
 	@mkdir -p ./dist/
 	@$(GOLANG_BIN) build -v -o $(TEST_EXECUTABLE_NAME) ./main.go
 
+build/test:
+	@mkdir -p ./dist/
+	@$(GOLANG_BIN) build -v -cover -o $(TEST_EXECUTABLE_NAME) ./main.go
+
 test/integration: build/test
-	@HDM_BINARY_PATH=$(TEST_EXECUTABLE_NAME) $(GOLANG_BIN) test -v ./test/... --debug
+	@mkdir -p .coverdata
+	@HDM_BINARY_PATH=$(TEST_EXECUTABLE_NAME) $(GOLANG_BIN) test -v ./test/... --debug --count=1
+	@$(GOLANG_BIN) tool covdata textfmt -i=.coverdata -o=integration.txt
 
 test/integration/regenerate: build/test
 	@HDM_BINARY_PATH=$(TEST_EXECUTABLE_NAME) $(GOLANG_BIN) test -v ./test/... --regenerate
 
 test/integration/selected: build/test
 	@HDM_BINARY_PATH=$(TEST_EXECUTABLE_NAME) $(GOLANG_BIN) test -v -run $(TEST_SELECTOR) ./test/... --debug
+
+coverage:
+	@$(GOLANG_BIN) tool gocovmerge integration.txt unit.txt > coverage.txt
+	@grep -v "/testutils/" coverage.txt > coverage.txt.tmp
+	@mv coverage.txt.tmp coverage.txt
+	@$(GOLANG_BIN) tool cover -html=coverage.txt -o coverage.html
+	@$(GOLANG_BIN) tool gocover-cobertura <coverage.txt >coverage.xml
 
 test: test/unit test/integration
 
@@ -141,7 +154,7 @@ lint:
 
 pre-push: fmt lint test/unit test/integration
 
-help/generate: build/test
+help/generate: build/docs
 	@scripts/autohelp.sh $(TEST_EXECUTABLE_NAME)
 	@scripts/autohelp.sh $(TEST_EXECUTABLE_NAME) run
 	@scripts/autohelp.sh $(TEST_EXECUTABLE_NAME) validate
@@ -149,12 +162,12 @@ help/generate: build/test
 	@scripts/autohelp.sh $(TEST_EXECUTABLE_NAME) tui
 
 # requires vhs to be installed, for now a manual action
-record/preview: build/test
+record/preview: build/docs
 	@git checkout -- ./preview/tapes/configs/
 	@git clean -fd ./preview/tapes/configs/
 	@$(VHS_BIN) ./preview/tapes/$(RECORD_TARGET).tape
 
-record/previews: build/test
+record/previews: build/docs
 	$(MAKE) record/preview RECORD_TARGET=views
 	$(MAKE) record/preview RECORD_TARGET=monitor_view
 	$(MAKE) record/preview RECORD_TARGET=panning
