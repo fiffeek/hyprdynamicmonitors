@@ -11,8 +11,9 @@ import (
 )
 
 type gridCell struct {
-	char  rune
-	color string
+	char            rune
+	color           string
+	backgroundColor string
 }
 
 type MonitorsPreviewPane struct {
@@ -245,33 +246,39 @@ func (*MonitorsPreviewPane) ColorGrid(grid [][]gridCell) []string {
 	for _, row := range grid {
 		var line strings.Builder
 		var currentColor string
+		var currentBgColor string
 		var currentSegment strings.Builder
 
 		for _, cell := range row {
-			if cell.color != currentColor {
+			if cell.color != currentColor || cell.backgroundColor != currentBgColor {
 				// Flush previous segment with its color
 				if currentSegment.Len() > 0 {
+					style := lipgloss.NewStyle()
 					if currentColor != "" {
-						style := lipgloss.NewStyle().Foreground(lipgloss.Color(currentColor))
-						line.WriteString(style.Render(currentSegment.String()))
-					} else {
-						line.WriteString(currentSegment.String())
+						style = style.Foreground(lipgloss.Color(currentColor))
 					}
+					if currentBgColor != "" {
+						style = style.Background(lipgloss.Color(currentBgColor))
+					}
+					line.WriteString(style.Render(currentSegment.String()))
 					currentSegment.Reset()
 				}
 				currentColor = cell.color
+				currentBgColor = cell.backgroundColor
 			}
 			currentSegment.WriteRune(cell.char)
 		}
 
 		// Flush remaining segment
 		if currentSegment.Len() > 0 {
+			style := lipgloss.NewStyle()
 			if currentColor != "" {
-				style := lipgloss.NewStyle().Foreground(lipgloss.Color(currentColor))
-				line.WriteString(style.Render(currentSegment.String()))
-			} else {
-				line.WriteString(currentSegment.String())
+				style = style.Foreground(lipgloss.Color(currentColor))
 			}
+			if currentBgColor != "" {
+				style = style.Background(lipgloss.Color(currentBgColor))
+			}
+			line.WriteString(style.Render(currentSegment.String()))
 		}
 
 		lines = append(lines, line.String())
@@ -376,11 +383,22 @@ func (*MonitorsPreviewPane) drawMonitorRectangle(isSelected bool, rectangle *Mon
 						edgeColor = GetBrightMonitorColor(color)
 					}
 
-					grid[y][x] = gridCell{char: borderChar, color: edgeColor}
+					char := borderChar
+					bgColor := ""
+					// Use half blocks for top and bottom edges and corners
+					if y == rectangle.startY {
+						// Top edge and top corners use bottom half block
+						char = '▄'
+					} else if y == rectangle.endY {
+						// Bottom edge and bottom corners use top half block
+						char = '▀'
+					}
+
+					grid[y][x] = gridCell{char: char, color: edgeColor, backgroundColor: bgColor}
 					continue
 				}
 
-				grid[y][x] = gridCell{char: fillChar, color: color}
+				grid[y][x] = gridCell{char: fillChar, color: color, backgroundColor: ""}
 			}
 		}
 	}
