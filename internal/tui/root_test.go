@@ -236,6 +236,28 @@ func TestModel_Update_UserFlows(t *testing.T) {
 		},
 
 		{
+			name:         "snap_center",
+			monitorsData: defaultMonitorData,
+			runFor:       utils.JustPtr(500 * time.Millisecond),
+			steps: []step{
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyEnter},
+					expectOutputToContain: "EDITING",
+				},
+				{
+					msg:   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'h'}},
+					times: utils.IntPtr(6),
+				},
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'k'}},
+					times:                 utils.IntPtr(12),
+					expectOutputToContain: "Position: 1536,384",
+					sleepAfter:            utils.JustPtr(100 * time.Millisecond),
+				},
+			},
+		},
+
+		{
 			name:         "snap",
 			monitorsData: defaultMonitorData,
 			runFor:       utils.JustPtr(500 * time.Millisecond),
@@ -272,7 +294,7 @@ func TestModel_Update_UserFlows(t *testing.T) {
 				},
 				{
 					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'k'}},
-					times:                 utils.IntPtr(10),
+					times:                 utils.IntPtr(9),
 					expectOutputToContain: "Position: 1920,540",
 					sleepAfter:            utils.JustPtr(100 * time.Millisecond),
 				},
@@ -327,7 +349,7 @@ func TestModel_Update_UserFlows(t *testing.T) {
 				},
 				{
 					msg:   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'k'}},
-					times: utils.IntPtr(6),
+					times: utils.IntPtr(5),
 				},
 				{
 					msg:        tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'h'}},
