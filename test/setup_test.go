@@ -77,7 +77,15 @@ func prepBinaryRun(ctx context.Context, args []string) *exec.Cmd {
 		ctx,
 		filepath.Join(basepath, binaryPath),
 		args...)
+	cmd.Dir = basepath
 	cmd.Env = append(os.Environ(), "GOCOVERDIR=.coverdata")
+
+	cmd.Cancel = func() error {
+		return cmd.Process.Signal(os.Interrupt)
+	}
+
+	cmd.WaitDelay = 200 * time.Millisecond
+
 	return cmd
 }
 

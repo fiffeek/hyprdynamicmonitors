@@ -337,7 +337,7 @@ func TestModel_Update_UserFlows(t *testing.T) {
 		{
 			name:         "move_fullscreen",
 			monitorsData: defaultMonitorData,
-			runFor:       utils.JustPtr(500 * time.Millisecond),
+			runFor:       utils.JustPtr(800 * time.Millisecond),
 			steps: []step{
 				{
 					msg:                   tea.KeyMsg{Type: tea.KeyEnter},
