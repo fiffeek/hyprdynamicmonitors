@@ -5,6 +5,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/utils"
+	"github.com/sirupsen/logrus"
 )
 
 var ErrMonitorDisabled = errors.New("monitor is disabled")
@@ -268,6 +269,12 @@ func abs(x int) int {
 	return x
 }
 
+func (e *MonitorEditorStore) getMonitorCenter(monitor *MonitorSpec, x, y int) (int, int) {
+	cornerX, cornerY := x, y
+	width, height := e.getMonitorDimensions(monitor)
+	return cornerX + width/2, cornerY + height/2
+}
+
 func (e *MonitorEditorStore) getMonitorDimensions(monitor *MonitorSpec) (int, int) {
 	scaledWidth := int(float64(monitor.Width) / monitor.Scale)
 	scaledHeight := int(float64(monitor.Height) / monitor.Scale)
@@ -290,6 +297,7 @@ func (e *MonitorEditorStore) snapToEdges(monitorIndex, x, y int) (int, int, tea.
 	}
 
 	monWidth, monHeight := e.getMonitorDimensions(monitor)
+	monCenterX, monCenterY := e.getMonitorCenter(monitor, x, y)
 	thresh := e.snapDistance
 	newX, newY := x, y
 	var snappedX, snappedY *int
@@ -300,8 +308,11 @@ func (e *MonitorEditorStore) snapToEdges(monitorIndex, x, y int) (int, int, tea.
 		}
 
 		otherWidth, otherHeight := e.getMonitorDimensions(other)
+		otherCenterX, otherCenterY := e.getMonitorCenter(other, other.X, other.Y)
+		logrus.Debugf("Monitor center: %d, %d", monCenterX, monCenterY)
+		logrus.Debugf("Other center: %d, %d", otherCenterX, otherCenterY)
 
-		// check all corners for both x and y
+		// check all corners for x, then centers
 		switch {
 		case abs(x-other.X-otherWidth) < thresh:
 			newX = other.X + otherWidth
@@ -315,8 +326,20 @@ func (e *MonitorEditorStore) snapToEdges(monitorIndex, x, y int) (int, int, tea.
 		case abs(x+monWidth-other.X-otherWidth) < thresh:
 			newX = other.X + otherWidth - monWidth
 			snappedX = utils.IntPtr(other.X + otherWidth)
+		case abs(otherCenterX-monCenterX) < thresh:
+			logrus.Debugf("Snapping center to x: %d", otherCenterX)
+			diff := otherCenterX - monCenterX
+			newX = x + diff
+			snappedX = utils.IntPtr(otherCenterX)
+		case abs(x-otherCenterX) < thresh:
+			newX = otherCenterX
+			snappedX = utils.IntPtr(otherCenterX)
+		case abs(x+monWidth-otherCenterX) < thresh:
+			newX = otherCenterX - monWidth
+			snappedX = utils.IntPtr(otherCenterX)
 		}
 
+		// check all corners for y, then centers
 		switch {
 		case abs(y-other.Y-otherHeight) < thresh:
 			newY = other.Y + otherHeight
@@ -330,6 +353,17 @@ func (e *MonitorEditorStore) snapToEdges(monitorIndex, x, y int) (int, int, tea.
 		case abs(y+monHeight-other.Y-otherHeight) < thresh:
 			newY = other.Y + otherHeight - monHeight
 			snappedY = utils.IntPtr(other.Y + otherHeight)
+		case abs(otherCenterY-monCenterY) < thresh:
+			logrus.Debugf("Snapping center to y: %d", otherCenterY)
+			diff := otherCenterY - monCenterY
+			newY = y + diff
+			snappedY = utils.IntPtr(otherCenterY)
+		case abs(y-otherCenterY) < thresh:
+			newY = otherCenterY
+			snappedY = utils.IntPtr(otherCenterY)
+		case abs(y+monHeight-otherCenterY) < thresh:
+			newY = otherCenterY - monHeight
+			snappedY = utils.IntPtr(otherCenterY)
 		}
 	}
 
