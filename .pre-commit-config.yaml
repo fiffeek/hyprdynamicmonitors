@@ -46,7 +46,7 @@ repos:
             language: system
           - id: autotoc
             name: generate toc
-            entry: ./scripts/autotoc.sh
+            entry: make toc/generate
             language: system
             files: ^README\.md$
           - id: autohelp

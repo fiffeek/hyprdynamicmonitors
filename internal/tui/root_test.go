@@ -43,6 +43,7 @@ func TestModel_Update_UserFlows(t *testing.T) {
 		cfg                 *config.Config
 		monitorsData        string
 		powerState          power.PowerState
+		lidState            power.LidState
 		steps               []step
 		runFor              *time.Duration
 		validateSideEffects func(*config.Config, tui.Model)
@@ -667,7 +668,7 @@ func TestModel_Update_UserFlows(t *testing.T) {
 			hyprMonitors := loadMonitorsFromTestdata(t, tt.monitorsData)
 			pm := profilemaker.NewService(tt.cfg, nil)
 			model := tui.NewModel(tt.cfg,
-				hyprMonitors, pm, "test-version", tt.powerState, tt.runFor, true)
+				hyprMonitors, pm, "test-version", tt.powerState, tt.runFor, true, tt.lidState)
 			tm := teatest.NewTestModel(t, model, teatest.WithInitialTermSize(160, 45))
 
 			// wait for app to be `ready`, just check if the footer is up

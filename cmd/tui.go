@@ -32,7 +32,7 @@ var tuiCmd = &cobra.Command{
 		ctx, cancel := context.WithCancelCause(context.Background())
 		defer cancel(context.Canceled)
 
-		app, err := app.NewTUI(ctx, configPath, mockedHyprMonitors, Version, disablePowerEvents, connectToSessionBus)
+		app, err := app.NewTUI(ctx, configPath, mockedHyprMonitors, Version, disablePowerEvents, connectToSessionBus, enableLidEvents)
 		if err != nil {
 			return fmt.Errorf("cant init tui: %w", err)
 		}
@@ -63,5 +63,12 @@ func init() {
 		"connect-to-session-bus",
 		false,
 		"Connect to session bus instead of system bus for power events: https://wiki.archlinux.org/title/D-Bus. You can switch as long as you expose power line events in your user session bus.",
+	)
+
+	tuiCmd.Flags().BoolVar(
+		&enableLidEvents,
+		"enable-lid-events",
+		false,
+		"Enable listening to dbus lid events",
 	)
 }

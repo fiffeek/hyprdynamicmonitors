@@ -20,6 +20,8 @@ func TestHDMProfilePreview_Update(t *testing.T) {
 		msg                tea.Msg
 		initialPowerState  power.PowerState
 		expectedPowerState power.PowerState
+		initialLidState    power.LidState
+		expectedLidState   power.LidState
 		expectProfileReset bool
 	}{
 		{
@@ -34,6 +36,15 @@ func TestHDMProfilePreview_Update(t *testing.T) {
 			msg:                tui.PowerStateChangedCmd(power.ACPowerState),
 			initialPowerState:  power.BatteryPowerState,
 			expectedPowerState: power.ACPowerState,
+			expectProfileReset: true,
+		},
+		{
+			name:               "LidStateChangedCmd updates state and resets profile",
+			msg:                tui.LidStateChangedCmd(power.ClosedLidState),
+			initialPowerState:  power.ACPowerState,
+			expectedPowerState: power.ACPowerState,
+			initialLidState:    power.OpenedLidState,
+			expectedLidState:   power.ClosedLidState,
 			expectProfileReset: true,
 		},
 	}
@@ -60,12 +71,14 @@ func TestHDMProfilePreview_Update(t *testing.T) {
 				{Name: "eDP-1"},
 			}
 
-			preview := tui.NewHDMProfilePreview(cfg, matcher, monitors, tt.initialPowerState, true)
+			preview := tui.NewHDMProfilePreview(cfg, matcher, monitors,
+				tt.initialPowerState, true, tt.initialLidState)
 			oldProfile := preview.GetProfile()
 
 			preview.Update(tt.msg)
 
 			assert.Equal(t, tt.expectedPowerState, preview.GetPowerState())
+			assert.Equal(t, tt.expectedLidState, preview.GetLidState())
 
 			if tt.expectProfileReset {
 				assert.Equal(t, cfgProfile, preview.GetProfile())

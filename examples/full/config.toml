@@ -93,12 +93,61 @@ name = "org.freedesktop.UPower.DeviceAdded"
 [[power_events.dbus_signal_receive_filters]]
 name = "org.freedesktop.UPower.DeviceRemoved"
 
+[lid_events]
+
+# Check if your version of upower supports LidIsClosed:
+# gdbus introspect --system --dest org.freedesktop.UPower --object-path /org/freedesktop/UPower | grep Lid
+
+# Control the query for the current battery state, the default (underneath)
+# effectively performs:
+#
+# dbus-send --system --print-reply \
+#   --dest=org.freedesktop.UPower \
+#   /org/freedesktop/UPower \
+#   org.freedesktop.DBus.Properties.Get \
+#   string:org.freedesktop.UPower \
+#   string:LidIsClosed
+# The code expects a single boolean as the result
+[lid_events.dbus_query_object]
+destination = "org.freedesktop.UPower"
+path = "/org/freedesktop/UPower"
+method = "org.freedesktop.DBus.Properties.Get"
+# expected value returned from the query
+# will compare it as strings, see logs
+expected_lid_closing_value = "true"
+
+[[lid_events.dbus_query_object.args]]
+arg = "org.freedesktop.UPower"
+
+[[lid_events.dbus_query_object.args]]
+arg = "LidIsClosed"
+
+# Custom D-Bus signal matching rules (optional)
+# These rules determine which D-Bus signals to listen for
+# Default rules work with standard UPower installations
+# You can listen to the events yourself:
+# $ gdbus monitor --system --dest org.freedesktop.UPower --object-path /org/freedesktop/UPower
+
+[[lid_events.dbus_signal_match_rules]]
+interface = "org.freedesktop.DBus.Properties"
+object_path = "/org/freedesktop/UPower"
+member = "PropertiesChanged"
+# sender = "org.freedesktop.UPower"  # Optional: specific sender
+
+# Signal name filters (optional)
+# Only signals matching these names will be processed.
+# Used to limit the work needed by the service since the events can be noisy.
+[[lid_events.dbus_signal_receive_filters]]
+name = "org.freedesktop.DBus.Properties.PropertiesChanged"
+body = "LidIsClosed"
+
 [scoring]
 # Scoring system for profile selection when multiple profiles match
 # Higher scores win - adjust these values to prioritize different matching criteria
 name_match = 10       # Points awarded for exact monitor name match (e.g., "eDP-1")
 description_match = 5 # Points awarded for exact monitor description match
 power_state_match = 3 # Bonus points for matching power state requirements
+lid_state_match = 2   # Bonus points for matching lid state requirements
 
 # Optionally you can define a fallback profile that will be used
 # when no other user profile matches the current state.

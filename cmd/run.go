@@ -15,6 +15,7 @@ var (
 	disableAutoHotReload bool
 	connectToSessionBus  bool
 	disablePowerEvents   bool
+	enableLidEvents      bool
 )
 
 var runCmd = &cobra.Command{
@@ -25,7 +26,7 @@ var runCmd = &cobra.Command{
 		logrus.WithField("version", Version).Debug("Starting Hyprland Dynamic Monitor Manager")
 		ctx, cancel := context.WithCancelCause(context.Background())
 		app, err := app.NewApplication(&configPath, &dryRun, ctx, cancel, &disablePowerEvents,
-			&disableAutoHotReload, &connectToSessionBus)
+			&disableAutoHotReload, &connectToSessionBus, &enableLidEvents)
 		if err != nil {
 			return fmt.Errorf("cant create application: %w", err)
 		}
@@ -72,5 +73,11 @@ func init() {
 		"disable-auto-hot-reload",
 		false,
 		"Disable automatic hot reload (no file watchers)",
+	)
+	runCmd.Flags().BoolVar(
+		&enableLidEvents,
+		"enable-lid-events",
+		false,
+		"Enable listening to dbus lid events",
 	)
 }

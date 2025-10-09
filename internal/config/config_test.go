@@ -678,6 +678,10 @@ func TestPowerSectionValidate(t *testing.T) {
 }
 
 func TestDbusSignalMatchRuleLeaveEmptyToken(t *testing.T) {
+	defaultInterface := "iface"
+	defaultMember := "mem"
+	defaultObjectPath := "/path"
+
 	tests := []struct {
 		name      string
 		rule      *config.DbusSignalMatchRule
@@ -739,7 +743,7 @@ func TestDbusSignalMatchRuleLeaveEmptyToken(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.rule.Validate()
+			err := tt.rule.Validate(defaultInterface, defaultMember, defaultObjectPath)
 			if err != nil {
 				t.Errorf("unexpected error: %v", err)
 				return
@@ -776,6 +780,15 @@ func TestDbusSignalMatchRuleLeaveEmptyToken(t *testing.T) {
 }
 
 func TestDbusQueryObjectValidate(t *testing.T) {
+	defaultDestination := "org.freedesktop.UPower"
+	defaultMethod := "org.freedesktop.DBus.Properties.Get"
+	defaultPath := "/org/freedesktop/UPower/devices/line_power_ACAD"
+	defaultArgs := []config.DbusQueryObjectArg{
+		{Arg: "org.freedesktop.UPower.Device"},
+		{Arg: "Online"},
+	}
+	defaultExpectedDischargingValue := "false"
+
 	tests := []struct {
 		name          string
 		queryObject   *config.DbusQueryObject
@@ -881,7 +894,10 @@ func TestDbusQueryObjectValidate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.queryObject.Validate()
+			err := tt.queryObject.Validate(
+				defaultDestination, defaultMethod, defaultPath,
+				defaultExpectedDischargingValue, defaultArgs, "",
+			)
 
 			if tt.expectError {
 				if err == nil {

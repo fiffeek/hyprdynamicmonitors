@@ -154,6 +154,9 @@ lint:
 
 pre-push: fmt lint test/unit test/integration
 
+toc/generate:
+	@scripts/autotoc.sh
+
 help/generate: build/docs
 	@scripts/autohelp.sh $(TEST_EXECUTABLE_NAME)
 	@scripts/autohelp.sh $(TEST_EXECUTABLE_NAME) run

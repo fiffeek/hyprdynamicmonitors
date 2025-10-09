@@ -40,14 +40,18 @@ type HDMConfigPane struct {
 	height        int
 	width         int
 	powerState    power.PowerState
+	lidState      power.LidState
 }
 
-func NewHDMConfigPane(cfg *config.Config, matcher *matchers.Matcher, monitors []*MonitorSpec, powerState power.PowerState) *HDMConfigPane {
+func NewHDMConfigPane(cfg *config.Config, matcher *matchers.Matcher, monitors []*MonitorSpec,
+	powerState power.PowerState, lidState power.LidState,
+) *HDMConfigPane {
 	return &HDMConfigPane{
 		cfg:        cfg,
 		matcher:    matcher,
 		monitors:   monitors,
 		powerState: powerState,
+		lidState:   lidState,
 		help:       help.New(),
 		keymap: &hdmKeyMap{
 			NewProfile: key.NewBinding(
@@ -79,12 +83,17 @@ func (h *HDMConfigPane) Update(msg tea.Msg) tea.Cmd {
 		h.powerState = msg.state
 		h.pulledProfile = false
 		h.profile = nil
+	case LidStateChanged:
+		logrus.Debug("Overriding the current lid state")
+		h.pulledProfile = false
+		h.lidState = msg.state
+		h.profile = nil
 	}
 
 	if !h.pulledProfile {
 		logrus.Debugf("Current power state: %d", h.powerState)
 		h.pulledProfile = true
-		_, profile, err := h.matcher.Match(h.cfg.Get(), ConvertToHyprMonitors(h.monitors), h.powerState)
+		_, profile, err := h.matcher.Match(h.cfg.Get(), ConvertToHyprMonitors(h.monitors), h.powerState, h.lidState)
 		cmds = append(cmds, OperationStatusCmd(OperationNameMatchingProfile, err))
 		h.profile = profile
 	}
@@ -284,6 +293,10 @@ func (h *HDMConfigPane) truncateString(s string, maxLen int) string {
 
 func (h *HDMConfigPane) GetPowerState() power.PowerState {
 	return h.powerState
+}
+
+func (h *HDMConfigPane) GetLidState() power.LidState {
+	return h.lidState
 }
 
 func (h *HDMConfigPane) GetProfile() *config.Profile {

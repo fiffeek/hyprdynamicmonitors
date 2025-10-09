@@ -25,15 +25,17 @@ type HDMProfilePreview struct {
 	width            int
 	powerState       power.PowerState
 	runningUnderTest bool
+	lidState         power.LidState
 }
 
 func NewHDMProfilePreview(cfg *config.Config,
-	matcher *matchers.Matcher, monitors []*MonitorSpec, powerState power.PowerState, runningUnderTest bool,
+	matcher *matchers.Matcher, monitors []*MonitorSpec, powerState power.PowerState, runningUnderTest bool, lidState power.LidState,
 ) *HDMProfilePreview {
 	ta := textarea.New()
 	return &HDMProfilePreview{
 		cfg:              cfg,
 		powerState:       powerState,
+		lidState:         lidState,
 		matcher:          matcher,
 		pulled:           false,
 		monitors:         monitors,
@@ -67,11 +69,17 @@ func (h *HDMProfilePreview) Update(msg tea.Msg) tea.Cmd {
 		h.powerState = msg.state
 		h.profile = nil
 		h.textarea.SetValue("")
+	case LidStateChanged:
+		logrus.Debug("Overriding the current lid state")
+		h.pulled = false
+		h.lidState = msg.state
+		h.profile = nil
+		h.textarea.SetValue("")
 	}
 
 	if !h.pulled {
 		h.pulled = true
-		_, profile, err := h.matcher.Match(h.cfg.Get(), ConvertToHyprMonitors(h.monitors), h.powerState)
+		_, profile, err := h.matcher.Match(h.cfg.Get(), ConvertToHyprMonitors(h.monitors), h.powerState, h.lidState)
 		cmds = append(cmds, OperationStatusCmd(OperationNameMatchingProfile, err))
 		h.profile = profile
 		if h.profile != nil {
@@ -123,6 +131,10 @@ func (h *HDMProfilePreview) View() string {
 
 func (h *HDMProfilePreview) GetPowerState() power.PowerState {
 	return h.powerState
+}
+
+func (h *HDMProfilePreview) GetLidState() power.LidState {
+	return h.lidState
 }
 
 func (h *HDMProfilePreview) GetProfile() *config.Profile {

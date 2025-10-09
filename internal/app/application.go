@@ -26,6 +26,7 @@ type Application struct {
 	hyprIPC       *hypr.IPC
 	fswatcher     *filewatcher.Service
 	powerDetector *power.PowerDetector
+	lidDetector   *power.LidStateDetector
 	matcher       *matchers.Matcher
 	generator     *generators.ConfigGenerator
 	notifications *notifications.Service
@@ -37,7 +38,7 @@ type Application struct {
 func NewApplication(
 	configPath *string, dryRun *bool, ctx context.Context,
 	cancel context.CancelCauseFunc, disablePowerEvents, disableAutoHotReload *bool,
-	connectToSessionBus *bool,
+	connectToSessionBus, enableLidEvents *bool,
 ) (*Application, error) {
 	cfg, err := config.NewConfig(*configPath)
 	if err != nil {
@@ -51,22 +52,28 @@ func NewApplication(
 
 	fswatcher := filewatcher.NewService(cfg, disableAutoHotReload)
 
-	var conn *dbus.Conn
+	var dbusPowerEvents *dbus.Conn
 	if !*disablePowerEvents {
-		if *connectToSessionBus {
-			logrus.Debug("Trying to connect to session bus")
-			conn, err = dbus.ConnectSessionBus()
-		} else {
-			logrus.Debug("Trying to connect to system bus")
-			conn, err = dbus.ConnectSystemBus()
-		}
+		dbusPowerEvents, err = getBus(*connectToSessionBus)
 		if err != nil {
 			return nil, fmt.Errorf("cant connect to dbus: %w", err)
 		}
 	}
-	powerDetector, err := power.NewPowerDetector(ctx, cfg, conn, *disablePowerEvents)
+	powerDetector, err := power.NewPowerDetector(ctx, cfg, dbusPowerEvents, *disablePowerEvents)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize PowerDetector: %w", err)
+	}
+
+	var dbusLidEvents *dbus.Conn
+	if *enableLidEvents {
+		dbusLidEvents, err = getBus(*connectToSessionBus)
+		if err != nil {
+			return nil, fmt.Errorf("cant connect to dbus: %w", err)
+		}
+	}
+	lidDetector, err := power.NewLidStateDetector(ctx, cfg, dbusLidEvents, *enableLidEvents)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize LidDetector: %w", err)
 	}
 
 	matcher := matchers.NewMatcher()
@@ -76,9 +83,9 @@ func NewApplication(
 
 	svc := userconfigupdater.NewService(cfg, hyprIPC, powerDetector, &userconfigupdater.Config{
 		DryRun: *dryRun,
-	}, matcher, generator, notifications)
+	}, matcher, generator, notifications, lidDetector)
 
-	reloader := reloader.NewService(cfg, fswatcher, powerDetector, svc, *disableAutoHotReload)
+	reloader := reloader.NewService(cfg, fswatcher, powerDetector, svc, *disableAutoHotReload, lidDetector)
 
 	signalHandler := signal.NewHandler(cancel, reloader, svc)
 
@@ -93,6 +100,7 @@ func NewApplication(
 		svc:           svc,
 		reloader:      reloader,
 		signal:        signalHandler,
+		lidDetector:   lidDetector,
 	}, nil
 }
 
@@ -116,6 +124,7 @@ func (a *Application) Run(ctx context.Context) error {
 		{Fun: a.fswatcher.Run, Name: "filewatcher"},
 		{Fun: a.hyprIPC.RunEventLoop, Name: "hypr ipc"},
 		{Fun: a.powerDetector.Run, Name: "power detector dbus"},
+		{Fun: a.lidDetector.Run, Name: "lid detector dbus"},
 		{Fun: a.reloader.Run, Name: "reloader"},
 		{Fun: a.svc.Run, Name: "main service"},
 	}

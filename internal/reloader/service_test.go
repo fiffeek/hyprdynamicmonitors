@@ -12,6 +12,16 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+type fakeLidDetector struct {
+	reloadErr   error
+	reloadCalls int
+}
+
+func (f *fakeLidDetector) Reload(ctx context.Context) error {
+	f.reloadCalls++
+	return f.reloadErr
+}
+
 type fakePowerDetector struct {
 	reloadErr   error
 	reloadCalls int
@@ -55,6 +65,7 @@ func TestService_Reload(t *testing.T) {
 		name           string
 		powerErr       error
 		serviceErr     error
+		lidErr         error
 		filewatcherErr error
 		wantErr        bool
 		errContains    string
@@ -76,6 +87,12 @@ func TestService_Reload(t *testing.T) {
 			errContains: "cant reload powerDetector",
 		},
 		{
+			name:        "lid detector reload fails",
+			lidErr:      errors.New("lid detector error"),
+			wantErr:     true,
+			errContains: "cant reload lidDetector",
+		},
+		{
 			name:        "service update fails",
 			serviceErr:  errors.New("service error"),
 			wantErr:     true,
@@ -88,8 +105,9 @@ func TestService_Reload(t *testing.T) {
 			powerDetector := &fakePowerDetector{reloadErr: tt.powerErr}
 			service := &fakeService{updateErr: tt.serviceErr}
 			filewatcher := &fakeFilewatcher{updateErr: tt.filewatcherErr}
+			lidDetector := &fakeLidDetector{reloadErr: tt.lidErr}
 
-			reloaderService := reloader.NewService(cfg, filewatcher, powerDetector, service, false)
+			reloaderService := reloader.NewService(cfg, filewatcher, powerDetector, service, false, lidDetector)
 
 			err := reloaderService.Reload(ctx)
 
@@ -100,6 +118,7 @@ func TestService_Reload(t *testing.T) {
 				assert.NoError(t, err)
 				assert.Equal(t, 1, filewatcher.updateCalls)
 				assert.Equal(t, 1, powerDetector.reloadCalls)
+				assert.Equal(t, 1, lidDetector.reloadCalls)
 				assert.Equal(t, 1, service.updateCalls)
 			}
 		})
@@ -115,6 +134,7 @@ func TestService_Run(t *testing.T) {
 		expectedFilewatcherCalls int
 		expectedPowerCalls       int
 		expectedServiceCalls     int
+		expectedLidCalls         int
 	}{
 		{
 			name:                     "processes events from filewatcher",
@@ -122,6 +142,7 @@ func TestService_Run(t *testing.T) {
 			expectedFilewatcherCalls: 1,
 			expectedPowerCalls:       1,
 			expectedServiceCalls:     1,
+			expectedLidCalls:         1,
 		},
 		{
 			name:                     "disabled hot reload",
@@ -129,6 +150,7 @@ func TestService_Run(t *testing.T) {
 			expectedFilewatcherCalls: 0,
 			expectedPowerCalls:       0,
 			expectedServiceCalls:     0,
+			expectedLidCalls:         0,
 		},
 	}
 
@@ -138,8 +160,10 @@ func TestService_Run(t *testing.T) {
 			service := &fakeService{}
 			channel := make(chan interface{}, 1)
 			filewatcher := &fakeFilewatcher{channel: channel}
+			lidDetector := &fakeLidDetector{}
 
-			reloaderService := reloader.NewService(cfg, filewatcher, powerDetector, service, tt.hotReloadDisabled)
+			reloaderService := reloader.NewService(cfg, filewatcher, powerDetector,
+				service, tt.hotReloadDisabled, lidDetector)
 
 			ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
 			defer cancel()
@@ -168,6 +192,7 @@ func TestService_Run(t *testing.T) {
 
 			assert.Equal(t, tt.expectedFilewatcherCalls, filewatcher.updateCalls)
 			assert.Equal(t, tt.expectedPowerCalls, powerDetector.reloadCalls)
+			assert.Equal(t, tt.expectedLidCalls, lidDetector.reloadCalls)
 			assert.Equal(t, tt.expectedServiceCalls, service.updateCalls)
 		})
 	}
