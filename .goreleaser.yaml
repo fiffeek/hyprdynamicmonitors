@@ -29,6 +29,7 @@ archives:
           {{- if .Arm }}v{{ .Arm }}{{ end }}
       files:
           - LICENSE
+          - infrastructure/systemd/*
 
 changelog:
     sort: asc
@@ -78,6 +79,9 @@ aurs:
 
           # license
           install -Dm644 "./LICENSE" "${pkgdir}/usr/share/licenses/hyprdynamicmonitors/LICENSE"
+
+          # systemd
+          install -Dm644 "./infrastructure/systemd/hyprdynamicmonitors.service" "${pkgdir}/usr/lib/systemd/user/hyprdynamicmonitors.service"
 
           # completions
           mkdir -p "${pkgdir}/usr/share/bash-completion/completions/"

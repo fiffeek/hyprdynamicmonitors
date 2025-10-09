@@ -208,3 +208,24 @@ record/previews: build/docs
 
 docs:
 	@cd ./docs && npm run start
+
+# The following nix target require nix locally, just for testing the flake, not in the CI yet
+nix/build:
+	@cd nix/$(NIX_DIRECTORY) && nix --extra-experimental-features "nix-command flakes" run nixpkgs#nixos-rebuild -- build-vm --flake .#hypr-vm
+
+nix/build/module:
+	@$(MAKE) nix/build NIX_DIRECTORY=module
+
+nix/build/homemanager:
+	@$(MAKE) nix/build NIX_DIRECTORY=homemanager
+
+nix/run:
+	@echo "login: demo"
+	@echo "password: demo"
+	@cd ./nix/$(NIX_DIRECTORY) && ./result/bin/run-hypr-vm-vm
+
+nix/run/module:
+	@$(MAKE) nix/run NIX_DIRECTORY=module
+
+nix/run/homemanager:
+	@$(MAKE) nix/run NIX_DIRECTORY=homemanager
