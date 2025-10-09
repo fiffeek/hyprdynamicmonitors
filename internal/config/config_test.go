@@ -254,11 +254,6 @@ func TestLoad(t *testing.T) {
 			expectError:   true,
 			errorContains: "fallback profile cant define any conditions",
 		},
-		{
-			name:        "file not found",
-			configFile:  "nonexistent.toml",
-			expectError: false,
-		},
 	}
 
 	for _, tt := range tests {

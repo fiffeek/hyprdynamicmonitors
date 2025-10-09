@@ -232,21 +232,21 @@ type RequiredMonitor struct {
 	MonitorTag  *string `toml:"monitor_tag"`
 }
 
-func cond(cond, a *string, b string) string {
+func Cond(cond, a *string, b string) string {
 	if cond != nil {
 		return *a
 	}
 	return b
 }
 
-func createDefaultConfig(path string) error {
+func CreateDefaultConfig(path string) error {
 	objectPath, err := utils.GetPowerLine()
 	if err != nil {
 		logrus.Warning("No power line available, will use a default")
 	}
 
 	funcMap := template.FuncMap{
-		"cond": cond,
+		"cond": Cond,
 	}
 
 	tmpl, err := template.New("hdm_config").Funcs(funcMap).Parse(defaultConfigTemplate)
@@ -273,7 +273,7 @@ func createDefaultConfig(path string) error {
 func Load(configPath string) (*RawConfig, error) {
 	configPath = os.ExpandEnv(configPath)
 	if _, err := os.Stat(configPath); os.IsNotExist(err) {
-		if err := createDefaultConfig(configPath); err != nil {
+		if err := CreateDefaultConfig(configPath); err != nil {
 			return nil, fmt.Errorf("cant create a default configuration %s: %w", configPath, err)
 		}
 	}

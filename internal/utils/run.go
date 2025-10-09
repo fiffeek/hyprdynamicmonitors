@@ -8,7 +8,13 @@ import (
 	"strings"
 )
 
-func runCmd(ctx context.Context, name string, args ...string) (string, error) {
+// cmdRunner is the function type for running commands
+type cmdRunner func(ctx context.Context, name string, args ...string) (string, error)
+
+// runCmd is a variable that can be swapped in tests
+var runCmd cmdRunner = execCommand
+
+func execCommand(ctx context.Context, name string, args ...string) (string, error) {
 	cmd := exec.CommandContext(ctx, name, args...)
 	var out bytes.Buffer
 	var stderr bytes.Buffer
@@ -19,4 +25,14 @@ func runCmd(ctx context.Context, name string, args ...string) (string, error) {
 			name, strings.Join(args, " "), err, stderr.String())
 	}
 	return strings.TrimSpace(out.String()), nil
+}
+
+// GetRunCmd returns the current command runner (for testing)
+func GetRunCmd() cmdRunner {
+	return runCmd
+}
+
+// SetRunCmd sets the command runner (for testing)
+func SetRunCmd(r cmdRunner) {
+	runCmd = r
 }
