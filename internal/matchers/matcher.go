@@ -16,7 +16,7 @@ func NewMatcher() *Matcher {
 }
 
 func (m *Matcher) Match(cfg *config.RawConfig, connectedMonitors []*hypr.MonitorSpec,
-	powerState power.PowerState,
+	powerState power.PowerState, lidState power.LidState,
 ) (bool, *config.Profile, error) {
 	score := make(map[string]int)
 	profiles := cfg.Profiles
@@ -28,7 +28,7 @@ func (m *Matcher) Match(cfg *config.RawConfig, connectedMonitors []*hypr.Monitor
 	for name, profile := range profiles {
 		conditions := profile.Conditions
 		fullMatchScore := m.calcFullProfileScore(cfg, conditions)
-		score[name] = m.scoreProfile(cfg, conditions, powerState, connectedMonitors)
+		score[name] = m.scoreProfile(cfg, conditions, powerState, lidState, connectedMonitors)
 
 		// if there is a partial match discard the config
 		if fullMatchScore != score[name] {
@@ -66,11 +66,15 @@ func (m *Matcher) returnNoneOrFallback(cfg *config.RawConfig) (bool, *config.Pro
 }
 
 func (m *Matcher) scoreProfile(cfg *config.RawConfig, conditions *config.ProfileCondition,
-	powerState power.PowerState, connectedMonitors []*hypr.MonitorSpec,
+	powerState power.PowerState, lidState power.LidState, connectedMonitors []*hypr.MonitorSpec,
 ) int {
 	profileScore := 0
 	if conditions.PowerState != nil && conditions.PowerState.Value() == powerState.String() {
 		profileScore += *cfg.Scoring.PowerStateMatch
+	}
+
+	if conditions.LidState != nil && conditions.LidState.Value() == lidState.String() {
+		profileScore += *cfg.Scoring.LidStateMatch
 	}
 
 	for _, condition := range conditions.RequiredMonitors {
@@ -97,6 +101,10 @@ func (m *Matcher) calcFullProfileScore(cfg *config.RawConfig, conditions *config
 	fullMatchScore := 0
 	if conditions.PowerState != nil {
 		fullMatchScore += *cfg.Scoring.PowerStateMatch
+	}
+
+	if conditions.LidState != nil {
+		fullMatchScore += *cfg.Scoring.LidStateMatch
 	}
 
 	for _, condition := range conditions.RequiredMonitors {

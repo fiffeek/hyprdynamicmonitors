@@ -15,6 +15,7 @@ var (
 	disableAutoHotReload bool
 	connectToSessionBus  bool
 	disablePowerEvents   bool
+	enableLidEvents      bool
 )
 
 var runCmd = &cobra.Command{
@@ -72,5 +73,11 @@ func init() {
 		"disable-auto-hot-reload",
 		false,
 		"Disable automatic hot reload (no file watchers)",
+	)
+	runCmd.Flags().BoolVar(
+		&enableLidEvents,
+		"enable-lid-events",
+		false,
+		"Enable listening to dbus lid events",
 	)
 }

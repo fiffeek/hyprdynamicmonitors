@@ -62,6 +62,7 @@ type RawConfig struct {
 	General              *GeneralSection     `toml:"general"`
 	Scoring              *ScoringSection     `toml:"scoring"`
 	PowerEvents          *PowerSection       `toml:"power_events"`
+	LidEvents            *LidSection         `toml:"lid_events"`
 	HotReload            *HotReloadSection   `toml:"hot_reload_section"`
 	Notifications        *Notifications      `toml:"notifications"`
 	StaticTemplateValues map[string]string   `toml:"static_template_values"`
@@ -77,6 +78,12 @@ type Notifications struct {
 	TimeoutMs *int32 `toml:"timeout_ms"`
 }
 
+type LidSection struct {
+	DbusSignalMatchRules     []*DbusSignalMatchRule     `toml:"dbus_signal_match_rules"`
+	DbusSignalReceiveFilters []*DbusSignalReceiveFilter `toml:"dbus_signal_receive_filters"`
+	DbusQueryObject          *DbusQueryObject           `toml:"dbus_query_object"`
+}
+
 type PowerSection struct {
 	DbusSignalMatchRules     []*DbusSignalMatchRule     `toml:"dbus_signal_match_rules"`
 	DbusSignalReceiveFilters []*DbusSignalReceiveFilter `toml:"dbus_signal_receive_filters"`
@@ -89,6 +96,7 @@ type DbusQueryObject struct {
 	Method                   string               `toml:"method"`
 	Args                     []DbusQueryObjectArg `toml:"args"`
 	ExpectedDischargingValue string               `toml:"expected_discharging_value"`
+	ExpectedLidClosingValue  string               `toml:"expected_lid_closing_value"`
 }
 
 type DbusQueryObjectArg struct {
@@ -117,6 +125,7 @@ type ScoringSection struct {
 	NameMatch        *int `toml:"name_match"`
 	DescriptionMatch *int `toml:"description_match"`
 	PowerStateMatch  *int `toml:"power_state_match"`
+	LidStateMatch    *int `toml:"lid_state_match"`
 }
 
 var reservedTemplateVariables = map[string]bool{
@@ -177,6 +186,8 @@ type Profile struct {
 	KeyOrder             int               `toml:"-"`
 }
 
+type LidStateType int
+
 type PowerStateType int
 
 const (
@@ -218,6 +229,7 @@ func (e *PowerStateType) MarshalTOML() ([]byte, error) {
 type ProfileCondition struct {
 	RequiredMonitors []*RequiredMonitor `toml:"required_monitors"`
 	PowerState       *PowerStateType    `toml:"power_state"`
+	LidState         *LidStateType      `toml:"lid_state"`
 }
 
 type RequiredMonitor struct {
