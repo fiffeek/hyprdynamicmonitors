@@ -133,10 +133,9 @@ func TestLoad(t *testing.T) {
 			},
 		},
 		{
-			name:          "invalid - no profiles",
-			configFile:    "invalid_no_profiles.toml",
-			expectError:   true,
-			errorContains: "at least one profile has to be defined",
+			name:        "valid - no profiles",
+			configFile:  "valid_no_profiles.toml",
+			expectError: false,
 		},
 		{
 			name:          "invalid - missing config file",
@@ -256,10 +255,9 @@ func TestLoad(t *testing.T) {
 			errorContains: "fallback profile cant define any conditions",
 		},
 		{
-			name:          "file not found",
-			configFile:    "nonexistent.toml",
-			expectError:   true,
-			errorContains: "not found",
+			name:        "file not found",
+			configFile:  "nonexistent.toml",
+			expectError: false,
 		},
 	}
 

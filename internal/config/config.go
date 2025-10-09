@@ -2,6 +2,8 @@
 package config
 
 import (
+	"bytes"
+	_ "embed"
 	"errors"
 	"fmt"
 	"os"
@@ -9,12 +11,16 @@ import (
 	"slices"
 	"strings"
 	"sync"
+	"text/template"
 	"time"
 
 	"github.com/BurntSushi/toml"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/utils"
 	"github.com/sirupsen/logrus"
 )
+
+//go:embed templates/default_config.toml.go.tmpl
+var defaultConfigTemplate string
 
 const LeaveEmpty = "leaveEmptyToken"
 
@@ -226,10 +232,50 @@ type RequiredMonitor struct {
 	MonitorTag  *string `toml:"monitor_tag"`
 }
 
+func cond(cond, a *string, b string) string {
+	if cond != nil {
+		return *a
+	}
+	return b
+}
+
+func createDefaultConfig(path string) error {
+	objectPath, err := utils.GetPowerLine()
+	if err != nil {
+		logrus.Warning("No power line available, will use a default")
+	}
+
+	funcMap := template.FuncMap{
+		"cond": cond,
+	}
+
+	tmpl, err := template.New("hdm_config").Funcs(funcMap).Parse(defaultConfigTemplate)
+	if err != nil {
+		return fmt.Errorf("failed to parse template: %w", err)
+	}
+
+	templateData := map[string]any{
+		"ObjectPath": objectPath,
+	}
+
+	var rendered bytes.Buffer
+	if err := tmpl.Execute(&rendered, templateData); err != nil {
+		return fmt.Errorf("failed to execute template: %w", err)
+	}
+
+	if err := utils.WriteAtomic(path, rendered.Bytes()); err != nil {
+		return fmt.Errorf("cant write to the config file: %w", err)
+	}
+
+	return nil
+}
+
 func Load(configPath string) (*RawConfig, error) {
 	configPath = os.ExpandEnv(configPath)
 	if _, err := os.Stat(configPath); os.IsNotExist(err) {
-		return nil, fmt.Errorf("configuration file %s not found", configPath)
+		if err := createDefaultConfig(configPath); err != nil {
+			return nil, fmt.Errorf("cant create a default configuration %s: %w", configPath, err)
+		}
 	}
 
 	logrus.WithFields(logrus.Fields{"expanded": configPath}).Debug("Expanded config path")
@@ -297,7 +343,7 @@ func (c *RawConfig) Validate() error {
 	}
 
 	if len(c.Profiles) == 0 {
-		return errors.New("at least one profile has to be defined")
+		logrus.Warning("No profiles are defined, not config will be automatically applied")
 	}
 
 	if c.General == nil {
