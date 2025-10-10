@@ -39,14 +39,15 @@ func Test_Validate_Examples(t *testing.T) {
 
 func Test_Validate_InvalidConfigs(t *testing.T) {
 	tests := []struct {
-		name          string
-		configFile    string
-		expectedError string // substring that should appear in error message
+		name               string
+		configFile         string
+		doesNotExpectError bool
+		expectedError      string // substring that should appear in error message
 	}{
 		{
-			name:          "missing profiles",
-			configFile:    "missing_profiles.toml",
-			expectedError: "at least one profile has to be defined",
+			name:               "missing profiles",
+			configFile:         "missing_profiles.toml",
+			doesNotExpectError: true,
 		},
 		{
 			name:          "invalid config file type",
@@ -95,11 +96,15 @@ func Test_Validate_InvalidConfigs(t *testing.T) {
 		},
 	}
 
-	invalidConfigsDir := filepath.Join(basepath, "test", "testdata", "app", "configs", "invalid")
-
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			configPath := filepath.Join(invalidConfigsDir, tt.configFile)
+			configsDir := filepath.Join(basepath, "test", "testdata", "app", "configs")
+			if tt.doesNotExpectError {
+				configsDir = filepath.Join(configsDir, "valid")
+			} else {
+				configsDir = filepath.Join(configsDir, "invalid")
+			}
+			configPath := filepath.Join(configsDir, tt.configFile)
 
 			ctx, cancel := context.WithTimeout(context.Background(), 200*time.Millisecond)
 			defer cancel()
@@ -117,6 +122,10 @@ func Test_Validate_InvalidConfigs(t *testing.T) {
 			case <-ctx.Done():
 				require.NoError(t, ctx.Err(), "timeout while running validation")
 			case <-done:
+				if tt.doesNotExpectError {
+					require.NoError(t, err, "expected validation to succeed but it failed. Output: %s", string(out))
+					return
+				}
 				require.Error(t, err, "expected validation to fail but it succeeded. Output: %s", string(out))
 				require.Contains(t, string(out), tt.expectedError,
 					"error message should contain expected substring. Got: %s", string(out))

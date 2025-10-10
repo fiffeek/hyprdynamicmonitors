@@ -377,6 +377,17 @@ detected setup is in [`examples/disable-monitors`](https://github.com/fiffeek/hy
 
 ## Configuration
 
+HyprDynamicMonitors automatically creates a default configuration file on first run if none exists at the specified path (the destination defaults to `~/.config/hypr/hyprdynamicmonitors.toml`).
+
+The default configuration:
+- Automatically detects your system's power line using `upower -e`
+- Searches for common power line paths (e.g., `line_power_ACAD`, `line_power_AC`, `line_power_ADP1`)
+- Falls back to `/org/freedesktop/UPower/devices/line_power_ACAD` if detection fails
+- Creates a minimal config with power event monitoring but **no profiles**
+- Allows you to start adding profiles immediately without manually configuring power events
+
+To customize your setup, add profile sections to the generated config file. See the [Minimal Example](#minimal-example) and [Examples](#examples) sections for guidance. Alternatively, use the `TUI`.
+
 ### Monitor Matching
 
 Profiles match monitors based on their properties. You can match by:
