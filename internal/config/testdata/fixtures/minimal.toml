@@ -1,6 +1,6 @@
 [profiles]
 [profiles.minimal]
-config_file = "/home/fmikina/personal/hyprdynamicmonitors/internal/config/testdata/basic.conf"
+config_file = "/personal/hyprdynamicmonitors/internal/config/testdata/basic.conf"
 config_file_type = "static"
 [profiles.minimal.conditions]
 
@@ -8,7 +8,7 @@ config_file_type = "static"
 name = "eDP-1"
 
 [general]
-destination = "/home/fmikina/.config/hypr/monitors.conf"
+destination = "/.config/hypr/monitors.conf"
 debounce_time_ms = 3000
 
 [scoring]

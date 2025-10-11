@@ -2,7 +2,9 @@ package config_test
 
 import (
 	"bytes"
+	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/BurntSushi/toml"
@@ -1077,10 +1079,14 @@ func Test__ReadWriteSelf(t *testing.T) {
 	err = encoder.Encode(cfg)
 	require.NoError(t, err, "config should be serializable")
 
+	// sanitize the data
+	data := buf.String()
+	data = strings.ReplaceAll(data, os.ExpandEnv("$HOME"), "")
+
 	tempDir := t.TempDir()
 	cfgFile := filepath.Join(tempDir, "file")
-	err = utils.WriteAtomic(cfgFile, buf.Bytes())
+	err = utils.WriteAtomic(cfgFile, []byte(data))
 	require.NoError(t, err, "config cant be written to a tmp file")
 
-	testutils.AssertFixture(t, cfgFile, "testdata/fixtures/minimal.toml", true)
+	testutils.AssertFixture(t, cfgFile, "testdata/fixtures/minimal.toml", *regenerate)
 }
