@@ -1,6 +1,6 @@
 [profiles]
 [profiles.minimal]
-config_file = "/personal/hyprdynamicmonitors/internal/config/testdata/basic.conf"
+config_file = "/basic.conf"
 config_file_type = "static"
 [profiles.minimal.conditions]
 

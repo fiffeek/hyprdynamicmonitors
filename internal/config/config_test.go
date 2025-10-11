@@ -1081,6 +1081,8 @@ func Test__ReadWriteSelf(t *testing.T) {
 
 	// sanitize the data
 	data := buf.String()
+	configDir := filepath.Dir(cfg.ConfigPath)
+	data = strings.ReplaceAll(data, configDir, "")
 	data = strings.ReplaceAll(data, os.ExpandEnv("$HOME"), "")
 
 	tempDir := t.TempDir()

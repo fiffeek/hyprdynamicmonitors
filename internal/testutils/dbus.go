@@ -99,10 +99,10 @@ func CreateLidConfig(busName, objectPath string) *config.LidSection {
 			{Name: utils.StringPtr(testSignalName)},
 		},
 		DbusQueryObject: &config.DbusQueryObject{
-			Destination:              busName,
-			Path:                     objectPath,
-			Method:                   testMethodName,
-			ExpectedDischargingValue: "true", // true means on battery
+			Destination:             busName,
+			Path:                    objectPath,
+			Method:                  testMethodName,
+			ExpectedLidClosingValue: "true",
 			Args: []config.DbusQueryObjectArg{
 				{Arg: testInterface},
 				{Arg: testProperty},
