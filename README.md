@@ -432,6 +432,7 @@ To understand scoring and profile matching more see [`examples/scoring`](https:/
 
 ```go
 .PowerState         // "AC" or "BAT"
+.LidState           // "UNKNOWN", "Closed" or "Opened"
 .Monitors           // Array of all connected monitors returned by `hyprctl monitors`
 .ExtraMonitors      // Array of connected monitors not defined in the profile
 .RequiredMonitors   // Array of connected monitors defined in the profile
@@ -472,6 +473,8 @@ To understand template variables more see [`examples/template-variables`](https:
 isOnBattery         // Returns true if on battery power
 isOnAC              // Returns true if on AC power
 powerState          // Returns current power state string
+isLidClosed         // Returns true if the lid is closed (if --enabling-lid-events is passed)
+isLidOpened         // Returns true if the lid is opened (if --enabling-lid-events is passed)
 ```
 
 ### Fallback Profile

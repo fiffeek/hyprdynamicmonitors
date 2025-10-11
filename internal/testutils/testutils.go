@@ -40,6 +40,13 @@ func (t *TestConfig) WithProfiles(profiles map[string]*config.Profile) *TestConf
 	return t
 }
 
+func (t *TestConfig) RequireLid(power config.LidStateType) *TestConfig {
+	for _, profile := range t.cfg.Profiles {
+		profile.Conditions.LidState = utils.JustPtr(power)
+	}
+	return t
+}
+
 func (t *TestConfig) RequirePower(power config.PowerStateType) *TestConfig {
 	for _, profile := range t.cfg.Profiles {
 		profile.Conditions.PowerState = utils.JustPtr(power)

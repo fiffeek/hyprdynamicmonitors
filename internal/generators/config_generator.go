@@ -34,20 +34,20 @@ func NewConfigGenerator(cfg *config.Config) *ConfigGenerator {
 // GenerateConfig either renders a template or links a file, and returns if any changed were done
 // this includes stating the config files to catch if the user modified them by hand (in linking scenario)
 func (g *ConfigGenerator) GenerateConfig(cfg *config.RawConfig, profile *config.Profile,
-	connectedMonitors []*hypr.MonitorSpec, powerState power.PowerState, destination string,
+	connectedMonitors []*hypr.MonitorSpec, powerState power.PowerState, lidState power.LidState, destination string,
 ) (bool, error) {
 	switch *profile.ConfigType {
 	case config.Static:
 		return g.linkConfigFile(profile, destination)
 	case config.Template:
-		return g.renderTemplateFile(cfg, profile, connectedMonitors, powerState, destination)
+		return g.renderTemplateFile(cfg, profile, connectedMonitors, powerState, lidState, destination)
 	default:
 		return false, fmt.Errorf("unsupported config type: %v", *profile.ConfigType)
 	}
 }
 
 func (g *ConfigGenerator) renderTemplateFile(cfg *config.RawConfig, profile *config.Profile,
-	connectedMonitors []*hypr.MonitorSpec, powerState power.PowerState, destination string,
+	connectedMonitors []*hypr.MonitorSpec, powerState power.PowerState, lidState power.LidState, destination string,
 ) (bool, error) {
 	templatePath := profile.ConfigFile
 
@@ -57,12 +57,12 @@ func (g *ConfigGenerator) renderTemplateFile(cfg *config.RawConfig, profile *con
 		return false, fmt.Errorf("failed to read template file %s: %w", templatePath, err)
 	}
 
-	tmpl, err := template.New("config").Funcs(getFuncMap(powerState)).Parse(string(templateContent))
+	tmpl, err := template.New("config").Funcs(getFuncMap(powerState, lidState)).Parse(string(templateContent))
 	if err != nil {
 		return false, fmt.Errorf("failed to parse template: %w", err)
 	}
 
-	templateData := g.createTemplateData(cfg, profile, connectedMonitors, powerState)
+	templateData := g.createTemplateData(cfg, profile, connectedMonitors, powerState, lidState)
 
 	var rendered bytes.Buffer
 	if err := tmpl.Execute(&rendered, templateData); err != nil {
@@ -91,7 +91,7 @@ func (g *ConfigGenerator) renderTemplateFile(cfg *config.RawConfig, profile *con
 	return true, nil
 }
 
-func getFuncMap(powerState power.PowerState) template.FuncMap {
+func getFuncMap(powerState power.PowerState, lidState power.LidState) template.FuncMap {
 	funcMap := template.FuncMap{
 		"isOnBattery": func() bool {
 			return powerState == power.BatteryPowerState
@@ -102,12 +102,21 @@ func getFuncMap(powerState power.PowerState) template.FuncMap {
 		"powerState": func() string {
 			return powerState.String()
 		},
+		"lidState": func() string {
+			return lidState.String()
+		},
+		"isLidClosed": func() bool {
+			return lidState == power.ClosedLidState
+		},
+		"isLidOpened": func() bool {
+			return lidState == power.OpenedLidState
+		},
 	}
 	return funcMap
 }
 
 func (g *ConfigGenerator) createTemplateData(cfg *config.RawConfig, profile *config.Profile,
-	connectedMonitors []*hypr.MonitorSpec, powerState power.PowerState,
+	connectedMonitors []*hypr.MonitorSpec, powerState power.PowerState, lidState power.LidState,
 ) map[string]any {
 	data := make(map[string]any)
 
@@ -126,6 +135,8 @@ func (g *ConfigGenerator) createTemplateData(cfg *config.RawConfig, profile *con
 	// Monitors represents all connected monitors, might not be defined in the profile, might be disabled etc.
 	data["Monitors"] = monitorsStripped
 	data["PowerState"] = powerState.String()
+	data["LidState"] = lidState.String()
+
 	requiredMonitors := []*MonitorSpec{}
 	extraMonitors := []*MonitorSpec{}
 

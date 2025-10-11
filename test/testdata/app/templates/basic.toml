@@ -1,5 +1,6 @@
 # Template test configuration
 # Generated with power state: {{.PowerState}}
+# Generated with lid state: {{.LidState}}
 
 {{- range .Monitors}}
 monitor={{.Name}},{{.Description}}

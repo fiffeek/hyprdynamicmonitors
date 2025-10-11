@@ -220,7 +220,7 @@ func (s *Service) UpdateOnce(ctx context.Context) error {
 	s.tryExec(ctx, profile.PreApplyExec, cfg.General.PreApplyExec, utils.PreExecLogID)
 
 	destination := *cfg.General.Destination
-	changed, err := s.generator.GenerateConfig(cfg, profile, monitors, powerState, destination)
+	changed, err := s.generator.GenerateConfig(cfg, profile, monitors, powerState, lidState, destination)
 	if err != nil {
 		return fmt.Errorf("failed to generate config: %w", err)
 	}

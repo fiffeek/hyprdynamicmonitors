@@ -171,6 +171,28 @@ func SetupTestDbusService(t *testing.T) (*TestDbusService, string, string, func(
 	return service, testBusName, testObjectPath, cleanup
 }
 
+func SetupFakeDbusLidEventsServer(t *testing.T, service *TestDbusService, events []power.LidState,
+	initialSleep, sleepBetweenEvents time.Duration, binaryStarting <-chan struct{},
+) chan struct{} {
+	serverDone := make(chan struct{})
+	go func() {
+		defer close(serverDone)
+		Logf(t, "Waiting for the server to start")
+		<-binaryStarting
+		Logf(t, "Starting fake dbus")
+		time.Sleep(initialSleep)
+		Logf(t, "Will start sending events")
+
+		for _, event := range events {
+			service.SetLidProperty(event)
+			require.NoError(t, service.EmitSignal(), "cant emit fake dbus signal")
+			Logf(t, "Emitted signal")
+			time.Sleep(sleepBetweenEvents)
+		}
+	}()
+	return serverDone
+}
+
 func SetupFakeDbusEventsServer(t *testing.T, service *TestDbusService, events []power.PowerState,
 	initialSleep, sleepBetweenEvents time.Duration, binaryStarting <-chan struct{},
 ) chan struct{} {
