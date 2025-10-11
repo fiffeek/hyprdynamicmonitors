@@ -57,6 +57,17 @@ func (s *TestDbusService) Get(interfaceName, propertyName string) (dbus.Variant,
 	return dbus.MakeVariant(false), dbus.NewError("org.freedesktop.DBus.Error.InvalidArgs", nil)
 }
 
+func (s *TestDbusService) SetLidProperty(value power.LidState) {
+	switch value {
+	case power.OpenedLidState:
+		s.propertyValue = false
+	case power.ClosedLidState:
+		s.propertyValue = true
+	default:
+		assert.True(s.t, false, "unknown lid state")
+	}
+}
+
 func (s *TestDbusService) SetProperty(value power.PowerState) {
 	switch value {
 	case power.ACPowerState:
@@ -73,6 +84,31 @@ func (s *TestDbusService) EmitSignal() error {
 		return fmt.Errorf("cant emit signal: %w", err)
 	}
 	return nil
+}
+
+func CreateLidConfig(busName, objectPath string) *config.LidSection {
+	return &config.LidSection{
+		DbusSignalMatchRules: []*config.DbusSignalMatchRule{
+			{
+				Interface:  utils.StringPtr(testInterface),
+				Member:     utils.StringPtr(testMemberName),
+				ObjectPath: utils.StringPtr(objectPath),
+			},
+		},
+		DbusSignalReceiveFilters: []*config.DbusSignalReceiveFilter{
+			{Name: utils.StringPtr(testSignalName)},
+		},
+		DbusQueryObject: &config.DbusQueryObject{
+			Destination:              busName,
+			Path:                     objectPath,
+			Method:                   testMethodName,
+			ExpectedDischargingValue: "true", // true means on battery
+			Args: []config.DbusQueryObjectArg{
+				{Arg: testInterface},
+				{Arg: testProperty},
+			},
+		},
+	}
 }
 
 func CreatePowerConfig(busName, objectPath string) *config.PowerSection {
@@ -98,6 +134,10 @@ func CreatePowerConfig(busName, objectPath string) *config.PowerSection {
 			},
 		},
 	}
+}
+
+func CreateTestLidConfig(t *testing.T, busName, objectPath string) *config.Config {
+	return NewTestConfig(t).WithLidSection(CreateLidConfig(busName, objectPath)).Get()
 }
 
 func CreateTestPowerConfig(t *testing.T, busName, objectPath string) *config.Config {

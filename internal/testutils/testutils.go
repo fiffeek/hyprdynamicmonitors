@@ -93,6 +93,11 @@ func (t *TestConfig) WithScoring(scoring *config.ScoringSection) *TestConfig {
 	return t
 }
 
+func (t *TestConfig) WithLidSection(ps *config.LidSection) *TestConfig {
+	t.cfg.LidEvents = ps
+	return t
+}
+
 func (t *TestConfig) WithPowerSection(ps *config.PowerSection) *TestConfig {
 	t.cfg.PowerEvents = ps
 	return t
