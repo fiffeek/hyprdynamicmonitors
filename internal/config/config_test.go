@@ -1,12 +1,16 @@
 package config_test
 
 import (
+	"bytes"
 	"path/filepath"
 	"testing"
 
+	"github.com/BurntSushi/toml"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/config"
+	"github.com/fiffeek/hyprdynamicmonitors/internal/testutils"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/utils"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestLoad(t *testing.T) {
@@ -1061,4 +1065,22 @@ func containsSubstring(haystack, needle string) bool {
 		}
 	}
 	return false
+}
+
+func Test__ReadWriteSelf(t *testing.T) {
+	cfg, err := config.Load("testdata/valid_minimal.toml")
+	require.NoError(t, err, "minimal config should be readable")
+
+	buf := new(bytes.Buffer)
+	encoder := toml.NewEncoder(buf)
+	encoder.Indent = ""
+	err = encoder.Encode(cfg)
+	require.NoError(t, err, "config should be serializable")
+
+	tempDir := t.TempDir()
+	cfgFile := filepath.Join(tempDir, "file")
+	err = utils.WriteAtomic(cfgFile, buf.Bytes())
+	require.NoError(t, err, "config cant be written to a tmp file")
+
+	testutils.AssertFixture(t, cfgFile, "testdata/fixtures/minimal.toml", true)
 }
