@@ -4,8 +4,10 @@ PRECOMMIT_FILE := .pre-commit-config.yaml
 VENV := venv
 REQUIREMENTS_FILE := requirements.txt
 PACKAGE_LOCK := package-lock.json
+GEMFILE_LOCK := Gemfile.lock
 COMMITLINT_FILE := commitlint.config.js
 NPM_BIN := npm
+BULDLE_BIN := bundle
 GOLANGCI_LINT_BIN := golangci-lint
 GOLANG_BIN := go
 GORELEASER_BIN := goreleaser
@@ -61,6 +63,7 @@ dev: \
 	$(INSTALL_DIR)/.asdf.stamp \
 	$(INSTALL_DIR)/.venv.stamp \
 	$(INSTALL_DIR)/.npm.stamp \
+	$(INSTALL_DIR)/.gem.stamp \
 	$(INSTALL_DIR)/.precommit.stamp \
 	$(INSTALL_DIR)/.toc.stamp
 
@@ -82,6 +85,10 @@ $(INSTALL_DIR)/.dir.stamp:
 
 $(INSTALL_DIR)/.asdf.stamp:
 	@asdf install
+	@touch $@
+
+$(INSTALL_DIR)/.gem.stamp: $(GEMFILE_LOCK) $(INSTALL_DIR)/.asdf.stamp
+	@$(BULDLE_BIN) install
 	@touch $@
 
 $(INSTALL_DIR)/.npm.stamp: $(PACKAGE_LOCK) $(INSTALL_DIR)/.asdf.stamp
@@ -187,3 +194,9 @@ record/previews: build/docs
 	$(MAKE) record/preview RECORD_TARGET=apply
 	$(MAKE) record/preview RECORD_TARGET=create_profile
 	$(MAKE) record/preview RECORD_TARGET=edit_existing
+
+record/demo: build/docs
+	$(MAKE) record/preview RECORD_TARGET=demo
+
+docs/serve:
+	@cd docs && $(BULDLE_BIN) exec jekyll serve --livereload

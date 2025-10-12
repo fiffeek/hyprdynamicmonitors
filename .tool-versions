@@ -3,3 +3,4 @@ python 3.9.0
 golangci-lint 2.4.0
 goreleaser 2.11.2
 nodejs 24.6.0
+ruby 3.3.4

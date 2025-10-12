@@ -1,0 +1,15 @@
+title: HyprDynamicMonitors
+description: An event-driven service that automatically manages Hyprland monitor configurations based on connected displays, power and lid state.
+markdown: kramdown
+remote_theme: pages-themes/minimal@v0.2.0
+plugins:
+  - jekyll-remote-theme
+navigation:
+  - name: Home
+    link: /
+  - name: About
+    link: /about
+  - name: Docs
+    link: /docs
+  - name: Contact
+    link: /contact

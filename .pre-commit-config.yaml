@@ -48,6 +48,7 @@ repos:
             name: generate toc
             entry: make toc/generate
             language: system
+            # todo update
             files: ^README\.md$
           - id: autohelp
             name: generate help

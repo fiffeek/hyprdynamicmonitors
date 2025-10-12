@@ -1,0 +1,2 @@
+---
+BUNDLE_BUILD__POSIX___SPAWN: "--with-cflags=-Wno-incompatible-function-pointer-types"

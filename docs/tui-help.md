@@ -1,3 +1,8 @@
+---
+layout: default
+title: TUI
+---
+
 # TUI Documentation
 
 The HyprDynamicMonitors TUI provides an interactive interface for managing Hyprland monitor configurations.
