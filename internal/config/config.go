@@ -68,6 +68,7 @@ type RawConfig struct {
 	General              *GeneralSection     `toml:"general"`
 	Scoring              *ScoringSection     `toml:"scoring"`
 	PowerEvents          *PowerSection       `toml:"power_events"`
+	LidEvents            *LidSection         `toml:"lid_events"`
 	HotReload            *HotReloadSection   `toml:"hot_reload_section"`
 	Notifications        *Notifications      `toml:"notifications"`
 	StaticTemplateValues map[string]string   `toml:"static_template_values"`
@@ -83,6 +84,12 @@ type Notifications struct {
 	TimeoutMs *int32 `toml:"timeout_ms"`
 }
 
+type LidSection struct {
+	DbusSignalMatchRules     []*DbusSignalMatchRule     `toml:"dbus_signal_match_rules"`
+	DbusSignalReceiveFilters []*DbusSignalReceiveFilter `toml:"dbus_signal_receive_filters"`
+	DbusQueryObject          *DbusQueryObject           `toml:"dbus_query_object"`
+}
+
 type PowerSection struct {
 	DbusSignalMatchRules     []*DbusSignalMatchRule     `toml:"dbus_signal_match_rules"`
 	DbusSignalReceiveFilters []*DbusSignalReceiveFilter `toml:"dbus_signal_receive_filters"`
@@ -95,6 +102,7 @@ type DbusQueryObject struct {
 	Method                   string               `toml:"method"`
 	Args                     []DbusQueryObjectArg `toml:"args"`
 	ExpectedDischargingValue string               `toml:"expected_discharging_value"`
+	ExpectedLidClosingValue  string               `toml:"expected_lid_closing_value"`
 }
 
 type DbusQueryObjectArg struct {
@@ -103,6 +111,7 @@ type DbusQueryObjectArg struct {
 
 type DbusSignalReceiveFilter struct {
 	Name *string `toml:"name"`
+	Body *string `toml:"body"`
 }
 
 type DbusSignalMatchRule struct {
@@ -123,6 +132,7 @@ type ScoringSection struct {
 	NameMatch        *int `toml:"name_match"`
 	DescriptionMatch *int `toml:"description_match"`
 	PowerStateMatch  *int `toml:"power_state_match"`
+	LidStateMatch    *int `toml:"lid_state_match"`
 }
 
 var reservedTemplateVariables = map[string]bool{
@@ -183,6 +193,46 @@ type Profile struct {
 	KeyOrder             int               `toml:"-"`
 }
 
+type LidStateType int
+
+const (
+	UnknownLidStateType LidStateType = iota
+	OpenedLidStateType
+	ClosedLidStateType
+)
+
+func (e LidStateType) Value() string {
+	switch e {
+	case OpenedLidStateType:
+		return "Opened"
+	case ClosedLidStateType:
+		return "Closed"
+	default:
+		return "UNKNOWN"
+	}
+}
+
+var allLidStateTypes = []LidStateType{OpenedLidStateType, ClosedLidStateType}
+
+func (e *LidStateType) UnmarshalTOML(value any) error {
+	sValue, ok := value.(string)
+	if !ok {
+		return fmt.Errorf("value %v is not a string type", value)
+	}
+	for _, enum := range allLidStateTypes {
+		if enum.Value() == sValue {
+			*e = enum
+			return nil
+		}
+	}
+	return fmt.Errorf("invalid enum value, expecting one of %s",
+		utils.FormatEnumTypes(allLidStateTypes))
+}
+
+func (e *LidStateType) MarshalTOML() ([]byte, error) {
+	return []byte("\"" + e.Value() + "\""), nil
+}
+
 type PowerStateType int
 
 const (
@@ -224,6 +274,7 @@ func (e *PowerStateType) MarshalTOML() ([]byte, error) {
 type ProfileCondition struct {
 	RequiredMonitors []*RequiredMonitor `toml:"required_monitors"`
 	PowerState       *PowerStateType    `toml:"power_state"`
+	LidState         *LidStateType      `toml:"lid_state"`
 }
 
 type RequiredMonitor struct {
@@ -385,6 +436,13 @@ func (c *RawConfig) Validate() error {
 		return fmt.Errorf("power events section validation failed: %w", err)
 	}
 
+	if c.LidEvents == nil {
+		c.LidEvents = &LidSection{}
+	}
+	if err := c.LidEvents.Validate(); err != nil {
+		return fmt.Errorf("lid events section validation failed: %w", err)
+	}
+
 	if c.Notifications == nil {
 		c.Notifications = &Notifications{}
 	}
@@ -453,8 +511,11 @@ func (s *ScoringSection) Validate() error {
 	if s.PowerStateMatch == nil {
 		s.PowerStateMatch = &defaultScore
 	}
+	if s.LidStateMatch == nil {
+		s.LidStateMatch = &defaultScore
+	}
 
-	fields := []int{*s.DescriptionMatch, *s.NameMatch, *s.PowerStateMatch}
+	fields := []int{*s.DescriptionMatch, *s.NameMatch, *s.PowerStateMatch, *s.LidStateMatch}
 	for _, field := range fields {
 		if 1 > field {
 			return errors.New("scoring section validation failed, score needs to be > 1")
@@ -561,6 +622,54 @@ func (rm *RequiredMonitor) Validate() error {
 	return nil
 }
 
+func (ls *LidSection) Validate() error {
+	if len(ls.DbusSignalMatchRules) == 0 {
+		ls.DbusSignalMatchRules = []*DbusSignalMatchRule{
+			{},
+		}
+	}
+
+	defaultInterface := "org.freedesktop.DBus.Properties"
+	defaultMember := "PropertiesChanged"
+	defaultObjectPath := "/org/freedesktop/UPower"
+	for _, rule := range ls.DbusSignalMatchRules {
+		if err := rule.Validate(defaultInterface, defaultMember, defaultObjectPath); err != nil {
+			return fmt.Errorf("one of the dbus match rules is invalid: %w", err)
+		}
+	}
+
+	if ls.DbusSignalReceiveFilters == nil {
+		ls.DbusSignalReceiveFilters = []*DbusSignalReceiveFilter{
+			{Name: utils.StringPtr("org.freedesktop.DBus.Properties.PropertiesChanged"), Body: utils.StringPtr("LidIsClosed")},
+		}
+	}
+
+	for _, signalFilter := range ls.DbusSignalReceiveFilters {
+		if err := signalFilter.Validate(); err != nil {
+			return fmt.Errorf("one of the dbus receive filter is invalid: %w", err)
+		}
+	}
+
+	if ls.DbusQueryObject == nil {
+		ls.DbusQueryObject = &DbusQueryObject{}
+	}
+
+	defaultDestination := "org.freedesktop.UPower"
+	defaultMethod := "org.freedesktop.DBus.Properties.Get"
+	defaultPath := "/org/freedesktop/UPower"
+	defaultArgs := []DbusQueryObjectArg{
+		{Arg: "org.freedesktop.UPower"},
+		{Arg: "LidIsClosed"},
+	}
+	defaultExpectedLidClosingValue := "true"
+	if err := ls.DbusQueryObject.Validate(defaultDestination, defaultMethod, defaultPath, "",
+		defaultArgs, defaultExpectedLidClosingValue); err != nil {
+		return fmt.Errorf("dbus query object for the battery stats is invalid: %w", err)
+	}
+
+	return nil
+}
+
 func (ps *PowerSection) Validate() error {
 	if len(ps.DbusSignalMatchRules) == 0 {
 		// listen to
@@ -572,8 +681,11 @@ func (ps *PowerSection) Validate() error {
 		}
 	}
 
+	defaultInterface := "org.freedesktop.DBus.Properties"
+	defaultMember := "PropertiesChanged"
+	defaultObjectPath := "/org/freedesktop/UPower/devices/line_power_ACAD"
 	for _, rule := range ps.DbusSignalMatchRules {
-		if err := rule.Validate(); err != nil {
+		if err := rule.Validate(defaultInterface, defaultMember, defaultObjectPath); err != nil {
 			return fmt.Errorf("one of the dbus match rules is invalid: %w", err)
 		}
 	}
@@ -594,7 +706,16 @@ func (ps *PowerSection) Validate() error {
 		ps.DbusQueryObject = &DbusQueryObject{}
 	}
 
-	if err := ps.DbusQueryObject.Validate(); err != nil {
+	defaultDestination := "org.freedesktop.UPower"
+	defaultMethod := "org.freedesktop.DBus.Properties.Get"
+	defaultPath := "/org/freedesktop/UPower/devices/line_power_ACAD"
+	defaultArgs := []DbusQueryObjectArg{
+		{Arg: "org.freedesktop.UPower.Device"},
+		{Arg: "Online"},
+	}
+	defaultExpectedDischargingValue := "false"
+	if err := ps.DbusQueryObject.Validate(defaultDestination, defaultMethod, defaultPath,
+		defaultExpectedDischargingValue, defaultArgs, ""); err != nil {
 		return fmt.Errorf("dbus query object for the battery stats is invalid: %w", err)
 	}
 
@@ -609,7 +730,10 @@ func (d *DbusQueryObject) CollectArgs() []interface{} {
 	return args
 }
 
-func (d *DbusQueryObject) Validate() error {
+func (d *DbusQueryObject) Validate(defaultDestination, defaultMethod, defaultPath,
+	defaultExpectedDischargingValue string,
+	defaultArgs []DbusQueryObjectArg, defaultExpectedLidClosingValue string,
+) error {
 	// dbus-send --system --print-reply \
 	//   --dest=org.freedesktop.UPower \
 	//   /org/freedesktop/UPower/devices/line_power_ACAD \
@@ -618,22 +742,22 @@ func (d *DbusQueryObject) Validate() error {
 	//   string:Online
 
 	if d.Destination == "" {
-		d.Destination = "org.freedesktop.UPower"
+		d.Destination = defaultDestination
 	}
 	if d.Method == "" {
-		d.Method = "org.freedesktop.DBus.Properties.Get"
+		d.Method = defaultMethod
 	}
 	if d.Path == "" {
-		d.Path = "/org/freedesktop/UPower/devices/line_power_ACAD"
+		d.Path = defaultPath
 	}
 	if len(d.Args) == 0 {
-		d.Args = []DbusQueryObjectArg{
-			{Arg: "org.freedesktop.UPower.Device"},
-			{Arg: "Online"},
-		}
+		d.Args = defaultArgs
 	}
 	if d.ExpectedDischargingValue == "" {
-		d.ExpectedDischargingValue = "false"
+		d.ExpectedDischargingValue = defaultExpectedDischargingValue
+	}
+	if d.ExpectedLidClosingValue == "" {
+		d.ExpectedLidClosingValue = defaultExpectedLidClosingValue
 	}
 	for _, arg := range d.Args {
 		if arg.Arg == "" {
@@ -643,21 +767,21 @@ func (d *DbusQueryObject) Validate() error {
 	return nil
 }
 
-func (dr *DbusSignalMatchRule) Validate() error {
+func (dr *DbusSignalMatchRule) Validate(defaultInterface, defaultMember, defaultObjectPath string) error {
 	if dr.Interface != nil && *dr.Interface == LeaveEmpty {
 		dr.Interface = nil
 	} else if dr.Interface == nil {
-		dr.Interface = utils.StringPtr("org.freedesktop.DBus.Properties")
+		dr.Interface = utils.StringPtr(defaultInterface)
 	}
 	if dr.Member != nil && *dr.Member == LeaveEmpty {
 		dr.Member = nil
 	} else if dr.Member == nil {
-		dr.Member = utils.StringPtr("PropertiesChanged")
+		dr.Member = utils.StringPtr(defaultMember)
 	}
 	if dr.ObjectPath != nil && *dr.ObjectPath == LeaveEmpty {
 		dr.ObjectPath = nil
 	} else if dr.ObjectPath == nil {
-		dr.ObjectPath = utils.StringPtr("/org/freedesktop/UPower/devices/line_power_ACAD")
+		dr.ObjectPath = utils.StringPtr(defaultObjectPath)
 	}
 	if dr.Interface == nil && dr.Sender == nil && dr.Member == nil && dr.ObjectPath == nil {
 		return errors.New("dbus rule cant be empty, at least one of interface, sender, member or object_path has to be provided")
@@ -667,8 +791,8 @@ func (dr *DbusSignalMatchRule) Validate() error {
 }
 
 func (d *DbusSignalReceiveFilter) Validate() error {
-	if d.Name == nil {
-		return errors.New("name cant be empty")
+	if d.Name == nil && d.Body == nil {
+		return errors.New("name and body cant both be empty")
 	}
 
 	return nil

@@ -44,13 +44,23 @@ func ViewChangedCmd(view ViewMode) tea.Cmd {
 	}
 }
 
+type LidStateChanged struct {
+	state power.LidState
+}
+
+func LidStateChangedCmd(state power.LidState) tea.Msg {
+	return LidStateChanged{
+		state,
+	}
+}
+
 type PowerStateChanged struct {
 	state power.PowerState
 }
 
 func PowerStateChangedCmd(state power.PowerState) tea.Msg {
 	return PowerStateChanged{
-		state: state,
+		state,
 	}
 }
 

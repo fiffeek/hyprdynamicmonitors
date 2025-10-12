@@ -37,7 +37,7 @@ func TestConfigGenerator_GenerateConfig_Static(t *testing.T) {
 		{Name: "eDP-1", ID: utils.IntPtr(1), Description: "Built-in Display"},
 	}
 
-	changed, err := generator.GenerateConfig(cfg.Get(), profile, monitors, power.ACPowerState, destination)
+	changed, err := generator.GenerateConfig(cfg.Get(), profile, monitors, power.ACPowerState, power.OpenedLidState, destination)
 	assert.NoError(t, err, "GenerateConfig failed")
 	assert.True(t, changed, "file was not changed")
 
@@ -56,14 +56,14 @@ func TestConfigGenerator_GenerateConfig_Static(t *testing.T) {
 		t.Errorf("Expected symlink target %s, got %s", staticConfigPath, linkTarget)
 	}
 
-	changed, err = generator.GenerateConfig(cfg.Get(), profile, monitors, power.ACPowerState, destination)
+	changed, err = generator.GenerateConfig(cfg.Get(), profile, monitors, power.ACPowerState, power.OpenedLidState, destination)
 	assert.NoError(t, err, "GenerateConfig failed")
 	assert.False(t, changed, "file was changed")
 
 	// if the underlying file is changed report generator as updated
 	err = os.Chtimes(destination, time.Now(), time.Now())
 	assert.NoError(t, err, "touch failed")
-	changed, err = generator.GenerateConfig(cfg.Get(), profile, monitors, power.ACPowerState, destination)
+	changed, err = generator.GenerateConfig(cfg.Get(), profile, monitors, power.ACPowerState, power.OpenedLidState, destination)
 	assert.NoError(t, err, "GenerateConfig failed")
 	assert.True(t, changed, "file was not changed")
 }
@@ -111,7 +111,8 @@ func TestConfigGenerator_GenerateConfig_Template(t *testing.T) {
 	}
 
 	// Test with battery power state
-	changed, err := generator.GenerateConfig(cfg.Get(), profile, monitors, power.BatteryPowerState, destination)
+	changed, err := generator.GenerateConfig(cfg.Get(), profile, monitors,
+		power.BatteryPowerState, power.OpenedLidState, destination)
 	if err != nil {
 		t.Fatalf("GenerateConfig failed: %v", err)
 	}
@@ -122,7 +123,7 @@ func TestConfigGenerator_GenerateConfig_Template(t *testing.T) {
 	testutils.AssertFixture(t, destination, "testdata/fixtures/bat.conf", *regenerate)
 
 	// Test with AC power state
-	changed, err = generator.GenerateConfig(cfg.Get(), profile, monitors, power.ACPowerState, destination)
+	changed, err = generator.GenerateConfig(cfg.Get(), profile, monitors, power.ACPowerState, power.ClosedLidState, destination)
 	if err != nil {
 		t.Fatalf("GenerateConfig failed with AC power: %v", err)
 	}
@@ -132,7 +133,7 @@ func TestConfigGenerator_GenerateConfig_Template(t *testing.T) {
 
 	testutils.AssertFixture(t, destination, "testdata/fixtures/ac.conf", *regenerate)
 
-	changed, err = generator.GenerateConfig(cfg.Get(), profile, monitors, power.ACPowerState, destination)
+	changed, err = generator.GenerateConfig(cfg.Get(), profile, monitors, power.ACPowerState, power.ClosedLidState, destination)
 	if err != nil {
 		t.Fatalf("GenerateConfig failed with AC power: %v", err)
 	}

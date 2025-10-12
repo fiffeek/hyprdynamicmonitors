@@ -16,6 +16,10 @@ type IPowerDetector interface {
 	Reload(context.Context) error
 }
 
+type ILidDetector interface {
+	Reload(context.Context) error
+}
+
 type IService interface {
 	UpdateOnce(context.Context) error
 }
@@ -29,17 +33,19 @@ type Service struct {
 	cfg                  *config.Config
 	filewatcher          IFilewatcher
 	powerDetector        IPowerDetector
+	lidDetector          ILidDetector
 	service              IService
 	disableAutoHotReload *bool
 }
 
 func NewService(cfg *config.Config, filewatcher IFilewatcher, powerDetector IPowerDetector,
-	service IService, disableAutoHotReload bool,
+	service IService, disableAutoHotReload bool, lidDetector ILidDetector,
 ) *Service {
 	return &Service{
 		cfg,
 		filewatcher,
 		powerDetector,
+		lidDetector,
 		service,
 		&disableAutoHotReload,
 	}
@@ -58,6 +64,7 @@ func (s *Service) Reload(ctx context.Context) error {
 		{Fun: s.cfg.Reload, Name: "config reload", Err: "cant reload configuration"},
 		{Fun: s.filewatcher.Update, Name: "update filewatcher", Err: "cant update filewatcher"},
 		{Fun: func() error { return s.powerDetector.Reload(ctx) }, Name: "power detector reload", Err: "cant reload powerDetector"},
+		{Fun: func() error { return s.lidDetector.Reload(ctx) }, Name: "lid detector reload", Err: "cant reload lidDetector"},
 		{
 			Fun:  func() error { return s.service.UpdateOnce(ctx) },
 			Name: "updating user configuration", Err: "cant update user service",

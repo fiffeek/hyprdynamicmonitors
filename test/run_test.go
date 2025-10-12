@@ -30,12 +30,14 @@ func Test__Run_Binary(t *testing.T) {
 		hyprMonitorResponseFiles []string
 		hyprEvents               []string
 		powerEvents              []power.PowerState
+		lidEvents                []power.LidState
 		// waitForSideEffects ensures tests run faster if the side effects conditions are met
 		// it will kill the current binary execution
 		waitForSideEffects  func(context.Context, *testing.T, *config.RawConfig)
 		validateSideEffects func(*testing.T, *config.RawConfig)
 		disableHotReload    bool
 		disablePowerEvents  bool
+		enableLidEvents     bool
 		connectToSessionBus bool
 		runOnce             bool
 		configUpdates       []*testutils.TestConfig
@@ -237,6 +239,26 @@ func Test__Run_Binary(t *testing.T) {
 		},
 
 		{
+			name:        "lid events templating",
+			description: "when lid events are enabled, dbus should be queried and return the state used for templating",
+			config:      createBasicTestConfig(t).RequireLid(config.OpenedLidStateType),
+			extraArgs:   []string{},
+			hyprMonitorResponseFiles: []string{
+				"testdata/hypr/server/basic_monitors_one.json",
+			},
+			validateSideEffects: func(t *testing.T, cfg *config.RawConfig) {
+				testutils.AssertFileExists(t, *cfg.General.Destination)
+				compareWithFixture(t, *cfg.General.Destination,
+					"testdata/app/fixtures/basic_one_lid_opened.conf")
+			},
+			disableHotReload:    true,
+			runOnce:             true,
+			disablePowerEvents:  true,
+			enableLidEvents:     true,
+			connectToSessionBus: true,
+		},
+
+		{
 			name:        "power events triggers",
 			description: "receiving power events should results in a configuration update",
 			config:      createBasicTestConfig(t).RequirePower(config.AC),
@@ -261,6 +283,35 @@ func Test__Run_Binary(t *testing.T) {
 			powerEvents:         []power.PowerState{power.ACPowerState},
 			disableHotReload:    true,
 			connectToSessionBus: true,
+		},
+
+		{
+			name:        "lid events triggers",
+			description: "receiving lid events should results in a configuration update",
+			config:      createBasicTestConfig(t).RequireLid(config.ClosedLidStateType),
+			extraArgs:   []string{},
+			hyprMonitorResponseFiles: []string{
+				"testdata/hypr/server/basic_monitors_one.json",
+			},
+			waitForSideEffects: func(ctx context.Context, t *testing.T, cfg *config.RawConfig) {
+				funcs := []func() error{
+					func() error {
+						return testutils.ContentSameAsFixture(t, *cfg.General.Destination,
+							"testdata/app/fixtures/basic_one_lid_closed.conf")
+					},
+				}
+				waitTillHolds(ctx, t, funcs, 300*time.Millisecond)
+			},
+			validateSideEffects: func(t *testing.T, cfg *config.RawConfig) {
+				testutils.AssertFileExists(t, *cfg.General.Destination)
+				compareWithFixture(t, *cfg.General.Destination,
+					"testdata/app/fixtures/basic_one_lid_closed.conf")
+			},
+			lidEvents:           []power.LidState{power.ClosedLidState},
+			disableHotReload:    true,
+			connectToSessionBus: true,
+			disablePowerEvents:  true,
+			enableLidEvents:     true,
 		},
 
 		{
@@ -292,6 +343,39 @@ func Test__Run_Binary(t *testing.T) {
 			powerEvents:         []power.PowerState{power.BatteryPowerState},
 			disableHotReload:    true,
 			connectToSessionBus: true,
+		},
+
+		{
+			name:        "power mon lid",
+			description: "receiving power, lid and hypr events should results in a configuration update",
+			config:      createBasicTestConfig(t).RequirePower(config.BAT).RequireLid(config.ClosedLidStateType),
+			extraArgs:   []string{},
+			hyprMonitorResponseFiles: []string{
+				"testdata/hypr/server/basic_monitors_one.json",
+				"testdata/hypr/server/basic_monitors.json",
+			},
+			hyprEvents: []string{
+				"monitoraddedv2>>2,DP-11,LG Electronics LG SDQHD 301NTBKDU037",
+			},
+			waitForSideEffects: func(ctx context.Context, t *testing.T, cfg *config.RawConfig) {
+				funcs := []func() error{
+					func() error {
+						return testutils.ContentSameAsFixture(t, *cfg.General.Destination,
+							"testdata/app/fixtures/basic_both_bat_closed.conf")
+					},
+				}
+				waitTillHolds(ctx, t, funcs, 800*time.Millisecond)
+			},
+			validateSideEffects: func(t *testing.T, cfg *config.RawConfig) {
+				testutils.AssertFileExists(t, *cfg.General.Destination)
+				compareWithFixture(t, *cfg.General.Destination,
+					"testdata/app/fixtures/basic_both_bat_closed.conf")
+			},
+			powerEvents:         []power.PowerState{power.BatteryPowerState},
+			lidEvents:           []power.LidState{power.ClosedLidState},
+			disableHotReload:    true,
+			connectToSessionBus: true,
+			enableLidEvents:     true,
 		},
 
 		{
@@ -477,6 +561,19 @@ func Test__Run_Binary(t *testing.T) {
 					tt.powerEvents, 100*time.Millisecond, 50*time.Millisecond, binaryStartingChan)
 			}
 
+			// lid: fake dbus session
+			var lidDbusDone chan struct{}
+			if tt.enableLidEvents {
+				dbusService, testBusName, testObjectPath, cleanup := testutils.SetupTestDbusService(t)
+				// initial state to open
+				dbusService.SetLidProperty(power.OpenedLidState)
+				defer cleanup()
+				tt.config = tt.config.WithLidSection(
+					testutils.CreateLidConfig(testBusName, testObjectPath))
+				lidDbusDone = testutils.SetupFakeDbusLidEventsServer(t, dbusService,
+					tt.lidEvents, 100*time.Millisecond, 50*time.Millisecond, binaryStartingChan)
+			}
+
 			// materialize config
 			rawConfig := tt.config.Get().Get()
 
@@ -498,6 +595,9 @@ func Test__Run_Binary(t *testing.T) {
 				}
 				if tt.disablePowerEvents {
 					args = append(args, "--disable-power-events")
+				}
+				if tt.enableLidEvents {
+					args = append(args, "--enable-lid-events")
 				}
 				if tt.runOnce {
 					args = append(args, "--run-once")
@@ -545,6 +645,7 @@ func Test__Run_Binary(t *testing.T) {
 
 			// wait on fakes to finish
 			waitFor(t, dbusDone)
+			waitFor(t, lidDbusDone)
 			waitFor(t, fakeHyprServerDone)
 			waitFor(t, fakeHyprEventServerDone)
 

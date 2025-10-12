@@ -14,7 +14,6 @@ import (
 	"github.com/fiffeek/hyprdynamicmonitors/internal/profilemaker"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/tui"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/utils"
-	"github.com/godbus/dbus/v5"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
 )
@@ -24,10 +23,11 @@ type TUI struct {
 	fswatcher *filewatcher.Service
 	cfg       *config.Config
 	pw        *power.PowerDetector
+	ld        *power.LidStateDetector
 }
 
 func NewTUI(ctx context.Context, configPath, mockedHyprMonitors string,
-	version string, disablePowerEvents, connectToSessionBus bool,
+	version string, disablePowerEvents, connectToSessionBus, enableLidEvents bool,
 ) (*TUI, error) {
 	cfg, err := config.NewConfig(configPath)
 	if err != nil {
@@ -69,14 +69,7 @@ func NewTUI(ctx context.Context, configPath, mockedHyprMonitors string,
 		fw = filewatcher.NewService(cfg, utils.BoolPtr(false))
 	}
 	if cfg != nil && !disablePowerEvents {
-		var conn *dbus.Conn
-		if connectToSessionBus {
-			logrus.Debug("Trying to connect to session bus")
-			conn, err = dbus.ConnectSessionBus()
-		} else {
-			logrus.Debug("Trying to connect to system bus")
-			conn, err = dbus.ConnectSystemBus()
-		}
+		conn, err := getBus(connectToSessionBus)
 		if err != nil {
 			return nil, fmt.Errorf("cant connect to dbus: %w", err)
 		}
@@ -87,7 +80,21 @@ func NewTUI(ctx context.Context, configPath, mockedHyprMonitors string,
 		currentState = pw.GetCurrentState()
 	}
 
-	model := tui.NewModel(cfg, monitors, profileMaker, version, currentState, nil, false)
+	var ld *power.LidStateDetector
+	var lidState power.LidState
+	if cfg != nil && enableLidEvents {
+		conn, err := getBus(connectToSessionBus)
+		if err != nil {
+			return nil, fmt.Errorf("cant connect to dbus: %w", err)
+		}
+		ld, err = power.NewLidStateDetector(ctx, cfg, conn, enableLidEvents)
+		if err != nil {
+			return nil, fmt.Errorf("cant init lid detector: %w", err)
+		}
+		lidState = ld.GetCurrentState()
+	}
+
+	model := tui.NewModel(cfg, monitors, profileMaker, version, currentState, nil, false, lidState)
 	program := tea.NewProgram(
 		model,
 		tea.WithAltScreen(),
@@ -99,6 +106,7 @@ func NewTUI(ctx context.Context, configPath, mockedHyprMonitors string,
 		fswatcher: fw,
 		cfg:       cfg,
 		pw:        pw,
+		ld:        ld,
 	}, nil
 }
 
@@ -144,13 +152,38 @@ func (t *TUI) Run(ctx context.Context, cancel context.CancelCauseFunc) error {
 				select {
 				case event, ok := <-c:
 					if !ok {
-						return errors.New("watcher event channel closed")
+						return errors.New("power events channel closed")
 					}
-					logrus.Debug("Watcher event received")
+					logrus.Debug("Power event received")
 					t.program.Send(tui.PowerStateChangedCmd(event.State))
 
 				case <-ctx.Done():
-					logrus.Debug("Reloader event processor context cancelled, shutting down")
+					logrus.Debug("Power event processor context cancelled, shutting down")
+					return context.Cause(ctx)
+				}
+			}
+		})
+
+	}
+
+	if t.ld != nil && t.cfg != nil {
+		eg.Go(func() error {
+			return t.ld.Run(ctx)
+		})
+
+		eg.Go(func() error {
+			c := t.ld.Listen()
+			for {
+				select {
+				case event, ok := <-c:
+					if !ok {
+						return errors.New("lid events channel closed")
+					}
+					logrus.Debug("Lid event received")
+					t.program.Send(tui.LidStateChangedCmd(event.State))
+
+				case <-ctx.Done():
+					logrus.Debug("Lid events processor context cancelled, shutting down")
 					return context.Cause(ctx)
 				}
 			}

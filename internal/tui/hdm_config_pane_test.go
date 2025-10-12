@@ -19,6 +19,8 @@ func TestHDMConfigPane_Update(t *testing.T) {
 		msg                tea.Msg
 		initialPowerState  power.PowerState
 		expectedPowerState power.PowerState
+		initialLidState    power.LidState
+		expectedLidState   power.LidState
 		expectProfileReset bool
 	}{
 		{
@@ -33,6 +35,13 @@ func TestHDMConfigPane_Update(t *testing.T) {
 			msg:                tui.PowerStateChangedCmd(power.BatteryPowerState),
 			initialPowerState:  power.ACPowerState,
 			expectedPowerState: power.BatteryPowerState,
+			expectProfileReset: true,
+		},
+		{
+			name:               "LidStateChangedCmd updates state and resets profile",
+			msg:                tui.LidStateChangedCmd(power.ClosedLidState),
+			initialLidState:    power.OpenedLidState,
+			expectedLidState:   power.ClosedLidState,
 			expectProfileReset: true,
 		},
 		{
@@ -84,7 +93,7 @@ func TestHDMConfigPane_Update(t *testing.T) {
 				{Name: "eDP-1"},
 			}
 
-			pane := tui.NewHDMConfigPane(cfg, matcher, monitors, tt.initialPowerState)
+			pane := tui.NewHDMConfigPane(cfg, matcher, monitors, tt.initialPowerState, tt.initialLidState)
 
 			pane.Update(nil)
 
@@ -93,6 +102,7 @@ func TestHDMConfigPane_Update(t *testing.T) {
 			pane.Update(tt.msg)
 
 			assert.Equal(t, tt.expectedPowerState, pane.GetPowerState())
+			assert.Equal(t, tt.expectedLidState, pane.GetLidState())
 
 			if tt.expectProfileReset {
 				profile := pane.GetProfile()

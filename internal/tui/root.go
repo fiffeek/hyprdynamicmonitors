@@ -54,7 +54,8 @@ type Model struct {
 }
 
 func NewModel(cfg *config.Config, hyprMonitors hypr.MonitorSpecs,
-	profileMaker *profilemaker.Service, version string, powerState power.PowerState, duration *time.Duration, runningUnderTest bool,
+	profileMaker *profilemaker.Service, version string, powerState power.PowerState,
+	duration *time.Duration, runningUnderTest bool, lidState power.LidState,
 ) Model {
 	monitors := make([]*MonitorSpec, len(hyprMonitors))
 	for i, monitor := range hyprMonitors {
@@ -78,12 +79,12 @@ func NewModel(cfg *config.Config, hyprMonitors hypr.MonitorSpecs,
 		monitorModes:        NewMonitorModeList(monitors),
 		monitorMirrors:      NewMirrorList(monitors),
 		hyprApply:           NewHyprApply(profileMaker),
-		hdm:                 NewHDMConfigPane(cfg, matcher, monitors, powerState),
+		hdm:                 NewHDMConfigPane(cfg, matcher, monitors, powerState, lidState),
 		profileMaker:        profileMaker,
 		profileNamePicker:   NewProfileNamePicker(),
 		confirmationPrompt:  nil,
 		scaleSelector:       NewScaleSelector(),
-		hdmProfilePreview:   NewHDMProfilePreview(cfg, matcher, monitors, powerState, runningUnderTest),
+		hdmProfilePreview:   NewHDMProfilePreview(cfg, matcher, monitors, powerState, runningUnderTest, lidState),
 		start:               time.Now(),
 		duration:            duration,
 	}

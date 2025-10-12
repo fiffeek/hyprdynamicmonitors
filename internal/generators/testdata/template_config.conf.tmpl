@@ -1,5 +1,6 @@
 # Template test configuration for Hyprland
 # Generated with power state: {{.PowerState}}
+# Generated with lid state: {{.LidState}}
 
 # All Monitors
 {{- range .Monitors}}
@@ -42,3 +43,15 @@ animation:enabled = true
 general_value = {{.general_value}}
 overwritten_value = {{.overwritten_value}}
 profile_value = {{.profile_value}}
+
+{{- if isLidClosed}}
+# lid is closed (isLidClosed)
+{{- else}}
+# lid is opened (isLidClosed)
+{{- end}}
+
+{{- if isLidOpened}}
+# lid is opened (isLidOpened)
+{{- else}}
+# lid is closed (isLidOpened)
+{{- end}}

@@ -16,6 +16,7 @@ func TestMatcher_Match(t *testing.T) {
 		config            *config.Config
 		connectedMonitors []*hypr.MonitorSpec
 		powerState        power.PowerState
+		lidState          power.LidState
 		expectedProfile   string // profile name or empty string for no match
 		description       string
 	}{
@@ -68,12 +69,49 @@ func TestMatcher_Match(t *testing.T) {
 			description:     "Profile should match based on description",
 		},
 		{
+			name: "lid_state_scoring",
+			config: createTestConfig(t, map[string]*config.Profile{
+				"whatever": {
+					Name: "whatever",
+					Conditions: &config.ProfileCondition{
+						RequiredMonitors: []*config.RequiredMonitor{
+							{Name: utils.StringPtr("eDP-1")},
+						},
+					},
+				},
+				"lid_closed": {
+					Name: "lid_closed",
+					Conditions: &config.ProfileCondition{
+						LidState: utils.JustPtr(config.ClosedLidStateType),
+						RequiredMonitors: []*config.RequiredMonitor{
+							{Name: utils.StringPtr("eDP-1")},
+						},
+					},
+				},
+				"lid_opened": {
+					Name: "lid_opened",
+					Conditions: &config.ProfileCondition{
+						LidState: utils.JustPtr(config.OpenedLidStateType),
+						RequiredMonitors: []*config.RequiredMonitor{
+							{Name: utils.StringPtr("eDP-1")},
+						},
+					},
+				},
+			}).Get(),
+			connectedMonitors: []*hypr.MonitorSpec{
+				{Name: "eDP-1", ID: utils.IntPtr(0), Description: "Built-in Display"},
+			},
+			lidState:        power.ClosedLidState,
+			expectedProfile: "lid_closed",
+			description:     "Profile with matching lid state should win (name match + power state match vs just name match)",
+		},
+		{
 			name: "power_state_scoring",
 			config: createTestConfig(t, map[string]*config.Profile{
 				"battery_profile": {
 					Name: "battery_profile",
 					Conditions: &config.ProfileCondition{
-						PowerState: powerStateTypePtr(config.BAT),
+						PowerState: utils.JustPtr(config.BAT),
 						RequiredMonitors: []*config.RequiredMonitor{
 							{Name: utils.StringPtr("eDP-1")},
 						},
@@ -82,7 +120,7 @@ func TestMatcher_Match(t *testing.T) {
 				"ac_profile": {
 					Name: "ac_profile",
 					Conditions: &config.ProfileCondition{
-						PowerState: powerStateTypePtr(config.AC),
+						PowerState: utils.JustPtr(config.AC),
 						RequiredMonitors: []*config.RequiredMonitor{
 							{Name: utils.StringPtr("eDP-1")},
 						},
@@ -170,7 +208,7 @@ func TestMatcher_Match(t *testing.T) {
 				"ac_only": {
 					Name: "ac_only",
 					Conditions: &config.ProfileCondition{
-						PowerState: powerStateTypePtr(config.AC),
+						PowerState: utils.JustPtr(config.AC),
 						RequiredMonitors: []*config.RequiredMonitor{
 							{Name: utils.StringPtr("eDP-1")},
 						},
@@ -311,7 +349,7 @@ func TestMatcher_Match(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			matcher := NewMatcher()
 
-			found, result, err := matcher.Match(tt.config.Get(), tt.connectedMonitors, tt.powerState)
+			found, result, err := matcher.Match(tt.config.Get(), tt.connectedMonitors, tt.powerState, tt.lidState)
 			if err != nil {
 				t.Fatalf("Match returned unexpected error: %v", err)
 			}
@@ -339,10 +377,6 @@ func createTestConfig(t *testing.T, profiles map[string]*config.Profile) *testut
 		NameMatch:        utils.IntPtr(10),
 		DescriptionMatch: utils.IntPtr(5),
 		PowerStateMatch:  utils.IntPtr(3),
+		LidStateMatch:    utils.IntPtr(3),
 	})
-}
-
-// Helper function to create PowerStateType pointer
-func powerStateTypePtr(p config.PowerStateType) *config.PowerStateType {
-	return &p
 }

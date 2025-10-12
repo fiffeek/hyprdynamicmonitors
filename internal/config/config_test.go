@@ -1,12 +1,18 @@
 package config_test
 
 import (
+	"bytes"
+	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
+	"github.com/BurntSushi/toml"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/config"
+	"github.com/fiffeek/hyprdynamicmonitors/internal/testutils"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/utils"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestLoad(t *testing.T) {
@@ -678,6 +684,10 @@ func TestPowerSectionValidate(t *testing.T) {
 }
 
 func TestDbusSignalMatchRuleLeaveEmptyToken(t *testing.T) {
+	defaultInterface := "iface"
+	defaultMember := "mem"
+	defaultObjectPath := "/path"
+
 	tests := []struct {
 		name      string
 		rule      *config.DbusSignalMatchRule
@@ -739,7 +749,7 @@ func TestDbusSignalMatchRuleLeaveEmptyToken(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.rule.Validate()
+			err := tt.rule.Validate(defaultInterface, defaultMember, defaultObjectPath)
 			if err != nil {
 				t.Errorf("unexpected error: %v", err)
 				return
@@ -776,6 +786,15 @@ func TestDbusSignalMatchRuleLeaveEmptyToken(t *testing.T) {
 }
 
 func TestDbusQueryObjectValidate(t *testing.T) {
+	defaultDestination := "org.freedesktop.UPower"
+	defaultMethod := "org.freedesktop.DBus.Properties.Get"
+	defaultPath := "/org/freedesktop/UPower/devices/line_power_ACAD"
+	defaultArgs := []config.DbusQueryObjectArg{
+		{Arg: "org.freedesktop.UPower.Device"},
+		{Arg: "Online"},
+	}
+	defaultExpectedDischargingValue := "false"
+
 	tests := []struct {
 		name          string
 		queryObject   *config.DbusQueryObject
@@ -881,7 +900,10 @@ func TestDbusQueryObjectValidate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.queryObject.Validate()
+			err := tt.queryObject.Validate(
+				defaultDestination, defaultMethod, defaultPath,
+				defaultExpectedDischargingValue, defaultArgs, "",
+			)
 
 			if tt.expectError {
 				if err == nil {
@@ -1045,4 +1067,28 @@ func containsSubstring(haystack, needle string) bool {
 		}
 	}
 	return false
+}
+
+func Test__ReadWriteSelf(t *testing.T) {
+	cfg, err := config.Load("testdata/valid_minimal.toml")
+	require.NoError(t, err, "minimal config should be readable")
+
+	buf := new(bytes.Buffer)
+	encoder := toml.NewEncoder(buf)
+	encoder.Indent = ""
+	err = encoder.Encode(cfg)
+	require.NoError(t, err, "config should be serializable")
+
+	// sanitize the data
+	data := buf.String()
+	configDir := filepath.Dir(cfg.ConfigPath)
+	data = strings.ReplaceAll(data, configDir, "")
+	data = strings.ReplaceAll(data, os.ExpandEnv("$HOME"), "")
+
+	tempDir := t.TempDir()
+	cfgFile := filepath.Join(tempDir, "file")
+	err = utils.WriteAtomic(cfgFile, []byte(data))
+	require.NoError(t, err, "config cant be written to a tmp file")
+
+	testutils.AssertFixture(t, cfgFile, "testdata/fixtures/minimal.toml", *regenerate)
 }

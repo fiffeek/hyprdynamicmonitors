@@ -49,6 +49,12 @@ An event-driven service that automatically manages Hyprland monitor configuratio
          * [Receive Filters](#receive-filters)
          * [Custom D-Bus Configuration](#custom-d-bus-configuration)
          * [Leave Empty Token](#leave-empty-token)
+      * [Lid events](#lid-events)
+         * [Enabling lid events](#enabling-lid-events)
+         * [Default lid event configuration](#default-lid-event-configuration)
+         * [Querying lid events](#querying-lid-events)
+         * [Receive lid Filters](#receive-lid-filters)
+         * [Custom D-Bus Configuration for lid events](#custom-d-bus-configuration-for-lid-events)
       * [Signals](#signals)
       * [Hot Reloading](#hot-reloading)
       * [TUI](#tui)
@@ -205,6 +211,7 @@ Flags:
       --disable-auto-hot-reload   Disable automatic hot reload (no file watchers)
       --disable-power-events      Disable power events (dbus)
       --dry-run                   Show what would be done without making changes
+      --enable-lid-events         Enable listening to dbus lid events
   -h, --help                      help for run
       --run-once                  Run once and exit immediately
 
@@ -301,6 +308,7 @@ Usage:
 Flags:
       --connect-to-session-bus          Connect to session bus instead of system bus for power events: https://wiki.archlinux.org/title/D-Bus. You can switch as long as you expose power line events in your user session bus.
       --disable-power-events            Disable power events (dbus)
+      --enable-lid-events               Enable listening to dbus lid events
   -h, --help                            help for tui
       --hypr-monitors-override string   When used it fill parse the given file as hyprland monitors spec, used for testing.
 
@@ -424,6 +432,7 @@ To understand scoring and profile matching more see [`examples/scoring`](https:/
 
 ```go
 .PowerState         // "AC" or "BAT"
+.LidState           // "UNKNOWN", "Closed" or "Opened"
 .Monitors           // Array of all connected monitors returned by `hyprctl monitors`
 .ExtraMonitors      // Array of connected monitors not defined in the profile
 .RequiredMonitors   // Array of connected monitors defined in the profile
@@ -464,6 +473,8 @@ To understand template variables more see [`examples/template-variables`](https:
 isOnBattery         // Returns true if on battery power
 isOnAC              // Returns true if on AC power
 powerState          // Returns current power state string
+isLidClosed         // Returns true if the lid is closed (if --enabling-lid-events is passed)
+isLidOpened         // Returns true if the lid is opened (if --enabling-lid-events is passed)
 ```
 
 ### Fallback Profile
@@ -661,6 +672,63 @@ member = "PropertiesChanged"
 object_path = "/custom/path"
 ```
 
+### Lid events
+
+Lid state monitoring uses D-Bus to listen for UPower events. This feature is optional and needs to be explicitly enabled.
+
+#### Enabling lid events
+
+To enable lid state monitoring, start with the flag:
+
+```bash
+hyprdynamicmonitors --enable-lid-events
+```
+
+When disabled:
+- the system defaults to `UNKNOWN` lid state.
+- no power events will be delivered, no dbus connection will be made.
+
+#### Default lid event configuration
+
+By default, the service listens for D-Bus signals:
+- **Signal**: `org.freedesktop.DBus.Properties.PropertiesChanged`
+- **Interface**: `org.freedesktop.DBus.Properties`
+- **Member**: `PropertiesChanged`
+- **Path**: `/org/freedesktop/UPower`
+
+These defaults can be overridden in the configuration (or left empty).
+
+You can monitor these events with:
+```bash
+gdbus monitor --system --dest org.freedesktop.UPower --object-path /org/freedesktop/UPower
+```
+
+Example output:
+```
+/org/freedesktop/UPower: org.freedesktop.DBus.Properties.PropertiesChanged ('org.freedesktop.UPower', {'LidIsClosed': <true>}, @as [])
+/org/freedesktop/UPower: org.freedesktop.DBus.Properties.PropertiesChanged ('org.freedesktop.UPower', {'LidIsClosed': <false>}, @as [])
+```
+
+#### Querying lid events
+
+On each event, the current power status is queried. Here's the equivalent command:
+```bash
+dbus-send --system --print-reply \
+  --dest=org.freedesktop.UPower /org/freedesktop/UPower \
+  org.freedesktop.DBus.Properties.Get string:org.freedesktop.UPower string:LidIsClosed
+```
+
+#### Receive lid Filters
+You can filter received events by name and body. By default, the service matches:
+- `org.freedesktop.DBus.Properties.PropertiesChanged` name.
+- `LidIsClosed` body.
+
+This prevents noisy signals. Additionally, lid status changes are only propagated when the state actually changes.
+
+
+#### Custom D-Bus Configuration for lid events
+
+You can customize which D-Bus signals to monitor, see [lid-states example](./examples/lid-states/config.toml).
 
 ### Signals
 

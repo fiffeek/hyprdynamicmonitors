@@ -30,10 +30,16 @@ type IMonitorDetector interface {
 	GetConnectedMonitors() hypr.MonitorSpecs
 }
 
+type ILidDetector interface {
+	Listen() <-chan power.LidEvent
+	GetCurrentState() power.LidState
+}
+
 type Service struct {
 	config               *config.Config
 	monitorDetector      IMonitorDetector
 	powerDetector        IPowerDetector
+	lidDetector          ILidDetector
 	matcher              *matchers.Matcher
 	serviceConfig        *Config
 	generator            *generators.ConfigGenerator
@@ -42,6 +48,7 @@ type Service struct {
 	stateMu          sync.RWMutex
 	cachedMonitors   []*hypr.MonitorSpec
 	cachedPowerState power.PowerState
+	cachedLidState   power.LidState
 	debouncer        *utils.Debouncer
 }
 
@@ -51,7 +58,7 @@ type Config struct {
 
 func NewService(cfg *config.Config, monitorDetector IMonitorDetector,
 	powerDetector IPowerDetector, svcCfg *Config, matcher *matchers.Matcher, generator *generators.ConfigGenerator,
-	notifications *notifications.Service,
+	notifications *notifications.Service, lidDetector ILidDetector,
 ) *Service {
 	return &Service{
 		config:               cfg,
@@ -63,6 +70,7 @@ func NewService(cfg *config.Config, monitorDetector IMonitorDetector,
 		cachedPowerState:     power.BatteryPowerState,
 		debouncer:            utils.NewDebouncer(),
 		notificationsService: notifications,
+		lidDetector:          lidDetector,
 	}
 }
 
@@ -73,6 +81,7 @@ func (s *Service) Run(ctx context.Context) error {
 
 	monitorEventsChannel := s.monitorDetector.Listen()
 	powerEventsChannel := s.powerDetector.Listen()
+	lidEventsChannel := s.lidDetector.Listen()
 	logrus.Info("Listening for monitor and power events...")
 
 	eg, ctx := errgroup.WithContext(ctx)
@@ -95,6 +104,14 @@ func (s *Service) Run(ctx context.Context) error {
 	eg.Go(func() error {
 		for {
 			select {
+			case lidEvent, ok := <-lidEventsChannel:
+				if !ok {
+					return errors.New("lid events channel closed")
+				}
+				s.stateMu.Lock()
+				s.cachedLidState = lidEvent.State
+				s.stateMu.Unlock()
+				s.debouncer.Do(ctx, time.Duration(*s.config.Get().General.DebounceTimeMs)*time.Millisecond, s.debounceUpdate)
 			case monitors, ok := <-monitorEventsChannel:
 				if !ok {
 					return errors.New("monitor events channel closed")
@@ -131,10 +148,12 @@ func (s *Service) Run(ctx context.Context) error {
 func (s *Service) RunOnce(ctx context.Context) error {
 	monitors := s.monitorDetector.GetConnectedMonitors()
 	powerState := s.powerDetector.GetCurrentState()
+	lidState := s.lidDetector.GetCurrentState()
 
 	s.stateMu.Lock()
 	s.cachedMonitors = monitors
 	s.cachedPowerState = powerState
+	s.cachedLidState = lidState
 	s.stateMu.Unlock()
 
 	if err := s.UpdateOnce(ctx); err != nil {
@@ -161,6 +180,7 @@ func (s *Service) UpdateOnce(ctx context.Context) error {
 	s.stateMu.RLock()
 	monitors := s.cachedMonitors
 	powerState := s.cachedPowerState
+	lidState := s.cachedLidState
 	s.stateMu.RUnlock()
 
 	// grab latest config and pass along for the same world-view
@@ -169,10 +189,11 @@ func (s *Service) UpdateOnce(ctx context.Context) error {
 	logrus.WithFields(logrus.Fields{
 		"monitor_count": len(monitors),
 		"power_state":   powerState.String(),
+		"lid_state":     lidState.String(),
 		"dry_run":       s.serviceConfig.DryRun,
 	}).Debug("Updating configuration")
 
-	found, profile, err := s.matcher.Match(cfg, monitors, powerState)
+	found, profile, err := s.matcher.Match(cfg, monitors, powerState, lidState)
 	if err != nil {
 		return fmt.Errorf("failed to match a profile %w", err)
 	}
@@ -199,7 +220,7 @@ func (s *Service) UpdateOnce(ctx context.Context) error {
 	s.tryExec(ctx, profile.PreApplyExec, cfg.General.PreApplyExec, utils.PreExecLogID)
 
 	destination := *cfg.General.Destination
-	changed, err := s.generator.GenerateConfig(cfg, profile, monitors, powerState, destination)
+	changed, err := s.generator.GenerateConfig(cfg, profile, monitors, powerState, lidState, destination)
 	if err != nil {
 		return fmt.Errorf("failed to generate config: %w", err)
 	}
