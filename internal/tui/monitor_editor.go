@@ -75,6 +75,36 @@ func (e *MonitorEditorStore) MoveMonitor(monitorID int, dx, dy Delta) tea.Cmd {
 	return cmd
 }
 
+func (e *MonitorEditorStore) AdjustSdrSaturation(monitorID int, value float64) tea.Cmd {
+	monitor, _, err := e.FindByID(monitorID)
+	if err != nil {
+		return OperationStatusCmd(OperationNameAdjustSdrSaturation, err)
+	}
+
+	if monitor.Disabled {
+		return OperationStatusCmd(OperationNameAdjustSdrSaturation, ErrMonitorDisabled)
+	}
+
+	monitor.SdrSaturation = value
+
+	return OperationStatusCmd(OperationNameAdjustSdrSaturation, nil)
+}
+
+func (e *MonitorEditorStore) AdjustSdrBrightness(monitorID int, value float64) tea.Cmd {
+	monitor, _, err := e.FindByID(monitorID)
+	if err != nil {
+		return OperationStatusCmd(OperationNameAdjustSdrBrightness, err)
+	}
+
+	if monitor.Disabled {
+		return OperationStatusCmd(OperationNameAdjustSdrBrightness, ErrMonitorDisabled)
+	}
+
+	monitor.SdrBrightness = value
+
+	return OperationStatusCmd(OperationNameAdjustSdrBrightness, nil)
+}
+
 func (e *MonitorEditorStore) ScaleMonitor(monitorID int, newScale float64) tea.Cmd {
 	monitor, _, err := e.FindByID(monitorID)
 	if err != nil {
@@ -146,6 +176,36 @@ func (e *MonitorEditorStore) ToggleDisable(monitorID int) tea.Cmd {
 
 	monitor.ToggleMonitor()
 	return OperationStatusCmd(OperationNameToggleMonitor, nil)
+}
+
+func (e *MonitorEditorStore) SetColorPreset(monitorID int, preset ColorPreset) tea.Cmd {
+	monitor, _, err := e.FindByID(monitorID)
+	if err != nil {
+		return OperationStatusCmd(OperationNameNextBitdepth, err)
+	}
+
+	if monitor.Disabled {
+		return OperationStatusCmd(OperationNameNextBitdepth, ErrMonitorDisabled)
+	}
+
+	monitor.SetPreset(preset)
+
+	return OperationStatusCmd(OperationNameSetColorPreset, nil)
+}
+
+func (e *MonitorEditorStore) NextBitdepth(monitorID int) tea.Cmd {
+	monitor, _, err := e.FindByID(monitorID)
+	if err != nil {
+		return OperationStatusCmd(OperationNameNextBitdepth, err)
+	}
+
+	if monitor.Disabled {
+		return OperationStatusCmd(OperationNameNextBitdepth, ErrMonitorDisabled)
+	}
+
+	monitor.NextBitdepth()
+
+	return OperationStatusCmd(OperationNameNextBitdepth, nil)
 }
 
 func (e *MonitorEditorStore) SetMirror(monitorID int, mirrorOf string) tea.Cmd {

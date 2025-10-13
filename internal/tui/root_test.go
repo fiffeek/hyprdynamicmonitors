@@ -81,6 +81,101 @@ func TestModel_Update_UserFlows(t *testing.T) {
 		},
 
 		{
+			name:         "color_open",
+			monitorsData: defaultMonitorData,
+			runFor:       utils.JustPtr(500 * time.Millisecond),
+			steps: []step{
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyEnter},
+					expectOutputToContain: "EDITING",
+				},
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'C'}},
+					expectOutputToContain: "Adjust Colors",
+				},
+			},
+		},
+
+		{
+			name:         "color_srgb",
+			monitorsData: defaultMonitorData,
+			runFor:       utils.JustPtr(500 * time.Millisecond),
+			steps: []step{
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyEnter},
+					expectOutputToContain: "EDITING",
+				},
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'C'}},
+					expectOutputToContain: "Adjust Colors",
+				},
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'j'}},
+					expectOutputToContain: "► srgb",
+				},
+			},
+		},
+
+		{
+			name:         "color_hdr",
+			monitorsData: defaultMonitorData,
+			runFor:       utils.JustPtr(500 * time.Millisecond),
+			steps: []step{
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyEnter},
+					expectOutputToContain: "EDITING",
+				},
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'C'}},
+					expectOutputToContain: "Adjust Colors",
+				},
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'j'}},
+					times:                 utils.JustPtr(4),
+					expectOutputToContain: "► hdr",
+				},
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'r'}},
+					times:                 utils.JustPtr(1),
+					expectOutputToContain: "SDR Brightness: 1.01",
+				},
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'t'}},
+					times:                 utils.JustPtr(1),
+					expectOutputToContain: "SDR Saturation: 1.01",
+				},
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'H'}},
+					expectOutputToContain: "monitor = desc:BOE",
+				},
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyEnter},
+					expectOutputToContain: "EDITING",
+				},
+			},
+		},
+
+		{
+			name:         "color_bitdepth",
+			monitorsData: defaultMonitorData,
+			runFor:       utils.JustPtr(500 * time.Millisecond),
+			steps: []step{
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyEnter},
+					expectOutputToContain: "EDITING",
+				},
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'C'}},
+					expectOutputToContain: "Adjust Colors",
+				},
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'b'}},
+					expectOutputToContain: "Bitdepth: 10",
+				},
+			},
+		},
+
+		{
 			name:         "scale",
 			monitorsData: defaultMonitorData,
 			runFor:       utils.JustPtr(500 * time.Millisecond),

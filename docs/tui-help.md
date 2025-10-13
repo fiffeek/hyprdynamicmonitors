@@ -129,6 +129,21 @@ Once you select a monitor with `Enter`, it enters **EDITING** mode. In this mode
 
 - `v` - Toggle VRR on/off for the monitor
 
+#### Color Profiles Management
+
+![color](../preview/output/color.gif)
+
+- `C` - Enter color profiles management menu
+  - `Esc/Enter` - Back / Select
+  - `up/down` - Change the current color preset
+  - `b` - Toggle bitdepth (at the moment only `default` and `10` is supported)
+  - When `hdr` color profile is selected you can use `r/R` and `t/T` to adjust the SDR brightness and saturation
+
+Due to [`hyprctl` not yet supporting the output of these](https://github.com/fiffeek/hyprdynamicmonitors/issues/34),
+when you change the color preset and apply it, then reload the TUI,
+the color preset will mismatch and show `auto/default/srgb`.
+This will change as soon as the underlying issue in `Hyprland` is resolved.
+
 ### Applying Changes
 
 ![apply](../preview/output/apply.gif)

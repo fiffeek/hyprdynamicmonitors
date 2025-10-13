@@ -11,6 +11,7 @@ import (
 	"github.com/fiffeek/hyprdynamicmonitors/internal/tui"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/utils"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestHDMConfigPane_Update(t *testing.T) {
@@ -90,16 +91,26 @@ func TestHDMConfigPane_Update(t *testing.T) {
 				}).Get()
 			matcher := matchers.NewMatcher()
 			monitors := []*tui.MonitorSpec{
-				{Name: "eDP-1"},
+				{Name: "eDP-1", ID: utils.JustPtr(1), Description: "Hello"},
 			}
 
 			pane := tui.NewHDMConfigPane(cfg, matcher, monitors, tt.initialPowerState, tt.initialLidState)
 
-			pane.Update(nil)
+			cmd := pane.Update(nil)
+			// nolint:gocritic
+			switch msg := cmd().(type) {
+			case tui.OperationStatus:
+				require.False(t, msg.IsError(), "no error should be returned")
+			}
 
 			oldProfile := pane.GetProfile()
 
-			pane.Update(tt.msg)
+			cmd = pane.Update(tt.msg)
+			// nolint:gocritic
+			switch msg := cmd().(type) {
+			case tui.OperationStatus:
+				require.False(t, msg.IsError(), "no error should be returned")
+			}
 
 			assert.Equal(t, tt.expectedPowerState, pane.GetPowerState())
 			assert.Equal(t, tt.expectedLidState, pane.GetLidState())

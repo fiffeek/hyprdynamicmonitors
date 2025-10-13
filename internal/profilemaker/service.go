@@ -89,7 +89,8 @@ func (s *Service) EditExisting(profileName string, currentMonitors []*hypr.Monit
 	}
 
 	templateData := map[string]any{
-		"Monitors": currentMonitors,
+		"Monitors":     currentMonitors,
+		"MonitorLines": s.ToHyprLines(currentMonitors),
 	}
 
 	var rendered bytes.Buffer
@@ -203,14 +204,15 @@ func (s *Service) append(profileSpec *bytes.Buffer, cfg *config.RawConfig) error
 	return nil
 }
 
-func (*Service) render(currentMonitors hypr.MonitorSpecs, profile *config.Profile) (func() error, error) {
+func (s *Service) render(currentMonitors hypr.MonitorSpecs, profile *config.Profile) (func() error, error) {
 	tmpl, err := template.New("config").Parse(monitorsTemplate)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse template: %w", err)
 	}
 
 	templateData := map[string]any{
-		"Monitors": currentMonitors,
+		"Monitors":     currentMonitors,
+		"MonitorLines": s.ToHyprLines(currentMonitors),
 	}
 
 	var rendered bytes.Buffer
@@ -282,4 +284,59 @@ func (s *Service) prepare(profileName, profileFileLocation string,
 		return nil, fmt.Errorf("cant set the profile path: %w", err)
 	}
 	return &profile, nil
+}
+
+func (s *Service) ToHyprLines(monitors hypr.MonitorSpecs) []string {
+	lines := []string{}
+
+	for _, monitor := range monitors {
+		fields := []string{}
+		line := "monitor=desc:" + monitor.Description
+		fields = append(fields, line)
+		if monitor.Disabled {
+			fields = append(fields, "disable")
+			lines = append(lines, strings.Join(fields, ","))
+			continue
+		}
+
+		fields = append(fields, fmt.Sprintf("%dx%d@%.5f", monitor.Width, monitor.Height, monitor.RefreshRate))
+		fields = append(fields, fmt.Sprintf("%dx%d", monitor.X, monitor.Y))
+		fields = append(fields, fmt.Sprintf("%.2f", monitor.Scale))
+		fields = append(fields, "transform")
+		// nolint:perfsprint
+		fields = append(fields, fmt.Sprintf("%d", monitor.Transform))
+		if monitor.Vrr {
+			fields = append(fields, "vrr")
+			fields = append(fields, "1")
+		} else {
+			fields = append(fields, "vrr")
+			fields = append(fields, "0")
+		}
+		if monitor.TenBitdepth {
+			fields = append(fields, "bitdepth")
+			fields = append(fields, "10")
+		}
+		if monitor.HasNonDefaultColorPreset() {
+			fields = append(fields, "cm")
+			fields = append(fields, monitor.ColorPreset)
+		}
+		if monitor.HDR() && monitor.SdrBrightness != 1.0 {
+			fields = append(fields, "sdrbrightness")
+			fields = append(fields, fmt.Sprintf("%.2f", monitor.SdrBrightness))
+		}
+		if monitor.HDR() && monitor.SdrSaturation != 1.0 {
+			fields = append(fields, "sdrsaturation")
+			fields = append(fields, fmt.Sprintf("%.2f", monitor.SdrSaturation))
+		}
+		if monitor.HasMirror() {
+			fields = append(fields, "mirror")
+			fields = append(fields, monitor.Mirror)
+		}
+
+		lines = append(lines, strings.Join(fields, ","))
+	}
+
+	logrus.Debugf("Monitors freeze: %v", lines)
+
+	return lines
 }

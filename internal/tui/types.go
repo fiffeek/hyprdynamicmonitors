@@ -1,26 +1,127 @@
 package tui
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/fiffeek/hyprdynamicmonitors/internal/hypr"
 )
 
+type ColorPreset int
+
+const (
+	AutoColorPreset ColorPreset = iota
+	SRGBColorPreset
+	WideColorPreset
+	EDIDColorPreset
+	HDRColorPreset
+	HDREDIDColorPreset
+	DCIP3ColorPreset
+	DP3ColorPreset
+	AdobeColorPreset
+)
+
+var colorPresetMapping = map[ColorPreset]string{
+	AutoColorPreset:    "auto",
+	SRGBColorPreset:    "srgb",
+	WideColorPreset:    "wide",
+	EDIDColorPreset:    "edid",
+	HDRColorPreset:     "hdr",
+	HDREDIDColorPreset: "hdredid",
+	DCIP3ColorPreset:   "dcip3",
+	DP3ColorPreset:     "dp3",
+	AdobeColorPreset:   "adobe",
+}
+
+var allColorPresets = []ColorPreset{
+	AutoColorPreset,
+	SRGBColorPreset,
+	WideColorPreset,
+	EDIDColorPreset,
+	HDRColorPreset,
+	HDREDIDColorPreset,
+	DCIP3ColorPreset,
+	DP3ColorPreset,
+	AdobeColorPreset,
+}
+
+func ColorPresetFromString(color string) (ColorPreset, error) {
+	for key, val := range colorPresetMapping {
+		if val == color {
+			return key, nil
+		}
+	}
+
+	return AutoColorPreset, errors.New("cant find color")
+}
+
+func (e ColorPreset) Value() string {
+	val, ok := colorPresetMapping[e]
+	if ok {
+		return val
+	}
+	return colorPresetMapping[SRGBColorPreset]
+}
+
+func (e ColorPreset) CanAdjustSdr() bool {
+	return e == HDRColorPreset
+}
+
+func (e ColorPreset) IsDefault() bool {
+	return e == AutoColorPreset || e == SRGBColorPreset
+}
+
+type Bitdepth int
+
+const (
+	DefaultBitdepth Bitdepth = iota
+	TenBitdepth
+)
+
+func (e Bitdepth) Value() string {
+	switch e {
+	case DefaultBitdepth:
+		return "default"
+	case TenBitdepth:
+		return "10"
+	default:
+		return "default"
+	}
+}
+
+func (e Bitdepth) Bool() bool {
+	return e == TenBitdepth
+}
+
+func GetBitdepth(spec *hypr.MonitorSpec) Bitdepth {
+	if spec.IsTenBitdepth() {
+		return TenBitdepth
+	}
+	return DefaultBitdepth
+}
+
+var allBitdepths = []Bitdepth{DefaultBitdepth, TenBitdepth}
+
 type MonitorSpec struct {
-	Name           string   `json:"name"`
-	ID             *int     `json:"id"`
-	Description    string   `json:"description"`
-	Disabled       bool     `json:"disabled"`
-	Width          int      `json:"width"`
-	Height         int      `json:"height"`
-	RefreshRate    float64  `json:"refreshRate"`
-	Transform      int      `json:"transform"`
-	Vrr            bool     `json:"vrr"`
-	Scale          float64  `json:"scale"`
-	X              int      `json:"x"`
-	Y              int      `json:"y"`
-	AvailableModes []string `json:"availableModes"`
-	Mirror         string   `json:"mirrorOf"`
+	Name           string      `json:"name"`
+	ID             *int        `json:"id"`
+	Description    string      `json:"description"`
+	Disabled       bool        `json:"disabled"`
+	Width          int         `json:"width"`
+	Height         int         `json:"height"`
+	RefreshRate    float64     `json:"refreshRate"`
+	Transform      int         `json:"transform"`
+	Vrr            bool        `json:"vrr"`
+	Scale          float64     `json:"scale"`
+	X              int         `json:"x"`
+	Y              int         `json:"y"`
+	AvailableModes []string    `json:"availableModes"`
+	Mirror         string      `json:"mirrorOf"`
+	CurrentFormat  string      `json:"currentFormat"`
+	Bitdepth       Bitdepth    `json:"-"`
+	ColorPreset    ColorPreset `json:"-"`
+	SdrBrightness  float64     `json:"-"`
+	SdrSaturation  float64     `json:"-"`
 }
 
 func NewMonitorSpec(spec *hypr.MonitorSpec) *MonitorSpec {
@@ -39,7 +140,17 @@ func NewMonitorSpec(spec *hypr.MonitorSpec) *MonitorSpec {
 		Y:              spec.Y,
 		AvailableModes: spec.AvailableModes,
 		Mirror:         spec.Mirror,
+		Bitdepth:       GetBitdepth(spec),
+		// TODO(fmikina, 12.10.25): fix after patching hyprctl to expose this information
+		ColorPreset:   AutoColorPreset,
+		SdrBrightness: 1.0,
+		SdrSaturation: 1.0,
 	}
+}
+
+func (m *MonitorSpec) NextBitdepth() {
+	current := int(m.Bitdepth)
+	m.Bitdepth = Bitdepth((current + 1) % len(allBitdepths))
 }
 
 func (m *MonitorSpec) RotationPretty() string {
@@ -55,6 +166,10 @@ func (m *MonitorSpec) RotationPretty() string {
 	default:
 		return fmt.Sprintf("Transform: %d", m.Transform)
 	}
+}
+
+func (m *MonitorSpec) SetPreset(preset ColorPreset) {
+	m.ColorPreset = preset
 }
 
 func (m *MonitorSpec) MirrorPretty() string {
@@ -152,8 +267,8 @@ func (m *MonitorSpec) NeedsDimensionsSwap() bool {
 	return m.Transform == 1 || m.Transform == 3
 }
 
-func (m *MonitorSpec) ToHyprMonitors() *hypr.MonitorSpec {
-	return &hypr.MonitorSpec{
+func (m *MonitorSpec) ToHyprMonitors() (*hypr.MonitorSpec, error) {
+	monitor := &hypr.MonitorSpec{
 		Name:           m.Name,
 		ID:             m.ID,
 		Description:    m.Description,
@@ -168,7 +283,17 @@ func (m *MonitorSpec) ToHyprMonitors() *hypr.MonitorSpec {
 		Y:              m.Y,
 		AvailableModes: m.AvailableModes,
 		Mirror:         m.Mirror,
+		TenBitdepth:    m.Bitdepth.Bool(),
+		CurrentFormat:  m.CurrentFormat,
+		SdrBrightness:  m.SdrBrightness,
+		SdrSaturation:  m.SdrSaturation,
+		ColorPreset:    m.ColorPreset.Value(),
 	}
+	if err := monitor.Validate(); err != nil {
+		return nil, fmt.Errorf("cant validate monitor: %w", err)
+	}
+
+	return monitor, nil
 }
 
 func (m *MonitorSpec) ToHypr() string {
@@ -179,6 +304,18 @@ func (m *MonitorSpec) ToHypr() string {
 		m.Height, m.RefreshRate, m.X, m.Y, m.Scale, m.Transform)
 	if m.Vrr {
 		line += ",vrr,1"
+	}
+	if m.Bitdepth != DefaultBitdepth {
+		line = fmt.Sprintf("%s,bitdepth,%s", line, m.Bitdepth.Value())
+	}
+	if !m.ColorPreset.IsDefault() {
+		line = fmt.Sprintf("%s,cm,%s", line, m.ColorPreset.Value())
+	}
+	if m.SdrBrightness != 1.0 && m.ColorPreset.CanAdjustSdr() {
+		line = fmt.Sprintf("%s,sdrbrightness,%.2f", line, m.SdrBrightness)
+	}
+	if m.SdrSaturation != 1.0 && m.ColorPreset.CanAdjustSdr() {
+		line = fmt.Sprintf("%s,sdrsaturation,%.2f", line, m.SdrSaturation)
 	}
 	if m.Mirror != "none" {
 		line = fmt.Sprintf("%s,mirror,%s", line, m.Mirror)
@@ -244,10 +381,14 @@ func (m *MonitorRectangle) isBottomEdge(x, y int) bool {
 	}
 }
 
-func ConvertToHyprMonitors(monitors []*MonitorSpec) []*hypr.MonitorSpec {
+func ConvertToHyprMonitors(monitors []*MonitorSpec) ([]*hypr.MonitorSpec, error) {
 	var hyprMonitors []*hypr.MonitorSpec
 	for _, monitor := range monitors {
-		hyprMonitors = append(hyprMonitors, monitor.ToHyprMonitors())
+		mon, err := monitor.ToHyprMonitors()
+		if err != nil {
+			return nil, fmt.Errorf("cant validate monitor: %w", err)
+		}
+		hyprMonitors = append(hyprMonitors, mon)
 	}
-	return hyprMonitors
+	return hyprMonitors, nil
 }

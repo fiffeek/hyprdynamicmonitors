@@ -30,12 +30,14 @@ type AppState struct {
 	Scaling                bool
 	ModeSelection          bool
 	MirrorSelection        bool
+	ColorSelection         bool
 	Fullscreen             bool
 	MonitorEditedListIndex int
 	Snapping               bool
 	ProfileNameRequested   bool
 	ShowConfirmationPrompt bool
 	MonitorFollowMode      bool
+	ExpandHyprPreview      bool
 }
 
 func (s AppState) String() string {
@@ -105,12 +107,17 @@ func (r *RootState) ToggleFollowMonitorMode() {
 	r.State.MonitorFollowMode = !r.State.MonitorFollowMode
 }
 
+func (r *RootState) ToggleExpandHyprPreview() {
+	r.State.ExpandHyprPreview = !r.State.ExpandHyprPreview
+}
+
 func (r *RootState) SetMonitorEditState(msg MonitorBeingEdited) {
 	r.State.EditingMonitor = true
 	r.State.Scaling = msg.Scaling
 	r.State.ModeSelection = msg.ModesEditor
 	r.State.MonitorEditedListIndex = msg.ListIndex
 	r.State.MirrorSelection = msg.MirroringMode
+	r.State.ColorSelection = msg.ColorSelection
 }
 
 func (r *RootState) ClearMonitorEditState() {
@@ -119,6 +126,7 @@ func (r *RootState) ClearMonitorEditState() {
 	r.State.EditingMonitor = false
 	r.State.MonitorEditedListIndex = -1
 	r.State.MirrorSelection = false
+	r.State.ColorSelection = false
 }
 
 func (r *RootState) CurrentView() ViewMode {

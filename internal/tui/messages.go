@@ -11,11 +11,12 @@ import (
 )
 
 type MonitorBeingEdited struct {
-	ListIndex     int
-	Scaling       bool
-	MonitorID     int
-	ModesEditor   bool
-	MirroringMode bool
+	ListIndex      int
+	Scaling        bool
+	MonitorID      int
+	ModesEditor    bool
+	MirroringMode  bool
+	ColorSelection bool
 }
 
 type MonitorUnselected struct{}
@@ -98,6 +99,10 @@ const (
 	OperationNameMatchingProfile
 	OperationNameEditProfile
 	OperationNameHDMConfigReloadRequested
+	OperationNameNextBitdepth
+	OperationNameSetColorPreset
+	OperationNameAdjustSdrBrightness
+	OperationNameAdjustSdrSaturation
 )
 
 type OperationStatus struct {
@@ -140,6 +145,14 @@ func (o OperationStatus) String() string {
 		operationName = "Edit Profile"
 	case OperationNameHDMConfigReloadRequested:
 		operationName = "HDM Config Reload"
+	case OperationNameNextBitdepth:
+		operationName = "Next Bitdepth"
+	case OperationNameSetColorPreset:
+		operationName = "Set Color Preset"
+	case OperationNameAdjustSdrBrightness:
+		operationName = "Set SDR Brightness"
+	case OperationNameAdjustSdrSaturation:
+		operationName = "Set SDR Saturation"
 	default:
 		operationName = "Operation"
 	}
@@ -166,6 +179,8 @@ func OperationStatusCmd(name OperationName, err error) tea.Cmd {
 		OperationNameHDMConfigReloadRequested,
 		OperationNameToggleMonitor,
 		OperationNameToggleVRR,
+		OperationNameNextBitdepth,
+		OperationNameSetColorPreset,
 	}
 	showSuccessToUser := slices.Contains(criticalOperations, name)
 	return func() tea.Msg {
@@ -195,6 +210,16 @@ type ScaleMonitorCommand struct {
 	scale     float64
 }
 
+type AdjustSdrBrightnessCommand struct {
+	MonitorID     int
+	SdrBrightness float64
+}
+
+type AdjustSdrSaturationCommand struct {
+	MonitorID  int
+	Saturation float64
+}
+
 type RotateMonitorCommand struct {
 	MonitorID int
 }
@@ -213,6 +238,14 @@ type ToggleMonitorCommand struct {
 	MonitorID int
 }
 
+type ChangeColorPresetCommand struct {
+	Preset ColorPreset
+}
+
+type ChangeColorPresetFinalCommand struct {
+	Preset ColorPreset
+}
+
 type ChangeModePreviewCommand struct {
 	Mode string
 }
@@ -227,6 +260,10 @@ type ChangeMirrorCommand struct {
 
 type ChangeModeCommand struct {
 	Mode string
+}
+
+type NextBitdepthCommand struct {
+	MonitorID int
 }
 
 type CreateNewProfileCommand struct {
@@ -253,6 +290,8 @@ type ToggleConfirmationPromptCommand struct{}
 
 type CloseMonitorMirrorListCommand struct{}
 
+type CloseColorPickerCommand struct{}
+
 type CloseMonitorModeListCommand struct{}
 
 type editorFinishedMsg struct{ err error }
@@ -277,15 +316,63 @@ func openEditor(file string) tea.Cmd {
 	})
 }
 
+func AdjustSdrSaturationCmd(monitorID int, value float64) tea.Cmd {
+	return func() tea.Msg {
+		return AdjustSdrSaturationCommand{
+			MonitorID:  monitorID,
+			Saturation: value,
+		}
+	}
+}
+
+func AdjustSdrBrightnessCmd(monitorID int, value float64) tea.Cmd {
+	return func() tea.Msg {
+		return AdjustSdrBrightnessCommand{
+			MonitorID:     monitorID,
+			SdrBrightness: value,
+		}
+	}
+}
+
+func ChangeColorPresetFinalCmd(preset ColorPreset) tea.Cmd {
+	return func() tea.Msg {
+		return ChangeColorPresetFinalCommand{
+			preset,
+		}
+	}
+}
+
+func ChangeColorPresetCmd(preset ColorPreset) tea.Cmd {
+	return func() tea.Msg {
+		return ChangeColorPresetCommand{
+			preset,
+		}
+	}
+}
+
 func CloseMonitorModeListCmd() tea.Cmd {
 	return func() tea.Msg {
 		return CloseMonitorModeListCommand{}
 	}
 }
 
+func CloseColorPickerCmd() tea.Cmd {
+	return func() tea.Msg {
+		return CloseColorPickerCommand{}
+	}
+}
+
 func CloseMonitorMirrorListCmd() tea.Cmd {
 	return func() tea.Msg {
 		return CloseMonitorMirrorListCommand{}
+	}
+}
+
+func nextBitdepthCmd(monitorID int) tea.Cmd {
+	return func() tea.Msg {
+		return NextBitdepthCommand{
+			monitorID,
+		}
 	}
 }
 
