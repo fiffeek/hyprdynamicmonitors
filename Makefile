@@ -183,6 +183,8 @@ record/preview: build/docs
 	@git checkout -- ./preview/tapes/configs/
 	@git clean -fd ./preview/tapes/configs/
 
+demo: record/preview
+
 record/previews: build/docs
 	$(MAKE) record/preview RECORD_TARGET=views
 	$(MAKE) record/preview RECORD_TARGET=monitor_view

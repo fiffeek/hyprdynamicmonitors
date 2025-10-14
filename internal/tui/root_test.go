@@ -671,6 +671,58 @@ func TestModel_Update_UserFlows(t *testing.T) {
 		},
 
 		{
+			name:         "no_matching_profile_view",
+			monitorsData: twoMonitorsData,
+			runFor:       utils.JustPtr(500 * time.Millisecond),
+			cfg: testutils.NewTestConfig(t).WithProfiles(map[string]*config.Profile{
+				"whatever": {
+					ConfigType: utils.JustPtr(config.Template),
+					Conditions: &config.ProfileCondition{
+						RequiredMonitors: []*config.RequiredMonitor{
+							{
+								Description: utils.StringPtr("BOE NE135A1M-NY1 SAMOYEDS"),
+							},
+						},
+					},
+				},
+			}).Get(),
+			steps: []step{
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyTab},
+					expectOutputToContain: "No configuration profile",
+				},
+			},
+		},
+
+		{
+			name:         "no_matching_ne_profile_view",
+			monitorsData: twoMonitorsData,
+			runFor:       utils.JustPtr(500 * time.Millisecond),
+			cfg: testutils.NewTestConfig(t).WithProfiles(map[string]*config.Profile{
+				"whatever": {
+					ConfigType: utils.JustPtr(config.Template),
+					Conditions: &config.ProfileCondition{
+						RequiredMonitors: []*config.RequiredMonitor{
+							{
+								Description: utils.StringPtr("BOE NE135A1M-NY1 SAMOYEDS"),
+							},
+						},
+					},
+				},
+			}).Get(),
+			steps: []step{
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyTab},
+					expectOutputToContain: "No configuration profile",
+				},
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'n'}},
+					expectOutputToContain: "Type the profile name",
+				},
+			},
+		},
+
+		{
 			name:         "matching_profile_append",
 			monitorsData: twoMonitorsData,
 			runFor:       utils.JustPtr(800 * time.Millisecond),

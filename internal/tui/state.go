@@ -40,12 +40,12 @@ type AppState struct {
 	ExpandHyprPreview      bool
 }
 
-func (s AppState) String() string {
+func (s AppState) String(currentView ViewMode) string {
 	modes := []string{}
-	if s.Fullscreen {
+	if s.Fullscreen && currentView == MonitorsListView {
 		modes = append(modes, "Fullscreen")
 	}
-	if s.Panning {
+	if s.Panning && currentView == MonitorsListView {
 		modes = append(modes, "Panning")
 	}
 	return strings.Join(modes, " ")
