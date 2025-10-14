@@ -93,9 +93,14 @@ func (h *HDMConfigPane) Update(msg tea.Msg) tea.Cmd {
 	if !h.pulledProfile {
 		logrus.Debugf("Current power state: %d", h.powerState)
 		h.pulledProfile = true
-		_, profile, err := h.matcher.Match(h.cfg.Get(), ConvertToHyprMonitors(h.monitors), h.powerState, h.lidState)
-		cmds = append(cmds, OperationStatusCmd(OperationNameMatchingProfile, err))
-		h.profile = profile
+		mons, err := ConvertToHyprMonitors(h.monitors)
+		if err != nil {
+			cmds = append(cmds, OperationStatusCmd(OperationNameMatchingProfile, err))
+		} else {
+			_, profile, err := h.matcher.Match(h.cfg.Get(), mons, h.powerState, h.lidState)
+			cmds = append(cmds, OperationStatusCmd(OperationNameMatchingProfile, err))
+			h.profile = profile
+		}
 	}
 
 	switch msg := msg.(type) {

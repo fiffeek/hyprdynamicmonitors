@@ -35,6 +35,7 @@ type Model struct {
 	header              *Header
 	hyprPreviewPane     *HyprPreviewPane
 	scaleSelector       *ScaleSelector
+	colorPicker         *ColorPicker
 
 	// components for config view
 	hdm               *HDMConfigPane
@@ -71,6 +72,7 @@ func NewModel(cfg *config.Config, hyprMonitors hypr.MonitorSpecs,
 		rootState:           state,
 		layout:              NewLayout(),
 		monitorsList:        NewMonitorList(monitors),
+		colorPicker:         NewColorPicker(),
 		monitorsPreviewPane: NewMonitorsPreviewPane(monitors),
 		help:                help.New(),
 		header:              NewHeader("HyprDynamicMonitors", state.viewModes, version),
@@ -174,10 +176,14 @@ func (m Model) rightPanels() []string {
 		if m.rootState.State.Panning {
 			previewStyle = ActiveStyle
 		}
-		m.monitorsPreviewPane.SetHeight(m.layout.RightPreviewHeight())
 		m.monitorsPreviewPane.SetWidth(m.layout.RightPanesWidth())
+		monHeight := m.layout.RightPreviewHeight()
+		if m.rootState.State.ExpandHyprPreview {
+			monHeight = m.layout.RightMonitorsPreviewShorterHeight()
+		}
+		m.monitorsPreviewPane.SetHeight(monHeight)
 		previewPane := previewStyle.Width(m.layout.RightPanesWidth()).Height(
-			m.layout.RightPreviewHeight()).Render(m.monitorsPreviewPane.View())
+			monHeight).Render(m.monitorsPreviewPane.View())
 
 		if m.rootState.State.Fullscreen {
 			m.monitorsPreviewPane.SetHeight(m.layout.AvailableHeight() + 2)
@@ -188,8 +194,13 @@ func (m Model) rightPanels() []string {
 
 		rightSections = append(rightSections, previewPane)
 		if !m.rootState.State.Fullscreen {
+			hyprPreviewHeight := m.layout.RightHyprHeight()
+			if m.rootState.State.ExpandHyprPreview {
+				hyprPreviewHeight = m.layout.RightHyprPreviewLonger()
+			}
+			m.hyprPreviewPane.SetWidth(m.layout.RightPanesWidth())
 			hyprPreview := InactiveStyle.Width(m.layout.RightPanesWidth()).Height(
-				m.layout.RightHyprHeight()).Render(m.hyprPreviewPane.View())
+				hyprPreviewHeight).Render(m.hyprPreviewPane.View())
 			rightSections = append(rightSections, hyprPreview)
 		}
 	}
@@ -236,12 +247,14 @@ func (m Model) leftPanels() []string {
 		logrus.Debugf("Monitors list height: %d", leftMainPanelSize)
 		monitorViewStyle := ActiveStyle
 		if m.rootState.State.ModeSelection || m.rootState.State.MirrorSelection ||
-			m.rootState.State.Scaling || m.rootState.State.Panning {
+			m.rootState.State.Scaling || m.rootState.State.Panning || m.rootState.State.ColorSelection {
 			monitorViewStyle = InactiveStyle
 		}
 		monitorView := monitorViewStyle.Width(m.layout.LeftPanesWidth()).Height(
 			leftMainPanelSize).Render(m.monitorsList.View())
-		left = append(left, monitorView)
+		if !m.rootState.State.ColorSelection {
+			left = append(left, monitorView)
+		}
 
 		subpaneStyle := InactiveStyle
 		if !m.rootState.State.Panning {
@@ -272,6 +285,14 @@ func (m Model) leftPanels() []string {
 			logrus.Debugf("Scaling selection pane height: %d", m.layout.LeftSubpaneHeight())
 			left = append(left, scalingSelector)
 		}
+
+		if m.rootState.State.ColorSelection {
+			m.colorPicker.SetHeight(m.layout.AvailableHeight() + 2)
+			m.colorPicker.SetWidth(m.layout.LeftPanesWidth())
+			pane := subpaneStyle.Width(m.layout.LeftPanesWidth()).Height(
+				m.layout.AvailableHeight() + 2).Render(m.colorPicker.View())
+			left = append(left, pane)
+		}
 	}
 
 	return left
@@ -298,12 +319,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmds = append(cmds, m.monitorModes.SetItems(m.rootState.monitors[msg.ListIndex]))
 		cmds = append(cmds, m.monitorMirrors.SetItems(m.rootState.monitors[msg.ListIndex]))
 		cmds = append(cmds, m.scaleSelector.Set(m.rootState.monitors[msg.ListIndex]))
+		cmds = append(cmds, m.colorPicker.SetMonitor(m.rootState.monitors[msg.ListIndex]))
 	case MonitorUnselected:
 		logrus.Debug("Monitor unselected event in root")
 		m.rootState.ClearMonitorEditState()
 		cmds = append(cmds, m.monitorModes.ClearItems())
 		cmds = append(cmds, m.monitorMirrors.ClearItems())
 		cmds = append(cmds, m.scaleSelector.Unset())
+		cmds = append(cmds, m.colorPicker.Unset())
 		stateChanged = true
 	case MoveMonitorCommand:
 		logrus.Debug("Received a monitor move command")
@@ -324,10 +347,17 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		logrus.Debug("Received a monitor scale command")
 		cmds = append(cmds, m.monitorEditor.ScaleMonitor(msg.monitorID, msg.scale))
 		cmds = append(cmds, m.monitorsList.Update(msg))
+	case AdjustSdrBrightnessCommand:
+		cmds = append(cmds, m.monitorEditor.AdjustSdrBrightness(msg.MonitorID, msg.SdrBrightness))
+	case AdjustSdrSaturationCommand:
+		cmds = append(cmds, m.monitorEditor.AdjustSdrSaturation(msg.MonitorID, msg.Saturation))
 	case ChangeMirrorPreviewCommand:
 		logrus.Debug("Received preview change for monitor mirror")
 		cmds = append(cmds, m.monitorEditor.SetMirror(
 			m.rootState.State.MonitorEditedListIndex, msg.MirrorOf))
+	case NextBitdepthCommand:
+		logrus.Debug("Received next bitdepth")
+		cmds = append(cmds, m.monitorEditor.NextBitdepth(msg.MonitorID))
 	case ChangeMirrorCommand:
 		logrus.Debug("Received change for monitor mirror")
 		cmds = append(cmds, m.monitorEditor.SetMirror(
@@ -337,7 +367,16 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		logrus.Debug("Received preview change for monitor mode")
 		cmds = append(cmds, m.monitorEditor.SetMode(
 			m.rootState.State.MonitorEditedListIndex, msg.Mode))
-	case CloseMonitorModeListCommand, CloseMonitorMirrorListCommand:
+	case ChangeColorPresetCommand:
+		logrus.Debug("Received change color preset")
+		cmds = append(cmds, m.monitorEditor.SetColorPreset(
+			m.rootState.State.MonitorEditedListIndex, msg.Preset))
+	case ChangeColorPresetFinalCommand:
+		logrus.Debug("Received final change color preset")
+		cmds = append(cmds, m.monitorEditor.SetColorPreset(
+			m.rootState.State.MonitorEditedListIndex, msg.Preset))
+		cmds = append(cmds, m.monitorsList.Update(msg))
+	case CloseMonitorModeListCommand, CloseMonitorMirrorListCommand, CloseColorPickerCommand:
 		cmds = append(cmds, m.monitorsList.Update(msg))
 	case ChangeModeCommand:
 		logrus.Debug("Received change for monitor mode")
@@ -409,6 +448,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				logrus.Debug("Toggling pane mode")
 				m.rootState.TogglePanning()
 				stateChanged = true
+			case key.Matches(msg, m.keys.ExpandHyprPreview):
+				logrus.Debug("Toggle expand hypr preview")
+				m.rootState.ToggleExpandHyprPreview()
+				m.hyprPreviewPane.SetClamp(!m.rootState.State.ExpandHyprPreview)
+				stateChanged = true
 			case key.Matches(msg, m.keys.Fullscreen):
 				logrus.Debug("Toggling fullscreen mode")
 				m.rootState.ToggleFullscreen()
@@ -447,6 +491,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					cmds = append(cmds, cmd)
 				case m.rootState.State.MirrorSelection:
 					cmd := m.monitorMirrors.Update(msg)
+					cmds = append(cmds, cmd)
+				case m.rootState.State.ColorSelection:
+					cmd := m.colorPicker.Update(msg)
 					cmds = append(cmds, cmd)
 				case m.rootState.State.Scaling:
 					cmd := m.scaleSelector.Update(msg)
@@ -488,6 +535,7 @@ func (m *Model) GlobalHelp() []key.Binding {
 			rootKeyMap.Pan,
 			rootKeyMap.Fullscreen, rootKeyMap.FollowMonitor, rootKeyMap.Center, rootKeyMap.ZoomIn, rootKeyMap.ZoomOut,
 			rootKeyMap.ToggleSnapping, rootKeyMap.ApplyHypr,
+			rootKeyMap.ExpandHyprPreview,
 		}
 		bindings = append(bindings, monitors...)
 

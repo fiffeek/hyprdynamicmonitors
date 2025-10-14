@@ -19,6 +19,7 @@ type MonitorItem struct {
 	inScaleMode          bool
 	inModeSelection      bool
 	inMirroringMode      bool
+	inColorSelection     bool
 }
 
 func (m MonitorItem) Title() string {
@@ -79,6 +80,10 @@ func (m MonitorItem) Indicator() string {
 		return MonitorScaleMode.Render("[SCALE MODE]")
 	}
 
+	if m.inColorSelection {
+		return MonitorColorMode.Render("[COLOR EDIT]")
+	}
+
 	if m.inMirroringMode {
 		return MonitorMirroringMode.Render("[MIRRORING]")
 	}
@@ -115,6 +120,7 @@ type MonitorListKeyMap struct {
 	unselect      key.Binding
 	rotate        key.Binding
 	scale         key.Binding
+	color         key.Binding
 	changeMode    key.Binding
 	vrr           key.Binding
 	toggle        key.Binding
@@ -155,6 +161,10 @@ func NewMonitorListKeyMap() *MonitorListKeyMap {
 			key.WithKeys("i"),
 			key.WithHelp("i", "mirror"),
 		),
+		color: key.NewBinding(
+			key.WithKeys("C"),
+			key.WithHelp("C", "color"),
+		),
 	}
 }
 
@@ -168,6 +178,7 @@ func (m MonitorListKeyMap) ShortHelp(state AppState) []key.Binding {
 			m.vrr,
 			m.toggle,
 			m.mirror,
+			m.color,
 		}
 	}
 	return []key.Binding{
@@ -219,6 +230,15 @@ func (d MonitorDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd {
 		previous := item.inScaleMode
 		item.RemoveSelectionModes()
 		item.inScaleMode = !previous
+		sendMonitorSelection = true
+	case CloseColorPickerCommand, ChangeColorPresetFinalCommand:
+		logrus.Debug("Received final change color command")
+		if !item.Editing() {
+			return nil
+		}
+		previous := item.inColorSelection
+		item.RemoveSelectionModes()
+		item.inColorSelection = !previous
 		sendMonitorSelection = true
 	case ChangeModeCommand, CloseMonitorModeListCommand:
 		logrus.Debug("Received final change mode command")
@@ -296,6 +316,15 @@ func (d MonitorDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd {
 			item.RemoveSelectionModes()
 			item.inModeSelection = !previous
 			sendMonitorSelection = true
+		case key.Matches(msg, d.keymap.color):
+			logrus.Debugf("List called with color")
+			if !item.Editing() {
+				return nil
+			}
+			previous := item.inColorSelection
+			item.RemoveSelectionModes()
+			item.inColorSelection = !previous
+			sendMonitorSelection = true
 		}
 	}
 	cmds = append(cmds, m.SetItem(m.Index(), item))
@@ -303,11 +332,12 @@ func (d MonitorDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd {
 	if sendMonitorSelection {
 		cmds = append(cmds, func() tea.Msg {
 			return MonitorBeingEdited{
-				ListIndex:     m.Index(),
-				Scaling:       item.inScaleMode,
-				MonitorID:     *item.monitor.ID,
-				ModesEditor:   item.inModeSelection,
-				MirroringMode: item.inMirroringMode,
+				ListIndex:      m.Index(),
+				Scaling:        item.inScaleMode,
+				MonitorID:      *item.monitor.ID,
+				ModesEditor:    item.inModeSelection,
+				MirroringMode:  item.inMirroringMode,
+				ColorSelection: item.inColorSelection,
 			}
 		})
 	}

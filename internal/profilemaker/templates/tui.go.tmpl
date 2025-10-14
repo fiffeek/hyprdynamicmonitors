@@ -1,13 +1,5 @@
 # <<<<< TUI AUTO START
-{{- range .Monitors }}
-{{- if .Disabled }}
-monitor=desc:{{ .Description }},disable
-{{- else }}
-{{- if and .Mirror (ne .Mirror "none") }}
-monitor=desc:{{ .Description }},{{ .Width }}x{{ .Height }}@{{ printf "%.5f" .RefreshRate }},{{ .X }}x{{ .Y }},{{ printf "%.2f" .Scale }},transform,{{ .Transform }},vrr,{{ if .Vrr }}1{{ else }}0{{ end }},mirror,{{ .Mirror }}
-{{- else }}
-monitor=desc:{{ .Description }},{{ .Width }}x{{ .Height }}@{{ printf "%.5f" .RefreshRate }},{{ .X }}x{{ .Y }},{{ printf "%.2f" .Scale }},transform,{{ .Transform }},vrr,{{ if .Vrr }}1{{ else }}0{{ end }}
-{{- end }}
-{{- end }}
+{{- range .MonitorLines }}
+{{ . }}
 {{- end }}
 # <<<<< TUI AUTO END

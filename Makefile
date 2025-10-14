@@ -21,6 +21,16 @@ TUI_FLOWS ?= "TestModel_Update_UserFlows"
 VHS_BIN ?= vhs
 DIST_DIR := $(abspath dist)
 RECORD_TARGET ?= demo
+GOTESTSUM := $(GOLANG_BIN) tool gotestsum
+GOTESTSUMINTEGRATION  := $(GOTESTSUM)
+
+ifeq ($(GITHUB_ACTIONS),true)
+GOTESTSUM := $(GOTESTSUM) --format=github-actions
+GOTESTSUMINTEGRATION := $(GOTESTSUM) --format=github-actions
+else
+GOTESTSUM := $(GOTESTSUM) --format=pkgname-and-test-fails
+GOTESTSUMINTEGRATION := $(GOTESTSUM) --format=testname
+endif
 
 export DIST_DIR
 export PATH := $(DIST_DIR):$(PATH)
@@ -104,15 +114,15 @@ test/tui/flows/regenerate:
 	@$(GOLANG_BIN) test ./internal/tui -v -run $(TUI_FLOWS) -update
 
 test/tui/flows:
-	@$(GOLANG_BIN) test ./internal/tui -v -run $(TUI_FLOWS)
+	@$(GOTESTSUM) -- ./internal/tui -v -run $(TUI_FLOWS)
 
 test/unit:
 	@$(GOLANGCI_LINT_BIN) config verify
 	@$(GORELEASER_BIN) check
-	@$(GOLANG_BIN) test ./internal/... -v -coverprofile=unit.txt
+	@$(GOTESTSUM) -- ./internal/... -v -coverprofile=unit.txt -covermode count
 
 test/unit/selected:
-	$(GOLANG_BIN) test ./internal/$(PACKAGE_SELECTOR) -v -run $(TEST_SELECTOR)
+	@$(GOTESTSUM) -- ./internal/$(PACKAGE_SELECTOR) -v -run $(TEST_SELECTOR)
 
 test/unit/selected/regenerate:
 	$(GOLANG_BIN) test ./internal/$(PACKAGE_SELECTOR) -v  --regenerate -run $(TEST_SELECTOR)
@@ -123,11 +133,12 @@ build/docs:
 
 build/test:
 	@mkdir -p ./dist/
-	@$(GOLANG_BIN) build -v -cover -o $(TEST_EXECUTABLE_NAME) ./main.go
+	@$(GOLANG_BIN) build -v -cover -covermode count -o $(TEST_EXECUTABLE_NAME) ./main.go
 
 test/integration: build/test
+	@rm -rf .coverdata
 	@mkdir -p .coverdata
-	@HDM_BINARY_PATH=$(TEST_EXECUTABLE_NAME) $(GOLANG_BIN) test -v ./test/... --debug --count=1
+	@HDM_BINARY_PATH=$(TEST_EXECUTABLE_NAME) $(GOTESTSUMINTEGRATION) -- -v ./test/... --debug --count=1
 	@$(GOLANG_BIN) tool covdata textfmt -i=.coverdata -o=integration.txt
 
 test/integration/regenerate: build/test
@@ -169,6 +180,8 @@ record/preview: build/docs
 	@git checkout -- ./preview/tapes/configs/
 	@git clean -fd ./preview/tapes/configs/
 	@$(VHS_BIN) ./preview/tapes/$(RECORD_TARGET).tape
+	@git checkout -- ./preview/tapes/configs/
+	@git clean -fd ./preview/tapes/configs/
 
 record/previews: build/docs
 	$(MAKE) record/preview RECORD_TARGET=views
@@ -187,3 +200,4 @@ record/previews: build/docs
 	$(MAKE) record/preview RECORD_TARGET=apply
 	$(MAKE) record/preview RECORD_TARGET=create_profile
 	$(MAKE) record/preview RECORD_TARGET=edit_existing
+	$(MAKE) record/preview RECORD_TARGET=color

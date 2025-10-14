@@ -48,11 +48,20 @@ Sleep 200ms
 Down
 Sleep 500ms
 Enter
+Sleep 500ms
 
 # change mode
 Type "m"
 Sleep 500ms
 Down
+Sleep 1s
+Enter
+Sleep 500ms
+
+# change color profile to wide
+Type "C"
+Sleep 1s
+Down 2
 Sleep 1s
 Enter
 Sleep 500ms

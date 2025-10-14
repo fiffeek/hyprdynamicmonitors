@@ -24,6 +24,34 @@ type MonitorSpec struct {
 	Y              int      `json:"y"`
 	AvailableModes []string `json:"availableModes"`
 	Mirror         string   `json:"mirrorOf"`
+	CurrentFormat  string   `json:"currentFormat"`
+	TenBitdepth    bool     `json:"-"`
+	// TODO(fmikina, 14.10.25): fix when hyprctl supports these
+	SdrBrightness float64 `json:"-"`
+	SdrSaturation float64 `json:"-"`
+	ColorPreset   string  `json:"-"`
+}
+
+func (m *MonitorSpec) IsTenBitdepth() bool {
+	switch m.CurrentFormat {
+	case "XRGB2101010":
+		return true
+	case "XBGR2101010":
+		return true
+	}
+	return false
+}
+
+func (m *MonitorSpec) HDR() bool {
+	return m.ColorPreset == "hdr"
+}
+
+func (m *MonitorSpec) HasNonDefaultColorPreset() bool {
+	return m.ColorPreset != "" && m.ColorPreset != "srgb" && m.ColorPreset != "auto"
+}
+
+func (m *MonitorSpec) HasMirror() bool {
+	return m.Mirror != "none" && m.Mirror != ""
 }
 
 func (m *MonitorSpec) Validate() error {
@@ -38,6 +66,15 @@ func (m *MonitorSpec) Validate() error {
 	}
 	if m.Name == "" {
 		return errors.New("name cant be empty")
+	}
+	if !m.TenBitdepth {
+		m.TenBitdepth = m.IsTenBitdepth()
+	}
+	if m.SdrBrightness == 0.0 {
+		m.SdrBrightness = 1.0
+	}
+	if m.SdrSaturation == 0.0 {
+		m.SdrSaturation = 1.0
 	}
 
 	return nil

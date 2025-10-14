@@ -68,7 +68,7 @@ func TestHDMProfilePreview_Update(t *testing.T) {
 			require.NoError(t, utils.WriteAtomic(cfgProfile.ConfigFile, []byte(content)))
 			matcher := matchers.NewMatcher()
 			monitors := []*tui.MonitorSpec{
-				{Name: "eDP-1"},
+				{Name: "eDP-1", ID: utils.JustPtr(1), Description: "Hello"},
 			}
 
 			preview := tui.NewHDMProfilePreview(cfg, matcher, monitors,

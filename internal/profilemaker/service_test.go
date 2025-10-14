@@ -20,6 +20,7 @@ func TestService_EditExisting(t *testing.T) {
 	monitors := []*hypr.MonitorSpec{
 		{
 			ID:          utils.IntPtr(1),
+			Name:        "monA",
 			Description: "New Monitor A",
 			Width:       2560,
 			Height:      1440,
@@ -31,18 +32,27 @@ func TestService_EditExisting(t *testing.T) {
 			Vrr:         false,
 		},
 		{
-			ID:          utils.IntPtr(2),
-			Description: "New Monitor B",
-			Width:       1920,
-			Height:      1080,
-			RefreshRate: 60.0,
-			X:           2560,
-			Y:           0,
-			Scale:       1.0,
-			Transform:   0,
-			Mirror:      "eDP-1",
-			Vrr:         true,
+			ID:            utils.IntPtr(2),
+			Name:          "monB",
+			Description:   "New Monitor B",
+			Width:         1920,
+			Height:        1080,
+			RefreshRate:   60.0,
+			X:             2560,
+			Y:             0,
+			Scale:         1.0,
+			Transform:     0,
+			Mirror:        "eDP-1",
+			Vrr:           true,
+			CurrentFormat: "XRGB2101010",
+			ColorPreset:   "hdr",
+			SdrBrightness: 1.1,
+			SdrSaturation: 0.98,
 		},
+	}
+
+	for _, monitor := range monitors {
+		require.NoError(t, monitor.Validate(), "monitor spec should be correct")
 	}
 
 	testCases := []struct {

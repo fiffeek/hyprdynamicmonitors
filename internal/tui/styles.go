@@ -50,6 +50,9 @@ var (
 	ItemSubtitle = lipgloss.NewStyle().
 			Foreground(lipgloss.Color("180")).
 			Italic(true)
+	MonitorColorMode = lipgloss.NewStyle().
+				Foreground(lipgloss.Color("15")).
+				Bold(true)
 	MonitorScaleMode = lipgloss.NewStyle().
 				Foreground(lipgloss.Color("39")).
 				Bold(true)
@@ -86,6 +89,9 @@ var (
 	TitleStyle = lipgloss.NewStyle().
 			Bold(true).
 			Foreground(lipgloss.Color("105"))
+	SubtitleStyle = lipgloss.NewStyle().
+			Bold(true).
+			Foreground(lipgloss.Color("180"))
 	SubtitleInfoStyle = lipgloss.NewStyle().
 				Foreground(lipgloss.Color("108")).
 				Italic(true)
