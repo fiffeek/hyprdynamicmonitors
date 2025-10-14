@@ -13,6 +13,7 @@ type Header struct {
 	title          string
 	warning        string
 	mode           string
+	state          AppState
 	width          int
 	err            string
 	success        string
@@ -47,7 +48,7 @@ func (h *Header) Update(msg tea.Msg) tea.Cmd {
 			h.success = ""
 		}
 	case StateChanged:
-		h.mode = msg.State.String()
+		h.state = msg.State
 	case ViewChanged:
 		h.currentView = msg.view
 	case OperationStatus:
@@ -65,6 +66,7 @@ func (h *Header) Update(msg tea.Msg) tea.Cmd {
 			}
 		}
 	}
+	h.mode = h.state.String(h.currentView)
 	return tea.Batch(cmds...)
 }
 

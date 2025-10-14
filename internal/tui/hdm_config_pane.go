@@ -131,6 +131,7 @@ func (h *HDMConfigPane) SetWidth(width int) {
 }
 
 func (h *HDMConfigPane) View() string {
+	logrus.Debugf("Available height %d", h.height)
 	if h.cfg == nil {
 		return h.renderNoConfig()
 	}
@@ -148,10 +149,14 @@ func (h *HDMConfigPane) View() string {
 		content = h.renderMatchedProfile(h.profile)
 	}
 	availableHeight -= lipgloss.Height(content)
+	logrus.Debugf("Height of content: %d", lipgloss.Height(content))
 	availableHeight -= lipgloss.Height(help)
+	logrus.Debugf("Height of help: %d", lipgloss.Height(help))
 	availableHeight -= lipgloss.Height(title)
+	logrus.Debugf("Height of title: %d", lipgloss.Height(title))
 
 	spacer := lipgloss.NewStyle().Width(h.width).Height(availableHeight).Render("")
+	logrus.Debugf("Height of spacer: %d", lipgloss.Height(spacer))
 
 	sections = append(sections, title)
 	sections = append(sections, content)
@@ -166,19 +171,20 @@ func (h *HDMConfigPane) renderNoConfig() string {
 }
 
 func (h *HDMConfigPane) renderNoMatchingProfile() string {
-	var result strings.Builder
+	sections := []string{}
 
-	result.WriteString(HyprConfigTitleStyle.Render("No Matching Profile"))
-	result.WriteString("\n\n")
+	sections = append(sections, HyprConfigTitleStyle.Width(h.width).Margin(0, 0, 1, 0).Render("No Matching Profile"))
 
-	result.WriteString("No configuration profile matches the current monitor setup.\n\n")
+	content := "No configuration profile matches the current monitor setup."
+	content = lipgloss.NewStyle().Margin(0, 0, 2, 0).Width(h.width).Render(content)
+	sections = append(sections, content)
 
 	actionContent := fmt.Sprintf("Press %s to create a new profile",
 		HeaderIndicatorStyle.Render("'n'"))
 	actionBox := configPaneActionStyle.Render(actionContent)
-	result.WriteString(actionBox)
+	sections = append(sections, actionBox)
 
-	return result.String()
+	return lipgloss.JoinVertical(lipgloss.Top, sections...)
 }
 
 func (h *HDMConfigPane) renderMatchedProfile(profile *config.Profile) string {
