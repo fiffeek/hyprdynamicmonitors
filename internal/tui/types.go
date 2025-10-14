@@ -103,44 +103,53 @@ func GetBitdepth(spec *hypr.MonitorSpec) Bitdepth {
 var allBitdepths = []Bitdepth{DefaultBitdepth, TenBitdepth}
 
 type MonitorSpec struct {
-	Name           string      `json:"name"`
-	ID             *int        `json:"id"`
-	Description    string      `json:"description"`
-	Disabled       bool        `json:"disabled"`
-	Width          int         `json:"width"`
-	Height         int         `json:"height"`
-	RefreshRate    float64     `json:"refreshRate"`
-	Transform      int         `json:"transform"`
-	Vrr            bool        `json:"vrr"`
-	Scale          float64     `json:"scale"`
-	X              int         `json:"x"`
-	Y              int         `json:"y"`
-	AvailableModes []string    `json:"availableModes"`
-	Mirror         string      `json:"mirrorOf"`
-	CurrentFormat  string      `json:"currentFormat"`
-	Bitdepth       Bitdepth    `json:"-"`
-	ColorPreset    ColorPreset `json:"-"`
-	SdrBrightness  float64     `json:"-"`
-	SdrSaturation  float64     `json:"-"`
+	Name            string      `json:"name"`
+	ID              *int        `json:"id"`
+	Description     string      `json:"description"`
+	Disabled        bool        `json:"disabled"`
+	Width           int         `json:"width"`
+	Height          int         `json:"height"`
+	RefreshRate     float64     `json:"refreshRate"`
+	Transform       int         `json:"transform"`
+	Vrr             bool        `json:"vrr"`
+	Scale           float64     `json:"scale"`
+	X               int         `json:"x"`
+	Y               int         `json:"y"`
+	AvailableModes  []string    `json:"availableModes"`
+	Mirror          string      `json:"mirrorOf"`
+	CurrentFormat   string      `json:"currentFormat"`
+	DpmsStatus      bool        `json:"dpmsStatus"`
+	ActivelyTearing bool        `json:"activelyTearing"`
+	DirectScanoutTo string      `json:"directScanoutTo"`
+	Solitary        string      `json:"solitary"`
+	Bitdepth        Bitdepth    `json:"-"`
+	ColorPreset     ColorPreset `json:"-"`
+	SdrBrightness   float64     `json:"-"`
+	SdrSaturation   float64     `json:"-"`
 }
 
 func NewMonitorSpec(spec *hypr.MonitorSpec) *MonitorSpec {
 	return &MonitorSpec{
-		Name:           spec.Name,
-		ID:             spec.ID,
-		Description:    spec.Description,
-		Disabled:       spec.Disabled,
-		Width:          spec.Width,
-		Height:         spec.Height,
-		RefreshRate:    spec.RefreshRate,
-		Transform:      spec.Transform,
-		Vrr:            spec.Vrr,
-		Scale:          spec.Scale,
-		X:              spec.X,
-		Y:              spec.Y,
-		AvailableModes: spec.AvailableModes,
-		Mirror:         spec.Mirror,
-		Bitdepth:       GetBitdepth(spec),
+		Name:            spec.Name,
+		ID:              spec.ID,
+		Description:     spec.Description,
+		Disabled:        spec.Disabled,
+		Width:           spec.Width,
+		Height:          spec.Height,
+		RefreshRate:     spec.RefreshRate,
+		Transform:       spec.Transform,
+		Vrr:             spec.Vrr,
+		Scale:           spec.Scale,
+		X:               spec.X,
+		Y:               spec.Y,
+		AvailableModes:  spec.AvailableModes,
+		Mirror:          spec.Mirror,
+		CurrentFormat:   spec.CurrentFormat,
+		DpmsStatus:      spec.DpmsStatus,
+		ActivelyTearing: spec.ActivelyTearing,
+		DirectScanoutTo: spec.DirectScanoutTo,
+		Solitary:        spec.Solitary,
+		Bitdepth:        GetBitdepth(spec),
 		// TODO(fmikina, 12.10.25): fix after patching hyprctl to expose this information
 		ColorPreset:   AutoColorPreset,
 		SdrBrightness: 1.0,
@@ -269,25 +278,29 @@ func (m *MonitorSpec) NeedsDimensionsSwap() bool {
 
 func (m *MonitorSpec) ToHyprMonitors() (*hypr.MonitorSpec, error) {
 	monitor := &hypr.MonitorSpec{
-		Name:           m.Name,
-		ID:             m.ID,
-		Description:    m.Description,
-		Disabled:       m.Disabled,
-		Width:          m.Width,
-		Height:         m.Height,
-		RefreshRate:    m.RefreshRate,
-		Transform:      m.Transform,
-		Vrr:            m.Vrr,
-		Scale:          m.Scale,
-		X:              m.X,
-		Y:              m.Y,
-		AvailableModes: m.AvailableModes,
-		Mirror:         m.Mirror,
-		TenBitdepth:    m.Bitdepth.Bool(),
-		CurrentFormat:  m.CurrentFormat,
-		SdrBrightness:  m.SdrBrightness,
-		SdrSaturation:  m.SdrSaturation,
-		ColorPreset:    m.ColorPreset.Value(),
+		Name:            m.Name,
+		ID:              m.ID,
+		Description:     m.Description,
+		Disabled:        m.Disabled,
+		Width:           m.Width,
+		Height:          m.Height,
+		RefreshRate:     m.RefreshRate,
+		Transform:       m.Transform,
+		Vrr:             m.Vrr,
+		Scale:           m.Scale,
+		X:               m.X,
+		Y:               m.Y,
+		AvailableModes:  m.AvailableModes,
+		Mirror:          m.Mirror,
+		CurrentFormat:   m.CurrentFormat,
+		DpmsStatus:      m.DpmsStatus,
+		ActivelyTearing: m.ActivelyTearing,
+		DirectScanoutTo: m.DirectScanoutTo,
+		Solitary:        m.Solitary,
+		TenBitdepth:     m.Bitdepth.Bool(),
+		SdrBrightness:   m.SdrBrightness,
+		SdrSaturation:   m.SdrSaturation,
+		ColorPreset:     m.ColorPreset.Value(),
 	}
 	if err := monitor.Validate(); err != nil {
 		return nil, fmt.Errorf("cant validate monitor: %w", err)
