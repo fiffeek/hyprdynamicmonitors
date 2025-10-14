@@ -105,9 +105,51 @@ func TestConfigGenerator_GenerateConfig_Template(t *testing.T) {
 	}
 
 	monitors := []*hypr.MonitorSpec{
-		{Name: "DP-1", ID: utils.IntPtr(0), Description: "External Monitor"},
-		{Name: "eDP-1", ID: utils.IntPtr(1), Description: "Built-in Display"},
-		{Name: "DP-11", ID: utils.IntPtr(2), Description: "Extra Monitor"},
+		{
+			Name:        "DP-1",
+			ID:          utils.IntPtr(0),
+			Description: "External Monitor",
+			AvailableModes: []string{
+				"1920x1080@60.00Hz",
+				"1920x1080@59.94Hz",
+			},
+			Mirror:          "none",
+			CurrentFormat:   "XRGB8888",
+			DpmsStatus:      true,
+			ActivelyTearing: false,
+			DirectScanoutTo: "0",
+			Solitary:        "0",
+		},
+		{
+			Name:        "eDP-1",
+			ID:          utils.IntPtr(1),
+			Description: "Built-in Display",
+			AvailableModes: []string{
+				"2560x1600@60.00Hz",
+				"1920x1200@60.00Hz",
+			},
+			Mirror:          "none",
+			CurrentFormat:   "XRGB8888",
+			DpmsStatus:      true,
+			ActivelyTearing: false,
+			DirectScanoutTo: "0",
+			Solitary:        "0",
+		},
+		{
+			Name:        "DP-11",
+			ID:          utils.IntPtr(2),
+			Description: "Extra Monitor",
+			AvailableModes: []string{
+				"3840x2160@60.00Hz",
+				"1920x1080@60.00Hz",
+			},
+			Mirror:          "none",
+			CurrentFormat:   "XRGB8888",
+			DpmsStatus:      false,
+			ActivelyTearing: true,
+			DirectScanoutTo: "HDMI-A-1",
+			Solitary:        "1",
+		},
 	}
 
 	// Test with battery power state

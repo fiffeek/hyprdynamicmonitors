@@ -131,6 +131,7 @@ func TestIPC_Run(t *testing.T) {
 				assert.Nil(t, err, "Failed to read test expected event file %s: %w", path, err)
 				res := hypr.MonitorSpecs{}
 				assert.Nil(t, utils.UnmarshalResponse(data, &res), "cant parse %s", path)
+				assert.Nil(t, res.Validate(), "cant validate %s", path)
 				expectedEvents = append(expectedEvents, res)
 			}
 
@@ -335,10 +336,14 @@ func TestIPC_GetConnectedMonitors(t *testing.T) {
 						"800x600@120.00Hz",
 						"640x480@120.00Hz",
 					},
-					Mirror:        "none",
-					CurrentFormat: "XRGB8888",
-					SdrBrightness: 1,
-					SdrSaturation: 1,
+					Mirror:          "none",
+					CurrentFormat:   "XRGB8888",
+					DpmsStatus:      true,
+					ActivelyTearing: false,
+					DirectScanoutTo: "0",
+					Solitary:        "0",
+					SdrBrightness:   1,
+					SdrSaturation:   1,
 				},
 				{
 					Name:        "DP-11",
@@ -382,10 +387,14 @@ func TestIPC_GetConnectedMonitors(t *testing.T) {
 						"640x480@59.94Hz",
 						"640x480@59.94Hz",
 					},
-					Mirror:        "none",
-					CurrentFormat: "XRGB8888",
-					SdrBrightness: 1,
-					SdrSaturation: 1,
+					Mirror:          "none",
+					CurrentFormat:   "XRGB8888",
+					DpmsStatus:      true,
+					ActivelyTearing: false,
+					DirectScanoutTo: "0",
+					Solitary:        "0",
+					SdrBrightness:   1,
+					SdrSaturation:   1,
 				},
 			},
 			description: "Should successfully parse valid monitor response",

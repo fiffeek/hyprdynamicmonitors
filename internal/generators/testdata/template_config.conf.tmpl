@@ -21,11 +21,27 @@ monitor={{.Name}},auto,auto,1.0
 {{- if .MonitorsByTag.laptop}}
 # Laptop monitor tagged settings
 workspace=1,monitor:{{.MonitorsByTag.laptop.Name}}
+# Monitor spec
+# AvailableModes: {{ .MonitorsByTag.laptop.AvailableModes }}
+# Mirror: {{ .MonitorsByTag.laptop.Mirror }}
+# CurrentFormat: {{ .MonitorsByTag.laptop.CurrentFormat }}
+# DpmsStatus: {{ .MonitorsByTag.laptop.DpmsStatus }}
+# ActivelyTearing: {{ .MonitorsByTag.laptop.ActivelyTearing }}
+# DirectScanoutTo: {{ .MonitorsByTag.laptop.DirectScanoutTo }}
+# Solitary: {{ .MonitorsByTag.laptop.Solitary }}
 {{- end}}
 
 {{- if .MonitorsByTag.external}}
 # External monitor tagged settings
 workspace=2,monitor:{{.MonitorsByTag.external.Name}}
+# Monitor spec
+# AvailableModes: {{ .MonitorsByTag.external.AvailableModes }}
+# Mirror: {{ .MonitorsByTag.external.Mirror }}
+# CurrentFormat: {{ .MonitorsByTag.external.CurrentFormat }}
+# DpmsStatus: {{ .MonitorsByTag.external.DpmsStatus }}
+# ActivelyTearing: {{ .MonitorsByTag.external.ActivelyTearing }}
+# DirectScanoutTo: {{ .MonitorsByTag.external.DirectScanoutTo }}
+# Solitary: {{ .MonitorsByTag.external.Solitary }}
 {{- end}}
 
 # Power state specific settings

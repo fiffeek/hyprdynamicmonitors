@@ -124,12 +124,7 @@ func (g *ConfigGenerator) createTemplateData(cfg *config.RawConfig, profile *con
 	// and lead to e.g. infinite config applications
 	monitorsStripped := []*MonitorSpec{}
 	for _, monitor := range connectedMonitors {
-		monitorsStripped = append(monitorsStripped, &MonitorSpec{
-			Name:        monitor.Name,
-			Description: monitor.Description,
-			ID:          monitor.ID,
-			Disabled:    monitor.Disabled,
-		})
+		monitorsStripped = append(monitorsStripped, NewMonitorSpec(monitor))
 	}
 
 	// Monitors represents all connected monitors, might not be defined in the profile, might be disabled etc.
