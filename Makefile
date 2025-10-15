@@ -23,6 +23,7 @@ DIST_DIR := $(abspath dist)
 RECORD_TARGET ?= demo
 GOTESTSUM := $(GOLANG_BIN) tool gotestsum
 GOTESTSUMINTEGRATION  := $(GOTESTSUM)
+DOCS_COMMAND_FILE := "docs/docs/usage/commands.md"
 
 ifeq ($(GITHUB_ACTIONS),true)
 GOTESTSUM := $(GOTESTSUM) --format=github-actions
@@ -35,7 +36,7 @@ endif
 export DIST_DIR
 export PATH := $(DIST_DIR):$(PATH)
 
-.PHONY: install test fmt lint release/local record/previews
+.PHONY: install test fmt lint release/local record/previews docs
 
 release/local: \
 	$(INSTALL_DIR)/.dir.stamp \
@@ -94,8 +95,9 @@ $(INSTALL_DIR)/.asdf.stamp:
 	@asdf install
 	@touch $@
 
-$(INSTALL_DIR)/.npm.stamp: $(PACKAGE_LOCK) $(INSTALL_DIR)/.asdf.stamp
+$(INSTALL_DIR)/.npm.stamp: $(PACKAGE_LOCK) ./docs/$(PACKAGE_LOCK) $(INSTALL_DIR)/.asdf.stamp
 	@$(NPM_BIN) install
+	@cd ./docs && $(NPM_BIN) install
 	@touch $@
 
 $(INSTALL_DIR)/.venv.stamp: $(REQUIREMENTS_FILE) $(INSTALL_DIR)/.asdf.stamp
@@ -169,11 +171,11 @@ toc/generate:
 	@scripts/autotoc.sh
 
 help/generate: build/docs
-	@scripts/autohelp.sh $(TEST_EXECUTABLE_NAME)
-	@scripts/autohelp.sh $(TEST_EXECUTABLE_NAME) run
-	@scripts/autohelp.sh $(TEST_EXECUTABLE_NAME) validate
-	@scripts/autohelp.sh $(TEST_EXECUTABLE_NAME) freeze
-	@scripts/autohelp.sh $(TEST_EXECUTABLE_NAME) tui
+	@scripts/autohelp.sh $(TEST_EXECUTABLE_NAME) $(DOCS_COMMAND_FILE)
+	@scripts/autohelp.sh $(TEST_EXECUTABLE_NAME) $(DOCS_COMMAND_FILE) run
+	@scripts/autohelp.sh $(TEST_EXECUTABLE_NAME) $(DOCS_COMMAND_FILE) validate
+	@scripts/autohelp.sh $(TEST_EXECUTABLE_NAME) $(DOCS_COMMAND_FILE) freeze
+	@scripts/autohelp.sh $(TEST_EXECUTABLE_NAME) $(DOCS_COMMAND_FILE) tui
 
 # requires vhs to be installed, for now a manual action
 record/preview: build/docs
@@ -203,3 +205,6 @@ record/previews: build/docs
 	$(MAKE) record/preview RECORD_TARGET=create_profile
 	$(MAKE) record/preview RECORD_TARGET=edit_existing
 	$(MAKE) record/preview RECORD_TARGET=color
+
+docs:
+	@cd ./docs && npm run start

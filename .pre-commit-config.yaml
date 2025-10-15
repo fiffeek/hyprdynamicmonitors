@@ -12,6 +12,7 @@ repos:
           - id: pretty-format-json
             args:
                 - --autofix
+            exclude: (package\.json|package-lock\.json|tsconfig\.json)$
     - repo: https://github.com/ComPWA/taplo-pre-commit
       rev: v0.9.3
       hooks:
