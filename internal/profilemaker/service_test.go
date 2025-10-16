@@ -1,6 +1,7 @@
 package profilemaker_test
 
 import (
+	"flag"
 	"os"
 	"path/filepath"
 	"strings"
@@ -14,6 +15,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+var regenerate = flag.Bool("regenerate", false, "regenerate fixtures instead of comparing")
 
 func TestService_EditExisting(t *testing.T) {
 	// Sample monitors data
@@ -48,6 +51,18 @@ func TestService_EditExisting(t *testing.T) {
 			ColorPreset:   "hdr",
 			SdrBrightness: 1.1,
 			SdrSaturation: 0.98,
+		},
+		{
+			ID:          utils.IntPtr(3),
+			Name:        "monC",
+			Description: "",
+			Width:       1000,
+			Height:      1000,
+			RefreshRate: 60.0,
+			X:           -1000,
+			Y:           -1000,
+			Scale:       1.0,
+			Transform:   0,
 		},
 	}
 
@@ -175,23 +190,7 @@ func TestService_EditExisting(t *testing.T) {
 
 			assert.NoError(t, err)
 
-			// nolint:gosec
-			resultContent, err := os.ReadFile(configFile)
-			require.NoError(t, err)
-
-			// nolint:gosec
-			expectedContent, err := os.ReadFile(tc.expectedFile)
-			require.NoError(t, err)
-
-			actualOutput := strings.TrimSpace(string(resultContent))
-			expectedOutput := strings.TrimSpace(string(expectedContent))
-
-			assert.Equal(t, expectedOutput, actualOutput)
-
-			if !tc.expectError {
-				assert.Contains(t, string(resultContent), "# <<<<< TUI AUTO START")
-				assert.Contains(t, string(resultContent), "# <<<<< TUI AUTO END")
-			}
+			testutils.AssertFixture(t, configFile, tc.expectedFile, *regenerate)
 		})
 	}
 }

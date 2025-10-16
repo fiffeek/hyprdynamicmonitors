@@ -35,6 +35,10 @@ func (m MonitorItem) MonitorDescription() string {
 }
 
 func (m MonitorItem) MonitorDescriptionTrunc() string {
+	if m.monitor.Description == "" {
+		return ""
+	}
+
 	desc := m.monitor.Description
 	if len(desc) > 15 {
 		desc = desc[:15]

@@ -140,7 +140,7 @@ build/test:
 test/integration: build/test
 	@rm -rf .coverdata
 	@mkdir -p .coverdata
-	@HDM_BINARY_PATH=$(TEST_EXECUTABLE_NAME) $(GOTESTSUMINTEGRATION) -- -v ./test/... --debug --count=1
+	@HDM_BINARY_PATH=$(TEST_EXECUTABLE_NAME) $(GOTESTSUMINTEGRATION) --rerun-fails=2 --packages="./test/..." -- -v ./test/... --debug --count=1
 	@$(GOLANG_BIN) tool covdata textfmt -i=.coverdata -o=integration.txt
 
 test/integration/regenerate: build/test

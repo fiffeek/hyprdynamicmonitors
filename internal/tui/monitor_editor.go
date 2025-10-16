@@ -432,6 +432,7 @@ func (e *MonitorEditorStore) snapToEdges(monitorIndex, x, y int) (int, int, tea.
 
 func (e *MonitorEditorStore) FindByID(monitorID int) (*MonitorSpec, int, error) {
 	for index, monitor := range e.monitors {
+		logrus.WithFields(logrus.Fields{"current": monitorID, "new": *monitor.ID}).Debug("Comparing monitors")
 		if *monitor.ID == monitorID {
 			return monitor, index, nil
 		}

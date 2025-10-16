@@ -34,6 +34,7 @@ var (
 	footer             = "p pan (move freely on the grid) • F fullscreen the preview"
 	defaultWait        = 200 * time.Millisecond
 	defaultMonitorData = "four.json"
+	headless           = "headless.json"
 	twoMonitorsData    = "two.json"
 )
 
@@ -574,6 +575,60 @@ func TestModel_Update_UserFlows(t *testing.T) {
 				{
 					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'y'}},
 					expectOutputToContain: "hey",
+				},
+			},
+		},
+
+		{
+			name:         "headless",
+			monitorsData: headless,
+			runFor:       utils.JustPtr(800 * time.Millisecond),
+			cfg:          testutils.NewTestConfig(t).Get(),
+			steps: []step{
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyEnter},
+					expectOutputToContain: "[EDITING]",
+				},
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'m'}},
+					expectOutputToContain: "Select monitor mode",
+				},
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'j'}},
+					expectOutputToContain: "► 1920x1080@0.06Hz",
+				},
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyEnter},
+					expectOutputToContain: "[EDITING]",
+				},
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyTab},
+					expectOutputToContain: "No Matching Profile",
+				},
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'n'}},
+					expectOutputToContain: "Type the profile name",
+				},
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'h'}},
+					expectOutputToContain: "h",
+				},
+				{
+					msg:        tea.KeyMsg{Type: tea.KeyEnter},
+					sleepAfter: utils.JustPtr(100 * time.Millisecond),
+					// mimic reload in the outer process
+					validateSideEffects: func(cfg *config.Config) {
+						require.NoError(t, cfg.Reload())
+						raw := cfg.Get()
+						assert.Equal(t, []*config.RequiredMonitor{
+							{Name: utils.JustPtr("HEADLESS-2"), MonitorTag: utils.JustPtr("monitor1")},
+						}, raw.Profiles["h"].Conditions.RequiredMonitors)
+					},
+				},
+				// mimic config reload send event
+				{
+					msg:        tui.ConfigReloaded{},
+					sleepAfter: utils.JustPtr(200 * time.Millisecond),
 				},
 			},
 		},

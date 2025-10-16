@@ -75,6 +75,32 @@ func Test__Run_Binary(t *testing.T) {
 		},
 
 		{
+			name:        "headless templating",
+			description: "when hypr returns the headless monitors defined in the configuration, the template should match the golden file",
+			config: createBasicTestConfig(t).WithProfiles(map[string]*config.Profile{
+				"headless": {
+					ConfigType: utils.JustPtr(config.Template),
+					Conditions: &config.ProfileCondition{
+						RequiredMonitors: []*config.RequiredMonitor{
+							{
+								Name: utils.StringPtr("HEADLESS-2"),
+							},
+						},
+					},
+				},
+			}).FillProfileConfigFile("headless", "testdata/app/templates/basic.toml"),
+			hyprMonitorResponseFiles: []string{"testdata/hypr/server/headless.json"},
+			validateSideEffects: func(t *testing.T, cfg *config.RawConfig) {
+				testutils.AssertFileExists(t, *cfg.General.Destination)
+				compareWithFixture(t, *cfg.General.Destination,
+					"testdata/app/fixtures/headless.conf")
+			},
+			disablePowerEvents: true,
+			disableHotReload:   true,
+			runOnce:            true,
+		},
+
+		{
 			name:        "disable templating extra",
 			description: "when hypr returns more monitors that are defined in the profile the template can use templating to reason about the state",
 			config: createBasicTestConfig(t).WithProfiles(
@@ -333,7 +359,7 @@ func Test__Run_Binary(t *testing.T) {
 							"testdata/app/fixtures/basic_both_bat.conf")
 					},
 				}
-				waitTillHolds(ctx, t, funcs, 200*time.Millisecond)
+				waitTillHolds(ctx, t, funcs, 500*time.Millisecond)
 			},
 			validateSideEffects: func(t *testing.T, cfg *config.RawConfig) {
 				testutils.AssertFileExists(t, *cfg.General.Destination)

@@ -268,8 +268,14 @@ func (s *Service) prepare(profileName, profileFileLocation string,
 	requiredMonitors := make([]*config.RequiredMonitor, len(currentMonitors))
 	for i, monitor := range currentMonitors {
 		requiredMonitors[i] = &config.RequiredMonitor{
-			Description: &monitor.Description,
-			MonitorTag:  utils.StringPtr(fmt.Sprintf("monitor%d", *monitor.ID)),
+			MonitorTag: utils.StringPtr(fmt.Sprintf("monitor%d", *monitor.ID)),
+		}
+		// eagerly match on the description to allow for port swaps
+		if monitor.Description != "" {
+			requiredMonitors[i].Description = &monitor.Description
+		} else {
+			// otherwise fallback on the name matching as that cant be empty
+			requiredMonitors[i].Name = &monitor.Name
 		}
 	}
 	profile := config.Profile{
@@ -291,7 +297,12 @@ func (s *Service) ToHyprLines(monitors hypr.MonitorSpecs) []string {
 
 	for _, monitor := range monitors {
 		fields := []string{}
-		line := "monitor=desc:" + monitor.Description
+
+		identifier := monitor.Name
+		if monitor.Description != "" {
+			identifier = "desc:" + monitor.Description
+		}
+		line := "monitor=" + identifier
 		fields = append(fields, line)
 		if monitor.Disabled {
 			fields = append(fields, "disable")

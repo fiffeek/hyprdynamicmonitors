@@ -6,6 +6,10 @@ sidebar_position: 2
 
 Profiles match monitors based on their properties. Understanding how monitor matching works is essential for creating effective profiles.
 
+:::tip
+For fake outputs (headless displays) the description from `hyprctl` will be empty so use the `name` matcher.
+:::
+
 ## Matching Properties
 
 You can match monitors by:

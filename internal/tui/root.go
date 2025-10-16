@@ -354,34 +354,34 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case ChangeMirrorPreviewCommand:
 		logrus.Debug("Received preview change for monitor mirror")
 		cmds = append(cmds, m.monitorEditor.SetMirror(
-			m.rootState.State.MonitorEditedListIndex, msg.MirrorOf))
+			m.rootState.State.MonitorEditedID, msg.MirrorOf))
 	case NextBitdepthCommand:
 		logrus.Debug("Received next bitdepth")
 		cmds = append(cmds, m.monitorEditor.NextBitdepth(msg.MonitorID))
 	case ChangeMirrorCommand:
 		logrus.Debug("Received change for monitor mirror")
 		cmds = append(cmds, m.monitorEditor.SetMirror(
-			m.rootState.State.MonitorEditedListIndex, msg.MirrorOf))
+			m.rootState.State.MonitorEditedID, msg.MirrorOf))
 		cmds = append(cmds, m.monitorsList.Update(msg))
 	case ChangeModePreviewCommand:
 		logrus.Debug("Received preview change for monitor mode")
 		cmds = append(cmds, m.monitorEditor.SetMode(
-			m.rootState.State.MonitorEditedListIndex, msg.Mode))
+			m.rootState.State.MonitorEditedID, msg.Mode))
 	case ChangeColorPresetCommand:
 		logrus.Debug("Received change color preset")
 		cmds = append(cmds, m.monitorEditor.SetColorPreset(
-			m.rootState.State.MonitorEditedListIndex, msg.Preset))
+			m.rootState.State.MonitorEditedID, msg.Preset))
 	case ChangeColorPresetFinalCommand:
 		logrus.Debug("Received final change color preset")
 		cmds = append(cmds, m.monitorEditor.SetColorPreset(
-			m.rootState.State.MonitorEditedListIndex, msg.Preset))
+			m.rootState.State.MonitorEditedID, msg.Preset))
 		cmds = append(cmds, m.monitorsList.Update(msg))
 	case CloseMonitorModeListCommand, CloseMonitorMirrorListCommand, CloseColorPickerCommand:
 		cmds = append(cmds, m.monitorsList.Update(msg))
 	case ChangeModeCommand:
 		logrus.Debug("Received change for monitor mode")
 		cmds = append(cmds, m.monitorEditor.SetMode(
-			m.rootState.State.MonitorEditedListIndex, msg.Mode))
+			m.rootState.State.MonitorEditedID, msg.Mode))
 		cmds = append(cmds, m.monitorsList.Update(msg))
 	case CreateNewProfileCommand:
 		logrus.Debug("Received create new profile")

@@ -310,10 +310,16 @@ func (m *MonitorSpec) ToHyprMonitors() (*hypr.MonitorSpec, error) {
 }
 
 func (m *MonitorSpec) ToHypr() string {
-	if m.Disabled {
-		return fmt.Sprintf("desc:%s,disable", m.Description)
+	// desc can be empty, use the name as a fallback
+	identifier := m.Name
+	if m.Description != "" {
+		identifier = "desc:" + m.Description
 	}
-	line := fmt.Sprintf("desc:%s,%dx%d@%.2f,%dx%d,%.2f,transform,%d", m.Description, m.Width,
+	if m.Disabled {
+		// nolint:perfsprint
+		return fmt.Sprintf("%s,disable", identifier)
+	}
+	line := fmt.Sprintf("%s,%dx%d@%.2f,%dx%d,%.2f,transform,%d", identifier, m.Width,
 		m.Height, m.RefreshRate, m.X, m.Y, m.Scale, m.Transform)
 	if m.Vrr {
 		line += ",vrr,1"
