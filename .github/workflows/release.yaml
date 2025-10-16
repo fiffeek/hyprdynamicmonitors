@@ -5,6 +5,10 @@ on:
         tags:
             - v[0-9]+.[0-9]+.[0-9]+
 
+permissions:
+    contents: write
+    pull-requests: write
+
 jobs:
     release:
         runs-on: ubuntu-latest
@@ -57,10 +61,14 @@ jobs:
                   user_name: github-actions[bot]
                   user_email: 41898282+github-actions[bot]@users.noreply.github.com
 
-            - name: Commit versions
-              run: |
-                  git config --global user.name 'github-actions[bot]'
-                  git config --global user.email '41898282+github-actions[bot]@users.noreply.github.com'
-                  git add docs/
-                  git commit -am "docs: update version for ${{github.ref_name}}"
-                  git push origin HEAD:main
+            - name: Create PR for docs changes
+              uses: peter-evans/create-pull-request@v6
+              with:
+                  token: ${{ secrets.GITHUB_TOKEN }}
+                  commit-message: 'docs: update version for ${{ github.ref_name }}'
+                  title: 'chore(docs): update docs for ${{ github.ref_name }}'
+                  body: |
+                      Automated docs update for ${{ github.ref_name }} by GitHub Actions
+                  branch: u/ga/docs/${{ github.ref_name }}
+                  base: main
+                  labels: documentation
