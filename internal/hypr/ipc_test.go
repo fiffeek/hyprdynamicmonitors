@@ -400,22 +400,24 @@ func TestIPC_GetConnectedMonitors(t *testing.T) {
 			description: "Should successfully parse valid monitor response",
 		},
 		{
-			name:          "missing_description",
-			responseFile:  "testdata/monitors_response_missing_description.json",
-			expectedError: "failed to validate response: invalid monitor: desc cant be empty",
-			description:   "Should fail when monitor block is missing description",
+			name:         "missing_description",
+			responseFile: "testdata/monitors_response_missing_description.json",
+			description:  "Should succeed when monitor block is missing description (this is the case for virtual/headless outputs)",
+			expectedMonitors: []*hypr.MonitorSpec{
+				{
+					Name:          "eDP-1",
+					ID:            utils.IntPtr(0),
+					Description:   "",
+					SdrBrightness: 1,
+					SdrSaturation: 1,
+				},
+			},
 		},
 		{
 			name:          "malformed_header",
 			responseFile:  "testdata/monitors_response_malformed_header.json",
 			expectedError: "failed to validate response: invalid monitor: id cant be nil",
 			description:   "Should fail when monitor header has wrong number of parts",
-		},
-		{
-			name:          "malformed_description",
-			responseFile:  "testdata/monitors_response_malformed_description.json",
-			expectedError: "failed to validate response: invalid monitor: desc cant be empty",
-			description:   "Should fail when description line has wrong format",
 		},
 	}
 

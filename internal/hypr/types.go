@@ -65,11 +65,11 @@ func (m *MonitorSpec) Validate() error {
 	if *m.ID < 0 {
 		return errors.New("id cant < 0")
 	}
-	if m.Description == "" {
-		return errors.New("desc cant be empty")
-	}
 	if m.Name == "" {
 		return errors.New("name cant be empty")
+	}
+	if m.Description == "" {
+		logrus.WithFields(logrus.Fields{"id": m.ID, "name": m.Name}).Warning("Monitor description is empty")
 	}
 	if !m.TenBitdepth {
 		m.TenBitdepth = m.IsTenBitdepth()

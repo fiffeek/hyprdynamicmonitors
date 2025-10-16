@@ -1,0 +1,45 @@
+ HyprDynamicMonitors [v. test-version]  Monitors  Profile                                                                                                       
+╭───────────────────────────────────────────────────╮╭────────────────────────────────────────────────────────────────────────────────────────────────────────╮ 
+│HyprDynamicMonitors Profile                        ││Profile Config Preview (template)                                                                       │ 
+│                                                   ││h.go.tmpl                                                                                               │ 
+│Profile: h                                         ││                                                                                                        │ 
+│                                                   ││┃   1 # Generated with hyprdynamicmonitors freeze.                                                      │ 
+│Profile Details                                    ││┃   2 # This is a template that you can edit, it is just a starter that pulled your current monitor     │ 
+│Config File: h.go.tmpl                             ││┃     setup,                                                                                            │ 
+│Config Type: template                              ││┃   3 # adjust as needed.                                                                               │ 
+│Required Monitors:                                 ││┃   4 # You can use templates here etc, see                                                             │ 
+│  • Name: HEADLESS-2 | Tag: monitor1               ││┃     https://github.com/fiffeek/hyprdynamicmonitors/blob/main/examples/basic/hyprconfigs/template.go.tm│ 
+│                                                   ││┃     pl.                                                                                               │ 
+│New settings will be appended when saved           ││┃   5 # Monitors are given arbitrary tags (the "monitor" prefix and the ID coming from hyprland).       │ 
+│                                                   ││┃   6 # If you are using tui to edit, leave this at the end of your file (the last monitor config       │ 
+│                                                   ││┃     applies)                                                                                          │ 
+│                                                   ││┃   7 # and leave the markers.                                                                          │ 
+│                                                   ││┃   8 # <<<<< TUI AUTO START                                                                            │ 
+│                                                   ││┃   9 monitor=HEADLESS-2,1920x1080@0.06000,2680x0,1.00,transform,0,vrr,0                                │ 
+│                                                   ││┃  10 # <<<<< TUI AUTO END                                                                              │ 
+│                                                   ││┃  11                                                                                                   │ 
+│                                                   ││┃                                                                                                       │ 
+│                                                   ││┃                                                                                                       │ 
+│                                                   ││┃                                                                                                       │ 
+│                                                   ││┃                                                                                                       │ 
+│                                                   ││┃                                                                                                       │ 
+│                                                   ││┃                                                                                                       │ 
+│                                                   ││┃                                                                                                       │ 
+│                                                   ││┃                                                                                                       │ 
+│                                                   ││┃                                                                                                       │ 
+│                                                   ││┃                                                                                                       │ 
+│                                                   ││┃                                                                                                       │ 
+│                                                   ││┃                                                                                                       │ 
+│                                                   ││┃                                                                                                       │ 
+│                                                   ││┃                                                                                                       │ 
+│                                                   ││                                                                                                        │ 
+│                                                   ││                                                                                                        │ 
+│                                                   ││                                                                                                        │ 
+│                                                   ││                                                                                                        │ 
+│                                                   ││                                                                                                        │ 
+│                                                   ││                                                                                                        │ 
+│  n new profile • a apply monitors to existing     ││                                                                                                        │ 
+│  profile • e edit manually                        ││                                                                                                        │ 
+╰───────────────────────────────────────────────────╯╰────────────────────────────────────────────────────────────────────────────────────────────────────────╯ 
+  tab switch view • C edit HyprDynamicMonitors config                                                                                                           
+                                                                                                                                                                

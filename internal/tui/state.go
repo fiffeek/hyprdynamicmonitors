@@ -33,6 +33,7 @@ type AppState struct {
 	ColorSelection         bool
 	Fullscreen             bool
 	MonitorEditedListIndex int
+	MonitorEditedID        int
 	Snapping               bool
 	ProfileNameRequested   bool
 	ShowConfirmationPrompt bool
@@ -116,6 +117,7 @@ func (r *RootState) SetMonitorEditState(msg MonitorBeingEdited) {
 	r.State.Scaling = msg.Scaling
 	r.State.ModeSelection = msg.ModesEditor
 	r.State.MonitorEditedListIndex = msg.ListIndex
+	r.State.MonitorEditedID = msg.MonitorID
 	r.State.MirrorSelection = msg.MirroringMode
 	r.State.ColorSelection = msg.ColorSelection
 }
@@ -127,6 +129,7 @@ func (r *RootState) ClearMonitorEditState() {
 	r.State.MonitorEditedListIndex = -1
 	r.State.MirrorSelection = false
 	r.State.ColorSelection = false
+	r.State.MonitorEditedID = -1
 }
 
 func (r *RootState) CurrentView() ViewMode {
