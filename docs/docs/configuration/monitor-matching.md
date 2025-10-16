@@ -87,6 +87,22 @@ name = "eDP-1"
 
 When only `eDP-1` is connected, both profiles match, but `laptop_optimized` is selected because it's defined last.
 
+### Customizing Scoring Weights
+
+You can customize the scoring weights to prioritize different matching criteria:
+
+```toml
+[scoring]
+name_match = 10       # Points for exact monitor name match
+description_match = 5 # Points for exact monitor description match
+power_state_match = 3 # Bonus points for matching power state
+lid_state_match = 2   # Bonus points for matching lid state
+```
+
+Higher values give more weight to specific criteria. For example, if you want power state matching to have more influence, increase the `power_state_match` value.
+
+See [Configuration Overview](./overview#scoring) for more details.
+
 ## Best Practices
 
 1. **Order matters**: Define more generic profiles first, specific ones last

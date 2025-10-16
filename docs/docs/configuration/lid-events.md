@@ -54,6 +54,8 @@ dbus-send --system --print-reply \
 
 ## Custom D-Bus Configuration
 
+### Custom Signal Match Rules
+
 You can customize which D-Bus signals to monitor for lid events:
 
 ```toml
@@ -62,10 +64,34 @@ You can customize which D-Bus signals to monitor for lid events:
 interface = "org.freedesktop.DBus.Properties"
 member = "PropertiesChanged"
 object_path = "/org/freedesktop/UPower"
+# sender = "org.freedesktop.UPower"  # Optional: specific sender
 
 [[lid_events.dbus_signal_receive_filters]]
 name = "org.freedesktop.DBus.Properties.PropertiesChanged"
+body = "LidIsClosed"  # Filter signals containing this in the body
 ```
+
+The `body` filter is useful for limiting the signals processed, as D-Bus property change events can be noisy.
+
+### Custom Query Configuration
+
+You can customize how lid state is queried:
+
+```toml
+[lid_events.dbus_query_object]
+destination = "org.freedesktop.UPower"
+path = "/org/freedesktop/UPower"
+method = "org.freedesktop.DBus.Properties.Get"
+expected_lid_closing_value = "true"
+
+[[lid_events.dbus_query_object.args]]
+arg = "org.freedesktop.UPower"
+
+[[lid_events.dbus_query_object.args]]
+arg = "LidIsClosed"
+```
+
+This configuration is equivalent to the default and queries the lid state using standard UPower D-Bus properties.
 
 See the [lid-states example](https://github.com/fiffeek/hyprdynamicmonitors/tree/main/examples/lid-states) for a complete configuration.
 

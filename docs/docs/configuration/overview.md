@@ -24,9 +24,17 @@ The configuration file is written in TOML and consists of several main sections:
 ```toml
 [general]
 destination = "$HOME/.config/hypr/monitors.conf"
+debounce_time_ms = 1500
+pre_apply_exec = "notify-send 'Switching profile...'"
+post_apply_exec = "notify-send 'Profile applied'"
 ```
 
-The `destination` specifies where the monitor configuration file will be created or linked.
+- `destination` - Where the monitor configuration file will be created or linked
+- `debounce_time_ms` - Collect events for this duration before applying changes (prevents configuration thrashing, default: 1500ms)
+- `pre_apply_exec` - Command to run before applying configuration (optional)
+- `post_apply_exec` - Command to run after applying configuration (optional)
+
+See [Callbacks](./callbacks) for details on exec commands.
 
 ### Power Events
 
@@ -77,6 +85,53 @@ timeout_ms = 10000
 ```
 
 Configure desktop notifications for configuration changes. See [Notifications](./notifications).
+
+### Hot Reload
+
+```toml
+[hot_reload_section]
+debounce_time_ms = 1000
+```
+
+Hot reload watches configuration files for changes and automatically reloads them. The `debounce_time_ms` setting controls how long to wait before applying changes after detecting a file modification.
+
+### Scoring
+
+```toml
+[scoring]
+name_match = 10
+description_match = 5
+power_state_match = 3
+lid_state_match = 2
+```
+
+Customize the scoring system for profile selection when multiple profiles match. Higher scores win:
+- `name_match` - Points for exact monitor name match (e.g., "eDP-1")
+- `description_match` - Points for exact monitor description match
+- `power_state_match` - Bonus points for matching power state
+- `lid_state_match` - Bonus points for matching lid state
+
+See [Monitor Matching](./monitor-matching) for details on how profiles are selected.
+
+### Static Template Values
+
+```toml
+[static_template_values]
+default_vrr = "1"
+default_res = "2880x1920"
+```
+
+Define global values that can be used in all templates. These can be overridden per-profile. See [Templates](../advanced/templates) and [Profiles](./profiles) for details.
+
+### Fallback Profile
+
+```toml
+[fallback_profile]
+config_file = "hyprconfigs/fallback.conf"
+config_file_type = "static"
+```
+
+Define a fallback profile that will be used when no other profile matches the current state. See [Profiles](./profiles) for details.
 
 ## Next Steps
 

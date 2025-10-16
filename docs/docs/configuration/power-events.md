@@ -63,7 +63,10 @@ You can customize which D-Bus signals to monitor and how to query power status.
 interface = "org.freedesktop.DBus.Properties"
 member = "PropertiesChanged"
 object_path = "/org/freedesktop/UPower/devices/line_power_ACAD"
+# sender = "org.freedesktop.UPower"  # Optional: specific sender
 ```
+
+You can add multiple match rules to listen for different events like `DeviceAdded` and `DeviceRemoved`.
 
 ### Custom Signal Filters
 
