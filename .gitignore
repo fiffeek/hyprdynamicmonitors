@@ -17,3 +17,5 @@ integration.txt
 .coverdata
 coverage.html
 coverage.xml
+
+hypr-vm.*
