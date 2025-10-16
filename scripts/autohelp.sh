@@ -2,10 +2,10 @@
 set -euo pipefail
 
 BINARY="$1"
-COMMAND="${2:-""}"
+FILE="$2"
+COMMAND="${3:-""}"
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 
-README="README.md"
 TMP_FILE="$(mktemp)"
 
 "$SCRIPT_DIR"/../"$BINARY" $COMMAND --help >"$TMP_FILE" 2>&1
@@ -17,6 +17,7 @@ echo '```' >>"$TMP_FILE"
 START="<!-- START ${COMMAND}help -->"
 END="<!-- END ${COMMAND}help -->"
 
+touch "${FILE}.tmp"
 awk -v start="$START" -v end="$END" -v file="$TMP_FILE" '
 BEGIN { inside=0 }
 {
@@ -36,7 +37,7 @@ BEGIN { inside=0 }
         print
     }
 }
-' "$README" >"${README}.tmp"
+' "$FILE" >"${FILE}.tmp"
 
-mv "${README}.tmp" "$README"
+mv "${FILE}.tmp" "$FILE"
 rm -f "$TMP_FILE"

@@ -1,0 +1,41 @@
+---
+name: Docs
+
+on:
+    pull_request:
+        branches:
+            - main
+        paths:
+            - docs/**
+            - docs/*
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        timeout-minutes: 5
+
+        steps:
+            - name: Checkout repo
+              uses: actions/checkout@v4
+              with:
+                  lfs: true
+
+            - name: Fetch and checkout LFS objects
+              run: |
+                  git lfs fetch --all
+                  git lfs checkout
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 24.6.0
+                  cache: npm
+                  cache-dependency-path: ./docs/package-lock.json
+
+            - name: Install dependencies
+              working-directory: ./docs
+              run: npm ci
+
+            - name: Build documentation
+              working-directory: ./docs
+              run: npm run build

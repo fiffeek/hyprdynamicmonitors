@@ -1,36 +1,32 @@
 ---
-name: Release a tag
+name: Deploy Docusaurus Docs
+
 on:
     push:
-        tags:
-            - v[0-9]+.[0-9]+.[0-9]+
+        branches:
+            - main
+        paths:
+            - docs/**
+
+permissions:
+    contents: write
 
 jobs:
-    release:
+    deploy-docs:
+        name: Build and Deploy Docs
         runs-on: ubuntu-latest
+
         steps:
-            - uses: actions/checkout@v5
+            - name: Checkout repository
+              uses: actions/checkout@v4
               with:
                   fetch-depth: 0
                   lfs: true
-
-            - uses: actions/setup-go@v5
-              with:
-                  go-version-file: go.mod
 
             - name: Fetch and checkout LFS objects
               run: |
                   git lfs fetch --all
                   git lfs checkout
-
-            - name: Create release
-              uses: goreleaser/goreleaser-action@v6
-              with:
-                  version: 2.11.2
-                  args: release --clean --timeout=10m
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-                  AUR_KEY: ${{ secrets.AUR_KEY }}
 
             - name: Setup Node.js
               uses: actions/setup-node@v4
@@ -45,9 +41,7 @@ jobs:
 
             - name: Build documentation
               working-directory: ./docs
-              run: |
-                  npm run docusaurus docs:version ${{github.ref_name}}
-                  npm run build
+              run: npm run build
 
             - name: Deploy to GitHub Pages
               uses: peaceiris/actions-gh-pages@v3
@@ -56,11 +50,3 @@ jobs:
                   publish_dir: ./docs/build
                   user_name: github-actions[bot]
                   user_email: 41898282+github-actions[bot]@users.noreply.github.com
-
-            - name: Commit versions
-              run: |
-                  git config --global user.name 'github-actions[bot]'
-                  git config --global user.email '41898282+github-actions[bot]@users.noreply.github.com'
-                  git add docs/
-                  git commit -am "docs: update version for ${{github.ref_name}}"
-                  git push origin HEAD:main
