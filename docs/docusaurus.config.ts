@@ -12,8 +12,8 @@ const config: Config = {
     v4: true,
   },
 
-  url: 'https://fiffeek.github.io',
-  baseUrl: '/hyprdynamicmonitors/',
+  url: 'https://hyprdynamicmonitors.filipmikina.com',
+  baseUrl: '',
 
   organizationName: 'fiffeek',
   projectName: 'hyprdynamicmonitors',
