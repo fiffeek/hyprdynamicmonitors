@@ -46,7 +46,7 @@ nix run github:fiffeek/hyprdynamicmonitors/v1.0.0
 nix profile install github:fiffeek/hyprdynamicmonitors
 ```
 
-For declarative NixOS or Home Manager configuration using flakes, see the [systemd integration guide](../advanced/systemd#using-with-nix).
+For declarative NixOS or Home Manager configuration using flakes, see the [systemd integration guide](../advanced/systemd#nix).
 
 ## Build from Source
 
