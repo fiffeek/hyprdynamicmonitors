@@ -15,7 +15,7 @@ function HomepageHeader() {
     <header className={clsx('hero hero--primary', styles.heroBanner)}>
       <div className={styles.heroBackground}>
         <img
-          src="/hyprdynamicmonitors/previews/demo.gif"
+          src="/previews/demo.gif"
           alt="HyprDynamicMonitors TUI Demo"
           className={styles.heroGif}
         />
