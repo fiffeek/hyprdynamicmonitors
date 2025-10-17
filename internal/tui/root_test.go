@@ -504,7 +504,7 @@ func TestModel_Update_UserFlows(t *testing.T) {
 			steps: []step{
 				{
 					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'+'}},
-					expectOutputToContain: "Virtual Area: 4000x4000",
+					expectOutputToContain: "Virtual Area: 7272x7272 ",
 				},
 			},
 		},
@@ -516,7 +516,7 @@ func TestModel_Update_UserFlows(t *testing.T) {
 			steps: []step{
 				{
 					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'-'}},
-					expectOutputToContain: "Virtual Area: 16000x16000",
+					expectOutputToContain: "Virtual Area: 8800x8800",
 				},
 			},
 		},
