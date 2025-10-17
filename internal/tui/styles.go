@@ -128,7 +128,7 @@ func GetMonitorFillForEdge(color string, selected bool) string {
 
 	switch color {
 	case "105":
-		return "54" // Bright purple -> much darker purple
+		return "98" // Bright purple -> darker purple
 	case "208":
 		return "94" // Bright orange -> much darker orange/brown
 	case "39":
@@ -151,7 +151,7 @@ func GetMonitorBottomColor(color string) string {
 	case "208":
 		return "214" // Orange -> Bright orange
 	case "39":
-		return "42" // Blue -> Bright teal
+		return "45" // Blue -> Bright blue
 	case "226":
 		return "228" // Yellow -> Bright yellow
 	case "196":

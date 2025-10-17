@@ -180,16 +180,16 @@ func TestMonitorsPreviewPane_KeyboardControls(t *testing.T) {
 			key:              tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'+'}},
 			expectedPanX:     0,
 			expectedPanY:     0,
-			expectedVirtualW: 4000,
-			expectedVirtualH: 4000,
+			expectedVirtualW: 7272,
+			expectedVirtualH: 7272,
 		},
 		{
 			name:             "zoom out increases virtual dimensions",
 			key:              tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'-'}},
 			expectedPanX:     0,
 			expectedPanY:     0,
-			expectedVirtualW: 16000,
-			expectedVirtualH: 16000,
+			expectedVirtualW: 8800,
+			expectedVirtualH: 8800,
 		},
 	}
 

@@ -374,10 +374,7 @@ func (*MonitorsPreviewPane) drawMonitorRectangle(isSelected bool, rectangle *Mon
 	gridHeight := len(grid)
 
 	borderChar := '█'
-	fillChar := '▓'
-	if isSelected {
-		fillChar = '▒'
-	}
+	fillChar := '█'
 
 	for y := rectangle.startY; y <= rectangle.endY; y++ {
 		for x := rectangle.startX; x <= rectangle.endX; x++ {
