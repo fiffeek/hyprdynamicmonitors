@@ -17,37 +17,43 @@ type gridCell struct {
 }
 
 type MonitorsPreviewPane struct {
-	monitors      []*MonitorSpec
-	selectedIndex int
-	panX, panY    int
-	virtualWidth  int
-	virtualHeight int
-	width         int
-	height        int
-	baseSpacing   int
-	minSpacingY   int
-	minSpacingX   int
-	panning       bool
-	panStep       int
-	snapping      bool
-	followMonitor bool
-	snapGridX     *int
-	snapGridY     *int
+	monitors              []*MonitorSpec
+	selectedIndex         int
+	panX, panY            int
+	originalVirtualWidth  int
+	originalVirtualHeight int
+	virtualWidth          int
+	virtualHeight         int
+	width                 int
+	height                int
+	baseSpacing           int
+	minSpacingY           int
+	minSpacingX           int
+	panning               bool
+	panStep               int
+	snapping              bool
+	followMonitor         bool
+	snapGridX             *int
+	snapGridY             *int
+	zoomStep              float64
 }
 
 func NewMonitorsPreviewPane(monitors []*MonitorSpec) *MonitorsPreviewPane {
 	return &MonitorsPreviewPane{
-		monitors:      monitors,
-		selectedIndex: -1,
-		panX:          0,
-		panY:          0,
-		virtualWidth:  8000,
-		virtualHeight: 8000,
-		baseSpacing:   200,
-		minSpacingY:   2,
-		minSpacingX:   4,
-		panStep:       100,
-		snapping:      true,
+		monitors:              monitors,
+		selectedIndex:         -1,
+		panX:                  0,
+		panY:                  0,
+		virtualWidth:          8000,
+		virtualHeight:         8000,
+		originalVirtualWidth:  8000,
+		originalVirtualHeight: 8000,
+		baseSpacing:           200,
+		minSpacingY:           2,
+		minSpacingX:           4,
+		panStep:               100,
+		snapping:              true,
+		zoomStep:              1.1,
 	}
 }
 
@@ -108,6 +114,8 @@ func (p *MonitorsPreviewPane) Update(msg tea.Msg) tea.Cmd {
 			p.ZoomIn()
 		case key.Matches(msg, rootKeyMap.ZoomOut):
 			p.ZoomOut()
+		case key.Matches(msg, rootKeyMap.ResetZoom):
+			p.ResetZoom()
 		}
 	}
 
@@ -365,7 +373,11 @@ func (*MonitorsPreviewPane) drawMonitorRectangle(isSelected bool, rectangle *Mon
 	gridWidth := len(grid[0])
 	gridHeight := len(grid)
 
-	fillChar := '█'
+	borderChar := '█'
+	fillChar := '▓'
+	if isSelected {
+		fillChar = '▒'
+	}
 
 	for y := rectangle.startY; y <= rectangle.endY; y++ {
 		for x := rectangle.startX; x <= rectangle.endX; x++ {
@@ -396,7 +408,7 @@ func (*MonitorsPreviewPane) drawMonitorRectangle(isSelected bool, rectangle *Mon
 					grid[y][x].color = GetMonitorFillForEdge(monitorEdgeColor, isSelected)
 					grid[y][x].backgroundColor = edgeColor
 				case y == rectangle.startY || y == rectangle.endY || x == rectangle.startX || x == rectangle.endX:
-					grid[y][x] = gridCell{char: fillChar, color: edgeColor, backgroundColor: ""}
+					grid[y][x] = gridCell{char: borderChar, color: edgeColor, backgroundColor: ""}
 				default:
 					grid[y][x] = gridCell{char: fillChar, color: GetMonitorFillForEdge(monitorEdgeColor, isSelected), backgroundColor: ""}
 				}
@@ -459,8 +471,8 @@ func (p *MonitorsPreviewPane) renderLegend() string {
 }
 
 func (p *MonitorsPreviewPane) ZoomIn() {
-	p.virtualWidth /= 2
-	p.virtualHeight /= 2
+	p.virtualWidth = int(float64(p.virtualWidth) / p.zoomStep)
+	p.virtualHeight = int(float64(p.virtualHeight) / p.zoomStep)
 	// Set minimum bounds
 	if p.virtualWidth < 1000 {
 		p.virtualWidth = 1000
@@ -470,9 +482,14 @@ func (p *MonitorsPreviewPane) ZoomIn() {
 	}
 }
 
+func (p *MonitorsPreviewPane) ResetZoom() {
+	p.virtualHeight = p.originalVirtualHeight
+	p.virtualWidth = p.originalVirtualWidth
+}
+
 func (p *MonitorsPreviewPane) ZoomOut() {
-	p.virtualWidth *= 2
-	p.virtualHeight *= 2
+	p.virtualWidth = int(float64(p.virtualWidth) * p.zoomStep)
+	p.virtualHeight = int(float64(p.virtualHeight) * p.zoomStep)
 	// Set maximum bounds
 	if p.virtualWidth > 32000 {
 		p.virtualWidth = 32000

@@ -24,6 +24,7 @@ type keyMap struct {
 	EditHDMConfig     key.Binding
 	FollowMonitor     key.Binding
 	ExpandHyprPreview key.Binding
+	ResetZoom         key.Binding
 }
 
 var rootKeyMap = keyMap{
@@ -110,5 +111,9 @@ var rootKeyMap = keyMap{
 	ExpandHyprPreview: key.NewBinding(
 		key.WithKeys("H"),
 		key.WithHelp("H", "expand/collapse hypr preview"),
+	),
+	ResetZoom: key.NewBinding(
+		key.WithKeys("R"),
+		key.WithHelp("R", "reset zoom"),
 	),
 }
