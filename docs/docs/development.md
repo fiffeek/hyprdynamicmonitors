@@ -24,6 +24,12 @@ This installs:
 
 ## Development Commands
 
+To see all available commands, run:
+
+```bash
+make help
+```
+
 ### Code Quality and Testing
 
 ```bash
@@ -39,6 +45,9 @@ make pre-push     # Run complete CI pipeline (fmt + lint + test)
 make test/unit                    # Run only unit tests
 make test/integration             # Run only integration tests
 make test/integration/regenerate  # Regenerate test fixtures
+make test/tui/flows               # Run TUI flow tests
+make test/tui/flows/regenerate    # Regenerate TUI flow test fixtures
+make coverage                     # Generate coverage report (coverage.html)
 ```
 
 ### Running Selected Tests
@@ -51,19 +60,43 @@ make TEST_SELECTOR=Test__Run_Binary/power_events_triggers test/integration/selec
 
 # Run subset of unit tests
 make TEST_SELECTOR="TestIPC_Run/happy_path$" PACKAGE_SELECTOR=hypr/... test/unit/selected
+
+# Regenerate specific test fixtures
+make TEST_SELECTOR="TestIPC_Run" PACKAGE_SELECTOR=hypr/... test/unit/selected/regenerate
 ```
 
 ### Building
 
 ```bash
-make release/local    # Build release binaries for all platforms
-make build/test       # Build test binary for integration tests
+make release/local       # Build release binaries for all platforms
+make release/local/rc    # Build release candidate binaries
+make build/test          # Build test binary with coverage for integration tests
+make build/docs          # Build binary for documentation generation
 ```
 
 ### Documentation
 
 ```bash
+make docs             # Start documentation development server
 make help/generate    # Generate help documentation from binary
+make toc/generate     # Generate table of contents for markdown files
+```
+
+### Recording Demos and Previews
+
+```bash
+make demo                              # Record demo preview (requires vhs)
+make record/preview RECORD_TARGET=demo # Record specific preview tape
+make record/previews                   # Record all preview tapes
+```
+
+### Nix Support (Experimental)
+
+```bash
+make nix/build/module        # Build NixOS module VM
+make nix/build/homemanager   # Build home-manager VM
+make nix/run/module          # Run NixOS module VM
+make nix/run/homemanager     # Run home-manager VM
 ```
 
 ## Development Workflow
@@ -77,17 +110,52 @@ make help/generate    # Generate help documentation from binary
 
 ```
 hyprdynamicmonitors/
-├── cmd/                    # Command-line interface
-├── internal/              # Internal packages
-│   ├── config/           # Configuration handling
-│   ├── hypr/             # Hyprland IPC integration
-│   ├── monitor/          # Monitor management
-│   ├── power/            # Power event handling
-│   └── tui/              # Terminal UI
-├── examples/             # Example configurations
-├── test/                 # Integration tests
-├── docs/                 # Docusaurus documentation
-└── scripts/              # Build and install scripts
+├── cmd/                      # Command-line interface
+├── internal/                 # Internal packages
+│   ├── app/                 # Application core
+│   ├── config/              # Configuration handling
+│   ├── dial/                # Connection dialing utilities
+│   ├── filewatcher/         # File watching for config changes
+│   ├── generators/          # Code/config generators
+│   ├── hypr/                # Hyprland IPC integration
+│   ├── matchers/            # Monitor matching logic
+│   ├── notifications/       # Desktop notifications
+│   ├── power/               # Power event handling
+│   ├── profilemaker/        # Profile creation and management
+│   ├── reloader/            # Configuration reloading
+│   ├── signal/              # Signal handling
+│   ├── testutils/           # Testing utilities
+│   ├── tui/                 # Terminal UI (Bubble Tea)
+│   ├── userconfigupdater/   # User configuration updates
+│   └── utils/               # Shared utilities
+├── examples/                 # Example configurations
+│   ├── basic/               # Basic configuration examples
+│   ├── callbacks/           # Callback examples
+│   ├── disable-monitors/    # Monitor disabling examples
+│   ├── fallback/            # Fallback configuration
+│   ├── full/                # Complete configuration example
+│   ├── lid-states/          # Laptop lid state handling
+│   ├── minimal/             # Minimal configuration
+│   ├── power-states/        # Power state examples
+│   ├── scoring/             # Monitor scoring examples
+│   └── template-variables/  # Template variable usage
+├── test/                     # Integration tests
+│   └── testdata/            # Test fixtures and data
+├── docs/                     # Docusaurus documentation
+│   ├── docs/                # Documentation content
+│   ├── src/                 # Documentation site source
+│   ├── static/              # Static assets
+│   └── versioned_docs/      # Versioned documentation
+├── scripts/                  # Build and utility scripts
+├── infrastructure/           # Infrastructure configs
+│   └── systemd/             # Systemd service files
+├── nix/                      # Nix configuration
+│   ├── homemanager/         # Home Manager integration
+│   └── module/              # NixOS module
+├── preview/                  # Preview/demo recordings
+│   ├── output/              # Generated preview output
+│   └── tapes/               # VHS tape files for recordings
+└── bin/                      # Development binaries
 ```
 
 ## Testing
@@ -176,24 +244,42 @@ The project follows [Semantic Versioning](https://semver.org/):
 
 ## Build System
 
-The project uses Make for build automation. Key targets:
+The project uses Make for build automation. Run `make help` to see all available targets.
+
+### Key Targets
 
 ```bash
-make                  # Build the binary
+make help             # Display all available targets and usage
+make dev              # Setup development environment
 make install          # Install to DESTDIR (default: ~/.local/bin)
 make uninstall        # Uninstall from DESTDIR
-make clean            # Clean build artifacts
-make dev              # Setup development environment
 make test             # Run all tests
 make lint             # Run linters
 make fmt              # Format code
+make pre-push         # Run complete CI pipeline
 ```
 
 ### Environment Variables
 
 - `DESTDIR`: Installation directory (default: `~/.local/bin`)
-- `TEST_SELECTOR`: Filter for running specific tests
-- `PACKAGE_SELECTOR`: Filter for running tests in specific packages
+- `TEST_SELECTOR`: Pattern to select specific tests
+- `PACKAGE_SELECTOR`: Package pattern for unit tests (default: `...`)
+- `RECORD_TARGET`: Preview tape to record (default: `demo`)
+- `TUI_FLOWS`: TUI flow test to run (default: `TestModel_Update_UserFlows`)
+- `VHS_BIN`: Path to vhs binary for recording previews (default: `vhs`)
+
+### Examples
+
+```bash
+# Run specific unit tests
+make TEST_SELECTOR='TestIPC_Run/happy_path$' PACKAGE_SELECTOR=hypr/... test/unit/selected
+
+# Run specific integration tests
+make TEST_SELECTOR=Test__Run_Binary/power_events test/integration/selected
+
+# Record a specific preview
+make record/preview RECORD_TARGET=demo
+```
 
 ## Debugging
 

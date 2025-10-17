@@ -61,31 +61,104 @@
   }
 }
 
-.heroTitle {
-  background: linear-gradient(90deg, #ffffff 0%, #ffffff 40%, #000000 70%, #000000 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  font-weight: 800;
-  animation: gradientShift 3s ease infinite;
-  background-size: 200% auto;
+@font-face {
+  font-family: 'TheFont';
+  src: url("https://garet.typeforward.com/assets/fonts/shared/TFMixVF.woff2") format('woff2');
 }
 
-@keyframes gradientShift {
+.heroTitleContainer {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 1rem;
+}
+
+.fadeWord {
+  display: inline-block;
+  animation: fadeIn 0.4s ease-out forwards;
+  opacity: 0;
+  margin: 0 0.175em;
+}
+
+.heroTitle {
+  font-weight: 800;
+  background: linear-gradient(120deg,
+      #000000 0%,
+      #000000 48%,
+      #ffffff 50%,
+      #000000 52%,
+      #000000 100%);
+  background-size: 200% 100%;
+  background-position: -200% 0;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shine 3s ease-in-out infinite;
+}
+
+@keyframes shine {
+  0% {
+    background-position: -200% 0;
+  }
+
+  50%,
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.breatheLetterH {
+  font-family: 'TheFont', sans-serif;
+  animation: letterBreathe 3s ease-in-out infinite;
+  animation-delay: 0s;
+}
+
+.breatheLetterD {
+  font-family: 'TheFont', sans-serif;
+  animation: letterBreathe 2.5s ease-in-out infinite;
+  animation-delay: 0s;
+}
+
+.breatheLetterM {
+  font-family: 'TheFont', sans-serif;
+  animation: letterBreathe 2s ease-in-out infinite;
+  animation-delay: 0s;
+}
+
+@keyframes letterBreathe {
 
   0%,
   100% {
-    background-position: 0% center;
-    filter: drop-shadow(0 0 20px rgba(0, 0, 0, 0.5)) drop-shadow(0 0 40px rgba(0, 0, 0, 0.3));
+    font-variation-settings: 'wght' 100;
   }
 
   50% {
-    background-position: 100% center;
-    filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.5)) drop-shadow(0 0 40px rgba(255, 255, 255, 0.3));
+    font-variation-settings: 'wght' 900;
   }
 }
 
 .heroSubtitle {
   color: white !important;
   font-weight: 500;
+}
+
+.fadeSubtitleWord {
+  display: inline-block;
+  animation: fadeIn 0.5s ease-out forwards;
+  opacity: 0;
+  margin: 0 0.2em;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
