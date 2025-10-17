@@ -338,7 +338,9 @@ func (p *MonitorsPreviewPane) DrawMonitor(i int, monitor *MonitorSpec, scaleX, s
 	p.drawMonitorLabel(isSelected, monitor, rectangle, grid, color)
 }
 
-func (*MonitorsPreviewPane) drawMonitorLabel(isSelected bool, monitor *MonitorSpec, rectangle *MonitorRectangle, grid [][]gridCell, color string) {
+func (*MonitorsPreviewPane) drawMonitorLabel(isSelected bool, monitor *MonitorSpec,
+	rectangle *MonitorRectangle, grid [][]gridCell, color string,
+) {
 	gridWidth := len(grid[0])
 	gridHeight := len(grid)
 
@@ -404,10 +406,12 @@ func (*MonitorsPreviewPane) drawMonitorRectangle(isSelected bool, rectangle *Mon
 					grid[y][x].char = '▀'
 					grid[y][x].color = GetMonitorFillForEdge(monitorEdgeColor, isSelected)
 					grid[y][x].backgroundColor = edgeColor
-				case y == rectangle.startY || y == rectangle.endY || x == rectangle.startX || x == rectangle.endX:
+				case y == rectangle.startY || y == rectangle.endY ||
+					x == rectangle.startX || x == rectangle.endX:
 					grid[y][x] = gridCell{char: borderChar, color: edgeColor, backgroundColor: ""}
 				default:
-					grid[y][x] = gridCell{char: fillChar, color: GetMonitorFillForEdge(monitorEdgeColor, isSelected), backgroundColor: ""}
+					grid[y][x] = gridCell{char: fillChar, color: GetMonitorFillForEdge(
+						monitorEdgeColor, isSelected), backgroundColor: ""}
 				}
 			}
 		}
