@@ -24,10 +24,32 @@ function HomepageHeader() {
       <div className="container" style={{ position: 'relative', zIndex: 2 }}>
         <div className="row">
           <div className="col col--12 text--center">
+            <div className={styles.heroTitleContainer}>
+              {['Dynamic', 'Monitor', 'Management'].map((word, index) => (
+                <span key={index} className={styles.fadeWord} style={{ animationDelay: `${index * 0.1}s` }}>
+                  {word}{' '}
+                </span>
+              ))}
+            </div>
             <Heading as="h1" className={clsx("hero__title", styles.heroTitle)}>
-              {siteConfig.title}
+              {siteConfig.title.split('').map((letter, index) => {
+                const breatheClass = letter === 'H' ? styles.breatheLetterH :
+                  letter === 'D' ? styles.breatheLetterD :
+                    letter === 'M' ? styles.breatheLetterM : '';
+                return (
+                  <span key={index} className={breatheClass}>
+                    {letter}
+                  </span>
+                );
+              })}
             </Heading>
-            <p className={clsx("hero__subtitle", styles.heroSubtitle)}>{siteConfig.tagline}</p>
+            <p className={clsx("hero__subtitle", styles.heroSubtitle)}>
+              {siteConfig.tagline.split(' ').map((word, index) => (
+                <span key={index} className={styles.fadeSubtitleWord} style={{ animationDelay: `${index * 0.08}s` }}>
+                  {word}{' '}
+                </span>
+              ))}
+            </p>
             <div className={styles.buttons}>
               <Link
                 className="button button--secondary button--lg"
