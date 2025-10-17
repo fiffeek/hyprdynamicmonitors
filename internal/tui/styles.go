@@ -99,14 +99,52 @@ var (
 
 var GridDotColor = "240" // Grey color for grid dots
 
-var MonitorColors = []string{"105", "208", "39", "226", "196", "99"}
+var MonitorEdgeColors = []string{"105", "208", "39", "226", "196", "99"}
 
 func GetMonitorColorStyle(index int) lipgloss.Style {
-	color := MonitorColors[index%len(MonitorColors)]
+	color := MonitorEdgeColors[index%len(MonitorEdgeColors)]
 	return lipgloss.NewStyle().Foreground(lipgloss.Color(color))
 }
 
-func GetBrightMonitorColor(color string) string {
+func GetMonitorFillForEdge(color string, selected bool) string {
+	if !selected {
+		switch color {
+		case "105":
+			return "99" // Bright purple -> darker purple
+		case "208":
+			return "166" // Bright orange -> darker orange
+		case "39":
+			return "25" // Bright blue -> darker blue
+		case "226":
+			return "220" // Bright yellow -> darker golden yellow
+		case "196":
+			return "124" // Bright red -> darker red
+		case "99":
+			return "60" // Bright pink -> darker magenta
+		default:
+			return "250" // Light gray fallback instead of white
+		}
+	}
+
+	switch color {
+	case "105":
+		return "54" // Bright purple -> much darker purple
+	case "208":
+		return "94" // Bright orange -> much darker orange/brown
+	case "39":
+		return "17" // Bright blue -> much darker blue
+	case "226":
+		return "100" // Bright yellow -> much darker gold
+	case "196":
+		return "52" // Bright red -> much darker red/maroon
+	case "99":
+		return "53" // Bright pink -> much darker magenta/purple
+	default:
+		return "237" // Much darker gray fallback
+	}
+}
+
+func GetMonitorBottomColor(color string) string {
 	switch color {
 	case "105":
 		return "141" // Purple -> Bright purple

@@ -11,8 +11,9 @@ import (
 )
 
 type gridCell struct {
-	char  rune
-	color string
+	color           string
+	backgroundColor string
+	char            rune
 }
 
 type MonitorsPreviewPane struct {
@@ -245,33 +246,39 @@ func (*MonitorsPreviewPane) ColorGrid(grid [][]gridCell) []string {
 	for _, row := range grid {
 		var line strings.Builder
 		var currentColor string
+		var currentBgColor string
 		var currentSegment strings.Builder
 
 		for _, cell := range row {
-			if cell.color != currentColor {
+			if cell.color != currentColor || cell.backgroundColor != currentBgColor {
 				// Flush previous segment with its color
 				if currentSegment.Len() > 0 {
+					style := lipgloss.NewStyle()
 					if currentColor != "" {
-						style := lipgloss.NewStyle().Foreground(lipgloss.Color(currentColor))
-						line.WriteString(style.Render(currentSegment.String()))
-					} else {
-						line.WriteString(currentSegment.String())
+						style = style.Foreground(lipgloss.Color(currentColor))
 					}
+					if currentBgColor != "" {
+						style = style.Background(lipgloss.Color(currentBgColor))
+					}
+					line.WriteString(style.Render(currentSegment.String()))
 					currentSegment.Reset()
 				}
 				currentColor = cell.color
+				currentBgColor = cell.backgroundColor
 			}
 			currentSegment.WriteRune(cell.char)
 		}
 
 		// Flush remaining segment
 		if currentSegment.Len() > 0 {
+			style := lipgloss.NewStyle()
 			if currentColor != "" {
-				style := lipgloss.NewStyle().Foreground(lipgloss.Color(currentColor))
-				line.WriteString(style.Render(currentSegment.String()))
-			} else {
-				line.WriteString(currentSegment.String())
+				style = style.Foreground(lipgloss.Color(currentColor))
 			}
+			if currentBgColor != "" {
+				style = style.Background(lipgloss.Color(currentBgColor))
+			}
+			line.WriteString(style.Render(currentSegment.String()))
 		}
 
 		lines = append(lines, line.String())
@@ -317,13 +324,13 @@ func (p *MonitorsPreviewPane) DrawMonitor(i int, monitor *MonitorSpec, scaleX, s
 		return
 	}
 
-	color := MonitorColors[i%len(MonitorColors)]
+	color := MonitorEdgeColors[i%len(MonitorEdgeColors)]
 	isSelected := i == p.selectedIndex
 	p.drawMonitorRectangle(isSelected, rectangle, color, grid)
-	p.drawMonitorLabel(monitor, rectangle, grid, color)
+	p.drawMonitorLabel(isSelected, monitor, rectangle, grid, color)
 }
 
-func (*MonitorsPreviewPane) drawMonitorLabel(monitor *MonitorSpec, rectangle *MonitorRectangle, grid [][]gridCell, color string) {
+func (*MonitorsPreviewPane) drawMonitorLabel(isSelected bool, monitor *MonitorSpec, rectangle *MonitorRectangle, grid [][]gridCell, color string) {
 	gridWidth := len(grid[0])
 	gridHeight := len(grid)
 
@@ -331,13 +338,16 @@ func (*MonitorsPreviewPane) drawMonitorLabel(monitor *MonitorSpec, rectangle *Mo
 	if len(label) > 6 {
 		label = label[:6] // Truncate long names
 	}
+	if isSelected {
+		label = "*" + label
+	}
 
 	// Determine positioning arrow based on monitor's relative position
 	arrow := monitor.PositionArrowView()
 	fullLabel := label + arrow
 
 	labelY := (rectangle.startY + rectangle.endY) / 2
-	labelStartX := (rectangle.startX + rectangle.endX - len(fullLabel)) / 2
+	labelStartX := (rectangle.startX + rectangle.endX + 1 - len(fullLabel)) / 2
 
 	if labelY >= 0 && labelY < gridHeight && labelStartX >= rectangle.startX && labelStartX <= rectangle.endX {
 		for j, char := range fullLabel {
@@ -350,37 +360,46 @@ func (*MonitorsPreviewPane) drawMonitorLabel(monitor *MonitorSpec, rectangle *Mo
 }
 
 func (*MonitorsPreviewPane) drawMonitorRectangle(isSelected bool, rectangle *MonitorRectangle,
-	color string, grid [][]gridCell,
+	monitorEdgeColor string, grid [][]gridCell,
 ) {
 	gridWidth := len(grid[0])
 	gridHeight := len(grid)
 
-	borderChar := '█'
-	fillChar := '▓'
-	if isSelected {
-		borderChar = '▓'
-		fillChar = '▒'
-	}
+	fillChar := '█'
 
 	for y := rectangle.startY; y <= rectangle.endY; y++ {
 		for x := rectangle.startX; x <= rectangle.endX; x++ {
 			if y >= 0 && y < gridHeight && x >= 0 && x < gridWidth {
-				// check bounds
-				if y == rectangle.startY || y == rectangle.endY ||
-					x == rectangle.startX || x == rectangle.endX {
-					// Use different color for the "bottom" edge based on rotation
-					edgeColor := color
 
-					if rectangle.isBottomEdge(x, y) {
-						// Use a brighter/different shade for the bottom edge
-						edgeColor = GetBrightMonitorColor(color)
-					}
+				edgeColor := monitorEdgeColor
 
-					grid[y][x] = gridCell{char: borderChar, color: edgeColor}
-					continue
+				// Use a brighter/different shade for the bottom edge
+				if rectangle.isBottomEdge(x, y) {
+					edgeColor = GetMonitorBottomColor(monitorEdgeColor)
 				}
 
-				grid[y][x] = gridCell{char: fillChar, color: color}
+				switch {
+				case y == rectangle.startY && (x == rectangle.startX || x == rectangle.endX):
+					grid[y][x].char = '▀'
+					grid[y][x].color = monitorEdgeColor
+					grid[y][x].backgroundColor = monitorEdgeColor
+				case y == rectangle.startY && x > rectangle.startX && x < rectangle.endX:
+					grid[y][x].char = '▄'
+					grid[y][x].color = GetMonitorFillForEdge(monitorEdgeColor, isSelected)
+					grid[y][x].backgroundColor = edgeColor
+				case y == rectangle.endY && (x == rectangle.startX || x == rectangle.endX):
+					grid[y][x].char = '▄'
+					grid[y][x].color = monitorEdgeColor
+					grid[y][x].backgroundColor = monitorEdgeColor
+				case y == rectangle.endY && x > rectangle.startX && x < rectangle.endX:
+					grid[y][x].char = '▀'
+					grid[y][x].color = GetMonitorFillForEdge(monitorEdgeColor, isSelected)
+					grid[y][x].backgroundColor = edgeColor
+				case y == rectangle.startY || y == rectangle.endY || x == rectangle.startX || x == rectangle.endX:
+					grid[y][x] = gridCell{char: fillChar, color: edgeColor, backgroundColor: ""}
+				default:
+					grid[y][x] = gridCell{char: fillChar, color: GetMonitorFillForEdge(monitorEdgeColor, isSelected), backgroundColor: ""}
+				}
 			}
 		}
 	}
@@ -420,7 +439,7 @@ func (p *MonitorsPreviewPane) renderLegend() string {
 			continue
 		}
 
-		coloredPattern := GetMonitorColorStyle(i).Render("▓▓")
+		coloredPattern := GetMonitorColorStyle(i).Render("██")
 		item := fmt.Sprintf("%s %s - %s, %s, %s, %s",
 			coloredPattern, monitor.Name, monitor.Mode(), monitor.PositionPretty(),
 			monitor.ScalePretty(), monitor.RotationPretty())
