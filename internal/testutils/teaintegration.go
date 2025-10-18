@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"os"
 	"os/exec"
 	"sync"
 	"syscall"
@@ -14,25 +13,16 @@ import (
 
 	"github.com/charmbracelet/x/exp/golden"
 	"github.com/charmbracelet/x/vt"
-	"github.com/creack/pty"
+	"github.com/charmbracelet/x/xpty"
 	"golang.org/x/sys/unix"
 )
 
 var errReadTimeout = errors.New("timeout while reading")
 
 const (
-	maxUint16 = 65535
-	maxInt32  = 2147483647
-	minInt32  = -2147483648
+	maxInt32 = 2147483647
+	minInt32 = -2147483648
 )
-
-// safeUint16 safely converts an int to uint16, returning an error if out of range
-func safeUint16(val int, name string) (uint16, error) {
-	if val < 0 || val > maxUint16 {
-		return 0, fmt.Errorf("%s %d out of valid range (0-%d)", name, val, maxUint16)
-	}
-	return uint16(val), nil // #nosec G115 -- validated above
-}
 
 // safeInt32 safely converts an int to int32, returning an error if out of range
 func safeInt32(val int, name string) (int32, error) {
@@ -104,7 +94,7 @@ func WithCommand(cmd *exec.Cmd) TestOption {
 }
 
 type TestModel struct {
-	ptmx          *os.File
+	ptmx          xpty.Pty
 	vt            *vt.Emulator
 	done          sync.Once
 	exitSequences []string
@@ -132,26 +122,13 @@ func NewTestModel(options ...TestOption) (*TestModel, error) {
 		return nil, errors.New("cmd is required")
 	}
 
-	ptmx, err := pty.Start(opts.cmd)
+	ptmx, err := xpty.NewPty(opts.width, opts.height)
 	if err != nil {
-		return nil, fmt.Errorf("cant starty pty: %w", err)
+		return nil, fmt.Errorf("cant get pty: %w", err)
 	}
 
-	rows, err := safeUint16(opts.height, "terminal height")
-	if err != nil {
-		return nil, err
-	}
-	cols, err := safeUint16(opts.width, "terminal width")
-	if err != nil {
-		return nil, err
-	}
-
-	err = pty.Setsize(ptmx, &pty.Winsize{
-		Rows: rows,
-		Cols: cols,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("cant resize the pty: %w", err)
+	if err := ptmx.Start(opts.cmd); err != nil {
+		return nil, fmt.Errorf("cant start pty: %w", err)
 	}
 
 	vt := vt.NewEmulator(opts.width, opts.height)
