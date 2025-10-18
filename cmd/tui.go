@@ -6,12 +6,17 @@ import (
 	"os"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/app"
+	"github.com/muesli/termenv"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
-var mockedHyprMonitors string
+var (
+	mockedHyprMonitors string
+	runningUnderTest   bool
+)
 
 var tuiCmd = &cobra.Command{
 	Use:   "tui",
@@ -19,7 +24,6 @@ var tuiCmd = &cobra.Command{
 	Long:  `Launch an interactive terminal-based TUI for managing monitor configurations.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if debug {
-			logrus.Debug("Running a debug log for tea")
 			f, err := tea.LogToFile("debug.log", "debug")
 			if err != nil {
 				fmt.Println("fatal:", err)
@@ -29,10 +33,15 @@ var tuiCmd = &cobra.Command{
 			defer f.Close()
 		}
 
+		if runningUnderTest {
+			lipgloss.SetColorProfile(termenv.Ascii)
+		}
+
 		ctx, cancel := context.WithCancelCause(context.Background())
 		defer cancel(context.Canceled)
 
-		app, err := app.NewTUI(ctx, configPath, mockedHyprMonitors, Version, disablePowerEvents, connectToSessionBus, enableLidEvents)
+		app, err := app.NewTUI(ctx, configPath, mockedHyprMonitors, Version, disablePowerEvents,
+			connectToSessionBus, enableLidEvents, runningUnderTest)
 		if err != nil {
 			return fmt.Errorf("cant init tui: %w", err)
 		}
@@ -71,4 +80,7 @@ func init() {
 		false,
 		"Enable listening to dbus lid events",
 	)
+
+	tuiCmd.Flags().BoolVar(&runningUnderTest, "running-under-test", false,
+		"Use test settings such as no styling etc.")
 }

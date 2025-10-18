@@ -27,7 +27,7 @@ type TUI struct {
 }
 
 func NewTUI(ctx context.Context, configPath, mockedHyprMonitors string,
-	version string, disablePowerEvents, connectToSessionBus, enableLidEvents bool,
+	version string, disablePowerEvents, connectToSessionBus, enableLidEvents, runningUnderTest bool,
 ) (*TUI, error) {
 	cfg, err := config.NewConfig(configPath)
 	if err != nil {
@@ -94,7 +94,7 @@ func NewTUI(ctx context.Context, configPath, mockedHyprMonitors string,
 		lidState = ld.GetCurrentState()
 	}
 
-	model := tui.NewModel(cfg, monitors, profileMaker, version, currentState, nil, false, lidState)
+	model := tui.NewModel(cfg, monitors, profileMaker, version, currentState, nil, runningUnderTest, lidState)
 	program := tea.NewProgram(
 		model,
 		tea.WithAltScreen(),

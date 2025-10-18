@@ -225,6 +225,7 @@ Flags:
       --enable-lid-events               Enable listening to dbus lid events
   -h, --help                            help for tui
       --hypr-monitors-override string   When used it fill parse the given file as hyprland monitors spec, used for testing.
+      --running-under-test              Use test settings such as no styling etc.
 
 Global Flags:
       --config string             Path to configuration file (default "$HOME/.config/hyprdynamicmonitors/config.toml")
