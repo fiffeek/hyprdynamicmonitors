@@ -71,7 +71,7 @@ func compareWithFixture(t *testing.T, target, fixture string) {
 	testutils.AssertContentsSameAsFixture(t, target, fixture)
 }
 
-func prepBinaryRun(ctx context.Context, args []string) *exec.Cmd {
+func prepBinaryRun(t *testing.T, ctx context.Context, args []string) *exec.Cmd {
 	// nolint:gosec
 	cmd := exec.CommandContext(
 		ctx,
@@ -85,13 +85,14 @@ func prepBinaryRun(ctx context.Context, args []string) *exec.Cmd {
 	}
 
 	cmd.WaitDelay = 200 * time.Millisecond
+	testutils.Logf(t, "Will execute: %v", cmd.Args)
 
 	return cmd
 }
 
-func runBinary(ctx context.Context, args []string) ([]byte, error) {
+func runBinary(t *testing.T, ctx context.Context, args []string) ([]byte, error) {
 	// nolint:wrapcheck
-	return prepBinaryRun(ctx, args).CombinedOutput()
+	return prepBinaryRun(t, ctx, args).CombinedOutput()
 }
 
 func find(root, ext string) ([]string, error) {

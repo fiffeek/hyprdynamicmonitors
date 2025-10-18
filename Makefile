@@ -206,10 +206,13 @@ test/integration: build/test
 	@$(GOLANG_BIN) tool covdata textfmt -i=.coverdata -o=integration.txt
 
 test/integration/regenerate: build/test
-	@HDM_BINARY_PATH=$(TEST_EXECUTABLE_NAME) $(GOLANG_BIN) test -v ./test/... --regenerate
+	@HDM_BINARY_PATH=$(TEST_EXECUTABLE_NAME) $(GOLANG_BIN) test -v ./test/... --regenerate -update
 
 test/integration/selected: build/test
 	@HDM_BINARY_PATH=$(TEST_EXECUTABLE_NAME) $(GOLANG_BIN) test -v -run $(TEST_SELECTOR) ./test/... --debug
+
+test/integration/selected/regenerate: build/test
+	@HDM_BINARY_PATH=$(TEST_EXECUTABLE_NAME) $(GOLANG_BIN) test -v -run $(TEST_SELECTOR) ./test/... -regenerate -update
 
 coverage:
 	@$(GOLANG_BIN) tool gocovmerge integration.txt unit.txt > coverage.txt

@@ -23,7 +23,7 @@ func Test_Validate_Examples(t *testing.T) {
 			defer close(done)
 
 			go func() {
-				out, err := runBinary(ctx, []string{"--config", file, "validate"})
+				out, err := runBinary(t, ctx, []string{"--config", file, "validate"})
 				require.NoError(t, err, "binary failed %s", string(out))
 				done <- true
 			}()
@@ -115,7 +115,7 @@ func Test_Validate_InvalidConfigs(t *testing.T) {
 
 			go func() {
 				defer close(done)
-				out, err = runBinary(ctx, []string{"--config", configPath, "validate"})
+				out, err = runBinary(t, ctx, []string{"--config", configPath, "validate"})
 			}()
 
 			select {

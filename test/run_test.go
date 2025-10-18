@@ -1,6 +1,7 @@
 package test
 
 import (
+	"bytes"
 	"context"
 	"os"
 	"path/filepath"
@@ -16,6 +17,21 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+var (
+	tuiHeight = 45
+	tuiWidth  = 160
+	keyEnter  = "\x0D"
+	keyTab    = "\t"
+)
+
+type tuiStep struct {
+	input                 string
+	waitFor               *time.Duration
+	expectOutputToContain string
+	times                 *int
+	sleepAfter            *time.Duration
+}
 
 func Test__Run_Binary(t *testing.T) {
 	tmpDir := t.TempDir()
@@ -46,6 +62,8 @@ func Test__Run_Binary(t *testing.T) {
 		// would add "--disable-auto-hot-reload" cli arg; in the context of anything but "run" it does not make sense, so this
 		// is an explicit knob to change this behavior
 		disablePassingArgs bool
+		tui                bool
+		validateTui        []*tuiStep
 	}{
 		{
 			name:                     "dry run should succeed",
@@ -542,6 +560,77 @@ func Test__Run_Binary(t *testing.T) {
 			runOnce:            true,
 			disablePassingArgs: true,
 		},
+		{
+			name:                     "tui should run",
+			config:                   testutils.NewTestConfig(t),
+			extraArgs:                []string{},
+			hyprMonitorResponseFiles: []string{"testdata/hypr/server/basic_monitors.json"},
+			tui:                      true,
+			disablePowerEvents:       true,
+			validateTui:              []*tuiStep{},
+		},
+		{
+			name:                     "tui power run",
+			config:                   testutils.NewTestConfig(t),
+			extraArgs:                []string{},
+			hyprMonitorResponseFiles: []string{"testdata/hypr/server/basic_monitors.json"},
+			tui:                      true,
+			disablePowerEvents:       false,
+			powerEvents:              []power.PowerState{power.BatteryPowerState},
+			connectToSessionBus:      true,
+			validateTui:              []*tuiStep{},
+		},
+		{
+			name:                     "tui lid run",
+			config:                   testutils.NewTestConfig(t),
+			extraArgs:                []string{},
+			hyprMonitorResponseFiles: []string{"testdata/hypr/server/basic_monitors.json"},
+			tui:                      true,
+			disablePowerEvents:       true,
+			enableLidEvents:          true,
+			lidEvents:                []power.LidState{power.ClosedLidState},
+			connectToSessionBus:      true,
+			validateTui:              []*tuiStep{},
+		},
+		{
+			name:                     "tui basic flow",
+			config:                   testutils.NewTestConfig(t).WithFilewatcherDebounceTime(100),
+			extraArgs:                []string{},
+			hyprMonitorResponseFiles: []string{"testdata/hypr/server/basic_monitors.json"},
+			tui:                      true,
+			disablePowerEvents:       true,
+			validateTui: []*tuiStep{
+				{
+					input:                 "j",
+					expectOutputToContain: "► DP-11",
+				},
+				{
+					input:                 keyEnter,
+					expectOutputToContain: "[EDITING]",
+				},
+				{
+					input:                 "r",
+					expectOutputToContain: "Rotation: 0",
+				},
+				{
+					input:                 keyTab,
+					expectOutputToContain: "No Matching Profile",
+				},
+				{
+					input:                 "n",
+					expectOutputToContain: "Type the profile name",
+				},
+				{
+					input:                 "hello",
+					expectOutputToContain: "hello",
+				},
+				{
+					input:                 keyEnter,
+					expectOutputToContain: "Profile: hello",
+					waitFor:               utils.JustPtr(300 * time.Millisecond),
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -569,7 +658,8 @@ func Test__Run_Binary(t *testing.T) {
 
 			// hypr: fake ipc events server, only needs to be run when the app runs
 			var fakeHyprEventServerDone chan struct{}
-			if !tt.runOnce {
+			// tui does not listen to hypr events for now
+			if !tt.runOnce && !tt.tui {
 				eventsListener, teardownEvents := testutils.SetupHyprSocket(ctx, t,
 					xdgRuntimeDir, signature, hypr.GetHyprEventsSocket)
 				defer teardownEvents()
@@ -616,6 +706,10 @@ func Test__Run_Binary(t *testing.T) {
 				"--enable-json-logs-format",
 			}, tt.extraArgs...)
 			if !tt.disablePassingArgs {
+				if tt.tui {
+					args = append(args, "tui")
+					args = append(args, "--running-under-test")
+				}
 				if tt.disableHotReload {
 					args = append(args, "--disable-auto-hot-reload")
 				}
@@ -642,13 +736,20 @@ func Test__Run_Binary(t *testing.T) {
 
 			go func() {
 				defer close(done)
-				cmd := prepBinaryRun(ctx, args)
+				cmd := prepBinaryRun(t, ctx, args)
 				go func() {
 					// give time to warm up
 					time.Sleep(100 * time.Millisecond)
 					close(binaryStartingChan)
 				}()
-				out, binaryErr = cmd.CombinedOutput()
+				if tt.tui {
+					model, err := testutils.NewTestModel(testutils.WithInitialTermSize(
+						tuiWidth, tuiHeight), testutils.WithCommand(cmd))
+					require.NoError(t, err, "pty has to start")
+					ValidateTUI(t, model, tt.validateTui)
+				} else {
+					out, binaryErr = cmd.CombinedOutput()
+				}
 			}()
 
 			// wait for filewatcher to write all files
@@ -688,7 +789,7 @@ func Test__Run_Binary(t *testing.T) {
 					assert.Contains(t, string(out), tt.expectErrorContains,
 						"error message should contain expected substring. Got: %s", string(out))
 				} else {
-					if tt.runOnce {
+					if tt.runOnce || tt.tui {
 						assert.NoError(t, binaryErr, "expected run to not fail but it did. Output: %s", string(out))
 					} else {
 						assert.Error(t, binaryErr, "expected the program to be killed")
@@ -701,6 +802,43 @@ func Test__Run_Binary(t *testing.T) {
 			}
 		})
 	}
+}
+
+func ValidateTUI(t *testing.T, model *testutils.TestModel, steps []*tuiStep) {
+	waitErr := model.WaitFor(func(bts []byte) bool {
+		return bytes.Contains(bts, []byte("R reset zoom"))
+	}, testutils.WithCheckInterval(time.Millisecond*50),
+		testutils.WithDuration(time.Millisecond*200))
+	assert.NoError(t, waitErr, "should be able to read the initial screen and see the footer")
+
+	for _, step := range steps {
+		if step.times == nil {
+			step.times = utils.IntPtr(1)
+		}
+		for range *step.times {
+			assert.NoError(t, model.Send([]byte(step.input)),
+				"should be able to send user event: %s", step.input)
+		}
+		if step.waitFor == nil {
+			step.waitFor = utils.JustPtr(200 * time.Millisecond)
+		}
+		if step.expectOutputToContain != "" {
+			err := model.WaitFor(func(bts []byte) bool {
+				return bytes.Contains(bts, []byte(step.expectOutputToContain))
+			}, testutils.WithCheckInterval(time.Millisecond*50), testutils.WithDuration(*step.waitFor))
+			assert.NoError(t, err, "should be able to move the cursor")
+		}
+
+		if step.sleepAfter != nil {
+			time.Sleep(*step.sleepAfter)
+		}
+	}
+
+	assert.NoError(t, model.Send([]byte("q")), "should be able to send quit")
+	out, err := model.FinalScreen(testutils.WithFinalTimeout(200 * time.Millisecond))
+	require.NoError(t, err, "should exit cleanly")
+
+	testutils.RequireEqualOutput(t, []byte(out))
 }
 
 func waitFor(t *testing.T, server chan struct{}) {
