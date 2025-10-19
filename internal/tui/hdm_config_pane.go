@@ -263,6 +263,12 @@ func (h *HDMConfigPane) renderProfileDetails(profile *config.Profile) string {
 		content.WriteString("\n")
 	}
 
+	if profile.Conditions != nil && profile.Conditions.LidState != nil {
+		content.WriteString(configDetailLabelStyle.Render("Lid State: "))
+		content.WriteString(configDetailStyle.Render(profile.Conditions.LidState.Value()))
+		content.WriteString("\n")
+	}
+
 	if profile.Conditions != nil && profile.Conditions.RequiredMonitors != nil {
 		content.WriteString(configDetailLabelStyle.Render("Required Monitors:"))
 		content.WriteString("\n")

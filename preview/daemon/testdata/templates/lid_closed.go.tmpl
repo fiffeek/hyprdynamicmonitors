@@ -1,0 +1,6 @@
+{{- $laptop := index .MonitorsByTag "laptop" -}}
+{{- $external := index .MonitorsByTag "external" -}}
+# Generated with lid state: {{.LidState}}
+
+monitor={{ $external.Name }},disable
+monitor={{ $external.Name }},2560x2880@59.96700,auto-left,1.6,transform,3

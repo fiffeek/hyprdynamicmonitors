@@ -1,0 +1,16 @@
+{{- $laptop := index .MonitorsByTag "laptop" -}}
+# Generated with power state: {{.PowerState}}
+
+{{ if isOnBattery }}
+# disable animations, reduce refresh rate, enable vrr
+monitor={{ $laptop.Name }},2880x1920@60.00000,0x0,2.0,vrr,1
+animations {
+  enabled = false
+}
+{{- else}}
+# enable animations, max refresh rate, disable vrr
+monitor={{ $laptop.Name }},2880x1920@120.00000,0x0,2.0,vrr,0
+animations {
+  enabled = true
+}
+{{- end}}

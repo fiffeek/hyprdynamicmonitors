@@ -140,7 +140,7 @@ func (o OperationStatus) String() string {
 	case OperationNameCreateProfile:
 		operationName = "Create Profile"
 	case OperationNameMatchingProfile:
-		operationName = "Matching Profile"
+		operationName = "Reload Profile"
 	case OperationNameEditProfile:
 		operationName = "Edit Profile"
 	case OperationNameHDMConfigReloadRequested:
@@ -181,6 +181,7 @@ func OperationStatusCmd(name OperationName, err error) tea.Cmd {
 		OperationNameToggleVRR,
 		OperationNameNextBitdepth,
 		OperationNameSetColorPreset,
+		OperationNameMatchingProfile,
 	}
 	showSuccessToUser := slices.Contains(criticalOperations, name)
 	return func() tea.Msg {

@@ -42,7 +42,7 @@ func TestHeader_Update(t *testing.T) {
 			setupMsg:        tui.OperationStatusCmd(tui.OperationNameMatchingProfile, testErr),
 			expectedMode:    "",
 			expectedView:    tui.ViewMode(0),
-			expectedErr:     "Matching Profile: test error",
+			expectedErr:     "Reload Profile: test error",
 			expectedSuccess: "",
 		},
 		{
@@ -55,7 +55,7 @@ func TestHeader_Update(t *testing.T) {
 		},
 		{
 			name:            "OperationStatus success without showSuccessToUser",
-			setupMsg:        tui.OperationStatusCmd(tui.OperationNameMatchingProfile, nil),
+			setupMsg:        tui.OperationStatusCmd(tui.OperationNameMove, nil),
 			expectedMode:    "",
 			expectedView:    tui.ViewMode(0),
 			expectedErr:     "",

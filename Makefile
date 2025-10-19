@@ -250,6 +250,12 @@ record/preview: build/docs
 	@git checkout -- ./preview/tapes/configs/
 	@git clean -fd ./preview/tapes/configs/
 
+record/preview/daemon/selected: build/docs
+	@$(GOTESTSUM) -- ./preview/daemon/ -v -count=1 -run $(TEST_SELECTOR)
+
+record/preview/daemon: build/docs
+	@$(GOTESTSUM) -- ./preview/daemon/ -v -count=1
+
 demo: record/preview
 
 record/previews: build/docs
