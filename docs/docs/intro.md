@@ -14,7 +14,13 @@ It also provides a standalone TUI that can be used for ad-hoc modifications and 
 
 ![Demo](/previews/demo.gif)
 
+:::note
+For keybinds explanation and usage see [TUI](quickstart/tui.md).
+:::
+
 ### Async Events
+
+In this preview, the `HyprDynamicMonitors` daemon runs in the background and automatically updates the Hyprland configuration when a lid close event is detected (via D-Bus). The TUI detects the configuration change and updates to show the new matching profile.
 
 ![Events](/previews/lid_tui.gif)
 

@@ -89,7 +89,8 @@ func Test__Preview(t *testing.T) {
 			contextTimeout: 60 * time.Second,
 
 			hyprMonitorResponseFiles: []string{
-				"testdata/hypr/basic.json",
+				"testdata/hypr/basic.json", // for daemon
+				"testdata/hypr/basic.json", // for tui
 			},
 
 			disablePowerEvents: true,
@@ -233,13 +234,11 @@ func Test__Preview(t *testing.T) {
 				listener, responses, expectedCommands, true)
 
 			// hypr: fake ipc events server
-			if !tt.tui {
-				eventsListener, teardownEvents := testutils.SetupHyprSocket(ctx, t,
-					xdgRuntimeDir, signature, hypr.GetHyprEventsSocket)
-				defer teardownEvents()
-				_ = testutils.SetupFakeHyprEventsServerWithSleep(ctx, t,
-					eventsListener, tt.hyprEvents, tt.initialHyprEventsSleep, tt.sleepBetweenHyprEvents)
-			}
+			eventsListener, teardownEvents := testutils.SetupHyprSocket(ctx, t,
+				xdgRuntimeDir, signature, hypr.GetHyprEventsSocket)
+			defer teardownEvents()
+			_ = testutils.SetupFakeHyprEventsServerWithSleep(ctx, t,
+				eventsListener, tt.hyprEvents, tt.initialHyprEventsSleep, tt.sleepBetweenHyprEvents)
 
 			// power: fake dbus session
 			if !tt.disablePowerEvents {

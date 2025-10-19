@@ -10,6 +10,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/config"
+	"github.com/fiffeek/hyprdynamicmonitors/internal/generators"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/hypr"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/matchers"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/power"
@@ -38,9 +39,10 @@ type Model struct {
 	colorPicker         *ColorPicker
 
 	// components for config view
-	hdm               *HDMConfigPane
-	profileNamePicker *ProfileNamePicker
-	hdmProfilePreview *HDMProfilePreview
+	hdm                       *HDMConfigPane
+	profileNamePicker         *ProfileNamePicker
+	hdmProfilePreview         *HDMProfilePreview
+	hdmGeneratevConfigPreview *HDMGeneratedConfigPreview
 
 	// stores
 	monitorEditor *MonitorEditorStore
@@ -65,30 +67,32 @@ func NewModel(cfg *config.Config, hyprMonitors hypr.MonitorSpecs,
 
 	state := NewState(monitors, cfg)
 	matcher := matchers.NewMatcher()
+	generator := generators.NewConfigGenerator(cfg)
 
 	model := Model{
-		config:              cfg,
-		keys:                rootKeyMap,
-		rootState:           state,
-		layout:              NewLayout(),
-		monitorsList:        NewMonitorList(monitors),
-		colorPicker:         NewColorPicker(),
-		monitorsPreviewPane: NewMonitorsPreviewPane(monitors),
-		help:                help.New(),
-		header:              NewHeader("HyprDynamicMonitors", state.viewModes, version),
-		hyprPreviewPane:     NewHyprPreviewPane(monitors),
-		monitorEditor:       NewMonitorEditor(monitors),
-		monitorModes:        NewMonitorModeList(monitors),
-		monitorMirrors:      NewMirrorList(monitors),
-		hyprApply:           NewHyprApply(profileMaker),
-		hdm:                 NewHDMConfigPane(cfg, matcher, monitors, powerState, lidState),
-		profileMaker:        profileMaker,
-		profileNamePicker:   NewProfileNamePicker(),
-		confirmationPrompt:  nil,
-		scaleSelector:       NewScaleSelector(),
-		hdmProfilePreview:   NewHDMProfilePreview(cfg, matcher, monitors, powerState, runningUnderTest, lidState),
-		start:               time.Now(),
-		duration:            duration,
+		config:                    cfg,
+		keys:                      rootKeyMap,
+		rootState:                 state,
+		layout:                    NewLayout(),
+		monitorsList:              NewMonitorList(monitors),
+		colorPicker:               NewColorPicker(),
+		monitorsPreviewPane:       NewMonitorsPreviewPane(monitors),
+		help:                      help.New(),
+		header:                    NewHeader("HyprDynamicMonitors", state.viewModes, version),
+		hyprPreviewPane:           NewHyprPreviewPane(monitors),
+		monitorEditor:             NewMonitorEditor(monitors),
+		monitorModes:              NewMonitorModeList(monitors),
+		monitorMirrors:            NewMirrorList(monitors),
+		hyprApply:                 NewHyprApply(profileMaker, generator),
+		hdm:                       NewHDMConfigPane(cfg, matcher, monitors, powerState, lidState),
+		profileMaker:              profileMaker,
+		profileNamePicker:         NewProfileNamePicker(),
+		confirmationPrompt:        nil,
+		scaleSelector:             NewScaleSelector(),
+		hdmProfilePreview:         NewHDMProfilePreview(cfg, matcher, monitors, powerState, runningUnderTest, lidState),
+		start:                     time.Now(),
+		duration:                  duration,
+		hdmGeneratevConfigPreview: NewHDMGeneratedConfigPreview(cfg, runningUnderTest),
 	}
 
 	return model
@@ -164,11 +168,17 @@ func (m Model) rightPanels() []string {
 	rightSections := []string{}
 
 	if m.rootState.CurrentView() == ProfileView {
-		m.hdmProfilePreview.SetHeight(m.layout.RightPreviewHeight())
+		m.hdmProfilePreview.SetHeight(m.layout.RightPanelTemplatePreviewHeight())
 		m.hdmProfilePreview.SetWidth(m.layout.RightPanesWidth())
-		profileCfg := InactiveStyle.Height(m.layout.AvailableHeight() + 2).Width(
+		profileCfg := InactiveStyle.Height(m.layout.RightPanelTemplatePreviewHeight()).Width(
 			m.layout.RightPanesWidth()).Render(m.hdmProfilePreview.View())
 		rightSections = append(rightSections, profileCfg)
+
+		m.hdmGeneratevConfigPreview.SetWidth(m.layout.RightPanesWidth())
+		m.hdmGeneratevConfigPreview.SetHeight(m.layout.RightPanelGeneratedPreviewHeight())
+		generatedPreview := InactiveStyle.Height(m.layout.RightPanelGeneratedPreviewHeight()).Width(
+			m.layout.RightPanesWidth()).Render(m.hdmGeneratevConfigPreview.View())
+		rightSections = append(rightSections, generatedPreview)
 	}
 
 	if m.rootState.CurrentView() == MonitorsListView {
@@ -383,6 +393,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmds = append(cmds, m.monitorEditor.SetMode(
 			m.rootState.State.MonitorEditedID, msg.Mode))
 		cmds = append(cmds, m.monitorsList.Update(msg))
+	case RenderHDMConfigCommand:
+		logrus.Debug("Received render hdm profile")
+		cmds = append(cmds, m.hyprApply.GenerateThroughHDM(m.config, msg.profile,
+			m.rootState.monitors, msg.powerState, msg.lidState))
+		cmds = append(cmds, m.hdmGeneratevConfigPreview.Update(msg))
 	case CreateNewProfileCommand:
 		logrus.Debug("Received create new profile")
 		cmds = append(cmds, m.hyprApply.CreateProfile(m.monitorEditor.GetMonitors(), msg.name, msg.file))
@@ -428,10 +443,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// nolint:gocritic
 		switch msg := msg.(type) {
 		case tea.KeyMsg:
-			// nolint:gocritic
 			switch {
 			case key.Matches(msg, m.keys.EditHDMConfig):
 				cmds = append(cmds, openEditor(m.config.Get().ConfigPath))
+			case key.Matches(msg, m.keys.EditHyprGeneratedConfig):
+				cmds = append(cmds, openEditor(*m.config.Get().General.Destination))
 			}
 		}
 	}
@@ -513,6 +529,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			} else {
 				cmds = append(cmds, m.hdm.Update(msg))
 				cmds = append(cmds, m.hdmProfilePreview.Update(msg))
+				cmds = append(cmds, m.hdmGeneratevConfigPreview.Update(msg))
 			}
 		}
 	} else {
@@ -543,6 +560,7 @@ func (m *Model) GlobalHelp() []key.Binding {
 	if m.rootState.CurrentView() == ProfileView {
 		profile := []key.Binding{
 			rootKeyMap.EditHDMConfig,
+			rootKeyMap.EditHyprGeneratedConfig,
 		}
 		bindings = append(bindings, profile...)
 	}

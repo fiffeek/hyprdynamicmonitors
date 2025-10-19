@@ -1,4 +1,4 @@
- HyprDynamicMonitors [v. test-version]  Monitors  Profile                                                                                Reload Profile: success
+ HyprDynamicMonitors [v. test-version]  Monitors  Profile                                                                       Reload Hypr Destination: success
 ╭───────────────────────────────────────────────────╮╭────────────────────────────────────────────────────────────────────────────────────────────────────────╮ 
 │HyprDynamicMonitors Profile                        ││Profile Config Preview (template)                                                                       │ 
 │                                                   ││h.go.tmpl                                                                                               │ 
@@ -24,22 +24,22 @@
 │                                                   ││Generated hypr config preview                                                                           │ 
 │                                                   ││target.conf                                                                                             │ 
 │                                                   ││                                                                                                        │ 
-│                                                   ││Are you running the daemon?                                                                             │ 
-│                                                   ││See: https://hyprdynamicmonitors.filipmikina.com/docs/quickstart/setup-approaches                       │ 
-│                                                   ││                                                                                                        │ 
-│                                                   ││Alternatively, run the generation once: `hyprdynamicmonitors run --run-once`                            │ 
-│                                                   ││                                                                                                        │ 
-│                                                   ││                                                                                                        │ 
-│                                                   ││                                                                                                        │ 
-│                                                   ││                                                                                                        │ 
-│                                                   ││                                                                                                        │ 
-│                                                   ││                                                                                                        │ 
-│                                                   ││                                                                                                        │ 
-│                                                   ││                                                                                                        │ 
-│                                                   ││                                                                                                        │ 
-│  n new profile • a apply monitors to existing     ││                                                                                                        │ 
-│  profile • e edit manually • R render profile to  ││                                                                                                        │ 
-│  config.general.destination                       ││                                                                                                        │ 
+│                                                   ││┃   1 # Generated with hyprdynamicmonitors freeze.                                                      │ 
+│                                                   ││┃   2 # This is a template that you can edit, it is just a starter that pulled your current monitor     │ 
+│                                                   ││┃     setup,                                                                                            │ 
+│                                                   ││┃   3 # adjust as needed.                                                                               │ 
+│                                                   ││┃   4 # You can use templates here etc, see                                                             │ 
+│                                                   ││┃     https://github.com/fiffeek/hyprdynamicmonitors/blob/main/examples/basic/hyprconfigs/template.go.tm│ 
+│                                                   ││┃     pl.                                                                                               │ 
+│                                                   ││┃   5 # Monitors are given arbitrary tags (the "monitor" prefix and the ID coming from hyprland).       │ 
+│                                                   ││┃   6 # If you are using tui to edit, leave this at the end of your file (the last monitor config       │ 
+│                                                   ││┃     applies)                                                                                          │ 
+│                                                   ││┃   7 # and leave the markers.                                                                          │ 
+│                                                   ││┃   8 # <<<<< TUI AUTO START                                                                            │ 
+│                                                   ││┃   9 monitor=desc:BOE NE135A1M-NY1,2880x1920@120.00000,1920x1080,2.00,transform,0,vrr,1                │ 
+│  n new profile • a apply monitors to existing     ││┃  10 monitor=desc:Dell Inc. DELL U2723QE 5YNK3H3,3840x2160@60.00000,0x0,1.25,transform,0,vrr,0         │ 
+│  profile • e edit manually • R render profile to  ││┃  11 monitor=desc:Samsung Electric Company C27F390                                                     │ 
+│  config.general.destination                       ││┃     HTHK500315,1920x1080@60.00000,3840x540,1.00,transform,0,vrr,0                                     │ 
 ╰───────────────────────────────────────────────────╯╰────────────────────────────────────────────────────────────────────────────────────────────────────────╯ 
   tab switch view • C edit HyprDynamicMonitors config • E edit hypr generated config (ephemeral)                                                                
                                                                                                                                                                 

@@ -629,6 +629,11 @@ func Test__Run_Binary(t *testing.T) {
 					expectOutputToContain: "Profile: hello",
 					waitFor:               utils.JustPtr(300 * time.Millisecond),
 				},
+				{
+					input:                 "R",
+					expectOutputToContain: "Generated with hyprdynamicmonitors freeze",
+					waitFor:               utils.JustPtr(300 * time.Millisecond),
+				},
 			},
 		},
 	}

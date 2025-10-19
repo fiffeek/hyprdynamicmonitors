@@ -16,9 +16,10 @@ import (
 )
 
 type hdmKeyMap struct {
-	NewProfile   key.Binding
-	ApplyProfile key.Binding
-	EditorEdit   key.Binding
+	NewProfile    key.Binding
+	ApplyProfile  key.Binding
+	EditorEdit    key.Binding
+	RenderProfile key.Binding
 }
 
 func (h *hdmKeyMap) Help() []key.Binding {
@@ -26,6 +27,7 @@ func (h *hdmKeyMap) Help() []key.Binding {
 		h.NewProfile,
 		h.ApplyProfile,
 		h.EditorEdit,
+		h.RenderProfile,
 	}
 }
 
@@ -54,6 +56,10 @@ func NewHDMConfigPane(cfg *config.Config, matcher *matchers.Matcher, monitors []
 		lidState:   lidState,
 		help:       help.New(),
 		keymap: &hdmKeyMap{
+			RenderProfile: key.NewBinding(
+				key.WithKeys("R"),
+				key.WithHelp("R", "render profile to config.general.destination"),
+			),
 			NewProfile: key.NewBinding(
 				key.WithKeys("n"),
 				key.WithHelp("n", "new profile"),
@@ -117,6 +123,8 @@ func (h *HDMConfigPane) Update(msg tea.Msg) tea.Cmd {
 			cmds = append(cmds, editProfileConfirmationCmd(h.profile.Name))
 		case key.Matches(msg, h.keymap.EditorEdit):
 			cmds = append(cmds, openEditor(h.profile.ConfigFile))
+		case key.Matches(msg, h.keymap.RenderProfile):
+			cmds = append(cmds, RenderHDMConfigCmd(h.profile, h.lidState, h.powerState))
 		}
 	}
 	return tea.Batch(cmds...)
