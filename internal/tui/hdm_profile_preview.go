@@ -124,7 +124,7 @@ func (h *HDMProfilePreview) View() string {
 		configFile = filepath.Base(configFile)
 	}
 
-	subtitle := SubtitleInfoStyle.Margin(0, 0, 1, 0).Render(configFile)
+	subtitle := SubtitleInfoStyle.Margin(0, 0, 1, 0).Width(h.width).Render(configFile)
 	availableHeight -= lipgloss.Height(subtitle)
 	sections = append(sections, subtitle)
 

@@ -675,6 +675,41 @@ func TestModel_Update_UserFlows(t *testing.T) {
 		},
 
 		{
+			name:         "new_prof_render",
+			monitorsData: defaultMonitorData,
+			runFor:       utils.JustPtr(800 * time.Millisecond),
+			cfg:          testutils.NewTestConfig(t).Get(),
+			steps: []step{
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyTab},
+					expectOutputToContain: "No Matching Profile",
+				},
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'n'}},
+					expectOutputToContain: "Type the profile name",
+				},
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'h'}},
+					expectOutputToContain: "h",
+				},
+				{
+					msg:        tea.KeyMsg{Type: tea.KeyEnter},
+					sleepAfter: utils.JustPtr(100 * time.Millisecond),
+					validateSideEffects: func(cfg *config.Config) {
+						require.NoError(t, cfg.Reload())
+					},
+				},
+				{
+					msg: tui.ConfigReloaded{},
+				},
+				{
+					msg:        tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'R'}},
+					sleepAfter: utils.JustPtr(200 * time.Millisecond),
+				},
+			},
+		},
+
+		{
 			name:         "matching_profile_view",
 			monitorsData: twoMonitorsData,
 			runFor:       utils.JustPtr(500 * time.Millisecond),
@@ -868,6 +903,9 @@ func TestModel_Update_UserFlows(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			hyprMonitors := loadMonitorsFromTestdata(t, tt.monitorsData)
+			if tt.cfg == nil {
+				tt.cfg = testutils.NewTestConfig(t).Get()
+			}
 			pm := profilemaker.NewService(tt.cfg, nil)
 			model := tui.NewModel(tt.cfg,
 				hyprMonitors, pm, "test-version", tt.powerState, tt.runFor, true, tt.lidState)

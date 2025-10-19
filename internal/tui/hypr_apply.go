@@ -1,21 +1,27 @@
 package tui
 
 import (
+	"errors"
 	"fmt"
 	"os/exec"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/fiffeek/hyprdynamicmonitors/internal/config"
+	"github.com/fiffeek/hyprdynamicmonitors/internal/generators"
+	"github.com/fiffeek/hyprdynamicmonitors/internal/power"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/profilemaker"
 	"github.com/sirupsen/logrus"
 )
 
 type HyprApply struct {
 	profileMaker *profilemaker.Service
+	generator    *generators.ConfigGenerator
 }
 
-func NewHyprApply(profileMaker *profilemaker.Service) *HyprApply {
+func NewHyprApply(profileMaker *profilemaker.Service, generator *generators.ConfigGenerator) *HyprApply {
 	return &HyprApply{
 		profileMaker: profileMaker,
+		generator:    generator,
 	}
 }
 
@@ -49,4 +55,19 @@ func (h *HyprApply) EditProfile(monitors []*MonitorSpec, name string) tea.Cmd {
 	}
 	err = h.profileMaker.EditExisting(name, hyprMonitors)
 	return OperationStatusCmd(OperationNameEditProfile, err)
+}
+
+func (h *HyprApply) GenerateThroughHDM(cfg *config.Config, profile *config.Profile,
+	monitors []*MonitorSpec, powerState power.PowerState, lidState power.LidState,
+) tea.Cmd {
+	if profile == nil {
+		return OperationStatusCmd(OperationNameHydrate, errors.New("profile is nil"))
+	}
+	hyprMonitors, err := ConvertToHyprMonitors(monitors)
+	if err != nil {
+		return OperationStatusCmd(OperationNameHydrate, err)
+	}
+	destination := *cfg.Get().General.Destination
+	_, err = h.generator.GenerateConfig(cfg.Get(), profile, hyprMonitors, powerState, lidState, destination)
+	return OperationStatusCmd(OperationNameHydrate, err)
 }

@@ -276,6 +276,7 @@ record/previews: build/docs
 	$(MAKE) record/preview RECORD_TARGET=create_profile
 	$(MAKE) record/preview RECORD_TARGET=edit_existing
 	$(MAKE) record/preview RECORD_TARGET=color
+	$(MAKE) record/preview RECORD_TARGET=render_edit
 
 docs:
 	@cd ./docs && npm run start

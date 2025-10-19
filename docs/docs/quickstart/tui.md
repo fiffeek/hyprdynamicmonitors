@@ -254,6 +254,23 @@ The TUI shows different status messages:
 
 ![Opening config file](/previews/hdm_c.gif)
 
+### Rendering Hyprland Configuration
+
+The TUI can generate and edit the Hyprland monitor configuration on-demand:
+
+| Key | Action |
+|-----|--------|
+| `R` | Render configuration from template/static file to the destination |
+| `E` | Edit the rendered configuration file in your `$EDITOR` |
+
+The `R` command writes the rendered output to your configured `config.general.destination`. You can then manually edit this file with `E`.
+
+:::caution Ephemeral Changes
+If the `hyprdynamicmonitors` daemon is running, any manual edits to the rendered configuration will be overwritten when the daemon responds to monitor or power state events.
+:::
+
+![Rendering and editing config](/previews/render_edit.gif)
+
 ---
 
 ## Tips

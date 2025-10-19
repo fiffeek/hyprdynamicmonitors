@@ -3,28 +3,29 @@ package tui
 import "github.com/charmbracelet/bubbles/key"
 
 type keyMap struct {
-	Tab               key.Binding
-	Enter             key.Binding
-	Quit              key.Binding
-	Up                key.Binding
-	Center            key.Binding
-	Down              key.Binding
-	Left              key.Binding
-	Right             key.Binding
-	ShowFullHelp      key.Binding
-	CloseFullHelp     key.Binding
-	Pan               key.Binding
-	Fullscreen        key.Binding
-	ZoomIn            key.Binding
-	ZoomOut           key.Binding
-	NextPage          key.Binding
-	ToggleSnapping    key.Binding
-	ApplyHypr         key.Binding
-	Back              key.Binding
-	EditHDMConfig     key.Binding
-	FollowMonitor     key.Binding
-	ExpandHyprPreview key.Binding
-	ResetZoom         key.Binding
+	Tab                     key.Binding
+	Enter                   key.Binding
+	Quit                    key.Binding
+	Up                      key.Binding
+	Center                  key.Binding
+	Down                    key.Binding
+	Left                    key.Binding
+	Right                   key.Binding
+	ShowFullHelp            key.Binding
+	CloseFullHelp           key.Binding
+	Pan                     key.Binding
+	Fullscreen              key.Binding
+	ZoomIn                  key.Binding
+	ZoomOut                 key.Binding
+	NextPage                key.Binding
+	ToggleSnapping          key.Binding
+	ApplyHypr               key.Binding
+	Back                    key.Binding
+	EditHDMConfig           key.Binding
+	FollowMonitor           key.Binding
+	ExpandHyprPreview       key.Binding
+	ResetZoom               key.Binding
+	EditHyprGeneratedConfig key.Binding
 }
 
 var rootKeyMap = keyMap{
@@ -115,5 +116,9 @@ var rootKeyMap = keyMap{
 	ResetZoom: key.NewBinding(
 		key.WithKeys("R"),
 		key.WithHelp("R", "reset zoom"),
+	),
+	EditHyprGeneratedConfig: key.NewBinding(
+		key.WithKeys("E"),
+		key.WithHelp("E", "edit hypr generated config (ephemeral)"),
 	),
 }

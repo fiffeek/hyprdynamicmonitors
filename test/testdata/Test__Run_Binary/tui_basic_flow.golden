@@ -1,4 +1,4 @@
- HyprDynamicMonitors [v. dev]  Monitors  Profile                                                                                         Reload Profile: success
+ HyprDynamicMonitors [v. dev]  Monitors  Profile                                                                                Reload Hypr Destination: success
 ╭───────────────────────────────────────────────────╮╭────────────────────────────────────────────────────────────────────────────────────────────────────────╮
 │HyprDynamicMonitors Profile                        ││Profile Config Preview (template)                                                                       │
 │                                                   ││hello.go.tmpl                                                                                           │
@@ -19,26 +19,26 @@
 │                                                   ││┃  10 monitor=desc:LG Electronics LG SDQHD                                                              │
 │                                                   ││┃     301NTBKDU037,2560x2880@59.96700,-1800x0,1.60,transform,0,vrr,0                                    │
 │                                                   ││┃  11 # <<<<< TUI AUTO END                                                                              │
-│                                                   ││┃  12                                                                                                   │
-│                                                   ││┃                                                                                                       │
-│                                                   ││┃                                                                                                       │
-│                                                   ││┃                                                                                                       │
-│                                                   ││┃                                                                                                       │
-│                                                   ││┃                                                                                                       │
-│                                                   ││┃                                                                                                       │
-│                                                   ││┃                                                                                                       │
-│                                                   ││┃                                                                                                       │
-│                                                   ││┃                                                                                                       │
-│                                                   ││┃                                                                                                       │
-│                                                   ││┃                                                                                                       │
-│                                                   ││┃                                                                                                       │
+│                                                   │╰────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+│                                                   │╭────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                   ││Generated hypr config preview                                                                           │
+│                                                   ││target.conf                                                                                             │
 │                                                   ││                                                                                                        │
-│                                                   ││                                                                                                        │
-│                                                   ││                                                                                                        │
-│                                                   ││                                                                                                        │
-│                                                   ││                                                                                                        │
-│                                                   ││                                                                                                        │
-│  n new profile • a apply monitors to existing     ││                                                                                                        │
-│  profile • e edit manually                        ││                                                                                                        │
+│                                                   ││┃   1 # Generated with hyprdynamicmonitors freeze.                                                      │
+│                                                   ││┃   2 # This is a template that you can edit, it is just a starter that pulled your current monitor     │
+│                                                   ││┃     setup,                                                                                            │
+│                                                   ││┃   3 # adjust as needed.                                                                               │
+│                                                   ││┃   4 # You can use templates here etc, see                                                             │
+│                                                   ││┃     https://github.com/fiffeek/hyprdynamicmonitors/blob/main/examples/basic/hyprconfigs/template.go.tm│
+│                                                   ││┃     pl.                                                                                               │
+│                                                   ││┃   5 # Monitors are given arbitrary tags (the "monitor" prefix and the ID coming from hyprland).       │
+│                                                   ││┃   6 # If you are using tui to edit, leave this at the end of your file (the last monitor config       │
+│                                                   ││┃     applies)                                                                                          │
+│                                                   ││┃   7 # and leave the markers.                                                                          │
+│                                                   ││┃   8 # <<<<< TUI AUTO START                                                                            │
+│                                                   ││┃   9 monitor=desc:BOE NE135A1M-NY1,2880x1920@120.00000,0x0,2.00,transform,0,vrr,1                      │
+│  n new profile • a apply monitors to existing     ││┃  10 monitor=desc:LG Electronics LG SDQHD                                                              │
+│  profile • e edit manually • R render profile to  ││┃     301NTBKDU037,2560x2880@59.96700,-1800x0,1.60,transform,0,vrr,0                                    │
+│  config.general.destination                       ││┃  11 # <<<<< TUI AUTO END                                                                              │
 ╰───────────────────────────────────────────────────╯╰────────────────────────────────────────────────────────────────────────────────────────────────────────╯
-  tab switch view • C edit HyprDynamicMonitors config
+  tab switch view • C edit HyprDynamicMonitors config • E edit hypr generated config (ephemeral)

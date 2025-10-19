@@ -95,6 +95,7 @@ var (
 	SubtitleInfoStyle = lipgloss.NewStyle().
 				Foreground(lipgloss.Color("108")).
 				Italic(true)
+	LinkStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("42")).Italic(true)
 )
 
 var GridDotColor = "240" // Grey color for grid dots

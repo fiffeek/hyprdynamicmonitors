@@ -18,21 +18,28 @@ An event-driven service with an interactive TUI that automatically manages Hyprl
 
 ## Preview
 
-### Full TUI demo
-
 ![TUI demo](./preview/output/demo.gif)
 
-### Daemon Render on async power events
+
+<details>
+<summary>Daemon Response to Power State Events</summary>
 
 ![power events demo](./preview/output/power_events.gif)
+
+</details>
+
+<details>
+<summary>Daemon and TUI Response to Laptop Lid Events</summary>
+
+![lid tui events demo](./preview/output/lid_tui.gif)
+
+</details>
 
 ## Table Of Contents
 
 <!--ts-->
 * [HyprDynamicMonitors](#hyprdynamicmonitors)
    * [Preview](#preview)
-      * [Full TUI demo](#full-tui-demo)
-      * [Daemon Render on async power events](#daemon-render-on-async-power-events)
    * [Table Of Contents](#table-of-contents)
    * [Features](#features)
    * [Quick Start](#quick-start)

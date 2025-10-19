@@ -7,6 +7,7 @@ import (
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/fiffeek/hyprdynamicmonitors/internal/config"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/power"
 )
 
@@ -77,6 +78,14 @@ func profileNameToogled() tea.Cmd {
 
 type clearStatusMsg struct{}
 
+type reloadHyprConfigMsg struct{}
+
+func reloadHyprConfig(d time.Duration) tea.Cmd {
+	return tea.Tick(d, func(t time.Time) tea.Msg {
+		return reloadHyprConfigMsg{}
+	})
+}
+
 func clearStatusAfter(d time.Duration) tea.Cmd {
 	return tea.Tick(d, func(t time.Time) tea.Msg {
 		return clearStatusMsg{}
@@ -103,6 +112,8 @@ const (
 	OperationNameSetColorPreset
 	OperationNameAdjustSdrBrightness
 	OperationNameAdjustSdrSaturation
+	OperationNameHydrate
+	OperationNameReloadHyprDestination
 )
 
 type OperationStatus struct {
@@ -153,6 +164,10 @@ func (o OperationStatus) String() string {
 		operationName = "Set SDR Brightness"
 	case OperationNameAdjustSdrSaturation:
 		operationName = "Set SDR Saturation"
+	case OperationNameHydrate:
+		operationName = "Render Hypr Config"
+	case OperationNameReloadHyprDestination:
+		operationName = "Reload Hypr Destination"
 	default:
 		operationName = "Operation"
 	}
@@ -182,6 +197,8 @@ func OperationStatusCmd(name OperationName, err error) tea.Cmd {
 		OperationNameNextBitdepth,
 		OperationNameSetColorPreset,
 		OperationNameMatchingProfile,
+		OperationNameHydrate,
+		OperationNameReloadHyprDestination,
 	}
 	showSuccessToUser := slices.Contains(criticalOperations, name)
 	return func() tea.Msg {
@@ -294,6 +311,22 @@ type CloseMonitorMirrorListCommand struct{}
 type CloseColorPickerCommand struct{}
 
 type CloseMonitorModeListCommand struct{}
+
+type RenderHDMConfigCommand struct {
+	profile    *config.Profile
+	lidState   power.LidState
+	powerState power.PowerState
+}
+
+func RenderHDMConfigCmd(profile *config.Profile, lidState power.LidState, powerState power.PowerState) tea.Cmd {
+	return func() tea.Msg {
+		return RenderHDMConfigCommand{
+			profile,
+			lidState,
+			powerState,
+		}
+	}
+}
 
 type editorFinishedMsg struct{ err error }
 

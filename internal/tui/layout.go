@@ -75,6 +75,14 @@ func (l *Layout) RightHyprHeight() int {
 	return l.AvailableHeight() - l.RightPreviewHeight()
 }
 
+func (l *Layout) RightPanelTemplatePreviewHeight() int {
+	return 1 * l.AvailableHeight() / 2
+}
+
+func (l *Layout) RightPanelGeneratedPreviewHeight() int {
+	return l.AvailableHeight() - l.RightPanelTemplatePreviewHeight()
+}
+
 func (l *Layout) PromptWidth() int {
 	return l.AvailableWidth() / 3
 }

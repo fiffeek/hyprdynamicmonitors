@@ -137,4 +137,8 @@ Type ":q"
 Enter
 Sleep 1s
 
+# render config
+Type "R"
+Sleep 2s
+
 Sleep 1s
