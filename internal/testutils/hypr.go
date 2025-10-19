@@ -89,6 +89,12 @@ func respondToHyprIPC(t *testing.T, listener net.Listener, exitOnError bool, com
 }
 
 func SetupFakeHyprEventsServer(ctx context.Context, t *testing.T, listener net.Listener, events []string) chan struct{} {
+	return SetupFakeHyprEventsServerWithSleep(ctx, t, listener, events, nil, 10*time.Millisecond)
+}
+
+func SetupFakeHyprEventsServerWithSleep(ctx context.Context, t *testing.T, listener net.Listener,
+	events []string, initialSleep *time.Duration, sleepBetweenEvents time.Duration,
+) chan struct{} {
 	serverDone := make(chan struct{})
 	go func() {
 		defer func() {
@@ -112,6 +118,10 @@ func SetupFakeHyprEventsServer(ctx context.Context, t *testing.T, listener net.L
 		Logf(t, "Fake Hypr events server: accepted connection, ready to send events")
 
 		for i, event := range events {
+			if initialSleep != nil {
+				time.Sleep(*initialSleep)
+			}
+
 			select {
 			case <-ctx.Done():
 				Logf(t, "Fake Hypr events server: context cancelled while sending events")
@@ -124,7 +134,7 @@ func SetupFakeHyprEventsServer(ctx context.Context, t *testing.T, listener net.L
 				return
 			}
 			Logf(t, "Wrote event %d on the event socket: %s", i, event)
-			time.Sleep(10 * time.Millisecond)
+			time.Sleep(sleepBetweenEvents)
 		}
 
 		Logf(t, "Fake Hypr events server: finished sending %d events, waiting for context cancellation", len(events))

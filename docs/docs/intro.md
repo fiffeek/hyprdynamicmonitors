@@ -8,9 +8,15 @@ slug: /
 HyprDynamicMonitors is an event-driven service that automatically manages Hyprland monitor configurations based on connected displays and power state.
 It also provides a standalone TUI that can be used for ad-hoc modifications and profile management.
 
-# Preview
+## Preview
 
-![Adjusting monitor scaling](/previews/demo.gif)
+### Full TUI Preview
+
+![Demo](/previews/demo.gif)
+
+### Async Events
+
+![Events](/previews/lid_tui.gif)
 
 ## Features
 

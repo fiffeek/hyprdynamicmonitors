@@ -6,6 +6,8 @@ sidebar_position: 7
 
 Lid state monitoring uses D-Bus to listen for UPower lid events. This feature is optional and needs to be explicitly enabled.
 
+![Lid events](/previews/lid_events.gif)
+
 ## Enabling Lid Events
 
 To enable lid state monitoring:

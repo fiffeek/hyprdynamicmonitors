@@ -6,6 +6,8 @@ sidebar_position: 4
 
 Power state monitoring uses D-Bus to listen for UPower events. This allows profiles and templates to react to AC/battery power changes.
 
+![Power events](/previews/power_events.gif)
+
 ## Disabling Power Events
 
 To disable power state monitoring entirely:
