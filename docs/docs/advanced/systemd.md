@@ -10,6 +10,10 @@ For production use, it's recommended to run HyprDynamicMonitors as a systemd use
 Ensure you're properly [pushing environment variables to systemd](https://wiki.hypr.land/Nix/Hyprland-on-Home-Manager/#programs-dont-work-in-systemd-services-but-do-on-the-terminal) for correct Hyprland integration.
 :::
 
+:::tip
+If you run with lid or power events enabled, ensure that `UPower` is properly set up and running.
+:::
+
 The [default systemd service configuration](https://github.com/fiffeek/hyprdynamicmonitors/blob/main/infrastructure/systemd/hyprdynamicmonitors.service) assumes you're running Hyprland under systemd:
 ```ini title="infrastructure/systemd/hyprdynamicmonitors.service"
 [Unit]
@@ -62,6 +66,11 @@ If you're running Hyprland outside of systemd, see the [Running Hyprland outside
 ## Nix
 
 HyprDynamicMonitors provides both a NixOS module and a Home Manager module for declarative configuration. Both modules automatically set up the systemd service.
+
+:::warning
+If you're running with [power events enabled (default)](../configuration/power-events#disabling-power-events), or [lid events enabled (`--enable-lid-events` passed)](../configuration/lid-events#enabling-lid-events) then `UPower` is required, e.g.
+`services.upower.enable = true` is needed in your configuration.
+:::
 
 ### NixOS Module
 

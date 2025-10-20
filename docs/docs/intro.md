@@ -61,9 +61,9 @@ Ready to get started? Check out the [Quick Start](./category/quick-start) to set
 ## Runtime Requirements
 
 - Hyprland with IPC support
-- UPower (optional, for power state monitoring)
-- Read-only access to system D-Bus (optional for power state monitoring; should already be your default)
-- Write access to system D-Bus for notifications (optional; should already be your default)
+- [UPower](https://upower.freedesktop.org/) (required if power events or lid events are enabled)
+- Read-only D-Bus access (required if power events, lid state or notifications are enabled)
+- Write access to system D-Bus for notifications (required for notifications; should already be your default)
 
 ## Alternative Software
 

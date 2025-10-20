@@ -8,6 +8,10 @@ Choose your preferred setup approach based on whether you want to run the daemon
 
 ## Choose Your Approach
 
+:::warning
+When running the daemon with power or lid events enabled, make sure that `UPower` is installed and its service is running.
+:::
+
 ### Option A: TUI + Daemon (Recommended for Most Users)
 
 **Best for:** Users who want automatic profile switching and an easy visual setup.

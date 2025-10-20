@@ -9,6 +9,7 @@ import (
 	"sync"
 
 	"github.com/fiffeek/hyprdynamicmonitors/internal/config"
+	"github.com/fiffeek/hyprdynamicmonitors/internal/errs"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/utils"
 	"github.com/godbus/dbus/v5"
 	"github.com/sirupsen/logrus"
@@ -66,7 +67,8 @@ func NewLidStateDetector(ctx context.Context, cfg *config.Config, conn *dbus.Con
 	ps, err := detector.getCurrentState(ctx)
 	if err != nil {
 		_ = conn.Close()
-		return nil, fmt.Errorf("UPower not available or accessible: %w", err)
+		//nolint:errorlint
+		return nil, fmt.Errorf("%w: %v", errs.ErrUPowerMisconfigured, err)
 	}
 	detector.lidState = ps
 
