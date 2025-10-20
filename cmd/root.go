@@ -12,6 +12,7 @@ import (
 	"slices"
 	"time"
 
+	"github.com/fiffeek/hyprdynamicmonitors/internal/errs"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/signal"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -58,6 +59,13 @@ func Execute() {
 	}
 	if errors.Is(err, context.Canceled) {
 		logrus.WithError(err).Info("Context cancelled, exiting")
+		return
+	}
+	if errors.Is(err, errs.ErrUPowerMisconfigured) {
+		logrus.Warn(`If lid or power events are enabled, UPower is required to run. Start the service.
+See: https://hyprdynamicmonitors.filipmikina.com/docs/#runtime-requirements.
+Alternatively, disable the power/lid events if you do not expect to use them with --disable-power-events`)
+		logrus.WithError(err).Fatal("Is UPower running?")
 		return
 	}
 	if err != nil {

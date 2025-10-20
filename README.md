@@ -75,7 +75,7 @@ curl -o- https://raw.githubusercontent.com/fiffeek/hyprdynamicmonitors/refs/head
 # AUR (Arch Linux)
 $aurHelper -S hyprdynamicmonitors-bin
 
-# Nix
+# Nix, for flakes/modules see: https://hyprdynamicmonitors.filipmikina.com/docs/advanced/systemd#nix
 nix run github:fiffeek/hyprdynamicmonitors
 ```
 
@@ -141,8 +141,8 @@ See the [`examples/`](https://github.com/fiffeek/hyprdynamicmonitors/tree/main/e
 ## Runtime Requirements
 
 - Hyprland with IPC support
-- UPower (optional, for power state monitoring)
-- D-Bus access (optional, for power events and notifications)
+- UPower (required, unless `--disable-power-events` is passed, for power state monitoring)
+- D-Bus access (required if power events, lid state or notifications are enabled)
 
 ## Alternative Software
 
