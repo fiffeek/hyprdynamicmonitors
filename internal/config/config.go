@@ -593,7 +593,7 @@ func (pc *ProfileCondition) IsEmpty() bool {
 	if pc == nil {
 		return true
 	}
-	return len(pc.RequiredMonitors) == 0 && pc.PowerState == nil
+	return len(pc.RequiredMonitors) == 0 && pc.PowerState == nil && pc.LidState == nil
 }
 
 func (pc *ProfileCondition) Validate() error {
