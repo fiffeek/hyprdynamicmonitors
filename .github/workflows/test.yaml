@@ -10,7 +10,6 @@ on:
             - main
 
 permissions:
-    pull-requests: write
     contents: read
 
 jobs:
@@ -83,24 +82,18 @@ jobs:
             - name: Create coverage artifact
               run: make coverage
 
-            - name: Generate code coverage report
-              uses: irongut/CodeCoverageSummary@v1.3.0
+            - name: Upload coverage markdown as artifact
+              uses: actions/upload-artifact@v4
               with:
-                  filename: coverage.xml
-                  badge: false
-                  fail_below_min: false
-                  format: markdown
-                  hide_branch_rate: false
-                  hide_complexity: true
-                  indicators: true
-                  output: both
+                  name: coverage-xml
+                  path: coverage.xml
+                  retention-days: 7
 
-            - name: Add Coverage PR Comment
-              uses: marocchino/sticky-pull-request-comment@v2
-              if: github.event_name == 'pull_request'
+            - uses: codecov/codecov-action@v5
+              if: github.ref == 'refs/heads/main'
               with:
-                  recreate: true
-                  path: code-coverage-results.md
+                  files: ./coverage.xml
+                  token: ${{ secrets.CODECOV_TOKEN }}
 
     nix:
         runs-on: ubuntu-latest
