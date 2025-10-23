@@ -83,6 +83,7 @@ func TestCreateDefaultConfig(t *testing.T) {
 func TestCreateDefaultConfigTemplate(t *testing.T) {
 	t.Run("template renders correctly", func(t *testing.T) {
 		tmpDir := t.TempDir()
+		tmpDir = filepath.Join(tmpDir, "nonexistentdir")
 		configPath := filepath.Join(tmpDir, "config.toml")
 
 		origRunCmd := utils.GetRunCmd()

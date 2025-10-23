@@ -33,7 +33,7 @@ var tuiCmd = &cobra.Command{
 			defer f.Close()
 		} else {
 			// disable logging completely for tui unless run in the debug mode
-			logrus.SetLevel(logrus.PanicLevel)
+			logrus.SetLevel(logrus.ErrorLevel)
 		}
 
 		if runningUnderTest {
