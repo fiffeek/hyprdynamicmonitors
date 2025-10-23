@@ -291,6 +291,10 @@ func Cond(cond, a *string, b string) string {
 }
 
 func CreateDefaultConfig(path string) error {
+	if err := os.MkdirAll(filepath.Dir(path), 0o750); err != nil {
+		return fmt.Errorf("cant create directory: %w", err)
+	}
+
 	objectPath, err := utils.GetPowerLine()
 	if err != nil {
 		logrus.Warning("No power line available, will use a default")

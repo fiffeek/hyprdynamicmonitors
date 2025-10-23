@@ -31,7 +31,8 @@ func NewTUI(ctx context.Context, configPath, mockedHyprMonitors string,
 ) (*TUI, error) {
 	cfg, err := config.NewConfig(configPath)
 	if err != nil {
-		logrus.WithError(err).Error("cant read config, ignoring")
+		logrus.WithError(err).Error("cant create/read config")
+		return nil, fmt.Errorf("cant create/read config: %w", err)
 	}
 
 	var monitors hypr.MonitorSpecs
