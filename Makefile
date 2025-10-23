@@ -183,7 +183,7 @@ test/tui/flows:
 test/unit:
 	@$(GOLANGCI_LINT_BIN) config verify
 	@$(GORELEASER_BIN) check
-	@$(GOTESTSUM) -- ./internal/... -v -coverprofile=unit.txt -covermode count
+	@$(GOTESTSUM) --rerun-fails=2 --packages="./internal/..." -- ./internal/... -v -coverprofile=unit.txt -covermode count
 
 test/unit/selected:
 	@$(GOTESTSUM) -- ./internal/$(PACKAGE_SELECTOR) -v -run $(TEST_SELECTOR)

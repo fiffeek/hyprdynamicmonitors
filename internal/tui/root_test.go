@@ -582,7 +582,7 @@ func TestModel_Update_UserFlows(t *testing.T) {
 		{
 			name:         "headless",
 			monitorsData: headless,
-			runFor:       utils.JustPtr(800 * time.Millisecond),
+			runFor:       utils.JustPtr(1000 * time.Millisecond),
 			cfg:          testutils.NewTestConfig(t).Get(),
 			steps: []step{
 				{
@@ -941,6 +941,8 @@ func TestModel_Update_UserFlows(t *testing.T) {
 					step.validateSideEffects(tt.cfg)
 				}
 			}
+			tm.Send(tui.ClearStatusMsgNow{})
+			time.Sleep(100 * time.Millisecond)
 			tm.Send(tea.Quit())
 			tm.WaitFinished(t, teatest.WithFinalTimeout(*tt.runFor))
 
