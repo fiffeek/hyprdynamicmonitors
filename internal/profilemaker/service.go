@@ -300,7 +300,7 @@ func (s *Service) ToHyprLines(monitors hypr.MonitorSpecs) []string {
 
 		identifier := monitor.Name
 		if monitor.Description != "" {
-			identifier = "desc:" + monitor.Description
+			identifier = "desc:" + utils.EscapeHyprDescription(monitor.Description)
 		}
 		line := "monitor=" + identifier
 		fields = append(fields, line)
