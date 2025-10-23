@@ -12,6 +12,7 @@
 ![AUR version](https://img.shields.io/aur/version/hyprdynamicmonitors-bin?style=flat&label=AUR)
 ![Go Report Card](https://goreportcard.com/badge/github.com/fiffeek/hyprdynamicmonitors)
 ![Build](https://img.shields.io/github/actions/workflow/status/fiffeek/hyprdynamicmonitors/test.yaml?branch=main&style=flat)
+[![Codecov](https://codecov.io/github/fiffeek/hyprdynamicmonitors/graph/badge.svg?token=HZONCOKJTE)](https://codecov.io/github/fiffeek/hyprdynamicmonitors)
 
 An event-driven service with an interactive TUI that automatically manages Hyprland monitor configurations based on connected displays, power and lid state.
 
