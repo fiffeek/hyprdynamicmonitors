@@ -64,6 +64,18 @@ func TestService_EditExisting(t *testing.T) {
 			Scale:       1.0,
 			Transform:   0,
 		},
+		{
+			ID:          utils.IntPtr(4),
+			Name:        "monD",
+			Description: "Dell #Whatever",
+			Width:       1337,
+			Height:      500,
+			RefreshRate: 60.0,
+			X:           2137,
+			Y:           -5000,
+			Scale:       2.0,
+			Transform:   2,
+		},
 	}
 
 	for _, monitor := range monitors {
