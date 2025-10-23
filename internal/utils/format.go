@@ -13,3 +13,9 @@ func FormatEnumTypes[T HasValue](enums []T) string {
 	}
 	return "[" + strings.Join(mapped, ", ") + "]"
 }
+
+// EscapeHyprDescription escapes # characters in monitor descriptions by doubling them.
+// In Hyprland's configuration syntax, # needs to be escaped as ## when used in desc: fields.
+func EscapeHyprDescription(desc string) string {
+	return strings.ReplaceAll(desc, "#", "##")
+}

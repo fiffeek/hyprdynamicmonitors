@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/fiffeek/hyprdynamicmonitors/internal/hypr"
+	"github.com/fiffeek/hyprdynamicmonitors/internal/utils"
 )
 
 type ColorPreset int
@@ -313,7 +314,7 @@ func (m *MonitorSpec) ToHypr() string {
 	// desc can be empty, use the name as a fallback
 	identifier := m.Name
 	if m.Description != "" {
-		identifier = "desc:" + m.Description
+		identifier = "desc:" + utils.EscapeHyprDescription(m.Description)
 	}
 	if m.Disabled {
 		// nolint:perfsprint
