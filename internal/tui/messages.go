@@ -76,6 +76,8 @@ func profileNameToogled() tea.Cmd {
 	}
 }
 
+type ClearStatusMsgNow struct{}
+
 type clearStatusMsg struct{}
 
 type reloadHyprConfigMsg struct{}
@@ -120,6 +122,7 @@ type OperationStatus struct {
 	name              OperationName
 	err               error
 	showSuccessToUser bool
+	createdAt         time.Time
 }
 
 func (o OperationStatus) IsError() bool {
@@ -206,6 +209,7 @@ func OperationStatusCmd(name OperationName, err error) tea.Cmd {
 			name:              name,
 			err:               err,
 			showSuccessToUser: showSuccessToUser,
+			createdAt:         time.Now(),
 		}
 	}
 }

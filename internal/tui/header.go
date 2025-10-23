@@ -51,17 +51,22 @@ func (h *Header) Update(msg tea.Msg) tea.Cmd {
 		h.state = msg.State
 	case ViewChanged:
 		h.currentView = msg.view
+	case ClearStatusMsgNow:
+		h.success = ""
 	case OperationStatus:
 		if msg.IsError() {
 			h.err = msg.String()
 			h.success = ""
 		} else {
 			h.err = ""
-			if msg.showSuccessToUser {
+			switch {
+			case !msg.createdAt.After(h.lastUpdate):
+				// nothing to be done, stale notif
+			case msg.showSuccessToUser:
 				h.success = msg.String()
 				h.lastUpdate = time.Now()
 				cmds = append(cmds, clearStatusAfter(h.clearAfter))
-			} else {
+			default:
 				h.success = ""
 			}
 		}
