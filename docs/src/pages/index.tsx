@@ -61,6 +61,15 @@ function HomepageHeader() {
                 to="/docs/">
                 Learn More
               </Link>
+              <iframe
+                src="https://ghbtns.com/github-btn.html?user=fiffeek&repo=hyprdynamicmonitors&type=star&count=true&size=large"
+                frameBorder="0"
+                scrolling="0"
+                width="130"
+                height="30"
+                title="GitHub Stars"
+                style={{ border: 'none', marginLeft: '0.5rem', alignSelf: 'center', display: 'block' }}
+              />
             </div>
           </div>
         </div>
