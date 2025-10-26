@@ -552,7 +552,7 @@ func (m *Model) GlobalHelp() []key.Binding {
 			rootKeyMap.Pan,
 			rootKeyMap.Fullscreen, rootKeyMap.FollowMonitor, rootKeyMap.Center, rootKeyMap.ZoomIn, rootKeyMap.ZoomOut,
 			rootKeyMap.ToggleSnapping, rootKeyMap.ApplyHypr,
-			rootKeyMap.ExpandHyprPreview, rootKeyMap.ResetZoom,
+			rootKeyMap.ExpandHyprPreview, rootKeyMap.ResetZoom, rootKeyMap.FitMonitors,
 		}
 		bindings = append(bindings, monitors...)
 

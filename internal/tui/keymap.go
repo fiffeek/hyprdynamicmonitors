@@ -26,6 +26,7 @@ type keyMap struct {
 	ExpandHyprPreview       key.Binding
 	ResetZoom               key.Binding
 	EditHyprGeneratedConfig key.Binding
+	FitMonitors             key.Binding
 }
 
 var rootKeyMap = keyMap{
@@ -120,5 +121,9 @@ var rootKeyMap = keyMap{
 	EditHyprGeneratedConfig: key.NewBinding(
 		key.WithKeys("E"),
 		key.WithHelp("E", "edit hypr generated config (ephemeral)"),
+	),
+	FitMonitors: key.NewBinding(
+		key.WithKeys("T"),
+		key.WithHelp("T", "auto fit monitors preview"),
 	),
 }

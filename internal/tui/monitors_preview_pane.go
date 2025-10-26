@@ -39,7 +39,7 @@ type MonitorsPreviewPane struct {
 }
 
 func NewMonitorsPreviewPane(monitors []*MonitorSpec) *MonitorsPreviewPane {
-	return &MonitorsPreviewPane{
+	pane := &MonitorsPreviewPane{
 		monitors:              monitors,
 		selectedIndex:         -1,
 		panX:                  0,
@@ -54,6 +54,97 @@ func NewMonitorsPreviewPane(monitors []*MonitorSpec) *MonitorsPreviewPane {
 		panStep:               100,
 		snapping:              true,
 		zoomStep:              1.1,
+	}
+
+	pane.autoFitMonitors()
+
+	return pane
+}
+
+// calculateMonitorBounds returns the bounding box of all non-disabled monitors
+// Returns (left, right, top, bottom, hasMonitors)
+func (p *MonitorsPreviewPane) calculateMonitorBounds() (int, int, int, int, bool) {
+	var minX, maxX, minY, maxY int
+	hasMonitors := false
+
+	for _, monitor := range p.monitors {
+		if monitor.Disabled {
+			continue
+		}
+
+		scaledWidth := int(float64(monitor.Width) / monitor.Scale)
+		scaledHeight := int(float64(monitor.Height) / monitor.Scale)
+		visualWidth := scaledWidth
+		visualHeight := scaledHeight
+
+		if monitor.NeedsDimensionsSwap() {
+			visualWidth = scaledHeight
+			visualHeight = scaledWidth
+		}
+
+		monitorLeft := monitor.X
+		monitorRight := monitor.X + visualWidth
+		monitorTop := monitor.Y
+		monitorBottom := monitor.Y + visualHeight
+
+		if !hasMonitors {
+			minX = monitorLeft
+			maxX = monitorRight
+			minY = monitorTop
+			maxY = monitorBottom
+			hasMonitors = true
+			continue
+		}
+
+		if monitorLeft < minX {
+			minX = monitorLeft
+		}
+		if monitorRight > maxX {
+			maxX = monitorRight
+		}
+		if monitorTop < minY {
+			minY = monitorTop
+		}
+		if monitorBottom > maxY {
+			maxY = monitorBottom
+		}
+	}
+
+	return minX, maxX, minY, maxY, hasMonitors
+}
+
+// autoFitMonitors centers the view on all monitors and adjusts zoom to fit
+func (p *MonitorsPreviewPane) autoFitMonitors() {
+	minX, maxX, minY, maxY, hasMonitors := p.calculateMonitorBounds()
+
+	if !hasMonitors {
+		return
+	}
+
+	p.panX = (minX + maxX) / 2
+	p.panY = (minY + maxY) / 2
+	monitorWidth := maxX - minX
+	monitorHeight := maxY - minY
+
+	if monitorWidth > 0 && monitorHeight > 0 {
+		// Add 40% padding total (20% on each side)
+		paddedWidth := int(float64(monitorWidth) * 1.4)
+		paddedHeight := int(float64(monitorHeight) * 1.4)
+
+		aspectRatio := p.AspectRatio()
+
+		p.virtualWidth = paddedWidth
+		p.virtualHeight = int(float64(paddedHeight) * aspectRatio)
+
+		if p.virtualWidth < 1000 {
+			p.virtualWidth = 1000
+		}
+		if p.virtualHeight < 750 {
+			p.virtualHeight = 750
+		}
+
+		p.originalVirtualWidth = p.virtualWidth
+		p.originalVirtualHeight = p.virtualHeight
 	}
 }
 
@@ -116,6 +207,8 @@ func (p *MonitorsPreviewPane) Update(msg tea.Msg) tea.Cmd {
 			p.ZoomOut()
 		case key.Matches(msg, rootKeyMap.ResetZoom):
 			p.ResetZoom()
+		case key.Matches(msg, rootKeyMap.FitMonitors):
+			p.autoFitMonitors()
 		}
 	}
 
