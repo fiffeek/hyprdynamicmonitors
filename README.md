@@ -50,6 +50,7 @@ An event-driven service with an interactive TUI that automatically manages Hyprl
    * [Examples](#examples)
    * [Runtime Requirements](#runtime-requirements)
    * [Alternative Software](#alternative-software)
+   * [Support](#support)
    * [License](#license)
 <!--te-->
 
@@ -154,6 +155,10 @@ Similar tools worth checking out:
 - [hyprmon](https://github.com/erans/hyprmon) - TUI-based display configuration tool
 
 HyprDynamicMonitors is Hyprland-specific but offers deeper integration, an interactive TUI, template system, and power state awareness. See [Introduction](https://fiffeek.github.io/hyprdynamicmonitors/docs/) for a detailed comparison.
+
+## Support
+
+If you find HyprDynamicMonitors useful and want to support its development, consider buying me a coffee on [Ko-fi](https://ko-fi.com/filipmikina). Your support helps keep the project maintained and enables new features. Thank you!
 
 ## License
 
