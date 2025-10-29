@@ -55,12 +55,16 @@ func TestModel_Update_UserFlows(t *testing.T) {
 			runFor:       utils.JustPtr(500 * time.Millisecond),
 			steps: []step{
 				{
+					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'j'}},
+					expectOutputToContain: "► DP-1",
+				},
+				{
 					msg:                   tea.KeyMsg{Type: tea.KeyEnter},
 					expectOutputToContain: "EDITING",
 				},
 				{
 					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'r'}},
-					expectOutputToContain: "eDP-1→",
+					expectOutputToContain: "DP-1→",
 				},
 			},
 		},
@@ -504,7 +508,7 @@ func TestModel_Update_UserFlows(t *testing.T) {
 			steps: []step{
 				{
 					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'+'}},
-					expectOutputToContain: "Virtual Area: 9774x5192",
+					expectOutputToContain: "Virtual Area: 11170x11170",
 				},
 			},
 		},
@@ -523,7 +527,7 @@ func TestModel_Update_UserFlows(t *testing.T) {
 			steps: []step{
 				{
 					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'-'}},
-					expectOutputToContain: "Virtual Area: 11827x6283",
+					expectOutputToContain: "Virtual Area: 13516x13516",
 				},
 			},
 		},
@@ -573,7 +577,7 @@ func TestModel_Update_UserFlows(t *testing.T) {
 				},
 				{
 					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'c'}},
-					expectOutputToContain: "Virtual Area: 10752x5712 | Snapping",
+					expectOutputToContain: "Virtual Area: 12288x12288 | Snapping",
 				},
 				{
 					msg:        tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'p'}},
