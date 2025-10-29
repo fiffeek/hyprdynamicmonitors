@@ -55,12 +55,16 @@ func TestModel_Update_UserFlows(t *testing.T) {
 			runFor:       utils.JustPtr(500 * time.Millisecond),
 			steps: []step{
 				{
+					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'j'}},
+					expectOutputToContain: "► DP-1",
+				},
+				{
 					msg:                   tea.KeyMsg{Type: tea.KeyEnter},
 					expectOutputToContain: "EDITING",
 				},
 				{
 					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'r'}},
-					expectOutputToContain: "eDP-1→",
+					expectOutputToContain: "DP-1→",
 				},
 			},
 		},
@@ -414,7 +418,7 @@ func TestModel_Update_UserFlows(t *testing.T) {
 				{
 					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'j'}},
 					times:                 utils.IntPtr(10),
-					expectOutputToContain: "Center: (3800,1000)",
+					expectOutputToContain: "Center: (7640,2020)",
 				},
 			},
 		},
@@ -504,9 +508,16 @@ func TestModel_Update_UserFlows(t *testing.T) {
 			steps: []step{
 				{
 					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'+'}},
-					expectOutputToContain: "Virtual Area: 7272x7272 ",
+					expectOutputToContain: "Virtual Area: 11170x11170",
 				},
 			},
+		},
+
+		{
+			name:         "initial",
+			monitorsData: defaultMonitorData,
+			runFor:       utils.JustPtr(500 * time.Millisecond),
+			steps:        []step{},
 		},
 
 		{
@@ -516,7 +527,32 @@ func TestModel_Update_UserFlows(t *testing.T) {
 			steps: []step{
 				{
 					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'-'}},
-					expectOutputToContain: "Virtual Area: 8800x8800",
+					expectOutputToContain: "Virtual Area: 13516x13516",
+				},
+			},
+		},
+
+		{
+			name:         "fit",
+			monitorsData: defaultMonitorData,
+			runFor:       utils.JustPtr(800 * time.Millisecond),
+			steps: []step{
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'j'}},
+					expectOutputToContain: "► HEADLESS-1 (Headless Virtua...)",
+					times:                 utils.JustPtr(3),
+				},
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyEnter},
+					expectOutputToContain: "► HEADLESS-1 (Headless Virtua...) [EDITING]",
+				},
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'e'}},
+					expectOutputToContain: "Disabled",
+				},
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'T'}},
+					expectOutputToContain: "Center: (2880,1020)",
 				},
 			},
 		},
@@ -537,11 +573,11 @@ func TestModel_Update_UserFlows(t *testing.T) {
 				{
 					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'j'}},
 					times:                 utils.IntPtr(10),
-					expectOutputToContain: "Center: (1000,1000)",
+					expectOutputToContain: "Center: (4840,2020)",
 				},
 				{
 					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'c'}},
-					expectOutputToContain: "Virtual Area: 8000x8000 | Snapping",
+					expectOutputToContain: "Virtual Area: 12288x12288 | Snapping",
 				},
 				{
 					msg:        tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'p'}},

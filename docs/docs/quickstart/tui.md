@@ -70,6 +70,7 @@ The Monitors view shows connected monitors on the left and a visual preview on t
 |-----|--------|
 | `+` | Zoom in on the preview |
 | `-` | Zoom out on the preview |
+| `T` | Zoom and pan monitors to fit the preview screen |
 
 ![Zoom](/previews/zoom.gif)
 
