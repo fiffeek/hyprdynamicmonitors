@@ -158,6 +158,23 @@ func NewMonitorSpec(spec *hypr.MonitorSpec) *MonitorSpec {
 	}
 }
 
+func (m *MonitorSpec) Center() (int, int) {
+	scaledWidth := int(float64(m.Width) / m.Scale)
+	scaledHeight := int(float64(m.Height) / m.Scale)
+	visualWidth := scaledWidth
+	visualHeight := scaledHeight
+
+	if m.NeedsDimensionsSwap() {
+		visualWidth = scaledHeight
+		visualHeight = scaledWidth
+	}
+
+	x := m.X + (visualWidth / 2)
+	y := m.Y + (visualHeight / 2)
+
+	return x, y
+}
+
 func (m *MonitorSpec) NextBitdepth() {
 	current := int(m.Bitdepth)
 	m.Bitdepth = Bitdepth((current + 1) % len(allBitdepths))

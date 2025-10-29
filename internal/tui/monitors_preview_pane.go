@@ -125,27 +125,29 @@ func (p *MonitorsPreviewPane) autoFitMonitors() {
 	p.panY = (minY + maxY) / 2
 	monitorWidth := maxX - minX
 	monitorHeight := maxY - minY
+	// Add padding on both sides
+	withPadding := 1.6
 
 	if monitorWidth > 0 && monitorHeight > 0 {
-		// Add 40% padding total (20% on each side)
-		paddedWidth := int(float64(monitorWidth) * 1.4)
-		paddedHeight := int(float64(monitorHeight) * 1.4)
-
+		paddedWidth := int(float64(monitorWidth) * withPadding)
+		paddedHeight := int(float64(monitorHeight) * withPadding)
 		aspectRatio := p.AspectRatio()
+		paddedHeight = int(float64(paddedHeight) * aspectRatio)
 
-		p.virtualWidth = paddedWidth
-		p.virtualHeight = int(float64(paddedHeight) * aspectRatio)
-
-		if p.virtualWidth < 1000 {
-			p.virtualWidth = 1000
-		}
-		if p.virtualHeight < 750 {
-			p.virtualHeight = 750
-		}
+		// Lock both to the same value
+		p.virtualWidth = max(paddedWidth, paddedHeight, 1000)
+		p.virtualHeight = max(paddedWidth, paddedHeight, 1000)
 
 		p.originalVirtualWidth = p.virtualWidth
 		p.originalVirtualHeight = p.virtualHeight
 	}
+}
+
+func (p *MonitorsPreviewPane) panToMonitorCenter() {
+	monitor := p.monitors[p.selectedIndex]
+	x, y := monitor.Center()
+	p.panX = x
+	p.panY = y
 }
 
 func (p *MonitorsPreviewPane) Update(msg tea.Msg) tea.Cmd {
@@ -159,16 +161,11 @@ func (p *MonitorsPreviewPane) Update(msg tea.Msg) tea.Cmd {
 		p.snapGridX = nil
 		p.snapGridY = nil
 		if p.followMonitor {
-			monitor := p.monitors[p.selectedIndex]
-			p.panX = monitor.X
-			p.panY = monitor.Y
+			p.panToMonitorCenter()
 		}
 	case MonitorBeingEdited:
 		p.selectedIndex = msg.ListIndex
-		// set panning to the current monitor left top corner
-		monitor := p.monitors[p.selectedIndex]
-		p.panX = monitor.X
-		p.panY = monitor.Y
+		p.panToMonitorCenter()
 	case MonitorUnselected:
 		p.selectedIndex = -1
 	case StateChanged:

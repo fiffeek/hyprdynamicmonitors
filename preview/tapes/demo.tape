@@ -1,6 +1,8 @@
 Source ./preview/tapes/base.tape
 Output preview/output/demo.gif
 
+Sleep 2s
+
 Sleep 500ms
 Enter
 Sleep 500ms
@@ -58,6 +60,10 @@ Sleep 1s
 Enter
 Sleep 500ms
 
+# fit to screen
+Type "T"
+Sleep 500ms
+
 # change color profile to wide
 Type "C"
 Sleep 1s
@@ -112,6 +118,8 @@ Sleep 1s
 Tab
 Sleep 1s
 Type "e"
+Sleep 500ms
+Type "G"
 Sleep 500ms
 Type "o"
 Type "another line can be added, like: exec = notify-send 'hello'"
