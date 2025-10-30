@@ -137,6 +137,21 @@ func (e *MonitorEditorStore) RotateMonitor(monitorID int) tea.Cmd {
 	return OperationStatusCmd(OperationNameRotate, nil)
 }
 
+func (e *MonitorEditorStore) FlipMonitor(monitorID int) tea.Cmd {
+	monitor, _, err := e.FindByID(monitorID)
+	if err != nil {
+		return OperationStatusCmd(OperationNameFlipMonitor, err)
+	}
+
+	if monitor.Disabled {
+		return OperationStatusCmd(OperationNameFlipMonitor, ErrMonitorDisabled)
+	}
+
+	monitor.ToggleFlip()
+
+	return OperationStatusCmd(OperationNameFlipMonitor, nil)
+}
+
 func (e *MonitorEditorStore) ToggleVRR(monitorID int) tea.Cmd {
 	monitor, _, err := e.FindByID(monitorID)
 	if err != nil {

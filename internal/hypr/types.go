@@ -80,6 +80,9 @@ func (m *MonitorSpec) Validate() error {
 	if m.SdrSaturation == 0.0 {
 		m.SdrSaturation = 1.0
 	}
+	if m.Transform < 0 || m.Transform > 7 {
+		return fmt.Errorf(".transform is invalid for monitor id %d: %d < 0 || %d > 7", m.ID, m.Transform, m.Transform)
+	}
 
 	return nil
 }

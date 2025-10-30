@@ -7,6 +7,7 @@ import (
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/fiffeek/hyprdynamicmonitors/internal/utils"
 	"github.com/sirupsen/logrus"
 )
 
@@ -438,6 +439,9 @@ func (*MonitorsPreviewPane) drawMonitorLabel(isSelected bool, monitor *MonitorSp
 	if len(label) > 6 {
 		label = label[:6] // Truncate long names
 	}
+	if monitor.Flipped {
+		label = utils.Reverse(label)
+	}
 	if isSelected {
 		label = "*" + label
 	}
@@ -545,7 +549,7 @@ func (p *MonitorsPreviewPane) renderLegend() string {
 		coloredPattern := GetMonitorColorStyle(i).Render("██")
 		item := fmt.Sprintf("%s %s - %s, %s, %s, %s",
 			coloredPattern, monitor.Name, monitor.Mode(), monitor.PositionPretty(),
-			monitor.ScalePretty(), monitor.RotationPretty())
+			monitor.ScalePretty(), monitor.RotationPretty(false))
 
 		if i == p.selectedIndex {
 			item = SelectedMonitorStyle.Render("► " + item + " ◄")

@@ -13,6 +13,12 @@ Sleep 500ms
 Type "r"
 Sleep 500ms
 
+# preview flip
+Type "L"
+Sleep 1s
+Type "L"
+Sleep 500ms
+
 # preview scale
 Type "s"
 Sleep 1s
@@ -31,6 +37,7 @@ Sleep 200ms
 Down 4
 Sleep 500ms
 Right 2
+Sleep 500ms
 Up 2
 Sleep 500ms
 

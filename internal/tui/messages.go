@@ -116,6 +116,7 @@ const (
 	OperationNameAdjustSdrSaturation
 	OperationNameHydrate
 	OperationNameReloadHyprDestination
+	OperationNameFlipMonitor
 )
 
 type OperationStatus struct {
@@ -171,6 +172,8 @@ func (o OperationStatus) String() string {
 		operationName = "Render Hypr Config"
 	case OperationNameReloadHyprDestination:
 		operationName = "Reload Hypr Destination"
+	case OperationNameFlipMonitor:
+		operationName = "Flip Monitor"
 	default:
 		operationName = "Operation"
 	}
@@ -202,6 +205,7 @@ func OperationStatusCmd(name OperationName, err error) tea.Cmd {
 		OperationNameMatchingProfile,
 		OperationNameHydrate,
 		OperationNameReloadHyprDestination,
+		OperationNameFlipMonitor,
 	}
 	showSuccessToUser := slices.Contains(criticalOperations, name)
 	return func() tea.Msg {
@@ -257,6 +261,10 @@ type ToggleMonitorVRRCommand struct {
 }
 
 type ToggleMonitorCommand struct {
+	MonitorID int
+}
+
+type FlipMonitorCommand struct {
 	MonitorID int
 }
 
@@ -497,6 +505,14 @@ func previewScaleMonitorCmd(monitorID int, scale float64) tea.Cmd {
 		return PreviewScaleMonitorCommand{
 			monitorID: monitorID,
 			scale:     scale,
+		}
+	}
+}
+
+func flipMonitorCmd(monitor *MonitorSpec) tea.Cmd {
+	return func() tea.Msg {
+		return FlipMonitorCommand{
+			MonitorID: *monitor.ID,
 		}
 	}
 }

@@ -127,6 +127,7 @@ type MonitorSpec struct {
 	ColorPreset     ColorPreset `json:"-"`
 	SdrBrightness   float64     `json:"-"`
 	SdrSaturation   float64     `json:"-"`
+	Flipped         bool        `json:"-"`
 }
 
 func NewMonitorSpec(spec *hypr.MonitorSpec) *MonitorSpec {
@@ -138,7 +139,7 @@ func NewMonitorSpec(spec *hypr.MonitorSpec) *MonitorSpec {
 		Width:           spec.Width,
 		Height:          spec.Height,
 		RefreshRate:     spec.RefreshRate,
-		Transform:       spec.Transform,
+		Transform:       spec.Transform % 4,
 		Vrr:             spec.Vrr,
 		Scale:           spec.Scale,
 		X:               spec.X,
@@ -155,6 +156,7 @@ func NewMonitorSpec(spec *hypr.MonitorSpec) *MonitorSpec {
 		ColorPreset:   AutoColorPreset,
 		SdrBrightness: 1.0,
 		SdrSaturation: 1.0,
+		Flipped:       spec.Transform >= 4,
 	}
 }
 
@@ -180,16 +182,24 @@ func (m *MonitorSpec) NextBitdepth() {
 	m.Bitdepth = Bitdepth((current + 1) % len(allBitdepths))
 }
 
-func (m *MonitorSpec) RotationPretty() string {
+func (m *MonitorSpec) RotationPretty(showFlip bool) string {
+	flipped := ", Flip: Off"
+	if m.Flipped {
+		flipped = ", Flip: On"
+	}
+	if !showFlip {
+		flipped = ""
+	}
+
 	switch m.Transform {
 	case 0:
-		return "Rotation: 0°"
+		return "Rotation: 0°" + flipped
 	case 1:
-		return "Rotation: 90°"
+		return "Rotation: 90°" + flipped
 	case 2:
-		return "Rotation: 180°"
+		return "Rotation: 180°" + flipped
 	case 3:
-		return "Rotation: 270°"
+		return "Rotation: 270°" + flipped
 	default:
 		return fmt.Sprintf("Transform: %d", m.Transform)
 	}
@@ -282,6 +292,17 @@ func (m *MonitorSpec) Rotate() {
 	m.Transform = (m.Transform + 1) % 4
 }
 
+func (m *MonitorSpec) ToggleFlip() {
+	m.Flipped = !m.Flipped
+}
+
+func (m *MonitorSpec) HyprTransform() int {
+	if m.Flipped {
+		return 4 + m.Transform
+	}
+	return m.Transform
+}
+
 func (m *MonitorSpec) ToggleVRR() {
 	m.Vrr = !m.Vrr
 }
@@ -303,7 +324,7 @@ func (m *MonitorSpec) ToHyprMonitors() (*hypr.MonitorSpec, error) {
 		Width:           m.Width,
 		Height:          m.Height,
 		RefreshRate:     m.RefreshRate,
-		Transform:       m.Transform,
+		Transform:       m.HyprTransform(),
 		Vrr:             m.Vrr,
 		Scale:           m.Scale,
 		X:               m.X,
@@ -338,7 +359,7 @@ func (m *MonitorSpec) ToHypr() string {
 		return fmt.Sprintf("%s,disable", identifier)
 	}
 	line := fmt.Sprintf("%s,%dx%d@%.2f,%dx%d,%.2f,transform,%d", identifier, m.Width,
-		m.Height, m.RefreshRate, m.X, m.Y, m.Scale, m.Transform)
+		m.Height, m.RefreshRate, m.X, m.Y, m.Scale, m.HyprTransform())
 	if m.Vrr {
 		line += ",vrr,1"
 	}
