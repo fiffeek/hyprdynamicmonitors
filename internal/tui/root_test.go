@@ -70,6 +70,30 @@ func TestModel_Update_UserFlows(t *testing.T) {
 		},
 
 		{
+			name:         "rotate_flip",
+			monitorsData: defaultMonitorData,
+			runFor:       utils.JustPtr(500 * time.Millisecond),
+			steps: []step{
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'j'}},
+					expectOutputToContain: "► DP-1",
+				},
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyEnter},
+					expectOutputToContain: "EDITING",
+				},
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'r'}},
+					expectOutputToContain: "DP-1→",
+				},
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'L'}},
+					expectOutputToContain: "1-PD→",
+				},
+			},
+		},
+
+		{
 			name:         "scale_open",
 			monitorsData: defaultMonitorData,
 			runFor:       utils.JustPtr(500 * time.Millisecond),

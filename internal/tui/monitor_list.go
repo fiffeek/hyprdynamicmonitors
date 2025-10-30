@@ -105,7 +105,7 @@ func (m MonitorItem) DescriptionLines() []string {
 		m.monitor.ModePretty(),
 		m.monitor.ScalePretty(),
 		m.monitor.VRRPretty(),
-		m.monitor.RotationPretty(),
+		m.monitor.RotationPretty(true),
 		m.monitor.PositionPretty(),
 		m.monitor.MirrorPretty(),
 	}
@@ -125,6 +125,7 @@ type MonitorListKeyMap struct {
 	rotate        key.Binding
 	scale         key.Binding
 	color         key.Binding
+	flip          key.Binding
 	changeMode    key.Binding
 	vrr           key.Binding
 	toggle        key.Binding
@@ -169,6 +170,10 @@ func NewMonitorListKeyMap() *MonitorListKeyMap {
 			key.WithKeys("C"),
 			key.WithHelp("C", "color"),
 		),
+		flip: key.NewBinding(
+			key.WithKeys("L"),
+			key.WithHelp("L", "flip"),
+		),
 	}
 }
 
@@ -183,6 +188,7 @@ func (m MonitorListKeyMap) ShortHelp(state AppState) []key.Binding {
 			m.toggle,
 			m.mirror,
 			m.color,
+			m.flip,
 		}
 	}
 	return []key.Binding{
@@ -292,6 +298,12 @@ func (d MonitorDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd {
 				return nil
 			}
 			cmds = append(cmds, toggleMonitorCmd(item.monitor))
+		case key.Matches(msg, d.keymap.flip):
+			logrus.Debugf("List called with flip")
+			if !item.Editing() {
+				return nil
+			}
+			cmds = append(cmds, flipMonitorCmd(item.monitor))
 		case key.Matches(msg, d.keymap.scale):
 			logrus.Debugf("List called with scale")
 			if !item.Editing() {

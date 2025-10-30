@@ -106,6 +106,7 @@ Once you select a monitor with `Enter`, it enters **EDITING** mode. In this mode
 | Key | Action |
 |-----|--------|
 | `r` | Rotate the monitor by 90 degrees (cycles through 0 → 90 → 180 → 270 → 0) |
+| `L` | Flip (mirror) monitor horizontally |
 
 :::note
 Cannot rotate disabled monitors

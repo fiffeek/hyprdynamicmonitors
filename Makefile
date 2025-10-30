@@ -258,6 +258,8 @@ record/preview/daemon: build/docs
 
 demo: record/preview
 
+record/all: demo record/previews record/preview/daemon
+
 record/previews: build/docs
 	$(MAKE) record/preview RECORD_TARGET=views
 	$(MAKE) record/preview RECORD_TARGET=monitor_view

@@ -347,6 +347,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case ToggleMonitorVRRCommand:
 		logrus.Debug("Received a monitor vrr command")
 		cmds = append(cmds, m.monitorEditor.ToggleVRR(msg.MonitorID))
+	case FlipMonitorCommand:
+		logrus.Debug("Received a monitor flip command")
+		cmds = append(cmds, m.monitorEditor.FlipMonitor(msg.MonitorID))
 	case RotateMonitorCommand:
 		logrus.Debug("Received a monitor rotate command")
 		cmds = append(cmds, m.monitorEditor.RotateMonitor(msg.MonitorID))
