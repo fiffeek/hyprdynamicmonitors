@@ -143,7 +143,7 @@ See the [`examples/`](https://github.com/fiffeek/hyprdynamicmonitors/tree/main/e
 ## Runtime Requirements
 
 - Hyprland with IPC support
-- UPower (required, unless `--disable-power-events` is passed, for power state monitoring)
+- UPower (required on laptops, unless `--disable-power-events` is passed, for power state monitoring)
 - D-Bus access (required if power events, lid state or notifications are enabled)
 
 ## Alternative Software

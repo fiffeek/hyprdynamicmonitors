@@ -8,6 +8,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/app"
+	"github.com/fiffeek/hyprdynamicmonitors/internal/utils"
 	"github.com/muesli/termenv"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -23,6 +24,15 @@ var tuiCmd = &cobra.Command{
 	Short: "Launch interactive TUI for monitor configuration",
 	Long:  `Launch an interactive terminal-based TUI for managing monitor configurations.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
+		// If the flag wasn't provided, power events are enabled, and not running on a laptop, then default to --disable-power-events
+		if !cmd.Flags().Changed("disable-power-events") && !disablePowerEvents && !utils.IsLaptop() {
+			disablePowerEvents = true
+			logrus.WithFields(utils.NewLogrusCustomFields(logrus.Fields{
+				"disable-power-events": disablePowerEvents,
+			}).WithLogID(utils.DisablingPowerEventsLogID)).Info(
+				"Running on desktop. Disabling power events. If this is not what you want, run with `--disable-power-events=false`.")
+		}
+
 		if debug {
 			f, err := tea.LogToFile("debug.log", "debug")
 			if err != nil {
@@ -67,7 +77,7 @@ func init() {
 		&disablePowerEvents,
 		"disable-power-events",
 		false,
-		"Disable power events (dbus)",
+		"Disable power events (dbus). Defaults to true if running on desktop, to false otherwise",
 	)
 
 	tuiCmd.Flags().BoolVar(
