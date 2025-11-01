@@ -9,7 +9,14 @@ Choose your preferred setup approach based on whether you want to run the daemon
 ## Choose Your Approach
 
 :::warning
-When running the daemon with power or lid events enabled, make sure that `UPower` is installed and its service is running.
+The app will try to detect your chassis type from `/sys/class/dmi/id/chassis_type` on startup.
+If a desktop is detected, it will disable power events unless explicitly enabled (by passing `--disable-power-events=false`).
+On laptops, power events are enabled by default (pass `--disable-power-events` to disable them).
+:::
+
+:::warning
+When running the daemon with power (default) or lid events enabled, make sure that `UPower` is installed and its service is running.
+If you're running on a desktop you likely want both disabled (pass `--disable-power-events`).
 :::
 
 ### Option A: TUI + Daemon (Recommended for Most Users)

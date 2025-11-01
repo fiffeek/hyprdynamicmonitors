@@ -21,6 +21,15 @@ When disabled:
 - No power events will be delivered
 - No D-Bus connection will be made
 
+## Enabling Power Events
+
+Power events are enabled by default on laptops. They are disabled on desktops (the current chassis type is pulled from `/sys/class/dmi/id/chassis_type`).
+If you want to enable them anyway, run, e.g.:
+
+```bash
+hyprdynamicmonitors run --disable-power-events=false
+```
+
 ## Default Configuration
 
 By default, the service listens for D-Bus signals:

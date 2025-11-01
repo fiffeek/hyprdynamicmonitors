@@ -64,6 +64,7 @@ func Test__Run_Binary(t *testing.T) {
 		disablePassingArgs bool
 		tui                bool
 		validateTui        []*tuiStep
+		fakeDesktop        bool
 	}{
 		{
 			name:                     "dry run should succeed",
@@ -75,6 +76,18 @@ func Test__Run_Binary(t *testing.T) {
 			disablePowerEvents:       true,
 			disableHotReload:         true,
 			runOnce:                  true,
+		},
+
+		{
+			name:                     "desktop should disable power events",
+			description:              "running on desktop should result in disabling power events by default",
+			config:                   testutils.NewTestConfig(t),
+			extraArgs:                []string{"--dry-run"},
+			expectLogs:               []utils.LogID{utils.DisablingPowerEventsLogID, utils.DryRunLogID},
+			hyprMonitorResponseFiles: []string{"testdata/hypr/server/basic_monitors.json"},
+			disableHotReload:         true,
+			runOnce:                  true,
+			fakeDesktop:              true,
 		},
 
 		{
@@ -710,6 +723,7 @@ func Test__Run_Binary(t *testing.T) {
 				"--config", rawConfig.ConfigPath,
 				"--enable-json-logs-format",
 			}, tt.extraArgs...)
+
 			if !tt.disablePassingArgs {
 				if tt.tui {
 					args = append(args, "tui")
@@ -720,6 +734,8 @@ func Test__Run_Binary(t *testing.T) {
 				}
 				if tt.disablePowerEvents {
 					args = append(args, "--disable-power-events")
+				} else if !tt.fakeDesktop {
+					args = append(args, "--disable-power-events=false")
 				}
 				if tt.enableLidEvents {
 					args = append(args, "--enable-lid-events")
@@ -733,7 +749,6 @@ func Test__Run_Binary(t *testing.T) {
 				if *debug {
 					args = append(args, "--debug")
 				}
-
 			}
 			done := make(chan struct{})
 			var out []byte
@@ -742,6 +757,12 @@ func Test__Run_Binary(t *testing.T) {
 			go func() {
 				defer close(done)
 				cmd := prepBinaryRun(t, ctx, args)
+				if tt.fakeDesktop {
+					tmpDir := t.TempDir()
+					dmiFile := filepath.Join(tmpDir, "chassis_type")
+					require.NoError(t, os.WriteFile(dmiFile, []byte("3"), 0o600))
+					cmd.Env = append(cmd.Env, "HYPRDYNAMICMONITORS_DMI_PATH_OVERRIDE="+dmiFile)
+				}
 				go func() {
 					// give time to warm up
 					time.Sleep(100 * time.Millisecond)

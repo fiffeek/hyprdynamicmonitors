@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/fiffeek/hyprdynamicmonitors/internal/app"
+	"github.com/fiffeek/hyprdynamicmonitors/internal/utils"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -24,6 +25,16 @@ var runCmd = &cobra.Command{
 	Long:  `Run the HyprDynamicMonitors service to continuously monitor for display changes and automatically apply matching configuration profiles.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		logrus.WithField("version", Version).Debug("Starting Hyprland Dynamic Monitor Manager")
+
+		// If the flag wasn't provided, power events are enabled, and not running on a laptop, then default to --disable-power-events
+		if !cmd.Flags().Changed("disable-power-events") && !disablePowerEvents && !utils.IsLaptop() {
+			disablePowerEvents = true
+			logrus.WithFields(utils.NewLogrusCustomFields(logrus.Fields{
+				"disable-power-events": disablePowerEvents,
+			}).WithLogID(utils.DisablingPowerEventsLogID)).Info(
+				"Running on desktop. Disabling power events. If this is not what you want, run with `--disable-power-events=false`.")
+		}
+
 		ctx, cancel := context.WithCancelCause(context.Background())
 		app, err := app.NewApplication(&configPath, &dryRun, ctx, cancel, &disablePowerEvents,
 			&disableAutoHotReload, &connectToSessionBus, &enableLidEvents)
@@ -60,7 +71,7 @@ func init() {
 		&disablePowerEvents,
 		"disable-power-events",
 		false,
-		"Disable power events (dbus)",
+		"Disable power events (dbus). Defaults to true if running on desktop, to false otherwise",
 	)
 	runCmd.Flags().BoolVar(
 		&connectToSessionBus,

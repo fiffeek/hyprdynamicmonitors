@@ -214,6 +214,16 @@ Yes! HyprDynamicMonitors can work alongside `nwg-displays`:
 
 This combines the visual configuration of `nwg-displays` with the automatic profile management of `hyprdynamicmonitors`.
 
+## Is UPower Running? UPower misconfigured or not running: failed to get property from UPower: Object does not exist at path “/org/freedesktop/UPower/devices/line_power_ACAD”
+
+If you got this error, you either want to:
+1. If you do not want to use power events (e.g., on a desktop), pass the `--disable-power-events` CLI argument
+2. Tweak your [Power Events configuration](./configuration/power-events.md) to use the proper device path (`upower -e` to find your `line_power` device; additionally, it would be helpful if you added it [here](https://github.com/fiffeek/hyprdynamicmonitors/blob/main/internal/utils/power.go#L14) so that others do not encounter this issue going forward)
+
+If you are running on a desktop with a version of `hyprdynamicmonitors` that includes [this patch](https://github.com/fiffeek/hyprdynamicmonitors/pull/80) (`v1.3.5+`),
+this error should not occur unless `--disable-power-events=false` is explicitly passed, since power events are disabled
+for desktops by default. Please [open an issue](https://github.com/fiffeek/hyprdynamicmonitors/issues) and include the output of `cat /sys/class/dmi/id/chassis_type`.
+
 ## See Also
 
 - [Examples](https://github.com/fiffeek/hyprdynamicmonitors/tree/main/examples) - Complete configuration examples

@@ -55,7 +55,7 @@ Usage:
 Flags:
       --connect-to-session-bus    Connect to session bus instead of system bus for power events: https://wiki.archlinux.org/title/D-Bus. You can switch as long as you expose power line events in your user session bus.
       --disable-auto-hot-reload   Disable automatic hot reload (no file watchers)
-      --disable-power-events      Disable power events (dbus)
+      --disable-power-events      Disable power events (dbus). Defaults to true if running on desktop, to false otherwise
       --dry-run                   Show what would be done without making changes
       --enable-lid-events         Enable listening to dbus lid events
   -h, --help                      help for run
@@ -221,7 +221,7 @@ Usage:
 
 Flags:
       --connect-to-session-bus          Connect to session bus instead of system bus for power events: https://wiki.archlinux.org/title/D-Bus. You can switch as long as you expose power line events in your user session bus.
-      --disable-power-events            Disable power events (dbus)
+      --disable-power-events            Disable power events (dbus). Defaults to true if running on desktop, to false otherwise
       --enable-lid-events               Enable listening to dbus lid events
   -h, --help                            help for tui
       --hypr-monitors-override string   When used it fill parse the given file as hyprland monitors spec, used for testing.
