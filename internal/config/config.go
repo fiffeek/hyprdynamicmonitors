@@ -685,9 +685,18 @@ func (ps *PowerSection) Validate() error {
 		}
 	}
 
+	defaultPowerLine := "/org/freedesktop/UPower/devices/line_power_ACAD"
+	powerLine, err := utils.GetPowerLine()
+	if err != nil {
+		logrus.WithError(err).Warningf("No power line available, will use a default: %s", defaultPowerLine)
+		powerLine = utils.JustPtr(defaultPowerLine)
+	}
+	logrus.WithFields(logrus.Fields{"power_line": *powerLine}).Info(
+		"Inferred power line")
+
 	defaultInterface := "org.freedesktop.DBus.Properties"
 	defaultMember := "PropertiesChanged"
-	defaultObjectPath := "/org/freedesktop/UPower/devices/line_power_ACAD"
+	defaultObjectPath := *powerLine
 	for _, rule := range ps.DbusSignalMatchRules {
 		if err := rule.Validate(defaultInterface, defaultMember, defaultObjectPath); err != nil {
 			return fmt.Errorf("one of the dbus match rules is invalid: %w", err)
@@ -712,7 +721,7 @@ func (ps *PowerSection) Validate() error {
 
 	defaultDestination := "org.freedesktop.UPower"
 	defaultMethod := "org.freedesktop.DBus.Properties.Get"
-	defaultPath := "/org/freedesktop/UPower/devices/line_power_ACAD"
+	defaultPath := *powerLine
 	defaultArgs := []DbusQueryObjectArg{
 		{Arg: "org.freedesktop.UPower.Device"},
 		{Arg: "Online"},

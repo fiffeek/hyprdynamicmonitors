@@ -875,7 +875,7 @@ func TestModel_Update_UserFlows(t *testing.T) {
 		{
 			name:         "matching_profile_append",
 			monitorsData: twoMonitorsData,
-			runFor:       utils.JustPtr(800 * time.Millisecond),
+			runFor:       utils.JustPtr(1100 * time.Millisecond),
 			cfg: testutils.NewTestConfig(t).WithProfiles(map[string]*config.Profile{
 				"two": {
 					ConfigType: utils.JustPtr(config.Template),
