@@ -103,7 +103,7 @@ func (m MonitorItem) DescriptionLines() []string {
 	return []string{
 		m.monitor.StatusPretty(),
 		m.monitor.ModePretty(),
-		m.monitor.ScalePretty(),
+		m.monitor.ScalePretty(true),
 		m.monitor.VRRPretty(),
 		m.monitor.RotationPretty(true),
 		m.monitor.PositionPretty(),

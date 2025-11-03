@@ -549,7 +549,7 @@ func (p *MonitorsPreviewPane) renderLegend() string {
 		coloredPattern := GetMonitorColorStyle(i).Render("██")
 		item := fmt.Sprintf("%s %s - %s, %s, %s, %s",
 			coloredPattern, monitor.Name, monitor.Mode(), monitor.PositionPretty(),
-			monitor.ScalePretty(), monitor.RotationPretty(false))
+			monitor.ScalePretty(false), monitor.RotationPretty(false))
 
 		if i == p.selectedIndex {
 			item = SelectedMonitorStyle.Render("► " + item + " ◄")

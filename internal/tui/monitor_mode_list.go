@@ -27,7 +27,64 @@ func (m ModeItem) FilterValue() string {
 }
 
 func (m ModeItem) View() string {
-	return m.mode
+	var width, height int
+	var refreshRate float64
+
+	n, err := fmt.Sscanf(m.mode, "%dx%d@%fHz", &width, &height, &refreshRate)
+	if err != nil || n != 3 {
+		return m.mode
+	}
+
+	suffix := m.getResolutionSuffix(width, height)
+	if suffix == "" {
+		return m.mode
+	}
+
+	isExactStandard := IsStandardResolution(width, height) && IsWholeNumber(refreshRate) &&
+		refreshRate >= minDesirableRefreshHz && IsFHDOrHigher(width, height)
+
+	var styledSuffix string
+	if isExactStandard {
+		styledSuffix = StandardModeSuffixStyle.Render(" " + suffix)
+	} else {
+		styledSuffix = NonStandardModeSuffixStyle.Render(" " + suffix)
+	}
+
+	resolutionPart := fmt.Sprintf("%dx%d", width, height)
+	refreshPart := fmt.Sprintf("%.0fHz", refreshRate)
+
+	styledRefresh := RefreshRateBoldStyle.Render(" @ " + refreshPart)
+
+	return resolutionPart + styledRefresh + styledSuffix
+}
+
+// getResolutionSuffix returns a styled suffix with aspect ratio and resolution class
+func (m ModeItem) getResolutionSuffix(width, height int) string {
+	aspectRatio := GetAspectRatio(width, height)
+	resClass := GetResolutionClass(width, height)
+
+	parts := []string{}
+	if resClass != "" {
+		parts = append(parts, resClass)
+	}
+	if aspectRatio != "" {
+		parts = append(parts, aspectRatio)
+	}
+
+	if len(parts) == 0 {
+		return ""
+	}
+
+	result := "["
+	for i, part := range parts {
+		if i > 0 {
+			result += ", "
+		}
+		result += part
+	}
+	result += "]"
+
+	return result
 }
 
 type ModeDelegate struct{}

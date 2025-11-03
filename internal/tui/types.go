@@ -347,8 +347,16 @@ func (m *MonitorSpec) searchScale(scale float64, checkUp, checkDown bool, initia
 	}
 }
 
-func (m *MonitorSpec) ScalePretty() string {
-	return fmt.Sprintf("Scale: %.4f", m.Scale)
+func (m *MonitorSpec) ScalePretty(withLogicalSize bool) string {
+	width, height := m.LogicalSize(m.Scale)
+	suffix := ""
+	if m.NeedsDimensionsSwap() {
+		width, height = height, width
+	}
+	if withLogicalSize {
+		suffix = fmt.Sprintf(" (%.0fx%0.f)", width, height)
+	}
+	return fmt.Sprintf("Scale: %.4f", m.Scale) + suffix
 }
 
 func (m *MonitorSpec) StatusPretty() string {

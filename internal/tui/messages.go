@@ -118,6 +118,7 @@ const (
 	OperationNameReloadHyprDestination
 	OperationNameFlipMonitor
 	OperationNameFindClosestScale
+	OperationNameTypeScale
 )
 
 type OperationStatus struct {
@@ -177,6 +178,8 @@ func (o OperationStatus) String() string {
 		operationName = "Flip Monitor"
 	case OperationNameFindClosestScale:
 		operationName = "Find Closest Valid Scale"
+	case OperationNameTypeScale:
+		operationName = "Set Custom Scale"
 	default:
 		operationName = "Operation"
 	}
@@ -209,6 +212,7 @@ func OperationStatusCmd(name OperationName, err error) tea.Cmd {
 		OperationNameHydrate,
 		OperationNameReloadHyprDestination,
 		OperationNameFlipMonitor,
+		OperationNameTypeScale,
 	}
 	showSuccessToUser := slices.Contains(criticalOperations, name)
 	return func() tea.Msg {

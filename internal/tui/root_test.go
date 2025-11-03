@@ -205,6 +205,122 @@ func TestModel_Update_UserFlows(t *testing.T) {
 		},
 
 		{
+			name:         "scale_2",
+			monitorsData: defaultMonitorData,
+			runFor:       utils.JustPtr(500 * time.Millisecond),
+			steps: []step{
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'j'}},
+					expectOutputToContain: "► DP-1",
+				},
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyEnter},
+					expectOutputToContain: "EDITING",
+				},
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'s'}},
+					expectOutputToContain: "Scale: 1.25",
+				},
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'2'}},
+					expectOutputToContain: "Scale: 2.00",
+				},
+			},
+		},
+
+		{
+			name:         "scale_1",
+			monitorsData: defaultMonitorData,
+			runFor:       utils.JustPtr(500 * time.Millisecond),
+			steps: []step{
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'j'}},
+					expectOutputToContain: "► DP-1",
+				},
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyEnter},
+					expectOutputToContain: "EDITING",
+				},
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'s'}},
+					expectOutputToContain: "Scale: 1.25",
+				},
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'1'}},
+					expectOutputToContain: "Scale: 1.00",
+				},
+			},
+		},
+
+		{
+			name:         "scale_type_invalid",
+			monitorsData: defaultMonitorData,
+			runFor:       utils.JustPtr(800 * time.Millisecond),
+			steps: []step{
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'j'}},
+					expectOutputToContain: "► DP-1",
+				},
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyEnter},
+					expectOutputToContain: "EDITING",
+				},
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'s'}},
+					expectOutputToContain: "Scale: 1.25",
+				},
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'C'}},
+					expectOutputToContain: "> 1.25",
+				},
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'f'}},
+					expectOutputToContain: "1.25000000f",
+				},
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyEnter},
+					expectOutputToContain: "Set Custom Scale: can't parse",
+				},
+			},
+		},
+
+		{
+			name:         "scale_type",
+			monitorsData: defaultMonitorData,
+			runFor:       utils.JustPtr(800 * time.Millisecond),
+			steps: []step{
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'j'}},
+					expectOutputToContain: "► DP-1",
+				},
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyEnter},
+					expectOutputToContain: "EDITING",
+				},
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'s'}},
+					expectOutputToContain: "Scale: 1.25",
+				},
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'C'}},
+					expectOutputToContain: "> 1.25",
+				},
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyBackspace},
+					expectOutputToContain: "1.2500000",
+				},
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'5'}},
+					expectOutputToContain: "1.25000005",
+				},
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyEnter},
+					expectOutputToContain: "Scale: 1.25000005",
+				},
+			},
+		},
+
+		{
 			name:         "scale",
 			monitorsData: defaultMonitorData,
 			runFor:       utils.JustPtr(500 * time.Millisecond),
@@ -263,11 +379,11 @@ func TestModel_Update_UserFlows(t *testing.T) {
 				},
 				{
 					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'j'}},
-					expectOutputToContain: "► 2880x1920@60.00Hz",
+					expectOutputToContain: "► 2880x1920 @ 60Hz",
 				},
 				{
 					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'j'}},
-					expectOutputToContain: "► 1920x1200@120.00Hz",
+					expectOutputToContain: "► 1920x1200 @ 120Hz",
 				},
 				{
 					msg:                   tea.KeyMsg{Type: tea.KeyEnter},
@@ -655,7 +771,7 @@ func TestModel_Update_UserFlows(t *testing.T) {
 				},
 				{
 					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'j'}},
-					expectOutputToContain: "► 1920x1080@0.06Hz",
+					expectOutputToContain: "► 1920x1080 @ 0Hz",
 				},
 				{
 					msg:                   tea.KeyMsg{Type: tea.KeyEnter},
