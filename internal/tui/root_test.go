@@ -223,7 +223,7 @@ func TestModel_Update_UserFlows(t *testing.T) {
 				},
 				{
 					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'k'}},
-					expectOutputToContain: "Scale: 1.26",
+					expectOutputToContain: "Scale: 1.3333",
 				},
 				{
 					msg:                   tea.KeyMsg{Type: tea.KeyEnter},

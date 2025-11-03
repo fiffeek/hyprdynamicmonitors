@@ -12,10 +12,11 @@ import (
 )
 
 type scaleSelectorKeyMap struct {
-	Up     key.Binding
-	Down   key.Binding
-	Select key.Binding
-	Back   key.Binding
+	Up                  key.Binding
+	Down                key.Binding
+	Select              key.Binding
+	Back                key.Binding
+	EnableScaleSnapping key.Binding
 }
 
 func (s *scaleSelectorKeyMap) Help() []key.Binding {
@@ -24,6 +25,7 @@ func (s *scaleSelectorKeyMap) Help() []key.Binding {
 		s.Down,
 		s.Select,
 		s.Back,
+		s.EnableScaleSnapping,
 	}
 }
 
@@ -40,14 +42,16 @@ type ScaleSelector struct {
 	lastKeyTime          time.Time
 	repeatCount          int
 	step                 float64
+	enableScaleSnapping  bool
 }
 
 func NewScaleSelector() *ScaleSelector {
 	return &ScaleSelector{
-		help:     help.New(),
-		minScale: 0.1,
-		maxScale: 10.0,
-		step:     0.01,
+		help:                help.New(),
+		minScale:            0.1,
+		maxScale:            10.0,
+		step:                0.005,
+		enableScaleSnapping: true,
 		keyMap: &scaleSelectorKeyMap{
 			Up: key.NewBinding(
 				key.WithKeys("up", "k"),
@@ -64,6 +68,10 @@ func NewScaleSelector() *ScaleSelector {
 			Back: key.NewBinding(
 				key.WithKeys("esc"),
 				key.WithHelp("esc", "back"),
+			),
+			EnableScaleSnapping: key.NewBinding(
+				key.WithKeys("e"),
+				key.WithHelp("e", "enable/disable scale snapping"),
 			),
 		},
 	}
@@ -97,16 +105,21 @@ func (s *ScaleSelector) View() string {
 	availableSpace := s.height
 	logrus.Debugf("availableSpace for ScaleSelector: %d", availableSpace)
 
-	title := TitleStyle.Width(s.width).Render("Adjust scale")
+	titleString := "Adjust scale"
+	if s.enableScaleSnapping {
+		titleString += " (snapping)"
+	}
+
+	title := TitleStyle.Width(s.width).Render(titleString)
 	sections = append(sections, title)
 	availableSpace -= lipgloss.Height(title)
 
 	subtitle := SubtitleInfoStyle.Margin(0, 0, 1, 0).Width(s.width).Render(
-		fmt.Sprintf("Tip: Hold for acceleration, single tick is %.2f", s.step))
+		fmt.Sprintf("Tip: Hold for acceleration, single tick is %.8f", s.step))
 	sections = append(sections, subtitle)
 	availableSpace -= lipgloss.Height(subtitle)
 
-	content := fmt.Sprintf("Scale: %.2f", s.monitor.Scale)
+	content := fmt.Sprintf("Scale: %.8f", s.monitor.Scale)
 	sections = append(sections, content)
 	availableSpace -= lipgloss.Height(content)
 
@@ -133,14 +146,23 @@ func (s *ScaleSelector) Update(msg tea.Msg) tea.Cmd {
 	case tea.KeyMsg:
 		switch {
 		case key.Matches(msg, s.keyMap.Up):
-			s.adjustScale(s.step)
+			err := s.adjustScale(s.step)
+			cmds = append(cmds, OperationStatusCmd(OperationNameFindClosestScale, err))
 			cmds = append(cmds, previewScaleMonitorCmd(*s.monitor.ID, s.currentScale))
 		case key.Matches(msg, s.keyMap.Down):
-			s.adjustScale(-s.step)
+			err := s.adjustScale(-s.step)
+			cmds = append(cmds, OperationStatusCmd(OperationNameFindClosestScale, err))
 			cmds = append(cmds, previewScaleMonitorCmd(*s.monitor.ID, s.currentScale))
 		case key.Matches(msg, s.keyMap.Select), key.Matches(msg, s.keyMap.Back):
 			logrus.Debug("Select in scale")
 			cmds = append(cmds, scaleMonitorCmd(*s.monitor.ID, s.currentScale))
+		case key.Matches(msg, s.keyMap.EnableScaleSnapping):
+			s.enableScaleSnapping = !s.enableScaleSnapping
+			if s.enableScaleSnapping {
+				s.step = 0.005
+			} else {
+				s.step = 0.0001
+			}
 		}
 	}
 	return tea.Batch(cmds...)
@@ -154,7 +176,7 @@ func (s *ScaleSelector) GetSelectedMonitorIndex() int {
 	return s.selectedMonitorIndex
 }
 
-func (s *ScaleSelector) adjustScale(baseIncrement float64) {
+func (s *ScaleSelector) adjustScale(baseIncrement float64) error {
 	now := time.Now()
 
 	if now.Sub(s.lastKeyTime) < 200*time.Millisecond {
@@ -185,5 +207,19 @@ func (s *ScaleSelector) adjustScale(baseIncrement float64) {
 		newScale = s.maxScale
 	}
 
-	s.currentScale = newScale
+	logrus.Debugf("Scale set to %f", newScale)
+
+	if !s.enableScaleSnapping {
+		s.currentScale = newScale
+		return nil
+	}
+
+	validScale, err := s.monitor.ClosestValidScale(newScale, increment > 0, increment < 0)
+	if err != nil {
+		s.currentScale = newScale
+		return fmt.Errorf("cant find closest valid scale: %w", err)
+	}
+
+	s.currentScale = validScale
+	return nil
 }

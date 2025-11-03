@@ -15,10 +15,10 @@
 │                                                   ││┃     applies)                                                                                          │ 
 │New settings will be appended when saved           ││┃   7 # and leave the markers.                                                                          │ 
 │                                                   ││┃   8 # <<<<< TUI AUTO START                                                                            │ 
-│                                                   ││┃   9 monitor=desc:BOE NE135A1M-NY1,2880x1920@120.00000,1920x1080,2.00,transform,0,vrr,1                │ 
-│                                                   ││┃  10 monitor=desc:Dell Inc. DELL U2723QE 5YNK3H3,3840x2160@60.00000,0x0,1.25,transform,0,vrr,0         │ 
+│                                                   ││┃   9 monitor=desc:BOE NE135A1M-NY1,2880x1920@120.00000,1920x1080,2.00000000,transform,0,vrr,1          │ 
+│                                                   ││┃  10 monitor=desc:Dell Inc. DELL U2723QE 5YNK3H3,3840x2160@60.00000,0x0,1.25000000,transform,0,vrr,0   │ 
 │                                                   ││┃  11 monitor=desc:Samsung Electric Company C27F390                                                     │ 
-│                                                   ││┃     HTHK500315,1920x1080@60.00000,3840x540,1.00,transform,0,vrr,0                                     │ 
+│                                                   ││┃     HTHK500315,1920x1080@60.00000,3840x540,1.00000000,transform,0,vrr,0                               │ 
 │                                                   │╰────────────────────────────────────────────────────────────────────────────────────────────────────────╯ 
 │                                                   │╭────────────────────────────────────────────────────────────────────────────────────────────────────────╮ 
 │                                                   ││Generated hypr config preview                                                                           │ 

@@ -3,9 +3,11 @@ package tui
 import (
 	"errors"
 	"fmt"
+	"math"
 
 	"github.com/fiffeek/hyprdynamicmonitors/internal/hypr"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/utils"
+	"github.com/sirupsen/logrus"
 )
 
 type ColorPreset int
@@ -104,34 +106,35 @@ func GetBitdepth(spec *hypr.MonitorSpec) Bitdepth {
 var allBitdepths = []Bitdepth{DefaultBitdepth, TenBitdepth}
 
 type MonitorSpec struct {
-	Name            string      `json:"name"`
-	ID              *int        `json:"id"`
-	Description     string      `json:"description"`
-	Disabled        bool        `json:"disabled"`
-	Width           int         `json:"width"`
-	Height          int         `json:"height"`
-	RefreshRate     float64     `json:"refreshRate"`
-	Transform       int         `json:"transform"`
-	Vrr             bool        `json:"vrr"`
-	Scale           float64     `json:"scale"`
-	X               int         `json:"x"`
-	Y               int         `json:"y"`
-	AvailableModes  []string    `json:"availableModes"`
-	Mirror          string      `json:"mirrorOf"`
-	CurrentFormat   string      `json:"currentFormat"`
-	DpmsStatus      bool        `json:"dpmsStatus"`
-	ActivelyTearing bool        `json:"activelyTearing"`
-	DirectScanoutTo string      `json:"directScanoutTo"`
-	Solitary        string      `json:"solitary"`
-	Bitdepth        Bitdepth    `json:"-"`
-	ColorPreset     ColorPreset `json:"-"`
-	SdrBrightness   float64     `json:"-"`
-	SdrSaturation   float64     `json:"-"`
-	Flipped         bool        `json:"-"`
+	Name             string               `json:"name"`
+	ID               *int                 `json:"id"`
+	Description      string               `json:"description"`
+	Disabled         bool                 `json:"disabled"`
+	Width            int                  `json:"width"`
+	Height           int                  `json:"height"`
+	RefreshRate      float64              `json:"refreshRate"`
+	Transform        int                  `json:"transform"`
+	Vrr              bool                 `json:"vrr"`
+	Scale            float64              `json:"scale"`
+	X                int                  `json:"x"`
+	Y                int                  `json:"y"`
+	AvailableModes   []string             `json:"availableModes"`
+	Mirror           string               `json:"mirrorOf"`
+	CurrentFormat    string               `json:"currentFormat"`
+	DpmsStatus       bool                 `json:"dpmsStatus"`
+	ActivelyTearing  bool                 `json:"activelyTearing"`
+	DirectScanoutTo  string               `json:"directScanoutTo"`
+	Solitary         string               `json:"solitary"`
+	Bitdepth         Bitdepth             `json:"-"`
+	ColorPreset      ColorPreset          `json:"-"`
+	SdrBrightness    float64              `json:"-"`
+	SdrSaturation    float64              `json:"-"`
+	Flipped          bool                 `json:"-"`
+	ValidScalesCache map[float64]struct{} `json:"-"`
 }
 
 func NewMonitorSpec(spec *hypr.MonitorSpec) *MonitorSpec {
-	return &MonitorSpec{
+	m := &MonitorSpec{
 		Name:            spec.Name,
 		ID:              spec.ID,
 		Description:     spec.Description,
@@ -153,11 +156,21 @@ func NewMonitorSpec(spec *hypr.MonitorSpec) *MonitorSpec {
 		Solitary:        spec.Solitary,
 		Bitdepth:        GetBitdepth(spec),
 		// TODO(fmikina, 12.10.25): fix after patching hyprctl to expose this information
-		ColorPreset:   AutoColorPreset,
-		SdrBrightness: 1.0,
-		SdrSaturation: 1.0,
-		Flipped:       spec.Transform >= 4,
+		ColorPreset:      AutoColorPreset,
+		SdrBrightness:    1.0,
+		SdrSaturation:    1.0,
+		Flipped:          spec.Transform >= 4,
+		ValidScalesCache: make(map[float64]struct{}),
 	}
+
+	scale, err := m.ClosestValidScale(m.Scale, true, true)
+	if err != nil {
+		logrus.Warn("cant find any closest valid scale, leaving the current value")
+	} else {
+		m.Scale = scale
+	}
+
+	return m
 }
 
 func (m *MonitorSpec) Center() (int, int) {
@@ -224,8 +237,118 @@ func (m *MonitorSpec) VRRPretty() string {
 	return "VRR: Off"
 }
 
+func (m *MonitorSpec) LogicalSize(scale float64) (float64, float64) {
+	return float64(m.Width) / scale, float64(m.Height) / scale
+}
+
+func (m *MonitorSpec) LogicalSizeFractional(scale float64) bool {
+	width, height := m.LogicalSize(scale)
+	return width != math.Round(width) || height != math.Round(height)
+}
+
+func (m *MonitorSpec) ClosestValidScale(scale float64, checkUp, checkDown bool) (float64, error) {
+	// lots of this is based on
+	// https://github.com/hyprwm/Hyprland/blob/8e9add2afda58d233a75e4c5ce8503b24fa59ceb/src/helpers/Monitor.cpp#L895
+	if !m.LogicalSizeFractional(scale) {
+		return scale, nil
+	}
+
+	// Invalid scale, would produce fractional pixels
+	// Find the nearest valid scale by searching in increments of 1/120th
+	logrus.Debugf("Scale is invalid, would produce fractional pixels, %f", scale)
+
+	// hardcode a list of "well-known" scales to try first
+	commonScales := []float64{
+		0.50, 0.75, 0.90, 1.00, 1.10, 1.125, 1.25, 1.33333333, 1.3334,
+		1.50, 1.6667, 1.75, 2.00, 2.125, 2.25, 2.3334, 2.50, 2.6667, 2.75, 3.00,
+	}
+	for _, commonScale := range commonScales {
+		if m.LogicalSizeFractional(commonScale) {
+			continue
+		}
+		if commonScale < scale && checkDown {
+			m.ValidScalesCache[commonScale] = struct{}{}
+		}
+		if commonScale > scale && checkUp {
+			m.ValidScalesCache[commonScale] = struct{}{}
+		}
+	}
+
+	// try 1/initialDivider, so by increments: 0.008333333333, 0.0001, 0.001666666667
+	m.searchScale(scale, checkUp, checkDown, 120.0)
+	m.searchScale(scale, checkUp, checkDown, 1000.0)
+	m.searchScale(scale, checkUp, checkDown, 600.0)
+
+	// Find the closest valid scale to the requested scale
+	if len(m.ValidScalesCache) == 0 {
+		return 0.0, errors.New("cant find suitable scale")
+	}
+
+	var closestScale float64
+	minDiff := math.MaxFloat64
+	first := true
+
+	for validScale := range m.ValidScalesCache {
+		isDown := validScale < scale && checkDown
+		isUp := validScale > scale && checkUp
+		if !isDown && !isUp {
+			continue
+		}
+
+		diff := math.Abs(scale - validScale)
+		if first || diff < minDiff {
+			minDiff = diff
+			closestScale = validScale
+			first = false
+		}
+	}
+
+	if closestScale == 0 {
+		return 0.0, errors.New("cant find suitable scale")
+	}
+
+	logrus.Debugf("Found closest valid scale %f for requested scale %f", closestScale, scale)
+	return closestScale, nil
+}
+
+func (m *MonitorSpec) searchScale(scale float64, checkUp, checkDown bool, initialDivider float64) {
+	initialValidScales := len(m.ValidScalesCache)
+	searchScale := math.Round(scale * initialDivider)
+
+	// First try the rounded scale
+	scaleZero := searchScale / initialDivider
+	if !m.LogicalSizeFractional(scaleZero) && scale < scaleZero && checkUp {
+		m.ValidScalesCache[scaleZero] = struct{}{}
+	}
+	if !m.LogicalSizeFractional(scaleZero) && scale > scaleZero && checkDown {
+		m.ValidScalesCache[scaleZero] = struct{}{}
+	}
+
+	// Search up and down in increments of 1/initialDivider
+	for i := 1; i < 90; i++ {
+		scaleUp := (searchScale + float64(i)) / initialDivider
+		scaleDown := (searchScale - float64(i)) / initialDivider
+		logrus.Debugf("Checking %f %f for %f", scaleUp, scaleDown, initialDivider)
+
+		if !m.LogicalSizeFractional(scaleUp) && checkUp {
+			logrus.Debugf("Scale up is valid %f for %f", scaleUp, initialDivider)
+			m.ValidScalesCache[scaleUp] = struct{}{}
+		}
+
+		if !m.LogicalSizeFractional(scaleDown) && checkDown {
+			logrus.Debugf("Scale down is valid %f for %f", scaleDown, initialDivider)
+			m.ValidScalesCache[scaleDown] = struct{}{}
+		}
+
+		// exit on the closest found
+		if initialValidScales != len(m.ValidScalesCache) {
+			break
+		}
+	}
+}
+
 func (m *MonitorSpec) ScalePretty() string {
-	return fmt.Sprintf("Scale: %.2f", m.Scale)
+	return fmt.Sprintf("Scale: %.4f", m.Scale)
 }
 
 func (m *MonitorSpec) StatusPretty() string {
@@ -269,6 +392,14 @@ func (m *MonitorSpec) SetMode(mode string) error {
 	m.Width = width
 	m.Height = height
 	m.RefreshRate = refreshRate
+
+	// set mode changes the current scale as well, since the last set might have been invalid
+	m.ValidScalesCache = make(map[float64]struct{})
+	scale, err := m.ClosestValidScale(m.Scale, true, true)
+	if err != nil {
+		return fmt.Errorf("cant find closest valid scale: %w", err)
+	}
+	m.Scale = scale
 
 	return nil
 }
@@ -358,7 +489,7 @@ func (m *MonitorSpec) ToHypr() string {
 		// nolint:perfsprint
 		return fmt.Sprintf("%s,disable", identifier)
 	}
-	line := fmt.Sprintf("%s,%dx%d@%.2f,%dx%d,%.2f,transform,%d", identifier, m.Width,
+	line := fmt.Sprintf("%s,%dx%d@%.2f,%dx%d,%.8f,transform,%d", identifier, m.Width,
 		m.Height, m.RefreshRate, m.X, m.Y, m.Scale, m.HyprTransform())
 	if m.Vrr {
 		line += ",vrr,1"

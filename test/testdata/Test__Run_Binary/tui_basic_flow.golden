@@ -15,9 +15,9 @@
 │                                                   ││┃     applies)                                                                                          │
 │                                                   ││┃   7 # and leave the markers.                                                                          │
 │                                                   ││┃   8 # <<<<< TUI AUTO START                                                                            │
-│                                                   ││┃   9 monitor=desc:BOE NE135A1M-NY1,2880x1920@120.00000,0x0,2.00,transform,0,vrr,1                      │
+│                                                   ││┃   9 monitor=desc:BOE NE135A1M-NY1,2880x1920@120.00000,0x0,2.00000000,transform,0,vrr,1                │
 │                                                   ││┃  10 monitor=desc:LG Electronics LG SDQHD                                                              │
-│                                                   ││┃     301NTBKDU037,2560x2880@59.96700,-1800x0,1.60,transform,0,vrr,0                                    │
+│                                                   ││┃     301NTBKDU037,2560x2880@59.96700,-1800x0,1.60000000,transform,0,vrr,0                              │
 │                                                   ││┃  11 # <<<<< TUI AUTO END                                                                              │
 │                                                   │╰────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 │                                                   │╭────────────────────────────────────────────────────────────────────────────────────────────────────────╮
@@ -36,9 +36,9 @@
 │                                                   ││┃     applies)                                                                                          │
 │                                                   ││┃   7 # and leave the markers.                                                                          │
 │                                                   ││┃   8 # <<<<< TUI AUTO START                                                                            │
-│                                                   ││┃   9 monitor=desc:BOE NE135A1M-NY1,2880x1920@120.00000,0x0,2.00,transform,0,vrr,1                      │
+│                                                   ││┃   9 monitor=desc:BOE NE135A1M-NY1,2880x1920@120.00000,0x0,2.00000000,transform,0,vrr,1                │
 │  n new profile • a apply monitors to existing     ││┃  10 monitor=desc:LG Electronics LG SDQHD                                                              │
-│  profile • e edit manually • R render profile to  ││┃     301NTBKDU037,2560x2880@59.96700,-1800x0,1.60,transform,0,vrr,0                                    │
+│  profile • e edit manually • R render profile to  ││┃     301NTBKDU037,2560x2880@59.96700,-1800x0,1.60000000,transform,0,vrr,0                              │
 │  config.general.destination                       ││┃  11 # <<<<< TUI AUTO END                                                                              │
 ╰───────────────────────────────────────────────────╯╰────────────────────────────────────────────────────────────────────────────────────────────────────────╯
   tab switch view • C edit HyprDynamicMonitors config • E edit hypr generated config (ephemeral)

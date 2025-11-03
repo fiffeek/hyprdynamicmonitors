@@ -5,7 +5,7 @@
 │► eDP-1 (BOE NE135A1M-NY...) [EDITING]             ││                                                                                                        │ 
 │Active                                             ││·   ·   ·   ·   ·   ·   ·   ·   ·   ·   ·   ·   ·   ·   ·   ·   ·   ·   ·   ·   ·   ·   ·   ·   ·       │ 
 │Mode: 2880x1920@120.00Hz                           ││                                                                                                        │ 
-│Scale: 2.00                                        ││·   ·   ·   ·   ·   ·   ·   ·▀▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▀ ·   ·   ·   ·   ·  ▀▄▄▄▄▄▄▄▄▄▄▄▄▄▄▀ ·   ·       │ 
+│Scale: 2.0000                                      ││·   ·   ·   ·   ·   ·   ·   ·▀▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▀ ·   ·   ·   ·   ·  ▀▄▄▄▄▄▄▄▄▄▄▄▄▄▄▀ ·   ·       │ 
 │VRR: On                                            ││                             ██████████████████████████                    ███HEADLE↑██████             │ 
 │Rotation: 0°, Flip: Off                            ││·   ·   ·   ·   ·   ·   ·   ·█████████DP-1↑████████████ ·  ▀▄▄▄▄▄▄▄▄▄▄▄▄▄▄▀▄▀▀▀▀▀▀▀▀▀▀▀▀▀▀▄ ·   ·       │ 
 │Position: 1920,1080                                ││                             ████████████████▀▄▄▄▄▄▄▄▄▄▄▀  ████DP-2↑███████                             │ 
@@ -14,23 +14,23 @@
 │DP-1 (Dell Inc. DELL ...)                          ││·   ·   ·   ·   ·   ·   ·   ·   ·   ·   ·   ·   ·   ·   ·   ·   ·   ·   ·   ·   ·   ·   ·   ·   ·       │ 
 │Active                                             ││                                                                                                        │ 
 │Mode: 3840x2160@60.00Hz                            ││·   ·   ·   ·   ·   ·   ·   ·   ·   ·   ·   ·   ·   ·   ·   ·   ·   ·   ·   ·   ·   ·   ·   ·   ·       │ 
-│Scale: 1.25                                        ││                                                                                                        │ 
+│Scale: 1.2500                                      ││                                                                                                        │ 
 │VRR: Off                                           ││·   ·   ·   ·   ·   ·   ·   ·   ·   ·   ·   ·   ·   ·   ·   ·   ·   ·   ·   ·   ·   ·   ·   ·   ·       │ 
 │Rotation: 0°, Flip: Off                            ││                                                                                                        │ 
 │Position: 0,0                                      ││·   ·   ·   ·   ·   ·   ·   ·   ·   ·   ·   ·   ·   ·   ·   ·   ·   ·   ·   ·   ·   ·   ·   ·   ·       │ 
-│Mirror: none                                       ││► ██ eDP-1 - 2880x1920@120.00000, Position: 1920,1080, Scale: 2.00, Rotation: 0° ◄                      │ 
-│                                                   ││██ DP-1 - 3840x2160@60.00000, Position: 0,0, Scale: 1.25, Rotation: 0°                                  │ 
-│DP-2 (Samsung Electri...)                          ││██ DP-2 - 1920x1080@60.00000, Position: 3840,540, Scale: 1.00, Rotation: 0°                             │ 
-│Active                                             ││██ HEADLESS-1 - 1920x1080@60.00000, Position: 5760,0, Scale: 1.00, Rotation: 0°                         │ 
+│Mirror: none                                       ││► ██ eDP-1 - 2880x1920@120.00000, Position: 1920,1080, Scale: 2.0000, Rotation: 0° ◄                    │ 
+│                                                   ││██ DP-1 - 3840x2160@60.00000, Position: 0,0, Scale: 1.2500, Rotation: 0°                                │ 
+│DP-2 (Samsung Electri...)                          ││██ DP-2 - 1920x1080@60.00000, Position: 3840,540, Scale: 1.0000, Rotation: 0°                           │ 
+│Active                                             ││██ HEADLESS-1 - 1920x1080@60.00000, Position: 5760,0, Scale: 1.0000, Rotation: 0°                       │ 
 │Mode: 1920x1080@60.00Hz                            │╰────────────────────────────────────────────────────────────────────────────────────────────────────────╯ 
-│Scale: 1.00                                        │╭────────────────────────────────────────────────────────────────────────────────────────────────────────╮ 
+│Scale: 1.0000                                      │╭────────────────────────────────────────────────────────────────────────────────────────────────────────╮ 
 │VRR: Off                                           ││Hyprland Config Preview                                                                                 │ 
 │Rotation: 0°, Flip: Off                            ││monitor = desc:BOE NE135A1M-                                                                            │ 
-│Position: 3840,540                                 ││NY1,2880x1920@120.00,1920x1080,2.00,transform,0,vrr,1,cm,hdr,sdrbrightness,1.01,sdrsaturation,1.01      │ 
-│Mirror: none                                       ││monitor = desc:Dell Inc. DELL U2723QE 5YNK3H3,3840x2160@60.00,0x0,1.25,transform,0                      │ 
-│                                                   ││monitor = desc:Samsung Electric Company C27F390 HTHK500315,1920x1080@60.00,3840x540,1.00,transform,0    │ 
-│                                                   ││monitor = desc:Headless Virtual Display,1920x1080@60.00,5760x0,1.00,transform,0                         │ 
-│                                                   ││                                                                                                        │ 
+│Position: 3840,540                                 ││NY1,2880x1920@120.00,1920x1080,2.00000000,transform,0,vrr,1,cm,hdr,sdrbrightness,1.01,sdrsaturation,1.01│ 
+│Mirror: none                                       ││monitor = desc:Dell Inc. DELL U2723QE 5YNK3H3,3840x2160@60.00,0x0,1.25000000,transform,0                │ 
+│                                                   ││monitor = desc:Samsung Electric Company C27F390                                                         │ 
+│                                                   ││HTHK500315,1920x1080@60.00,3840x540,1.00000000,transform,0                                              │ 
+│                                                   ││monitor = desc:Headless Virtual Display,1920x1080@60.00,5760x0,1.00000000,transform,0                   │ 
 │                                                   ││                                                                                                        │ 
 │                                                   ││                                                                                                        │ 
 │                                                   ││                                                                                                        │ 

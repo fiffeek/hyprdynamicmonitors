@@ -312,7 +312,7 @@ func (s *Service) ToHyprLines(monitors hypr.MonitorSpecs) []string {
 
 		fields = append(fields, fmt.Sprintf("%dx%d@%.5f", monitor.Width, monitor.Height, monitor.RefreshRate))
 		fields = append(fields, fmt.Sprintf("%dx%d", monitor.X, monitor.Y))
-		fields = append(fields, fmt.Sprintf("%.2f", monitor.Scale))
+		fields = append(fields, fmt.Sprintf("%.8f", monitor.Scale))
 		fields = append(fields, "transform")
 		// nolint:perfsprint
 		fields = append(fields, fmt.Sprintf("%d", monitor.Transform))
