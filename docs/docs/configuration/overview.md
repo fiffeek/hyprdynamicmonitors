@@ -4,7 +4,7 @@ sidebar_position: 1
 
 # Overview
 
-HyprDynamicMonitors automatically creates a default configuration file on first run if none exists at the specified path (defaults to `~/.config/hypr/hyprdynamicmonitors.toml`).
+HyprDynamicMonitors automatically creates a default configuration file on first run if none exists at the specified path (defaults to `~/.config/hyprdynamicmonitors/config.toml`).
 
 ## Default Configuration
 
