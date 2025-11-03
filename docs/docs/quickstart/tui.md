@@ -132,8 +132,12 @@ Shows all available modes for the selected monitor.
 | Key | Action |
 |-----|--------|
 | `s` | Open scale selector |
-| `k` | Increase scale by 0.1 |
-| `j` | Decrease scale by 0.1 |
+| `k` | Increase scale by 0.001 or to the nearest greater valid value |
+| `j` | Decrease scale by 0.001 or to the nearest lower valid value |
+| `1` | Set scale to 1.0x |
+| `2` | Set scale to 2.0x |
+| `C` | Enter a custom scale value |
+| `e` | Enable/Disable snapping |
 | `Enter` | Confirm scale change |
 | `Esc` | Close (applying the last selection) |
 

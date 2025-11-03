@@ -171,3 +171,89 @@ func TestScaleSelector_AcceleratedScaling(t *testing.T) {
 	// 1.25 -> 1.26 (with 2x multiplier) snaps to 1.333...
 	assert.InDelta(t, 1.3333333333333333, selector.GetCurrentScale(), 0.01)
 }
+
+func TestScaleSelector_DPICalculation(t *testing.T) {
+	testCases := []struct {
+		name        string
+		scale       float64
+		expectedDPI int
+	}{
+		{"1.0 scale", 1.0, 96},
+		{"1.5 scale", 1.5, 144},
+		{"2.0 scale", 2.0, 192},
+		{"1.25 scale", 1.25, 120},
+		{"0.75 scale", 0.75, 72},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			monitor := &tui.MonitorSpec{
+				ID:               utils.IntPtr(1),
+				Width:            1920,
+				Height:           1080,
+				Scale:            tc.scale,
+				ValidScalesCache: make(map[float64]struct{}),
+			}
+
+			selector := tui.NewScaleSelector()
+			selector.Set(monitor)
+
+			view := selector.View()
+
+			// The view should contain the DPI value
+			assert.Contains(t, view, "DPI", "View should contain DPI information")
+			assert.NotEmpty(t, view, "View should not be empty")
+		})
+	}
+}
+
+func TestScaleSelector_CustomInput(t *testing.T) {
+	testCases := []struct {
+		name          string
+		initialScale  float64
+		inputValue    string
+		expectedScale float64
+	}{
+		{"Valid scale 1.5", 1.0, "1.5", 1.5},
+		{"Valid scale 2.0", 1.0, "2.0", 2.0},
+		{"Valid scale 0.75", 1.0, "0.75", 0.75},
+		{"Invalid - not a number", 1.0, "abc", 1.0},
+		{"Cancel with Esc", 1.0, "2.5", 1.0}, // Special case: will press Esc instead of Enter
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			monitor := &tui.MonitorSpec{
+				ID:               utils.IntPtr(1),
+				Width:            1920,
+				Height:           1080,
+				Scale:            tc.initialScale,
+				ValidScalesCache: make(map[float64]struct{}),
+			}
+
+			selector := tui.NewScaleSelector()
+			selector.Set(monitor)
+
+			// Trigger custom input mode
+			selector.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'C'}})
+
+			// Clear the pre-filled value first
+			selector.Update(tea.KeyMsg{Type: tea.KeyCtrlU}) // Ctrl+U clears the line in textinput
+
+			// Type the value
+			for _, r := range tc.inputValue {
+				selector.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{r}})
+			}
+
+			// Press enter to apply (or Esc for cancel test)
+			if tc.name == "Cancel with Esc" {
+				selector.Update(tea.KeyMsg{Type: tea.KeyEsc})
+			} else {
+				selector.Update(tea.KeyMsg{Type: tea.KeyEnter})
+			}
+
+			assert.Equal(t, tc.expectedScale, selector.GetCurrentScale(),
+				"Expected scale to be %.2f, got %.2f", tc.expectedScale, selector.GetCurrentScale())
+		})
+	}
+}

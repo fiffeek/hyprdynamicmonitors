@@ -181,3 +181,25 @@ var (
 				Foreground(lipgloss.Color("105")).
 				Bold(true)
 )
+
+var (
+	// Monitor mode list styles
+	StandardModeSuffixStyle = lipgloss.NewStyle().
+				Italic(true).
+				Foreground(lipgloss.Color("120"))
+
+	NonStandardModeSuffixStyle = lipgloss.NewStyle().
+					Italic(true).
+					Foreground(lipgloss.Color("243"))
+
+	RefreshRateBoldStyle = lipgloss.NewStyle().
+				Bold(true)
+
+	// Scale selector styles
+	MutedItalicStyle = lipgloss.NewStyle().
+				Italic(true).
+				Foreground(lipgloss.Color("243"))
+
+	CustomInputLabelStyle = lipgloss.NewStyle().
+				Margin(1, 0, 0, 0)
+)
