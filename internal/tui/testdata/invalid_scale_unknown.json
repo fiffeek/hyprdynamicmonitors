@@ -1,0 +1,59 @@
+[
+  {
+    "activeWorkspace": {
+      "id": 20,
+      "name": "20"
+    },
+    "activelyTearing": false,
+    "availableModes": [
+      "1920x1080@0.06Hz"
+    ],
+    "currentFormat": "XRGB8888",
+    "description": "",
+    "directScanoutBlockedBy": [
+      "USER",
+      "CANDIDATE"
+    ],
+    "directScanoutTo": "0",
+    "disabled": false,
+    "dpmsStatus": true,
+    "focused": false,
+    "height": 1328,
+    "id": 1,
+    "make": "",
+    "mirrorOf": "none",
+    "model": "",
+    "name": "HEADLESS-2",
+    "physicalHeight": 0,
+    "physicalWidth": 0,
+    "refreshRate": 60.0,
+    "reserved": [
+      0,
+      24,
+      640,
+      480
+    ],
+    "scale": 1.32,
+    "serial": "",
+    "solitary": "0",
+    "solitaryBlockedBy": [
+      "WINDOWED",
+      "CANDIDATE"
+    ],
+    "specialWorkspace": {
+      "id": 0,
+      "name": ""
+    },
+    "tearingBlockedBy": [
+      "NOT_TORN",
+      "USER",
+      "SUPPORT",
+      "CANDIDATE"
+    ],
+    "transform": 0,
+    "vrr": false,
+    "width": 1328,
+    "x": 2680,
+    "y": 0
+  }
+]

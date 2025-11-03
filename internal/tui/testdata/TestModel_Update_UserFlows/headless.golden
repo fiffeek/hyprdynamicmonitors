@@ -15,7 +15,7 @@
 │                                                   ││┃     applies)                                                                                          │ 
 │                                                   ││┃   7 # and leave the markers.                                                                          │ 
 │                                                   ││┃   8 # <<<<< TUI AUTO START                                                                            │ 
-│                                                   ││┃   9 monitor=HEADLESS-2,1920x1080@0.06000,2680x0,1.00,transform,0,vrr,0                                │ 
+│                                                   ││┃   9 monitor=HEADLESS-2,1920x1080@0.06000,2680x0,1.00000000,transform,0,vrr,0                          │ 
 │                                                   ││┃  10 # <<<<< TUI AUTO END                                                                              │ 
 │                                                   ││┃  11                                                                                                   │ 
 │                                                   ││┃                                                                                                       │ 

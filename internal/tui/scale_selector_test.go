@@ -25,8 +25,11 @@ func TestScaleSelector_Update(t *testing.T) {
 		{
 			name: "MonitorBeingEdited sets selectedMonitorIndex",
 			setupMonitor: &tui.MonitorSpec{
-				ID:    utils.IntPtr(1),
-				Scale: 1.5,
+				ID:               utils.IntPtr(1),
+				Width:            1920,
+				Height:           1080,
+				Scale:            1.5,
+				ValidScalesCache: make(map[float64]struct{}),
 			},
 			message:            tui.MonitorBeingEdited{MonitorID: 42, ListIndex: 3},
 			expectedScale:      1.5,
@@ -36,8 +39,11 @@ func TestScaleSelector_Update(t *testing.T) {
 		{
 			name: "MonitorUnselected resets selectedMonitorIndex",
 			setupMonitor: &tui.MonitorSpec{
-				ID:    utils.IntPtr(1),
-				Scale: 2.0,
+				ID:               utils.IntPtr(1),
+				Width:            1920,
+				Height:           1080,
+				Scale:            2.0,
+				ValidScalesCache: make(map[float64]struct{}),
 			},
 			message:            tui.MonitorUnselected{},
 			expectedScale:      2.0,
@@ -47,30 +53,39 @@ func TestScaleSelector_Update(t *testing.T) {
 		{
 			name: "Up key increases scale and sends preview command",
 			setupMonitor: &tui.MonitorSpec{
-				ID:    utils.IntPtr(5),
-				Scale: 1.0,
+				ID:               utils.IntPtr(5),
+				Width:            1920,
+				Height:           1080,
+				Scale:            1.0,
+				ValidScalesCache: make(map[float64]struct{}),
 			},
 			message:         tea.KeyMsg{Type: tea.KeyUp},
-			expectedScale:   1.01,
+			expectedScale:   1.2, // Nearest valid scale for 1920x1080 above 1.0
 			expectedCmd:     true,
-			expectedCmdType: tui.PreviewScaleMonitorCommand{},
+			expectedCmdType: nil, // Returns BatchMsg with multiple commands
 		},
 		{
 			name: "Down key decreases scale and sends preview command",
 			setupMonitor: &tui.MonitorSpec{
-				ID:    utils.IntPtr(7),
-				Scale: 1.5,
+				ID:               utils.IntPtr(7),
+				Width:            1920,
+				Height:           1080,
+				Scale:            1.5,
+				ValidScalesCache: make(map[float64]struct{}),
 			},
 			message:         tea.KeyMsg{Type: tea.KeyDown},
-			expectedScale:   1.49,
+			expectedScale:   1.3333333333333333, // Nearest valid scale for 1920x1080 below 1.5
 			expectedCmd:     true,
-			expectedCmdType: tui.PreviewScaleMonitorCommand{},
+			expectedCmdType: nil, // Returns BatchMsg with multiple commands
 		},
 		{
 			name: "Enter key sends scale command",
 			setupMonitor: &tui.MonitorSpec{
-				ID:    utils.IntPtr(6),
-				Scale: 1.25,
+				ID:               utils.IntPtr(6),
+				Width:            1920,
+				Height:           1080,
+				Scale:            1.25,
+				ValidScalesCache: make(map[float64]struct{}),
 			},
 			message:         tea.KeyMsg{Type: tea.KeyEnter},
 			expectedScale:   1.25,
@@ -80,8 +95,11 @@ func TestScaleSelector_Update(t *testing.T) {
 		{
 			name: "Scale cannot go below minimum",
 			setupMonitor: &tui.MonitorSpec{
-				ID:    utils.IntPtr(9),
-				Scale: 0.1,
+				ID:               utils.IntPtr(9),
+				Width:            1920,
+				Height:           1080,
+				Scale:            0.1,
+				ValidScalesCache: make(map[float64]struct{}),
 			},
 			message:       tea.KeyMsg{Type: tea.KeyDown},
 			expectedScale: 0.1,
@@ -90,8 +108,11 @@ func TestScaleSelector_Update(t *testing.T) {
 		{
 			name: "Scale cannot go above maximum",
 			setupMonitor: &tui.MonitorSpec{
-				ID:    utils.IntPtr(10),
-				Scale: 10.0,
+				ID:               utils.IntPtr(10),
+				Width:            1920,
+				Height:           1080,
+				Scale:            10.0,
+				ValidScalesCache: make(map[float64]struct{}),
 			},
 			message:       tea.KeyMsg{Type: tea.KeyUp},
 			expectedScale: 10.0,
@@ -130,7 +151,13 @@ func TestScaleSelector_Update(t *testing.T) {
 }
 
 func TestScaleSelector_AcceleratedScaling(t *testing.T) {
-	monitor := &tui.MonitorSpec{ID: utils.IntPtr(1), Scale: 1.0}
+	monitor := &tui.MonitorSpec{
+		ID:               utils.IntPtr(1),
+		Width:            1920,
+		Height:           1080,
+		Scale:            1.0,
+		ValidScalesCache: make(map[float64]struct{}),
+	}
 	selector := tui.NewScaleSelector()
 	selector.Set(monitor)
 
@@ -138,5 +165,9 @@ func TestScaleSelector_AcceleratedScaling(t *testing.T) {
 	selector.Update(tea.KeyMsg{Type: tea.KeyUp})
 	time.Sleep(50 * time.Millisecond)
 	selector.Update(tea.KeyMsg{Type: tea.KeyUp})
-	assert.InDelta(t, 1.04, selector.GetCurrentScale(), 0.001)
+	// With scale snapping enabled, successive increments will snap to nearest valid scales:
+	// 1.0 -> 1.005 snaps to 1.2
+	// 1.2 -> 1.205 snaps to 1.25
+	// 1.25 -> 1.26 (with 2x multiplier) snaps to 1.333...
+	assert.InDelta(t, 1.3333333333333333, selector.GetCurrentScale(), 0.01)
 }

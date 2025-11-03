@@ -119,7 +119,12 @@ func (e *MonitorEditorStore) ScaleMonitor(monitorID int, newScale float64) tea.C
 		monitor.Scale = newScale
 	}
 
-	return OperationStatusCmd(OperationNameScale, err)
+	ok := monitor.LogicalSizeFractional(monitor.Scale)
+	if ok {
+		return OperationStatusCmd(OperationNameScale, errors.New("fractional scale"))
+	}
+
+	return OperationStatusCmd(OperationNameScale, nil)
 }
 
 func (e *MonitorEditorStore) RotateMonitor(monitorID int) tea.Cmd {

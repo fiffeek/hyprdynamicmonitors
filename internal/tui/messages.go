@@ -117,6 +117,7 @@ const (
 	OperationNameHydrate
 	OperationNameReloadHyprDestination
 	OperationNameFlipMonitor
+	OperationNameFindClosestScale
 )
 
 type OperationStatus struct {
@@ -174,6 +175,8 @@ func (o OperationStatus) String() string {
 		operationName = "Reload Hypr Destination"
 	case OperationNameFlipMonitor:
 		operationName = "Flip Monitor"
+	case OperationNameFindClosestScale:
+		operationName = "Find Closest Valid Scale"
 	default:
 		operationName = "Operation"
 	}

@@ -20,6 +20,22 @@ func Test__Types_Back_Forth(t *testing.T) {
 		validate func(*hypr.MonitorSpec)
 	}{
 		{
+			name:    "finds valid scale",
+			fixture: "invalid_scale_unknown.json",
+			after:   func(mon *tui.MonitorSpec) {},
+			validate: func(mon *hypr.MonitorSpec) {
+				assert.Equal(t, 1.328, mon.Scale, "scale is adjusted")
+			},
+		},
+		{
+			name:    "finds valid scale",
+			fixture: "invalid_scale.json",
+			after:   func(mon *tui.MonitorSpec) {},
+			validate: func(mon *hypr.MonitorSpec) {
+				assert.Equal(t, 1.125, mon.Scale, "scale is adjusted")
+			},
+		},
+		{
 			name:    "flip to no flip",
 			fixture: "flipped.json",
 			after: func(mon *tui.MonitorSpec) {
