@@ -3,6 +3,7 @@ package tui
 import (
 	"errors"
 	"fmt"
+	"regexp"
 
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
@@ -65,6 +66,28 @@ func (p *ProfileNamePicker) SetHeight(height int) {
 	p.height = height
 }
 
+// validateProfileName validates the profile name
+func validateProfileName(name string) error {
+	if name == "" {
+		return errors.New("profile name cannot be empty")
+	}
+
+	if len(name) > 50 {
+		return errors.New("profile name must be 50 characters or less")
+	}
+
+	if (name[0] < 'a' || name[0] > 'z') && (name[0] < 'A' || name[0] > 'Z') {
+		return errors.New("profile name must start with a letter")
+	}
+
+	validName := regexp.MustCompile(`^[a-zA-Z][a-zA-Z0-9_-]*$`)
+	if !validName.MatchString(name) {
+		return errors.New("profile name can only contain letters, numbers, hyphens, and underscores")
+	}
+
+	return nil
+}
+
 func (p *ProfileNamePicker) Update(msg tea.Msg) tea.Cmd {
 	cmds := []tea.Cmd{}
 	// nolint:gocritic
@@ -75,10 +98,8 @@ func (p *ProfileNamePicker) Update(msg tea.Msg) tea.Cmd {
 			cmds = append(cmds, profileNameToogled())
 		case key.Matches(msg, p.keyMap.Create):
 			text := p.textInput.Value()
-			// todo validate profile name, no spaces etc, check other profiles here from cfg
-			if text == "" {
-				cmds = append(cmds, OperationStatusCmd(OperationNameCreateProfile,
-					errors.New("cant create empty name profile")))
+			if err := validateProfileName(text); err != nil {
+				cmds = append(cmds, OperationStatusCmd(OperationNameCreateProfile, err))
 			} else {
 				p.textInput.SetValue("")
 				logrus.Debugf("Setting name to: %s", text)
