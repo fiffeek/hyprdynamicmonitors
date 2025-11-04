@@ -279,6 +279,7 @@ record/previews: build/docs
 	$(MAKE) record/preview RECORD_TARGET=edit_existing
 	$(MAKE) record/preview RECORD_TARGET=color
 	$(MAKE) record/preview RECORD_TARGET=render_edit
+	$(MAKE) record/preview RECORD_TARGET=adhoc
 
 docs:
 	@cd ./docs && npm run start
