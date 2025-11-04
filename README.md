@@ -36,6 +36,15 @@ An event-driven service with an interactive TUI that automatically manages Hyprl
 
 </details>
 
+<details>
+<summary>Dynamic Profile Modes depending on the user context</summary>
+
+A full guide is available at [Dynamic Profile Modes](https://fiffeek.github.io/hyprdynamicmonitors/docs/guides/ad-hoc).
+
+![Dynamic Profile Modes](./preview/output/ad-hoc.gif)
+
+</details>
+
 ## Table Of Contents
 
 <!--ts-->
@@ -128,6 +137,7 @@ Key topics:
 | [FAQ](https://fiffeek.github.io/hyprdynamicmonitors/docs/faq) | Common questions |
 | [Power Events](https://fiffeek.github.io/hyprdynamicmonitors/docs/guides/power-events) | Guide to running with Power Events |
 | [Lid Events](https://fiffeek.github.io/hyprdynamicmonitors/docs/guides/lid-events) | Guide to running with Lid Events |
+| [Dynamic Profile Modes](https://fiffeek.github.io/hyprdynamicmonitors/docs/guides/ad-hoc) | Guide to making dynamic profile modes |
 
 ## Examples
 
