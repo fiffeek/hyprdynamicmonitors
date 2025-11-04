@@ -796,9 +796,13 @@ func TestModel_Update_UserFlows(t *testing.T) {
 					validateSideEffects: func(cfg *config.Config) {
 						require.NoError(t, cfg.Reload())
 						raw := cfg.Get()
+						profile, exists := raw.Profiles["h"]
+						require.True(t, exists, "profile 'h' should exist")
+						require.NotNil(t, profile, "profile 'h' should not be nil")
+						require.NotNil(t, profile.Conditions, "profile 'h' conditions should not be nil")
 						assert.Equal(t, []*config.RequiredMonitor{
 							{Name: utils.JustPtr("HEADLESS-2"), MonitorTag: utils.JustPtr("monitor1")},
-						}, raw.Profiles["h"].Conditions.RequiredMonitors)
+						}, profile.Conditions.RequiredMonitors)
 					},
 				},
 				// mimic config reload send event
@@ -834,12 +838,16 @@ func TestModel_Update_UserFlows(t *testing.T) {
 					validateSideEffects: func(cfg *config.Config) {
 						require.NoError(t, cfg.Reload())
 						raw := cfg.Get()
+						profile, exists := raw.Profiles["h"]
+						require.True(t, exists, "profile 'h' should exist")
+						require.NotNil(t, profile, "profile 'h' should not be nil")
+						require.NotNil(t, profile.Conditions, "profile 'h' conditions should not be nil")
 						assert.Equal(t, []*config.RequiredMonitor{
 							{Description: utils.JustPtr("BOE NE135A1M-NY1"), MonitorTag: utils.JustPtr("monitor0")},
 							{Description: utils.JustPtr("Dell Inc. DELL U2723QE 5YNK3H3"), MonitorTag: utils.JustPtr("monitor1")},
 							{Description: utils.JustPtr("Samsung Electric Company C27F390 HTHK500315"), MonitorTag: utils.JustPtr("monitor2")},
 							{Description: utils.JustPtr("Headless Virtual Display"), MonitorTag: utils.JustPtr("monitor3")},
-						}, raw.Profiles["h"].Conditions.RequiredMonitors)
+						}, profile.Conditions.RequiredMonitors)
 					},
 				},
 				// mimic config reload send event
