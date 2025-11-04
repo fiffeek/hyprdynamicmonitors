@@ -1,0 +1,45 @@
+ HyprDynamicMonitors [v. test-version]  Monitors  Profile                                                                                                       
+╭───────────────────────────────────────────────────╮╭────────────────────────────────────────────────────────────────────────────────────────────────────────╮ 
+│HyprDynamicMonitors Profile                        ││No profile config                                                                                       │ 
+│                                                   ││                                                                                                        │ 
+│No Matching Profile                                ││                                                                                                        │ 
+│                                                   ││                                                                                                        │ 
+│No configuration profile matches the current       ││                                                                                                        │ 
+│monitor setup.                                     ││                                                                                                        │ 
+│                                                   ││                                                                                                        │ 
+│                                                   ││                                                                                                        │ 
+│Press 'n' to create a new profile                  ││                                                                                                        │ 
+│                                                   ││                                                                                                        │ 
+│                                                   ││                                                                                                        │ 
+│                                                   ││                                                                                                        │ 
+│                                                   ││                                                                                                        │ 
+│                                                   ││                                                                                                        │ 
+│                                                   ││                                                                                                        │ 
+│                                                   ││                                                                                                        │ 
+│                                                   ││                                                                                                        │ 
+│                                                   ││                                                                                                        │ 
+│                                                   ││                                                                                                        │ 
+│                                                   │╰────────────────────────────────────────────────────────────────────────────────────────────────────────╯ 
+│                                                   │╭────────────────────────────────────────────────────────────────────────────────────────────────────────╮ 
+│                                                   ││Generated hypr config preview                                                                           │ 
+│                                                   ││target.conf                                                                                             │ 
+│                                                   ││                                                                                                        │ 
+│                                                   ││Are you running the daemon?                                                                             │ 
+│  n new profile • a apply monitors to existing     ││See: https://hyprdynamicmonitors.filipmikina.com/docs/quickstart/setup-approaches                       │ 
+│  profile • e edit manually • R render profile to  ││                                                                                                        │ 
+│  config.general.destination                       ││Alternatively, run the generation once: `hyprdynamicmonitors run --run-once`                            │ 
+╰───────────────────────────────────────────────────╯│                                                                                                        │ 
+╭───────────────────────────────────────────────────╮│                                                                                                        │ 
+│Type the profile name                              ││                                                                                                        │ 
+│                                                   ││                                                                                                        │ 
+│> CE                                               ││                                                                                                        │ 
+│                                                   ││                                                                                                        │ 
+│                                                   ││                                                                                                        │ 
+│                                                   ││                                                                                                        │ 
+│                                                   ││                                                                                                        │ 
+│                                                   ││                                                                                                        │ 
+│                                                   ││                                                                                                        │ 
+│enter create profile • esc return/back             ││                                                                                                        │ 
+╰───────────────────────────────────────────────────╯╰────────────────────────────────────────────────────────────────────────────────────────────────────────╯ 
+  tab switch view • C edit HyprDynamicMonitors config • E edit hypr generated config (ephemeral)                                                                
+                                                                                                                                                                

@@ -727,6 +727,31 @@ func TestModel_Update_UserFlows(t *testing.T) {
 		},
 
 		{
+			name:         "new_profile_name_problem",
+			monitorsData: defaultMonitorData,
+			runFor:       utils.JustPtr(500 * time.Millisecond),
+			cfg:          testutils.NewTestConfig(t).Get(),
+			steps: []step{
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyTab},
+					expectOutputToContain: "No Matching Profile",
+				},
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'n'}},
+					expectOutputToContain: "Type the profile name",
+				},
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'C'}},
+					expectOutputToContain: "C",
+				},
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'E'}},
+					expectOutputToContain: "CE",
+				},
+			},
+		},
+
+		{
 			name:         "new_profile_name_open",
 			monitorsData: defaultMonitorData,
 			runFor:       utils.JustPtr(500 * time.Millisecond),
