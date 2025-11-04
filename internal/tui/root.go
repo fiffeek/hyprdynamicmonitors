@@ -448,9 +448,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case tea.KeyMsg:
 			switch {
 			case key.Matches(msg, m.keys.EditHDMConfig):
-				cmds = append(cmds, openEditor(m.config.Get().ConfigPath))
+				if !m.rootState.State.ProfileNameRequested {
+					cmds = append(cmds, openEditor(m.config.Get().ConfigPath))
+				}
 			case key.Matches(msg, m.keys.EditHyprGeneratedConfig):
-				cmds = append(cmds, openEditor(*m.config.Get().General.Destination))
+				if !m.rootState.State.ProfileNameRequested {
+					cmds = append(cmds, openEditor(*m.config.Get().General.Destination))
+				}
 			}
 		}
 	}
