@@ -2,7 +2,7 @@
 sidebar_position: 2
 ---
 
-# Running with power events
+# Running with Power Events
 
 ## What are power events?
 
@@ -126,6 +126,10 @@ If you only want to switch profiles based on connected monitors (not power state
 ```bash
 hyprdynamicmonitors run --disable-power-events
 ```
+
+## Using power events
+
+You can use them in [profile matching criteria](../configuration/profiles.md#profile-structure) and in [your templates](../advanced/templates.md#template-functions).
 
 ---
 
