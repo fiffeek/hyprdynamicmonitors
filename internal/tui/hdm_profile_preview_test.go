@@ -81,7 +81,7 @@ func TestHDMProfilePreview_Update(t *testing.T) {
 			assert.Equal(t, tt.expectedLidState, preview.GetLidState())
 
 			if tt.expectProfileReset {
-				assert.Equal(t, cfgProfile, preview.GetProfile())
+				assert.Equal(t, cfgProfile, preview.GetProfile().Profile)
 				assert.Equal(t, content, preview.GetText())
 			} else {
 				assert.Equal(t, oldProfile, preview.GetProfile())

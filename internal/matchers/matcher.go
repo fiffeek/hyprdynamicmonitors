@@ -7,6 +7,7 @@ import (
 	"github.com/fiffeek/hyprdynamicmonitors/internal/config"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/hypr"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/power"
+	"github.com/sirupsen/logrus"
 )
 
 type Matcher struct{}
@@ -17,8 +18,9 @@ func NewMatcher() *Matcher {
 
 func (m *Matcher) Match(cfg *config.RawConfig, connectedMonitors []*hypr.MonitorSpec,
 	powerState power.PowerState, lidState power.LidState,
-) (bool, *config.Profile, error) {
+) (bool, *MatchedProfile, error) {
 	score := make(map[string]int)
+	profileRules := make(map[string]map[int]*config.RequiredMonitor)
 	profiles := cfg.Profiles
 	ok, fallbackProfile := m.returnNoneOrFallback(cfg)
 	for name := range profiles {
@@ -28,7 +30,10 @@ func (m *Matcher) Match(cfg *config.RawConfig, connectedMonitors []*hypr.Monitor
 	for name, profile := range profiles {
 		conditions := profile.Conditions
 		fullMatchScore := m.calcFullProfileScore(cfg, conditions)
-		score[name] = m.scoreProfile(cfg, conditions, powerState, lidState, connectedMonitors)
+		profileScore, profileRule := m.scoreProfile(cfg, conditions, powerState, lidState, connectedMonitors)
+		score[name] = profileScore
+		profileRules[name] = profileRule
+		logrus.Debugf("Profile %s score %d, full match %d", name, score[name], fullMatchScore)
 
 		// if there is a partial match discard the config
 		if fullMatchScore != score[name] {
@@ -43,7 +48,7 @@ func (m *Matcher) Match(cfg *config.RawConfig, connectedMonitors []*hypr.Monitor
 
 	// when nothing scored > 0 then no config matches
 	if bestScore == 0 {
-		return ok, fallbackProfile, nil
+		return ok, NewFallbackProfile(fallbackProfile), nil
 	}
 
 	// match from the last entry in the toml config
@@ -52,10 +57,10 @@ func (m *Matcher) Match(cfg *config.RawConfig, connectedMonitors []*hypr.Monitor
 	for _, name := range ascProfiles {
 		profile := cfg.Profiles[name]
 		if score[name] == bestScore {
-			return true, profile, nil
+			return true, NewMatchedProfile(profile, profileRules[name]), nil
 		}
 	}
-	return ok, fallbackProfile, nil
+	return ok, NewFallbackProfile(fallbackProfile), nil
 }
 
 func (m *Matcher) returnNoneOrFallback(cfg *config.RawConfig) (bool, *config.Profile) {
@@ -67,7 +72,8 @@ func (m *Matcher) returnNoneOrFallback(cfg *config.RawConfig) (bool, *config.Pro
 
 func (m *Matcher) scoreProfile(cfg *config.RawConfig, conditions *config.ProfileCondition,
 	powerState power.PowerState, lidState power.LidState, connectedMonitors []*hypr.MonitorSpec,
-) int {
+) (int, map[int]*config.RequiredMonitor) {
+	monitorToRule := make(map[int]*config.RequiredMonitor)
 	profileScore := 0
 	if conditions.PowerState != nil && conditions.PowerState.Value() == powerState.String() {
 		profileScore += *cfg.Scoring.PowerStateMatch
@@ -77,24 +83,66 @@ func (m *Matcher) scoreProfile(cfg *config.RawConfig, conditions *config.Profile
 		profileScore += *cfg.Scoring.LidStateMatch
 	}
 
+	usedMonitors := map[int]bool{}
+	for _, connectedMonitor := range connectedMonitors {
+		usedMonitors[*connectedMonitor.ID] = false
+	}
+
+	// one rule will match at best with one monitor
 	for _, condition := range conditions.RequiredMonitors {
+		// find best monitor match in terms of scoring
+		bestScore, bestMonitor := 0, -1
+
+		// iterate over all the monitors, excluding the already matched
 		for _, connectedMonitor := range connectedMonitors {
-			// if both are defined but there is a mismatch on either then skip
-			if condition.Name != nil && condition.Description != nil &&
-				(*condition.Name != connectedMonitor.Name ||
-					*condition.Description != connectedMonitor.Description) {
+			// if the monitor was matched by any other rule, skip
+			if usedMonitors[*connectedMonitor.ID] {
+				logrus.WithFields(logrus.Fields{"monitor_id": *connectedMonitor.ID}).Debug(
+					"Monitor already matched to another rule")
 				continue
 			}
-			if condition.Name != nil && *condition.Name == connectedMonitor.Name {
-				profileScore += *cfg.Scoring.NameMatch
+
+			// if both are defined but there is a mismatch on either then skip
+			if condition.HasName() && condition.HasDescription() &&
+				(!condition.MatchName(connectedMonitor.Name) ||
+					!condition.MatchDescription(connectedMonitor.Description)) {
+				logrus.WithFields(logrus.Fields{"monitor_id": *connectedMonitor.ID}).Debug(
+					"Monitor mismatches on description or name but both are required")
+				continue
 			}
-			if condition.Description != nil && *condition.Description == connectedMonitor.Description {
-				profileScore += *cfg.Scoring.DescriptionMatch
+
+			logrus.WithFields(logrus.Fields{"monitor_id": *connectedMonitor.ID}).Debug("Matching monitor with rule")
+
+			score := 0
+			if condition.HasName() && condition.MatchName(connectedMonitor.Name) {
+				score += *cfg.Scoring.NameMatch
+				logrus.WithFields(logrus.Fields{
+					"monitor_id":   *connectedMonitor.ID,
+					"monitor_name": connectedMonitor.Name, "rule": *condition.Name,
+				}).Debug("Name matches")
 			}
+			if condition.HasDescription() && condition.MatchDescription(connectedMonitor.Description) {
+				score += *cfg.Scoring.DescriptionMatch
+				logrus.WithFields(logrus.Fields{
+					"monitor_id":   *connectedMonitor.ID,
+					"monitor_name": connectedMonitor.Name, "rule": *condition.Description,
+				}).Debug("Description matches")
+			}
+
+			if score > bestScore {
+				bestScore = score
+				bestMonitor = *connectedMonitor.ID
+			}
+		}
+
+		if bestScore > 0 {
+			profileScore += bestScore
+			usedMonitors[bestMonitor] = true
+			monitorToRule[bestMonitor] = condition
 		}
 	}
 
-	return profileScore
+	return profileScore, monitorToRule
 }
 
 func (m *Matcher) calcFullProfileScore(cfg *config.RawConfig, conditions *config.ProfileCondition) int {
@@ -108,10 +156,10 @@ func (m *Matcher) calcFullProfileScore(cfg *config.RawConfig, conditions *config
 	}
 
 	for _, condition := range conditions.RequiredMonitors {
-		if condition.Name != nil {
+		if condition.HasName() {
 			fullMatchScore += *cfg.Scoring.NameMatch
 		}
-		if condition.Description != nil {
+		if condition.HasDescription() {
 			fullMatchScore += *cfg.Scoring.DescriptionMatch
 		}
 	}

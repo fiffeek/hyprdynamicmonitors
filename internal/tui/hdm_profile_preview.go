@@ -18,7 +18,7 @@ type HDMProfilePreview struct {
 	cfg              *config.Config
 	matcher          *matchers.Matcher
 	pulled           bool
-	profile          *config.Profile
+	profile          *matchers.MatchedProfile
 	monitors         []*MonitorSpec
 	textarea         textarea.Model
 	height           int
@@ -84,12 +84,14 @@ func (h *HDMProfilePreview) Update(msg tea.Msg) tea.Cmd {
 		if err != nil {
 			cmds = append(cmds, OperationStatusCmd(OperationNameMatchingProfile, err))
 		} else {
-			_, profile, err := h.matcher.Match(h.cfg.Get(), mons, h.powerState, h.lidState)
+			ok, profile, err := h.matcher.Match(h.cfg.Get(), mons, h.powerState, h.lidState)
 			cmds = append(cmds, OperationStatusCmd(OperationNameMatchingProfile, err))
-			h.profile = profile
+			if ok {
+				h.profile = profile
+			}
 		}
 		if h.profile != nil {
-			contents, err := os.ReadFile(h.profile.ConfigFile)
+			contents, err := os.ReadFile(h.profile.Profile.ConfigFile)
 			text := "Can't pull config"
 			if err == nil {
 				text = string(contents)
@@ -112,14 +114,14 @@ func (h *HDMProfilePreview) View() string {
 	availableHeight := h.height
 
 	title := TitleStyle.Margin(0, 0, 0, 0).Render(
-		fmt.Sprintf("Profile Config Preview (%s)", h.profile.ConfigType.Value()))
+		fmt.Sprintf("Profile Config Preview (%s)", h.profile.Profile.ConfigType.Value()))
 	availableHeight -= lipgloss.Height(title)
 	sections = append(sections, title)
 
 	// if running under test then just show the filename.
 	// Since all configs are generated in tmp with random prefix directories,
 	// it is easier to compare golden fixtures this way.
-	configFile := h.profile.ConfigFile
+	configFile := h.profile.Profile.ConfigFile
 	if h.runningUnderTest {
 		configFile = filepath.Base(configFile)
 	}
@@ -143,7 +145,7 @@ func (h *HDMProfilePreview) GetLidState() power.LidState {
 	return h.lidState
 }
 
-func (h *HDMProfilePreview) GetProfile() *config.Profile {
+func (h *HDMProfilePreview) GetProfile() *matchers.MatchedProfile {
 	return h.profile
 }
 

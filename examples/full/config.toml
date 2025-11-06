@@ -266,3 +266,18 @@ monitor_tag = "laptop"
 # Generic match for various projectors/presentation displays
 description = "Projector" # Or match specific projector model
 monitor_tag = "projector"
+
+# Profile: Match by regex
+[profiles.regex]
+config_file = "hyprconfigs/regex.conf.tmpl"
+config_file_type = "template"
+
+[[profiles.regex.conditions.required_monitors]]
+name = "eDP.*"
+monitor_tag = "laptop"
+match_name_using_regex = true
+
+[[profiles.regex.conditions.required_monitors]]
+description = "LG.*"
+monitor_tag = "external"
+match_description_using_regex = true

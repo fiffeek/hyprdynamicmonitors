@@ -36,7 +36,7 @@ type HDMConfigPane struct {
 	matcher       *matchers.Matcher
 	monitors      []*MonitorSpec
 	keymap        *hdmKeyMap
-	profile       *config.Profile
+	profile       *matchers.MatchedProfile
 	pulledProfile bool
 	help          help.Model
 	height        int
@@ -103,9 +103,11 @@ func (h *HDMConfigPane) Update(msg tea.Msg) tea.Cmd {
 		if err != nil {
 			cmds = append(cmds, OperationStatusCmd(OperationNameMatchingProfile, err))
 		} else {
-			_, profile, err := h.matcher.Match(h.cfg.Get(), mons, h.powerState, h.lidState)
+			ok, profile, err := h.matcher.Match(h.cfg.Get(), mons, h.powerState, h.lidState)
 			cmds = append(cmds, OperationStatusCmd(OperationNameMatchingProfile, err))
-			h.profile = profile
+			if ok {
+				h.profile = profile
+			}
 		}
 	}
 
@@ -120,9 +122,9 @@ func (h *HDMConfigPane) Update(msg tea.Msg) tea.Cmd {
 			cmds = append(cmds, profileNameToogled())
 		case key.Matches(msg, h.keymap.ApplyProfile):
 			logrus.Debug("Editing existing config")
-			cmds = append(cmds, editProfileConfirmationCmd(h.profile.Name))
+			cmds = append(cmds, editProfileConfirmationCmd(h.profile.Profile.Name))
 		case key.Matches(msg, h.keymap.EditorEdit):
-			cmds = append(cmds, openEditor(h.profile.ConfigFile))
+			cmds = append(cmds, openEditor(h.profile.Profile.ConfigFile))
 		case key.Matches(msg, h.keymap.RenderProfile):
 			cmds = append(cmds, RenderHDMConfigCmd(h.profile, h.lidState, h.powerState))
 		}
@@ -154,7 +156,7 @@ func (h *HDMConfigPane) View() string {
 	if h.profile == nil {
 		content = h.renderNoMatchingProfile()
 	} else {
-		content = h.renderMatchedProfile(h.profile)
+		content = h.renderMatchedProfile(h.profile.Profile)
 	}
 	availableHeight -= lipgloss.Height(content)
 	logrus.Debugf("Height of content: %d", lipgloss.Height(content))
@@ -324,6 +326,6 @@ func (h *HDMConfigPane) GetLidState() power.LidState {
 	return h.lidState
 }
 
-func (h *HDMConfigPane) GetProfile() *config.Profile {
+func (h *HDMConfigPane) GetProfile() *matchers.MatchedProfile {
 	return h.profile
 }

@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"slices"
 	"strings"
 	"sync"
@@ -278,9 +279,13 @@ type ProfileCondition struct {
 }
 
 type RequiredMonitor struct {
-	Name        *string `toml:"name"`
-	Description *string `toml:"description"`
-	MonitorTag  *string `toml:"monitor_tag"`
+	Name                       *string        `toml:"name"`
+	Description                *string        `toml:"description"`
+	MonitorTag                 *string        `toml:"monitor_tag"`
+	MatchDescriptionUsingRegex *bool          `toml:"match_description_using_regex"`
+	MatchNameUsingRegex        *bool          `toml:"match_name_using_regex"`
+	DescriptionRegex           *regexp.Regexp `toml:"-"`
+	NameRegex                  *regexp.Regexp `toml:"-"`
 }
 
 func Cond(cond, a *string, b string) string {
@@ -622,8 +627,60 @@ func (rm *RequiredMonitor) Validate() error {
 	if rm.Name == nil && rm.Description == nil {
 		return errors.New("at least one of name, or description must be specified")
 	}
+	if rm.MatchDescriptionUsingRegex == nil {
+		rm.MatchDescriptionUsingRegex = utils.JustPtr(false)
+	}
+	if rm.MatchNameUsingRegex == nil {
+		rm.MatchNameUsingRegex = utils.JustPtr(false)
+	}
+	if *rm.MatchDescriptionUsingRegex && rm.Description != nil {
+		r, err := regexp.Compile(*rm.Description)
+		if err != nil {
+			return fmt.Errorf("regex %s is not valid: %w", *rm.Description, err)
+		}
+		rm.DescriptionRegex = r
+	}
+	if *rm.MatchNameUsingRegex && rm.Name != nil {
+		r, err := regexp.Compile(*rm.Name)
+		if err != nil {
+			return fmt.Errorf("regex %s is not valid: %w", *rm.Name, err)
+		}
+		rm.NameRegex = r
+	}
 
 	return nil
+}
+
+func (rm *RequiredMonitor) MatchName(name string) bool {
+	if rm.Name == nil {
+		return false
+	}
+
+	if rm.MatchNameUsingRegex == nil || !*rm.MatchNameUsingRegex {
+		return name == *rm.Name
+	}
+
+	return rm.NameRegex.MatchString(name)
+}
+
+func (rm *RequiredMonitor) HasName() bool {
+	return rm.Name != nil
+}
+
+func (rm *RequiredMonitor) MatchDescription(desc string) bool {
+	if rm.Description == nil {
+		return false
+	}
+
+	if rm.MatchDescriptionUsingRegex == nil || !*rm.MatchDescriptionUsingRegex {
+		return desc == *rm.Description
+	}
+
+	return rm.DescriptionRegex.MatchString(desc)
+}
+
+func (rm *RequiredMonitor) HasDescription() bool {
+	return rm.Description != nil
 }
 
 func (ls *LidSection) Validate() error {

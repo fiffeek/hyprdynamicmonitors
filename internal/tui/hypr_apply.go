@@ -8,6 +8,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/config"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/generators"
+	"github.com/fiffeek/hyprdynamicmonitors/internal/matchers"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/power"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/profilemaker"
 	"github.com/sirupsen/logrus"
@@ -57,7 +58,7 @@ func (h *HyprApply) EditProfile(monitors []*MonitorSpec, name string) tea.Cmd {
 	return OperationStatusCmd(OperationNameEditProfile, err)
 }
 
-func (h *HyprApply) GenerateThroughHDM(cfg *config.Config, profile *config.Profile,
+func (h *HyprApply) GenerateThroughHDM(cfg *config.Config, profile *matchers.MatchedProfile,
 	monitors []*MonitorSpec, powerState power.PowerState, lidState power.LidState,
 ) tea.Cmd {
 	if profile == nil {

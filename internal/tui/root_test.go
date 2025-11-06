@@ -826,7 +826,12 @@ func TestModel_Update_UserFlows(t *testing.T) {
 						require.NotNil(t, profile, "profile 'h' should not be nil")
 						require.NotNil(t, profile.Conditions, "profile 'h' conditions should not be nil")
 						assert.Equal(t, []*config.RequiredMonitor{
-							{Name: utils.JustPtr("HEADLESS-2"), MonitorTag: utils.JustPtr("monitor1")},
+							{
+								Name:                       utils.JustPtr("HEADLESS-2"),
+								MonitorTag:                 utils.JustPtr("monitor1"),
+								MatchDescriptionUsingRegex: utils.JustPtr(false),
+								MatchNameUsingRegex:        utils.JustPtr(false),
+							},
 						}, profile.Conditions.RequiredMonitors)
 					},
 				},
@@ -868,10 +873,31 @@ func TestModel_Update_UserFlows(t *testing.T) {
 						require.NotNil(t, profile, "profile 'h' should not be nil")
 						require.NotNil(t, profile.Conditions, "profile 'h' conditions should not be nil")
 						assert.Equal(t, []*config.RequiredMonitor{
-							{Description: utils.JustPtr("BOE NE135A1M-NY1"), MonitorTag: utils.JustPtr("monitor0")},
-							{Description: utils.JustPtr("Dell Inc. DELL U2723QE 5YNK3H3"), MonitorTag: utils.JustPtr("monitor1")},
-							{Description: utils.JustPtr("Samsung Electric Company C27F390 HTHK500315"), MonitorTag: utils.JustPtr("monitor2")},
-							{Description: utils.JustPtr("Headless Virtual Display"), MonitorTag: utils.JustPtr("monitor3")},
+							{
+								Description:                utils.JustPtr("BOE NE135A1M-NY1"),
+								MonitorTag:                 utils.JustPtr("monitor0"),
+								MatchDescriptionUsingRegex: utils.JustPtr(false),
+								MatchNameUsingRegex:        utils.JustPtr(false),
+							},
+							{
+								Description:                utils.JustPtr("Dell Inc. DELL U2723QE 5YNK3H3"),
+								MonitorTag:                 utils.JustPtr("monitor1"),
+								MatchDescriptionUsingRegex: utils.JustPtr(false),
+								MatchNameUsingRegex:        utils.JustPtr(false),
+							},
+							{
+								Description: utils.JustPtr(
+									"Samsung Electric Company C27F390 HTHK500315"),
+								MonitorTag:                 utils.JustPtr("monitor2"),
+								MatchDescriptionUsingRegex: utils.JustPtr(false),
+								MatchNameUsingRegex:        utils.JustPtr(false),
+							},
+							{
+								Description:                utils.JustPtr("Headless Virtual Display"),
+								MonitorTag:                 utils.JustPtr("monitor3"),
+								MatchDescriptionUsingRegex: utils.JustPtr(false),
+								MatchNameUsingRegex:        utils.JustPtr(false),
+							},
 						}, profile.Conditions.RequiredMonitors)
 					},
 				},

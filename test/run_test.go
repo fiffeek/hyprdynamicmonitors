@@ -106,6 +106,39 @@ func Test__Run_Binary(t *testing.T) {
 		},
 
 		{
+			name:        "basic templating regex",
+			description: "when hypr returns the same monitors as defined in the configuration, the template should match the golden file with a regex",
+			config: createBasicTestConfig(t).WithProfiles(map[string]*config.Profile{
+				"both": {
+					ConfigType: utils.JustPtr(config.Template),
+					Conditions: &config.ProfileCondition{
+						RequiredMonitors: []*config.RequiredMonitor{
+							{
+								Name:                utils.StringPtr("eDP.*"),
+								MonitorTag:          utils.StringPtr("EDP"),
+								MatchNameUsingRegex: utils.JustPtr(true),
+							},
+							{
+								Description:                utils.JustPtr("LG.*"),
+								MonitorTag:                 utils.StringPtr("DP"),
+								MatchDescriptionUsingRegex: utils.JustPtr(true),
+							},
+						},
+					},
+				},
+			}).FillProfileConfigFile("both", "testdata/app/templates/basic.toml"),
+			hyprMonitorResponseFiles: []string{"testdata/hypr/server/basic_monitors.json"},
+			validateSideEffects: func(t *testing.T, cfg *config.RawConfig) {
+				testutils.AssertFileExists(t, *cfg.General.Destination)
+				compareWithFixture(t, *cfg.General.Destination,
+					"testdata/app/fixtures/basic_both_regex.conf")
+			},
+			disablePowerEvents: true,
+			disableHotReload:   true,
+			runOnce:            true,
+		},
+
+		{
 			name:        "headless templating",
 			description: "when hypr returns the headless monitors defined in the configuration, the template should match the golden file",
 			config: createBasicTestConfig(t).WithProfiles(map[string]*config.Profile{
@@ -553,12 +586,17 @@ func Test__Run_Binary(t *testing.T) {
 					PowerState: nil,
 					RequiredMonitors: []*config.RequiredMonitor{
 						{
-							Description: utils.StringPtr("BOE NE135A1M-NY1"),
-							MonitorTag:  utils.StringPtr("monitor0"),
+							Description:                utils.StringPtr("BOE NE135A1M-NY1"),
+							MonitorTag:                 utils.StringPtr("monitor0"),
+							MatchDescriptionUsingRegex: utils.JustPtr(false),
+							MatchNameUsingRegex:        utils.JustPtr(false),
 						},
 						{
-							Description: utils.StringPtr("LG Electronics LG SDQHD 301NTBKDU037"),
-							MonitorTag:  utils.StringPtr("monitor1"),
+							Description: utils.StringPtr(
+								"LG Electronics LG SDQHD 301NTBKDU037"),
+							MonitorTag:                 utils.StringPtr("monitor1"),
+							MatchDescriptionUsingRegex: utils.JustPtr(false),
+							MatchNameUsingRegex:        utils.JustPtr(false),
 						},
 					},
 				}, profile.Conditions)

@@ -193,7 +193,7 @@ func (s *Service) UpdateOnce(ctx context.Context) error {
 		"dry_run":       s.serviceConfig.DryRun,
 	}).Debug("Updating configuration")
 
-	found, profile, err := s.matcher.Match(cfg, monitors, powerState, lidState)
+	found, matchedProfile, err := s.matcher.Match(cfg, monitors, powerState, lidState)
 	if err != nil {
 		return fmt.Errorf("failed to match a profile %w", err)
 	}
@@ -204,9 +204,9 @@ func (s *Service) UpdateOnce(ctx context.Context) error {
 	}
 
 	profileFields := logrus.Fields{
-		"profile_name": profile.Name,
-		"config_file":  profile.ConfigFile,
-		"config_type":  profile.ConfigType.Value(),
+		"profile_name": matchedProfile.Profile.Name,
+		"config_file":  matchedProfile.Profile.ConfigFile,
+		"config_type":  matchedProfile.Profile.ConfigType.Value(),
 	}
 
 	if s.serviceConfig.DryRun {
@@ -217,10 +217,10 @@ func (s *Service) UpdateOnce(ctx context.Context) error {
 
 	logrus.WithFields(profileFields).Info("Using profile")
 
-	s.tryExec(ctx, profile.PreApplyExec, cfg.General.PreApplyExec, utils.PreExecLogID)
+	s.tryExec(ctx, matchedProfile.Profile.PreApplyExec, cfg.General.PreApplyExec, utils.PreExecLogID)
 
 	destination := *cfg.General.Destination
-	changed, err := s.generator.GenerateConfig(cfg, profile, monitors, powerState, lidState, destination)
+	changed, err := s.generator.GenerateConfig(cfg, matchedProfile, monitors, powerState, lidState, destination)
 	if err != nil {
 		return fmt.Errorf("failed to generate config: %w", err)
 	}
@@ -230,9 +230,9 @@ func (s *Service) UpdateOnce(ctx context.Context) error {
 		return nil
 	}
 
-	s.tryExec(ctx, profile.PostApplyExec, cfg.General.PostApplyExec, utils.PostExecLogID)
+	s.tryExec(ctx, matchedProfile.Profile.PostApplyExec, cfg.General.PostApplyExec, utils.PostExecLogID)
 
-	if err := s.notificationsService.NotifyProfileApplied(profile); err != nil {
+	if err := s.notificationsService.NotifyProfileApplied(matchedProfile.Profile); err != nil {
 		logrus.WithFields(profileFields).WithError(err).Error("swallowing notification error")
 	}
 

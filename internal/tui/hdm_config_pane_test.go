@@ -118,7 +118,7 @@ func TestHDMConfigPane_Update(t *testing.T) {
 			if tt.expectProfileReset {
 				profile := pane.GetProfile()
 				if profile != nil {
-					assert.Equal(t, cfg.Get().Profiles["test"], profile)
+					assert.Equal(t, cfg.Get().Profiles["test"], profile.Profile)
 				}
 			} else {
 				assert.Equal(t, oldProfile, pane.GetProfile())
