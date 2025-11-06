@@ -21,7 +21,7 @@ The configuration file is written in TOML and consists of several main sections:
 
 ### General Settings
 
-```toml
+```toml title="~/.config/hyprdynamicmonitors/config.toml"
 [general]
 destination = "$HOME/.config/hypr/monitors.conf"
 debounce_time_ms = 1500
@@ -38,7 +38,7 @@ See [Callbacks](./callbacks) for details on exec commands.
 
 ### Power Events
 
-```toml
+```toml title="~/.config/hyprdynamicmonitors/config.toml"
 [power_events]
 [power_events.dbus_query_object]
 path = "/org/freedesktop/UPower/devices/line_power_ACAD"
@@ -51,7 +51,7 @@ Power events monitor your system's power state (AC/Battery) via D-Bus. See [Powe
 
 ### Lid Events
 
-```toml
+```toml title="~/.config/hyprdynamicmonitors/config.toml"
 [lid_events]
 # custom config goes here, the defaults should work in most cases
 ```
@@ -60,7 +60,7 @@ Lid events monitor your system's lid state (Opened/Closed) via D-Bus. See [Lid E
 
 ### Profiles
 
-```toml
+```toml title="~/.config/hyprdynamicmonitors/config.toml"
 [profiles.laptop_only]
 config_file = "hyprconfigs/laptop.conf"
 config_file_type = "static"
@@ -78,7 +78,7 @@ See [Profiles](./profiles) for details.
 
 ### Notifications
 
-```toml
+```toml title="~/.config/hyprdynamicmonitors/config.toml"
 [notifications]
 disabled = false
 timeout_ms = 10000
@@ -88,7 +88,7 @@ Configure desktop notifications for configuration changes. See [Notifications](.
 
 ### Hot Reload
 
-```toml
+```toml title="~/.config/hyprdynamicmonitors/config.toml"
 [hot_reload_section]
 debounce_time_ms = 1000
 ```
@@ -97,7 +97,7 @@ Hot reload watches configuration files for changes and automatically reloads the
 
 ### Scoring
 
-```toml
+```toml title="~/.config/hyprdynamicmonitors/config.toml"
 [scoring]
 name_match = 10
 description_match = 5
@@ -115,7 +115,7 @@ See [Monitor Matching](./monitor-matching) for details on how profiles are selec
 
 ### Static Template Values
 
-```toml
+```toml title="~/.config/hyprdynamicmonitors/config.toml"
 [static_template_values]
 default_vrr = "1"
 default_res = "2880x1920"
@@ -125,7 +125,7 @@ Define global values that can be used in all templates. These can be overridden 
 
 ### Fallback Profile
 
-```toml
+```toml title="~/.config/hyprdynamicmonitors/config.toml"
 [fallback_profile]
 config_file = "hyprconfigs/fallback.conf"
 config_file_type = "static"

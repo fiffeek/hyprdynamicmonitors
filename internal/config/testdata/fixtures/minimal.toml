@@ -6,6 +6,8 @@ config_file_type = "static"
 
 [[profiles.minimal.conditions.required_monitors]]
 name = "eDP-1"
+match_description_using_regex = false
+match_name_using_regex = false
 
 [general]
 destination = "/.config/hypr/monitors.conf"

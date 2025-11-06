@@ -1,0 +1,11 @@
+{{- $laptop := index .MonitorsByTag "laptop" -}}
+{{- $external := index .MonitorsByTag "external" -}}
+
+# Yet another configuration matched by regexes
+{{- if $laptop }}
+monitor={{$laptop.Name}},2880x1920@60.00000,0x0,2.0
+{{- end }}
+
+{{- if $external }}
+monitor={{$external.Name}},2880x1920@60.00000,0x0,2.0
+{{- end }}

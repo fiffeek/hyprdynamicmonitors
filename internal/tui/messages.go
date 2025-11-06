@@ -7,7 +7,7 @@ import (
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/fiffeek/hyprdynamicmonitors/internal/config"
+	"github.com/fiffeek/hyprdynamicmonitors/internal/matchers"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/power"
 )
 
@@ -332,12 +332,12 @@ type CloseColorPickerCommand struct{}
 type CloseMonitorModeListCommand struct{}
 
 type RenderHDMConfigCommand struct {
-	profile    *config.Profile
+	profile    *matchers.MatchedProfile
 	lidState   power.LidState
 	powerState power.PowerState
 }
 
-func RenderHDMConfigCmd(profile *config.Profile, lidState power.LidState, powerState power.PowerState) tea.Cmd {
+func RenderHDMConfigCmd(profile *matchers.MatchedProfile, lidState power.LidState, powerState power.PowerState) tea.Cmd {
 	return func() tea.Msg {
 		return RenderHDMConfigCommand{
 			profile,

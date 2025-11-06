@@ -12,6 +12,7 @@ import (
 
 	"github.com/fiffeek/hyprdynamicmonitors/internal/config"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/hypr"
+	"github.com/fiffeek/hyprdynamicmonitors/internal/matchers"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/power"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/utils"
 	"github.com/sirupsen/logrus"
@@ -33,23 +34,23 @@ func NewConfigGenerator(cfg *config.Config) *ConfigGenerator {
 
 // GenerateConfig either renders a template or links a file, and returns if any changed were done
 // this includes stating the config files to catch if the user modified them by hand (in linking scenario)
-func (g *ConfigGenerator) GenerateConfig(cfg *config.RawConfig, profile *config.Profile,
+func (g *ConfigGenerator) GenerateConfig(cfg *config.RawConfig, profile *matchers.MatchedProfile,
 	connectedMonitors []*hypr.MonitorSpec, powerState power.PowerState, lidState power.LidState, destination string,
 ) (bool, error) {
-	switch *profile.ConfigType {
+	switch *profile.Profile.ConfigType {
 	case config.Static:
-		return g.linkConfigFile(profile, destination)
+		return g.linkConfigFile(profile.Profile, destination)
 	case config.Template:
 		return g.renderTemplateFile(cfg, profile, connectedMonitors, powerState, lidState, destination)
 	default:
-		return false, fmt.Errorf("unsupported config type: %v", *profile.ConfigType)
+		return false, fmt.Errorf("unsupported config type: %v", *profile.Profile.ConfigType)
 	}
 }
 
-func (g *ConfigGenerator) renderTemplateFile(cfg *config.RawConfig, profile *config.Profile,
+func (g *ConfigGenerator) renderTemplateFile(cfg *config.RawConfig, profile *matchers.MatchedProfile,
 	connectedMonitors []*hypr.MonitorSpec, powerState power.PowerState, lidState power.LidState, destination string,
 ) (bool, error) {
-	templatePath := profile.ConfigFile
+	templatePath := profile.Profile.ConfigFile
 
 	//nolint:gosec
 	templateContent, err := os.ReadFile(templatePath)
@@ -115,7 +116,7 @@ func getFuncMap(powerState power.PowerState, lidState power.LidState) template.F
 	return funcMap
 }
 
-func (g *ConfigGenerator) createTemplateData(cfg *config.RawConfig, profile *config.Profile,
+func (g *ConfigGenerator) createTemplateData(cfg *config.RawConfig, profile *matchers.MatchedProfile,
 	connectedMonitors []*hypr.MonitorSpec, powerState power.PowerState, lidState power.LidState,
 ) map[string]any {
 	data := make(map[string]any)
@@ -138,28 +139,22 @@ func (g *ConfigGenerator) createTemplateData(cfg *config.RawConfig, profile *con
 	monitorsByTag := make(map[string]*MonitorSpec)
 
 	for _, connectedMonitor := range monitorsStripped {
-		matchesAny := false
-		for _, requiredMonitor := range profile.Conditions.RequiredMonitors {
-			if !g.monitorMatches(requiredMonitor, connectedMonitor) {
-				continue
-			}
-			matchesAny = true
-			if requiredMonitor.MonitorTag != nil {
-				monitorsByTag[*requiredMonitor.MonitorTag] = connectedMonitor
-				logrus.WithFields(logrus.Fields{
-					"tag":         *requiredMonitor.MonitorTag,
-					"name":        connectedMonitor.Name,
-					"description": connectedMonitor.Description,
-				}).Debug("Mapped monitor tag")
-			}
-			break
+		requiredMonitor, ok := profile.MonitorToRule[*connectedMonitor.ID]
+		if !ok {
+			extraMonitors = append(extraMonitors, connectedMonitor)
+			continue
 		}
 
-		if !matchesAny {
-			extraMonitors = append(extraMonitors, connectedMonitor)
-		} else {
-			requiredMonitors = append(requiredMonitors, connectedMonitor)
+		if requiredMonitor.MonitorTag != nil {
+			monitorsByTag[*requiredMonitor.MonitorTag] = connectedMonitor
+			logrus.WithFields(logrus.Fields{
+				"tag":         *requiredMonitor.MonitorTag,
+				"name":        connectedMonitor.Name,
+				"description": connectedMonitor.Description,
+			}).Debug("Mapped monitor tag")
 		}
+
+		requiredMonitors = append(requiredMonitors, connectedMonitor)
 	}
 
 	data["ExtraMonitors"] = extraMonitors
@@ -199,7 +194,7 @@ func (g *ConfigGenerator) createTemplateData(cfg *config.RawConfig, profile *con
 	}
 
 	logrus.Debug("Adding profile defined values")
-	for key, value := range profile.StaticTemplateValues {
+	for key, value := range profile.Profile.StaticTemplateValues {
 		_, ok := data[key]
 		data[key] = value
 
@@ -214,16 +209,6 @@ func (g *ConfigGenerator) createTemplateData(cfg *config.RawConfig, profile *con
 	}
 
 	return data
-}
-
-func (g *ConfigGenerator) monitorMatches(required *config.RequiredMonitor, connected *MonitorSpec) bool {
-	if required.Name != nil && *required.Name != connected.Name {
-		return false
-	}
-	if required.Description != nil && *required.Description != connected.Description {
-		return false
-	}
-	return true
 }
 
 func (g *ConfigGenerator) linkConfigFile(profile *config.Profile, destination string) (bool, error) {

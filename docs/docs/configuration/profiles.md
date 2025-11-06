@@ -8,18 +8,22 @@ Profiles define different monitor configurations for different setups. Each prof
 
 ## Profile Structure
 
-```toml
+```toml title="~/.config/hyprdynamicmonitors/config.toml"
 [profiles.PROFILE_NAME]
-config_file = "path/to/config/file"
+config_file = "path/to/config/file" # can be absolute or relative to the config.toml file
 config_file_type = "static"  # or "template"
 
 [profiles.PROFILE_NAME.conditions]
-power_state = "AC"      # optional: "AC" or "BAT"
+power_state = "AC"      # optional: "AC" or "BAT" (requires --disable-power-events=false)
 lid_state = "Opened"    # optional: "Opened" or "Closed" (requires --enable-lid-events)
 
+# at least one required_monitor needs to be defined in a given profile
 [[profiles.PROFILE_NAME.conditions.required_monitors]]
-name = "eDP-1"
+name = "eDP-1"  # optional but one of description/name is required
+description = "LG" # optional but one of description/name is required
 monitor_tag = "laptop"  # optional
+match_description_using_regex = true # optional, defaults to false
+match_name_using_regex = true # optional, defaults to false
 ```
 
 ## Configuration File Types
@@ -28,7 +32,7 @@ monitor_tag = "laptop"  # optional
 
 Static configurations are plain Hyprland config files. The service creates a symlink to them.
 
-```toml
+```toml title="~/.config/hyprdynamicmonitors/config.toml"
 [profiles.laptop_only]
 config_file = "hyprconfigs/laptop.conf"
 config_file_type = "static"
@@ -43,7 +47,7 @@ monitor=eDP-1,2880x1920@120,0x0,2.0,vrr,1
 
 Templates use Go template syntax for dynamic configuration generation.
 
-```toml
+```toml title="~/.config/hyprdynamicmonitors/config.toml"
 [profiles.dual_monitor]
 config_file = "hyprconfigs/dual.go.tmpl"
 config_file_type = "template"
@@ -54,11 +58,12 @@ monitor_tag = "laptop"
 
 [[profiles.dual_monitor.conditions.required_monitors]]
 description = "LG.*ULTRAWIDE"
+match_description_using_regex = true
 monitor_tag = "external"
 ```
 
 **hyprconfigs/dual.go.tmpl:**
-```go
+```go title="~/.config/hyprdynamicmonitors/hyprconfigs/dual.go.tmpl"
 {{- $laptop := index .MonitorsByTag "laptop" -}}
 {{- $external := index .MonitorsByTag "external" -}}
 monitor={{$laptop.Name}},{{if isOnAC}}2880x1920@120{{else}}1920x1080@60{{end}},0x0,2.0
@@ -73,7 +78,7 @@ See [Templates](../advanced/templates) for details on template syntax and variab
 
 Each profile can require specific monitors to be connected. A profile matches when all its required monitors are present.
 
-```toml
+```toml title="~/.config/hyprdynamicmonitors/config.toml"
 # Single monitor
 [[profiles.laptop_only.conditions.required_monitors]]
 name = "eDP-1"
@@ -93,7 +98,7 @@ description = "LG 27UK850"
 
 You can restrict a profile to only match on specific power states:
 
-```toml
+```toml title="~/.config/hyprdynamicmonitors/config.toml"
 [profiles.performance_mode.conditions]
 power_state = "AC"  # Only match when plugged into AC power
 
@@ -118,7 +123,7 @@ See [Power States Example](https://github.com/fiffeek/hyprdynamicmonitors/tree/m
 
 You can restrict a profile to only match on specific lid states (requires `--enable-lid-events` flag):
 
-```toml
+```toml title="~/.config/hyprdynamicmonitors/config.toml"
 [profiles.lid_closed.conditions]
 lid_state = "Closed"  # Only match when lid is closed
 
@@ -143,7 +148,7 @@ See [Lid States Example](https://github.com/fiffeek/hyprdynamicmonitors/tree/mai
 
 You can combine monitor, power state, and lid state conditions:
 
-```toml
+```toml title="~/.config/hyprdynamicmonitors/config.toml"
 [profiles.docked_ac.conditions]
 power_state = "AC"
 lid_state = "Closed"
@@ -168,7 +173,7 @@ You can define custom values that are available in templates. These can be defin
 
 Available in all templates:
 
-```toml
+```toml title="~/.config/hyprdynamicmonitors/config.toml"
 [static_template_values]
 default_vrr = "1"
 default_res = "2880x1920"
@@ -180,7 +185,7 @@ refresh_rate_low = "60.00000"
 
 Override global values or add profile-specific values:
 
-```toml
+```toml title="~/.config/hyprdynamicmonitors/config.toml"
 [profiles.laptop_only.static_template_values]
 default_vrr = "0"        # Override global value
 battery_scaling = "1.5"  # Profile-specific value
@@ -196,7 +201,7 @@ monitor=eDP-1,{{.default_res}}@{{if isOnAC}}{{.refresh_rate_high}}{{else}}{{.ref
 
 When no regular profile matches, you can define a fallback profile:
 
-```toml
+```toml title="~/.config/hyprdynamicmonitors/config.toml"
 [fallback_profile]
 config_file = "hyprconfigs/fallback.conf"
 config_file_type = "static"
@@ -217,7 +222,7 @@ monitor=,preferred,auto,1
 
 You can define commands to execute before and after profile application:
 
-```toml
+```toml title="~/.config/hyprdynamicmonitors/config.toml"
 [general]
 # Global exec commands - run for all profile changes
 pre_apply_exec = "notify-send 'Switching profile...'"
