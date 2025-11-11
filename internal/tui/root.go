@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -32,7 +31,7 @@ type Model struct {
 	monitorsPreviewPane *MonitorsPreviewPane
 	monitorModes        *MonitorModeList
 	monitorMirrors      *MirrorList
-	help                help.Model
+	help                *CustomHelp
 	header              *Header
 	hyprPreviewPane     *HyprPreviewPane
 	scaleSelector       *ScaleSelector
@@ -46,6 +45,7 @@ type Model struct {
 
 	// stores
 	monitorEditor *MonitorEditorStore
+	colors        *ColorsManager
 
 	// actions
 	hyprApply    *HyprApply
@@ -68,31 +68,33 @@ func NewModel(cfg *config.Config, hyprMonitors hypr.MonitorSpecs,
 	state := NewState(monitors, cfg)
 	matcher := matchers.NewMatcher()
 	generator := generators.NewConfigGenerator(cfg)
+	colors := NewColorsManager(cfg)
 
 	model := Model{
 		config:                    cfg,
 		keys:                      rootKeyMap,
 		rootState:                 state,
 		layout:                    NewLayout(),
-		monitorsList:              NewMonitorList(monitors),
-		colorPicker:               NewColorPicker(),
-		monitorsPreviewPane:       NewMonitorsPreviewPane(monitors),
-		help:                      help.New(),
-		header:                    NewHeader("HyprDynamicMonitors", state.viewModes, version),
-		hyprPreviewPane:           NewHyprPreviewPane(monitors),
+		monitorsList:              NewMonitorList(monitors, colors),
+		colorPicker:               NewColorPicker(colors),
+		monitorsPreviewPane:       NewMonitorsPreviewPane(monitors, colors),
+		help:                      NewCustomHelp(colors),
+		header:                    NewHeader("HyprDynamicMonitors", state.viewModes, version, colors),
+		hyprPreviewPane:           NewHyprPreviewPane(monitors, colors),
 		monitorEditor:             NewMonitorEditor(monitors),
-		monitorModes:              NewMonitorModeList(monitors),
-		monitorMirrors:            NewMirrorList(monitors),
+		monitorModes:              NewMonitorModeList(monitors, colors),
+		monitorMirrors:            NewMirrorList(monitors, colors),
 		hyprApply:                 NewHyprApply(profileMaker, generator),
-		hdm:                       NewHDMConfigPane(cfg, matcher, monitors, powerState, lidState),
+		hdm:                       NewHDMConfigPane(cfg, matcher, monitors, powerState, lidState, colors),
 		profileMaker:              profileMaker,
-		profileNamePicker:         NewProfileNamePicker(),
+		profileNamePicker:         NewProfileNamePicker(colors),
 		confirmationPrompt:        nil,
-		scaleSelector:             NewScaleSelector(),
-		hdmProfilePreview:         NewHDMProfilePreview(cfg, matcher, monitors, powerState, runningUnderTest, lidState),
+		scaleSelector:             NewScaleSelector(colors),
+		hdmProfilePreview:         NewHDMProfilePreview(cfg, matcher, monitors, powerState, runningUnderTest, lidState, colors),
 		start:                     time.Now(),
 		duration:                  duration,
-		hdmGeneratevConfigPreview: NewHDMGeneratedConfigPreview(cfg, runningUnderTest),
+		hdmGeneratevConfigPreview: NewHDMGeneratedConfigPreview(cfg, runningUnderTest, colors),
+		colors:                    colors,
 	}
 
 	return model
@@ -116,7 +118,7 @@ func (m Model) View() string {
 	if m.rootState.State.ShowConfirmationPrompt {
 		m.confirmationPrompt.SetWidth(m.layout.PromptWidth())
 		m.confirmationPrompt.SetHeight(m.layout.PromptHeight())
-		prompt := ActiveStyle.Width(m.layout.PromptWidth()).Height(
+		prompt := m.colors.ActiveStyle().Width(m.layout.PromptWidth()).Height(
 			m.layout.PromptHeight()).Render(m.confirmationPrompt.View())
 
 		return lipgloss.Place(m.layout.AvailableWidth(), m.layout.AvailableHeight(),
@@ -129,7 +131,7 @@ func (m Model) View() string {
 	header := m.header.View()
 	headerHeight := lipgloss.Height(header)
 
-	globalHelp := HelpStyle.Margin(0, 0, 1, 0).Width(m.layout.visibleWidth).Render(m.help.ShortHelpView(m.GlobalHelp()))
+	globalHelp := m.colors.HelpStyle().Margin(0, 0, 1, 0).Width(m.layout.visibleWidth).Render(m.help.ShortHelpView(m.GlobalHelp()))
 	globalHelpHeight := lipgloss.Height(globalHelp)
 
 	m.layout.SetReservedTop(globalHelpHeight + headerHeight + 2)
@@ -156,7 +158,7 @@ func (m Model) View() string {
 	if m.rootState.State.Fullscreen && m.rootState.CurrentView() == MonitorsListView {
 		m.monitorsPreviewPane.SetHeight(m.layout.AvailableHeight() + 2)
 		m.monitorsPreviewPane.SetWidth(m.layout.AvailableWidth())
-		previewPane := ActiveStyle.Width(m.layout.AvailableWidth()).Height(
+		previewPane := m.colors.ActiveStyle().Width(m.layout.AvailableWidth()).Height(
 			m.layout.AvailableHeight() + 2).Render(m.monitorsPreviewPane.View())
 		view = previewPane
 	}
@@ -170,21 +172,23 @@ func (m Model) rightPanels() []string {
 	if m.rootState.CurrentView() == ProfileView {
 		m.hdmProfilePreview.SetHeight(m.layout.RightPanelTemplatePreviewHeight())
 		m.hdmProfilePreview.SetWidth(m.layout.RightPanesWidth())
-		profileCfg := InactiveStyle.Height(m.layout.RightPanelTemplatePreviewHeight()).Width(
+		profileCfg := m.colors.InactiveStyle().Height(
+			m.layout.RightPanelTemplatePreviewHeight()).Width(
 			m.layout.RightPanesWidth()).Render(m.hdmProfilePreview.View())
 		rightSections = append(rightSections, profileCfg)
 
 		m.hdmGeneratevConfigPreview.SetWidth(m.layout.RightPanesWidth())
 		m.hdmGeneratevConfigPreview.SetHeight(m.layout.RightPanelGeneratedPreviewHeight())
-		generatedPreview := InactiveStyle.Height(m.layout.RightPanelGeneratedPreviewHeight()).Width(
+		generatedPreview := m.colors.InactiveStyle().Height(
+			m.layout.RightPanelGeneratedPreviewHeight()).Width(
 			m.layout.RightPanesWidth()).Render(m.hdmGeneratevConfigPreview.View())
 		rightSections = append(rightSections, generatedPreview)
 	}
 
 	if m.rootState.CurrentView() == MonitorsListView {
-		previewStyle := InactiveStyle
+		previewStyle := m.colors.InactiveStyle()
 		if m.rootState.State.Panning {
-			previewStyle = ActiveStyle
+			previewStyle = m.colors.ActiveStyle()
 		}
 		m.monitorsPreviewPane.SetWidth(m.layout.RightPanesWidth())
 		monHeight := m.layout.RightPreviewHeight()
@@ -209,7 +213,7 @@ func (m Model) rightPanels() []string {
 				hyprPreviewHeight = m.layout.RightHyprPreviewLonger()
 			}
 			m.hyprPreviewPane.SetWidth(m.layout.RightPanesWidth())
-			hyprPreview := InactiveStyle.Width(m.layout.RightPanesWidth()).Height(
+			hyprPreview := m.colors.InactiveStyle().Width(m.layout.RightPanesWidth()).Height(
 				hyprPreviewHeight).Render(m.hyprPreviewPane.View())
 			rightSections = append(rightSections, hyprPreview)
 		}
@@ -229,9 +233,9 @@ func (m Model) leftPanels() []string {
 		}
 		m.hdm.SetHeight(leftMainPanelSize)
 		m.hdm.SetWidth(m.layout.LeftPanesWidth())
-		mainPanelStyle := ActiveStyle
+		mainPanelStyle := m.colors.ActiveStyle()
 		if m.rootState.State.ProfileNameRequested {
-			mainPanelStyle = InactiveStyle
+			mainPanelStyle = m.colors.InactiveStyle()
 		}
 		view := mainPanelStyle.Width(m.layout.LeftPanesWidth()).Height(
 			leftMainPanelSize).Render(m.hdm.View())
@@ -240,7 +244,7 @@ func (m Model) leftPanels() []string {
 		if m.rootState.State.ProfileNameRequested {
 			m.profileNamePicker.SetHeight(m.layout.LeftSubpaneHeight())
 			m.profileNamePicker.SetWidth(m.layout.LeftPanesWidth())
-			namePicker := ActiveStyle.Width(m.layout.LeftPanesWidth()).Height(
+			namePicker := m.colors.ActiveStyle().Width(m.layout.LeftPanesWidth()).Height(
 				m.layout.LeftSubpaneHeight()).Render(m.profileNamePicker.View())
 			left = append(left, namePicker)
 		}
@@ -255,10 +259,10 @@ func (m Model) leftPanels() []string {
 		m.monitorsList.SetHeight(leftMainPanelSize)
 		m.monitorsList.SetWidth(m.layout.LeftPanesWidth())
 		logrus.Debugf("Monitors list height: %d", leftMainPanelSize)
-		monitorViewStyle := ActiveStyle
+		monitorViewStyle := m.colors.ActiveStyle()
 		if m.rootState.State.ModeSelection || m.rootState.State.MirrorSelection ||
 			m.rootState.State.Scaling || m.rootState.State.Panning || m.rootState.State.ColorSelection {
-			monitorViewStyle = InactiveStyle
+			monitorViewStyle = m.colors.InactiveStyle()
 		}
 		monitorView := monitorViewStyle.Width(m.layout.LeftPanesWidth()).Height(
 			leftMainPanelSize).Render(m.monitorsList.View())
@@ -266,9 +270,9 @@ func (m Model) leftPanels() []string {
 			left = append(left, monitorView)
 		}
 
-		subpaneStyle := InactiveStyle
+		subpaneStyle := m.colors.InactiveStyle()
 		if !m.rootState.State.Panning {
-			subpaneStyle = ActiveStyle
+			subpaneStyle = m.colors.ActiveStyle()
 		}
 
 		if m.rootState.State.ModeSelection {

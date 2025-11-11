@@ -62,6 +62,12 @@
               description = "If true and no config/configFile is provided, install a minimal example config.";
             };
 
+            installThemes = mkOption {
+              type = types.bool;
+              default = false;
+              description = "If true, install static themes and templates relative to configPath at ./themes/.";
+            };
+
             serviceOptions = mkOption {
               type = types.attrs;
               default = {};
@@ -95,6 +101,10 @@
           };
 
           config = mkIf cfg.enable (let
+            # Extract base directory from configPath for themes
+            configDir = lib.removeSuffix "/config.toml" cfg.configPath;
+            themesBasePath = lib.replaceStrings [ "/etc/" ] [ "" ] "${configDir}/themes";
+
             tomlAttr = if cfg.config != null then
               { "${etcKey}" = { text = cfg.config; }; }
             else if cfg.configFile != null then
@@ -112,7 +122,12 @@
               builtins.listToAttrs (map (k: { name = k; value = { source = cfg.extraFiles.${k}; }; }) (builtins.attrNames cfg.extraFiles))
             else {};
 
-            etcAttrs = tomlAttr // extraEtc;
+            themesEtc = if cfg.installThemes then {
+              "${themesBasePath}/static" = { source = ./themes/static; };
+              "${themesBasePath}/templates" = { source = ./themes/templates; };
+            } else {};
+
+            etcAttrs = tomlAttr // extraEtc // themesEtc;
 
             unitSpec = {
               description = "HyprDynamicMonitors - Dynamic monitor configuration for Hyprland";
@@ -204,6 +219,12 @@
               default = true;
             };
 
+            installThemes = mkOption {
+              type = types.bool;
+              default = false;
+              description = "If true, install static themes and templates relative to configPath at ./themes/.";
+            };
+
             serviceOptions = mkOption {
               type = types.attrs;
               default = {};
@@ -237,6 +258,9 @@
           };
 
           config = mkIf hmCfg.enable (let
+            # Extract base directory from configPath for themes
+            configDir = lib.removeSuffix "/config.toml" hmCfg.configPath;
+
             tomlEntry = if hmCfg.config != null then
               { "${hmCfg.configPath}" = { text = hmCfg.config; }; }
             else if hmCfg.configFile != null then
@@ -250,8 +274,13 @@
             extraFilesHM = if hmCfg.extraFiles != null then
               builtins.listToAttrs (map (k: { name = "${config.home.homeDirectory}/.config/${k}"; value = { source = hmCfg.extraFiles.${k}; }; }) (builtins.attrNames hmCfg.extraFiles))
             else {};
+
+            themesHM = if hmCfg.installThemes then {
+              "${configDir}/themes/static" = { source = ./themes/static; recursive = true; };
+              "${configDir}/themes/templates" = { source = ./themes/templates; recursive = true; };
+            } else {};
           in {
-            home.file = tomlEntry // extraFilesHM;
+            home.file = tomlEntry // extraFilesHM // themesHM;
 
             systemd.user.services.hyprdynamicmonitors = {
               Unit = {

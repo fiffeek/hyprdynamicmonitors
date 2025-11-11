@@ -26,10 +26,12 @@ type HDMProfilePreview struct {
 	powerState       power.PowerState
 	runningUnderTest bool
 	lidState         power.LidState
+	colors           *ColorsManager
 }
 
 func NewHDMProfilePreview(cfg *config.Config,
-	matcher *matchers.Matcher, monitors []*MonitorSpec, powerState power.PowerState, runningUnderTest bool, lidState power.LidState,
+	matcher *matchers.Matcher, monitors []*MonitorSpec, powerState power.PowerState,
+	runningUnderTest bool, lidState power.LidState, colors *ColorsManager,
 ) *HDMProfilePreview {
 	ta := textarea.New()
 	return &HDMProfilePreview{
@@ -41,6 +43,7 @@ func NewHDMProfilePreview(cfg *config.Config,
 		monitors:         monitors,
 		textarea:         ta,
 		runningUnderTest: runningUnderTest,
+		colors:           colors,
 	}
 }
 
@@ -113,7 +116,7 @@ func (h *HDMProfilePreview) View() string {
 	sections := []string{}
 	availableHeight := h.height
 
-	title := TitleStyle.Margin(0, 0, 0, 0).Render(
+	title := h.colors.TitleStyle().Margin(0, 0, 0, 0).Render(
 		fmt.Sprintf("Profile Config Preview (%s)", h.profile.Profile.ConfigType.Value()))
 	availableHeight -= lipgloss.Height(title)
 	sections = append(sections, title)
@@ -126,7 +129,7 @@ func (h *HDMProfilePreview) View() string {
 		configFile = filepath.Base(configFile)
 	}
 
-	subtitle := SubtitleInfoStyle.Margin(0, 0, 1, 0).Width(h.width).Render(configFile)
+	subtitle := h.colors.MutedStyle().Margin(0, 0, 1, 0).Width(h.width).Render(configFile)
 	availableHeight -= lipgloss.Height(subtitle)
 	sections = append(sections, subtitle)
 

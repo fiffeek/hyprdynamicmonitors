@@ -1,0 +1,94 @@
+# Tokyo Night Theme for hyprdynamicmonitors
+# Based on the popular Tokyo Night color scheme
+
+# Pane borders
+active_pane_color = "#7aa2f7"      # Tokyo Night blue
+inactive_pane_color = "#565f89"    # Tokyo Night comment
+
+# Header colors
+header_color = "#bb9af7"           # Tokyo Night magenta
+header_indicator_color = "#e0af68" # Tokyo Night yellow
+header_indicator_bg = "#1a1b26"    # Tokyo Night background
+
+# Program name
+program_name_color = "#1a1b26"     # Tokyo Night background (dark text for contrast)
+program_name_bg = "#9d7cd8"        # First monitor edge color (purple)
+
+# Status colors
+error_color = "#f7768e"            # Tokyo Night red
+error_bg = "#1a1b26"               # Tokyo Night background
+success_color = "#9ece6a"          # Tokyo Night green
+success_bg = "#1a1b26"             # Tokyo Night background
+warning_color = "#f7768e"          # Tokyo Night red
+muted_color = "#565f89"            # Tokyo Night comment
+
+# Tab colors
+tab_active_color = "#c0caf5"       # Tokyo Night foreground
+tab_active_bg = "#9d7cd8"          # Tokyo Night purple
+tab_inactive_color = "#565f89"     # Tokyo Night comment
+tab_inactive_bg = "#1a1b26"        # Tokyo Night background
+
+# Monitor mode colors
+monitor_color_mode_color = "#7dcfff"      # Tokyo Night cyan
+monitor_scale_mode_color = "#7aa2f7"      # Tokyo Night blue
+monitor_mirroring_mode_color = "#9d7cd8"  # Tokyo Night purple
+monitor_editing_mode_color = "#e0af68"    # Tokyo Night yellow
+monitor_mode_selection_color = "#ff9e64"  # Tokyo Night orange
+
+# List colors
+list_item_subtitle_color = "#ff9e64"      # Tokyo Night orange
+list_item_unselected_color = "#c0caf5"    # Tokyo Night foreground
+list_item_selected_color = "#bb9af7"      # Tokyo Night magenta
+
+# Legend and selection
+legend_color = "#565f89"                  # Tokyo Night comment
+legend_selected_monitor_color = "#e0af68" # Tokyo Night yellow
+legend_selected_monitor_bg = "#1a1b26"    # Tokyo Night background
+
+# Title and subtitle colors
+title_color = "#bb9af7"           # Tokyo Night magenta
+subtitle_color = "#ff9e64"        # Tokyo Night orange
+info_color = "#9ece6a"            # Tokyo Night green
+link_color = "#7dcfff"            # Tokyo Night cyan
+
+# Grid and monitor edge colors
+grid_dot_color = "#565f89"        # Tokyo Night comment
+grid_snapping_line_color = "#6a75a3" # Slightly brighter comment
+monitor_edge_colors = [
+    "#9d7cd8",  # Purple
+    "#ff9e64",  # Orange
+    "#7aa2f7",  # Blue
+    "#e0af68",  # Yellow
+    "#f7768e",  # Red
+    "#bb9af7"   # Magenta
+]
+monitor_fill_colors_unselected = [
+    "#7c5faa",  # Darker purple
+    "#cc7d50",  # Darker orange
+    "#5a82c9",  # Darker blue
+    "#b38c54",  # Darker yellow
+    "#c65e70",  # Darker red
+    "#9478c9"   # Darker magenta
+]
+monitor_fill_colors_selected = [
+    "#5d4681",  # Much darker purple
+    "#995d3c",  # Much darker orange/brown
+    "#3e5a8d",  # Much darker blue
+    "#876642",  # Much darker gold
+    "#8f434f",  # Much darker red/maroon
+    "#6e5694"   # Much darker magenta/purple
+]
+monitor_bottom_colors = [
+    "#b4a0e0",  # Brighter purple
+    "#ffb380",  # Brighter orange
+    "#90c0ff",  # Brighter blue
+    "#f0c97c",  # Brighter yellow
+    "#ff90a8",  # Brighter red
+    "#d0b0ff"   # Brighter magenta
+]
+monitor_preview_pane_label_bg = "#1a1b26" # Tokyo Night background
+
+# Help colors
+help_key_color = "#565f89"         # Tokyo Night comment (muted)
+help_description_color = "#414868" # Tokyo Night darker comment
+help_separator_color = "#363b54"   # Tokyo Night even darker

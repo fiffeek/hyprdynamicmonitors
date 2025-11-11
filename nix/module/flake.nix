@@ -30,6 +30,7 @@
 
           services.hyprdynamicmonitors = {
             enable = true;
+            installThemes = true;
             mode = "user";
             configFile = "${hyprdynamicmonitors}/examples/full/config.toml";
             extraFiles = {

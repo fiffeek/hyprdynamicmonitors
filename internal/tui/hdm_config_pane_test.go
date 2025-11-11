@@ -94,7 +94,9 @@ func TestHDMConfigPane_Update(t *testing.T) {
 				{Name: "eDP-1", ID: utils.JustPtr(1), Description: "Hello"},
 			}
 
-			pane := tui.NewHDMConfigPane(cfg, matcher, monitors, tt.initialPowerState, tt.initialLidState)
+			colors := tui.NewColorsManager(cfg)
+
+			pane := tui.NewHDMConfigPane(cfg, matcher, monitors, tt.initialPowerState, tt.initialLidState, colors)
 
 			cmd := pane.Update(nil)
 			// nolint:gocritic

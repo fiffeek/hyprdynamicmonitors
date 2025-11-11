@@ -1,0 +1,94 @@
+# Dracula Theme for hyprdynamicmonitors
+# Based on the extremely popular Dracula color scheme
+
+# Pane borders
+active_pane_color = "#bd93f9"      # Dracula purple
+inactive_pane_color = "#6272a4"    # Dracula comment
+
+# Header colors
+header_color = "#ff79c6"           # Dracula pink
+header_indicator_color = "#f1fa8c" # Dracula yellow
+header_indicator_bg = "#282a36"    # Dracula background
+
+# Program name
+program_name_color = "#282a36"     # Dracula background (dark text for contrast)
+program_name_bg = "#bd93f9"        # First monitor edge color (purple)
+
+# Status colors
+error_color = "#ff5555"            # Dracula red
+error_bg = "#282a36"               # Dracula background
+success_color = "#50fa7b"          # Dracula green
+success_bg = "#282a36"             # Dracula background
+warning_color = "#ff5555"          # Dracula red
+muted_color = "#6272a4"            # Dracula comment
+
+# Tab colors
+tab_active_color = "#f8f8f2"       # Dracula foreground
+tab_active_bg = "#bd93f9"          # Dracula purple
+tab_inactive_color = "#6272a4"     # Dracula comment
+tab_inactive_bg = "#282a36"        # Dracula background
+
+# Monitor mode colors
+monitor_color_mode_color = "#8be9fd"      # Dracula cyan
+monitor_scale_mode_color = "#bd93f9"      # Dracula purple
+monitor_mirroring_mode_color = "#ff79c6"  # Dracula pink
+monitor_editing_mode_color = "#f1fa8c"    # Dracula yellow
+monitor_mode_selection_color = "#ffb86c"  # Dracula orange
+
+# List colors
+list_item_subtitle_color = "#ffb86c"      # Dracula orange
+list_item_unselected_color = "#f8f8f2"    # Dracula foreground
+list_item_selected_color = "#ff79c6"      # Dracula pink
+
+# Legend and selection
+legend_color = "#6272a4"                  # Dracula comment
+legend_selected_monitor_color = "#f1fa8c" # Dracula yellow
+legend_selected_monitor_bg = "#282a36"    # Dracula background
+
+# Title and subtitle colors
+title_color = "#ff79c6"           # Dracula pink
+subtitle_color = "#ffb86c"        # Dracula orange
+info_color = "#50fa7b"            # Dracula green
+link_color = "#8be9fd"            # Dracula cyan
+
+# Grid and monitor edge colors
+grid_dot_color = "#6272a4"        # Dracula comment
+grid_snapping_line_color = "#7a88ba" # Slightly brighter comment
+monitor_edge_colors = [
+    "#bd93f9",  # Purple
+    "#ffb86c",  # Orange
+    "#8be9fd",  # Cyan
+    "#f1fa8c",  # Yellow
+    "#ff5555",  # Red
+    "#ff79c6"   # Pink
+]
+monitor_fill_colors_unselected = [
+    "#9d76d9",  # Darker purple
+    "#df9856",  # Darker orange
+    "#6bc9dd",  # Darker cyan
+    "#d1da6f",  # Darker yellow
+    "#df3e3e",  # Darker red
+    "#df5ca6"   # Darker pink
+]
+monitor_fill_colors_selected = [
+    "#7856af",  # Much darker purple
+    "#b57240",  # Much darker orange
+    "#4f9faf",  # Much darker cyan
+    "#a7b05a",  # Much darker yellow
+    "#af2f2f",  # Much darker red
+    "#af4280"   # Much darker pink
+]
+monitor_bottom_colors = [
+    "#d8bfff",  # Brighter purple
+    "#ffd4a3",  # Brighter orange
+    "#b8f5ff",  # Brighter cyan
+    "#fcffc3",  # Brighter yellow
+    "#ff9999",  # Brighter red
+    "#ffb3e0"   # Brighter pink
+]
+monitor_preview_pane_label_bg = "#282a36" # Dracula background
+
+# Help colors
+help_key_color = "#6272a4"         # Dracula comment (muted)
+help_description_color = "#4d5b86" # Dracula darker comment
+help_separator_color = "#3d4568"   # Dracula even darker

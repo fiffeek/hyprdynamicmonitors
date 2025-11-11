@@ -1,0 +1,94 @@
+# Nord Theme for hyprdynamicmonitors
+# Based on the popular Nord color scheme
+
+# Pane borders
+active_pane_color = "#88C0D0"      # Nord frost blue
+inactive_pane_color = "#4C566A"    # Nord polar night
+
+# Header colors
+header_color = "#B48EAD"           # Nord aurora purple
+header_indicator_color = "#EBCB8B" # Nord aurora yellow
+header_indicator_bg = "#2E3440"    # Nord polar night background
+
+# Program name
+program_name_color = "#ECEFF4"     # Nord snow storm (light text for contrast)
+program_name_bg = "#5E81AC"        # First monitor edge color (frost dark blue)
+
+# Status colors
+error_color = "#BF616A"            # Nord aurora red
+error_bg = "#2E3440"               # Nord polar night background
+success_color = "#A3BE8C"          # Nord aurora green
+success_bg = "#2E3440"             # Nord polar night background
+warning_color = "#BF616A"          # Nord aurora red
+muted_color = "#4C566A"            # Nord polar night
+
+# Tab colors
+tab_active_color = "#ECEFF4"       # Nord snow storm
+tab_active_bg = "#5E81AC"          # Nord frost dark blue
+tab_inactive_color = "#4C566A"     # Nord polar night
+tab_inactive_bg = "#2E3440"        # Nord polar night background
+
+# Monitor mode colors
+monitor_color_mode_color = "#8FBCBB"      # Nord frost aqua
+monitor_scale_mode_color = "#88C0D0"      # Nord frost blue
+monitor_mirroring_mode_color = "#5E81AC"  # Nord frost dark blue
+monitor_editing_mode_color = "#EBCB8B"    # Nord aurora yellow
+monitor_mode_selection_color = "#D08770"  # Nord aurora orange
+
+# List colors
+list_item_subtitle_color = "#D08770"      # Nord aurora orange
+list_item_unselected_color = "#D8DEE9"    # Nord snow storm
+list_item_selected_color = "#B48EAD"      # Nord aurora purple
+
+# Legend and selection
+legend_color = "#4C566A"                  # Nord polar night
+legend_selected_monitor_color = "#EBCB8B" # Nord aurora yellow
+legend_selected_monitor_bg = "#2E3440"    # Nord polar night background
+
+# Title and subtitle colors
+title_color = "#B48EAD"           # Nord aurora purple
+subtitle_color = "#D08770"        # Nord aurora orange
+info_color = "#A3BE8C"            # Nord aurora green
+link_color = "#8FBCBB"            # Nord frost aqua
+
+# Grid and monitor edge colors
+grid_dot_color = "#4C566A"        # Nord polar night
+grid_snapping_line_color = "#5d6a88" # Slightly brighter polar night
+monitor_edge_colors = [
+    "#5E81AC",  # Frost dark blue
+    "#D08770",  # Aurora orange
+    "#88C0D0",  # Frost blue
+    "#EBCB8B",  # Aurora yellow
+    "#BF616A",  # Aurora red
+    "#B48EAD"   # Aurora purple
+]
+monitor_fill_colors_unselected = [
+    "#4c6a8a",  # Darker frost blue
+    "#a86850",  # Darker orange
+    "#6a9bb0",  # Darker blue
+    "#c3a56b",  # Darker yellow
+    "#9f4e52",  # Darker red
+    "#94708d"   # Darker purple
+]
+monitor_fill_colors_selected = [
+    "#3d5369",  # Much darker frost blue
+    "#85503d",  # Much darker orange
+    "#4f7a8d",  # Much darker blue
+    "#9c8350",  # Much darker yellow
+    "#7e3d41",  # Much darker red
+    "#755970"   # Much darker purple
+]
+monitor_bottom_colors = [
+    "#7fa0c9",  # Brighter frost blue
+    "#e89f86",  # Brighter orange
+    "#a4d7e8",  # Brighter blue
+    "#f5e1a7",  # Brighter yellow
+    "#d77e86",  # Brighter red
+    "#d0a4c3"   # Brighter purple
+]
+monitor_preview_pane_label_bg = "#2E3440" # Nord polar night background
+
+# Help colors
+help_key_color = "#4C566A"         # Nord polar night (muted)
+help_description_color = "#434C5E" # Nord polar night darker
+help_separator_color = "#3B4252"   # Nord polar night darkest

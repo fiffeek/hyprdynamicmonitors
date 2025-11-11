@@ -19,8 +19,15 @@ An event-driven service with an interactive TUI that automatically manages Hyprl
 
 ## Preview
 
+
+![TUI theming](./preview/output/themes-showcase.gif)
+
+<details>
+<summary>TUI demo in default theme</summary>
+
 ![TUI demo](./preview/output/demo.gif)
 
+</details>
 
 <details>
 <summary>Daemon Response to Power State Events</summary>
@@ -73,6 +80,7 @@ A full guide is available at [Dynamic Profile Modes](https://fiffeek.github.io/h
 - **Power state awareness** built-in AC/battery detection for laptop users (optional)
 - **Lid state awareness** built-in lid state detection for laptop users (optional)
 - **Desktop notifications** for configuration changes (optional)
+- **Theming support** support for built-in themes and dynamic generation from wallpapers
 
 ## Quick Start
 
@@ -152,6 +160,7 @@ Key topics:
 | [Lid Events](https://fiffeek.github.io/hyprdynamicmonitors/docs/guides/lid-events) | Guide to running with Lid Events |
 | [Dynamic Profile Modes](https://fiffeek.github.io/hyprdynamicmonitors/docs/guides/ad-hoc) | Guide to making dynamic profile modes |
 | [Prepare Command](https://fiffeek.github.io/hyprdynamicmonitors/docs/advanced/prepare) | Do I need `hyprdynamicmonitors prepare`? |
+| [Make it yours!](https://fiffeek.github.io/hyprdynamicmonitors/docs/configuration/theming) | How to apply/generate a theme |
 
 ## Examples
 

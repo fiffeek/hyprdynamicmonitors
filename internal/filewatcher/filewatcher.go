@@ -55,7 +55,9 @@ func (s *Service) Update() error {
 		return fmt.Errorf("cant track config: %w", err)
 	}
 
-	if s.checkIfAllPathsAreAlreadyTracked() {
+	allPaths := s.collectPaths()
+
+	if s.checkIfAllPathsAreAlreadyTracked(allPaths) {
 		logrus.Info("All paths are tracked already, no update needed")
 		return nil
 	}
@@ -64,7 +66,7 @@ func (s *Service) Update() error {
 		return fmt.Errorf("cant remove currently tracked paths: %w", err)
 	}
 
-	if err := s.addWatchedPaths(); err != nil {
+	if err := s.addWatchedPaths(allPaths); err != nil {
 		return fmt.Errorf("cant add new tracked paths: %w", err)
 	}
 
@@ -73,17 +75,35 @@ func (s *Service) Update() error {
 	return nil
 }
 
-func (s *Service) addWatchedPaths() error {
-	logrus.Debug("(Re)adding new tracked paths")
+func (s *Service) collectPaths() []string {
+	paths := make(map[string]struct{})
 	for _, profile := range s.cfg.Get().Profiles {
-		if _, ok := s.watchedPaths[profile.ConfigFileDir]; ok {
+		paths[profile.ConfigFileDir] = struct{}{}
+	}
+	tuiDir := s.cfg.Get().TUISection.Colors.SourceFileDir
+	if tuiDir != nil {
+		paths[*tuiDir] = struct{}{}
+	}
+
+	pathsStrings := []string{}
+	for key := range paths {
+		pathsStrings = append(pathsStrings, key)
+	}
+
+	return pathsStrings
+}
+
+func (s *Service) addWatchedPaths(paths []string) error {
+	logrus.Debug("(Re)adding new tracked paths")
+	for _, path := range paths {
+		if _, ok := s.watchedPaths[path]; ok {
 			continue
 		}
-		if err := s.watcher.Add(profile.ConfigFileDir); err != nil {
-			return fmt.Errorf("cant add %s to watcher: %w", profile.ConfigFileDir, err)
+		if err := s.watcher.Add(path); err != nil {
+			return fmt.Errorf("cant add %s to watcher: %w", path, err)
 		}
-		s.watchedPaths[profile.ConfigFileDir] = true
-		logrus.WithFields(logrus.Fields{"path": profile.ConfigFileDir}).Debug("Added watched path")
+		s.watchedPaths[path] = true
+		logrus.WithFields(logrus.Fields{"path": path}).Debug("Added watched path")
 	}
 	return nil
 }
@@ -104,15 +124,13 @@ func (s *Service) removeCurrentlyTrackedPaths() error {
 	return nil
 }
 
-func (s *Service) checkIfAllPathsAreAlreadyTracked() bool {
-	allPathsTracked := true
-	for _, profile := range s.cfg.Get().Profiles {
-		if _, ok := s.watchedPaths[profile.ConfigFileDir]; !ok {
-			allPathsTracked = false
-			break
+func (s *Service) checkIfAllPathsAreAlreadyTracked(paths []string) bool {
+	for _, path := range paths {
+		if _, ok := s.watchedPaths[path]; !ok {
+			return false
 		}
 	}
-	return allPathsTracked
+	return true
 }
 
 func (s *Service) ensureConfigPathIsTracked() error {

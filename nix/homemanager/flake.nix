@@ -52,6 +52,7 @@
 
             home.hyprdynamicmonitors = {
               enable = true;
+              installThemes = true;
               configFile = "${hyprdynamicmonitors}/examples/minimal/config.toml";
               extraFiles = {
                 "hyprdynamicmonitors/hyprconfigs" = "${hyprdynamicmonitors}/examples/minimal/hyprconfigs";

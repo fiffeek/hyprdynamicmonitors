@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
@@ -19,7 +18,8 @@ type MirrorItem struct {
 type MirrorList struct {
 	L        list.Model
 	monitors []*MonitorSpec
-	help     help.Model
+	help     *CustomHelp
+	colors   *ColorsManager
 }
 
 func (m MirrorItem) FilterValue() string {
@@ -30,10 +30,14 @@ func (m MirrorItem) View() string {
 	return m.mirrorName
 }
 
-type MirrorDelegate struct{}
+type MirrorDelegate struct {
+	colors *ColorsManager
+}
 
-func NewMirrorDelegate() MirrorDelegate {
-	return MirrorDelegate{}
+func NewMirrorDelegate(colors *ColorsManager) MirrorDelegate {
+	return MirrorDelegate{
+		colors: colors,
+	}
 }
 
 func (d MirrorDelegate) Height() int {
@@ -76,10 +80,10 @@ func (d MirrorDelegate) Render(w io.Writer, m list.Model, index int, item list.I
 	var prefix string
 	switch {
 	case index == m.Index():
-		style = MonitorListSelected
+		style = d.colors.ListItemSelected()
 		prefix = "► "
 	default:
-		style = MonitorListTitle
+		style = d.colors.ListItemUnselected()
 	}
 	title := style.Render(prefix + modeItem.View())
 	content := title
@@ -87,9 +91,9 @@ func (d MirrorDelegate) Render(w io.Writer, m list.Model, index int, item list.I
 	fmt.Fprintf(w, "%s", content)
 }
 
-func NewMirrorList(monitors []*MonitorSpec) *MirrorList {
+func NewMirrorList(monitors []*MonitorSpec, colors *ColorsManager) *MirrorList {
 	modesItems := []list.Item{}
-	delegate := NewMirrorDelegate()
+	delegate := NewMirrorDelegate(colors)
 	modesList := list.New(modesItems, delegate, 0, 0)
 	modesList.SetShowStatusBar(false)
 	modesList.SetFilteringEnabled(false)
@@ -99,7 +103,8 @@ func NewMirrorList(monitors []*MonitorSpec) *MirrorList {
 	return &MirrorList{
 		L:        modesList,
 		monitors: monitors,
-		help:     help.New(),
+		help:     NewCustomHelp(colors),
+		colors:   colors,
 	}
 }
 
@@ -154,7 +159,7 @@ func (m *MirrorList) View() string {
 	sections := []string{}
 	availHeight := m.L.Height()
 
-	title := TitleStyle.Margin(0, 0, 1, 0).Render("Select a monitor mirror")
+	title := m.colors.TitleStyle().Margin(0, 0, 1, 0).Render("Select a monitor mirror")
 	availHeight -= lipgloss.Height(title)
 	sections = append(sections, title)
 

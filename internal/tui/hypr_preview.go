@@ -8,13 +8,15 @@ type HyprPreviewPane struct {
 	monitors []*MonitorSpec
 	clamp    bool
 	width    int
+	colors   *ColorsManager
 }
 
-func NewHyprPreviewPane(monitors []*MonitorSpec) *HyprPreviewPane {
+func NewHyprPreviewPane(monitors []*MonitorSpec, colors *ColorsManager) *HyprPreviewPane {
 	return &HyprPreviewPane{
 		monitors: monitors,
 		width:    0,
 		clamp:    true,
+		colors:   colors,
 	}
 }
 
@@ -30,10 +32,10 @@ func (h *HyprPreviewPane) View() string {
 	var sections []string
 
 	if len(h.monitors) == 0 {
-		sections = append(sections, HyprConfigTitleStyle.Render(
+		sections = append(sections, h.colors.TitleStyle().Render(
 			"Hyprland Config Preview\n\nNo monitors to configure"))
 	} else {
-		sections = append(sections, HyprConfigTitleStyle.Render("Hyprland Config Preview"))
+		sections = append(sections, h.colors.TitleStyle().Render("Hyprland Config Preview"))
 	}
 
 	for _, monitor := range h.monitors {
@@ -41,7 +43,7 @@ func (h *HyprPreviewPane) View() string {
 		if h.clamp {
 			hyprCommand = ClampTextTo(hyprCommand, h.width)
 		}
-		sections = append(sections, HyprCommandStyle.Render(hyprCommand))
+		sections = append(sections, h.colors.MutedStyle().Render(hyprCommand))
 	}
 	return lipgloss.JoinVertical(lipgloss.Left, sections...)
 }

@@ -1,0 +1,94 @@
+# Kanagawa Theme for hyprdynamicmonitors
+# Based on the popular Kanagawa color scheme - inspired by "The Great Wave off Kanagawa"
+
+# Pane borders
+active_pane_color = "#7e9cd8"      # Kanagawa wave blue
+inactive_pane_color = "#54546d"    # Kanagawa sumiInk4
+
+# Header colors
+header_color = "#957fb8"           # Kanagawa oniViolet
+header_indicator_color = "#dca561" # Kanagawa roninYellow
+header_indicator_bg = "#1f1f28"    # Kanagawa sumiInk1
+
+# Program name
+program_name_color = "#1f1f28"     # Kanagawa sumiInk1 (dark text)
+program_name_bg = "#957fb8"        # First monitor edge color (oni violet)
+
+# Status colors
+error_color = "#e82424"            # Kanagawa samuraiRed
+error_bg = "#1f1f28"               # Kanagawa sumiInk1
+success_color = "#98bb6c"          # Kanagawa springGreen
+success_bg = "#1f1f28"             # Kanagawa sumiInk1
+warning_color = "#e82424"          # Kanagawa samuraiRed
+muted_color = "#54546d"            # Kanagawa sumiInk4
+
+# Tab colors
+tab_active_color = "#dcd7ba"       # Kanagawa fujiWhite
+tab_active_bg = "#7e9cd8"          # Kanagawa wave blue
+tab_inactive_color = "#727169"     # Kanagawa fujiGray
+tab_inactive_bg = "#1f1f28"        # Kanagawa sumiInk1
+
+# Monitor mode colors
+monitor_color_mode_color = "#7fb4ca"      # Kanagawa springBlue
+monitor_scale_mode_color = "#7e9cd8"      # Kanagawa wave blue
+monitor_mirroring_mode_color = "#957fb8"  # Kanagawa oniViolet
+monitor_editing_mode_color = "#dca561"    # Kanagawa roninYellow
+monitor_mode_selection_color = "#ffa066"  # Kanagawa surimiOrange
+
+# List colors
+list_item_subtitle_color = "#ffa066"      # Kanagawa surimiOrange
+list_item_unselected_color = "#dcd7ba"    # Kanagawa fujiWhite
+list_item_selected_color = "#d27e99"      # Kanagawa sakuraPink
+
+# Legend and selection
+legend_color = "#727169"                  # Kanagawa fujiGray
+legend_selected_monitor_color = "#e6c384" # Kanagawa carpYellow
+legend_selected_monitor_bg = "#1f1f28"    # Kanagawa sumiInk1
+
+# Title and subtitle colors
+title_color = "#957fb8"           # Kanagawa oniViolet
+subtitle_color = "#ffa066"        # Kanagawa surimiOrange
+info_color = "#98bb6c"            # Kanagawa springGreen
+link_color = "#7fb4ca"            # Kanagawa springBlue
+
+# Grid and monitor edge colors
+grid_dot_color = "#54546d"        # Kanagawa sumiInk4
+grid_snapping_line_color = "#686885" # Slightly brighter sumiInk4
+monitor_edge_colors = [
+    "#957fb8",  # Oni violet
+    "#ffa066",  # Surimi orange
+    "#7e9cd8",  # Wave blue
+    "#e6c384",  # Carp yellow
+    "#e82424",  # Samurai red
+    "#d27e99"   # Sakura pink
+]
+monitor_fill_colors_unselected = [
+    "#6c5d8f",  # Darker violet
+    "#cc7d4f",  # Darker orange
+    "#5e7ca8",  # Darker blue
+    "#b69c67",  # Darker yellow
+    "#b81c1c",  # Darker red
+    "#a8627a"   # Darker pink
+]
+monitor_fill_colors_selected = [
+    "#4d4369",  # Much darker violet
+    "#99603d",  # Much darker orange
+    "#455d82",  # Much darker blue
+    "#8a764f",  # Much darker yellow
+    "#8a1414",  # Much darker red
+    "#7e495c"   # Much darker pink
+]
+monitor_bottom_colors = [
+    "#b399d4",  # Brighter violet
+    "#ffb98c",  # Brighter orange
+    "#9db8ea",  # Brighter blue
+    "#f5d9a0",  # Brighter yellow
+    "#ff5c5c",  # Brighter red
+    "#e89fb5"   # Brighter pink
+]
+monitor_preview_pane_label_bg = "#1f1f28" # Kanagawa sumiInk1
+
+# Help colors
+help_key_color = "#727169"         # Kanagawa fujiGray (muted)
+help_description_color = "#54546d" # Kanagawa sumiInk4
+help_separator_color = "#3a3a50"   # Kanagawa darker ink
