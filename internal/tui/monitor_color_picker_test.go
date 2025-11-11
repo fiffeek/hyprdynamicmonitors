@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/fiffeek/hyprdynamicmonitors/internal/testutils"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/tui"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/utils"
 	"github.com/stretchr/testify/assert"
@@ -91,7 +92,9 @@ func TestColorPicker_Update(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			colorPicker := tui.NewColorPicker()
+			cfg := testutils.NewTestConfig(t).Get()
+			colors := tui.NewColorsManager(cfg)
+			colorPicker := tui.NewColorPicker(colors)
 			colorPicker.SetMonitor(tt.setupMonitor)
 
 			cmd := colorPicker.Update(tt.key)
@@ -166,7 +169,9 @@ func TestColorPicker_SdrAdjustment(t *testing.T) {
 				SdrSaturation: tt.initialVal,
 			}
 
-			colorPicker := tui.NewColorPicker()
+			cfg := testutils.NewTestConfig(t).Get()
+			colors := tui.NewColorsManager(cfg)
+			colorPicker := tui.NewColorPicker(colors)
 			colorPicker.SetMonitor(monitor)
 			colorPicker.SetItems(monitor)
 
@@ -188,7 +193,9 @@ func TestColorPicker_SetMonitor(t *testing.T) {
 		SdrSaturation: 1.2,
 	}
 
-	colorPicker := tui.NewColorPicker()
+	cfg := testutils.NewTestConfig(t).Get()
+	colors := tui.NewColorsManager(cfg)
+	colorPicker := tui.NewColorPicker(colors)
 	colorPicker.SetMonitor(monitor)
 
 	// Verify that the monitor was set by checking Update works
@@ -203,7 +210,9 @@ func TestColorPicker_Unset(t *testing.T) {
 		ColorPreset: tui.AutoColorPreset,
 	}
 
-	colorPicker := tui.NewColorPicker()
+	cfg := testutils.NewTestConfig(t).Get()
+	colors := tui.NewColorsManager(cfg)
+	colorPicker := tui.NewColorPicker(colors)
 	colorPicker.SetMonitor(monitor)
 
 	cmd := colorPicker.Unset()

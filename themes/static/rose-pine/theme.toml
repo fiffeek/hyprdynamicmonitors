@@ -1,0 +1,105 @@
+# Rosé Pine Theme for hyprdynamicmonitors
+# Based on the elegant Rosé Pine color scheme - all natural pine, faux fur and a bit of soho vibes
+
+# Pane borders
+active_pane_color = "#9ccfd8"      # Rosé Pine foam
+inactive_pane_color = "#6e6a86"    # Rosé Pine muted
+
+# Header colors
+header_color = "#c4a7e7"           # Rosé Pine iris
+header_indicator_color = "#f6c177" # Rosé Pine gold
+header_indicator_bg = "#191724"    # Rosé Pine base
+
+# Program name
+program_name_color = "#191724"     # Rosé Pine base (dark text)
+program_name_bg = "#9ccfd8"        # Rosé Pine foam
+
+# Status colors
+error_color = "#eb6f92"            # Rosé Pine love
+error_bg = "#191724"               # Rosé Pine base
+success_color = "#9ccfd8"          # Rosé Pine foam
+success_bg = "#191724"             # Rosé Pine base
+
+# Tab colors
+tab_active_color = "#e0def4"       # Rosé Pine text
+tab_active_bg = "#c4a7e7"          # Rosé Pine iris
+tab_inactive_color = "#6e6a86"     # Rosé Pine muted
+tab_inactive_bg = "#191724"        # Rosé Pine base
+
+# Hypr config colors
+hypr_config_title_color = "#f6c177"  # Rosé Pine gold
+hypr_command_color = "#e0def4"       # Rosé Pine text
+
+# Monitor/Item colors
+item_subtitle_color = "#f6c177"           # Rosé Pine gold
+monitor_color_mode_color = "#9ccfd8"      # Rosé Pine foam
+monitor_scale_mode_color = "#31748f"      # Rosé Pine pine
+monitor_mirroring_mode_color = "#c4a7e7"  # Rosé Pine iris
+monitor_editing_mode_color = "#f6c177"    # Rosé Pine gold
+monitor_mode_selection_color = "#ebbcba"  # Rosé Pine rose
+muted_color = "#6e6a86"                   # Rosé Pine muted
+monitor_list_title_color = "#e0def4"      # Rosé Pine text
+monitor_list_selected_color = "#ebbcba"   # Rosé Pine rose
+monitor_preview_pane_label_bg = "#191724" # Rosé Pine base
+
+# Legend and selection
+legend_color = "#6e6a86"              # Rosé Pine muted
+selected_monitor_color = "#f6c177"    # Rosé Pine gold
+selected_monitor_bg = "#191724"       # Rosé Pine base
+
+# Title and subtitle colors
+title_color = "#c4a7e7"           # Rosé Pine iris
+subtitle_color = "#ebbcba"        # Rosé Pine rose
+subtitle_info_color = "#9ccfd8"   # Rosé Pine foam
+link_color = "#31748f"            # Rosé Pine pine
+
+# Grid and monitor edge colors
+grid_dot_color = "#6e6a86"        # Rosé Pine muted
+monitor_edge_colors = [
+    "#c4a7e7",  # Iris
+    "#ebbcba",  # Rose
+    "#31748f",  # Pine
+    "#f6c177",  # Gold
+    "#eb6f92",  # Love
+    "#9ccfd8"   # Foam
+]
+monitor_fill_colors_unselected = [
+    "#9d87c7",  # Darker iris
+    "#cb9c9a",  # Darker rose
+    "#28596f",  # Darker pine
+    "#d6a157",  # Darker gold
+    "#cb5872",  # Darker love
+    "#7caeb8"   # Darker foam
+]
+monitor_fill_colors_selected = [
+    "#7660a0",  # Much darker iris
+    "#ab7c7a",  # Much darker rose
+    "#1f4252",  # Much darker pine
+    "#b08140",  # Much darker gold
+    "#ab4155",  # Much darker love
+    "#5c8e98"   # Much darker foam
+]
+monitor_bottom_colors = [
+    "#d8c8f3",  # Brighter iris
+    "#f5d8d6",  # Brighter rose
+    "#5a94b4",  # Brighter pine
+    "#ffd89d",  # Brighter gold
+    "#ff9bb8",  # Brighter love
+    "#b8e5ee"   # Brighter foam
+]
+
+# Config pane colors
+config_pane_warning_color = "#eb6f92"  # Rosé Pine love
+config_pane_action_bg = "#191724"      # Rosé Pine base
+config_detail_color = "#ebbcba"        # Rosé Pine rose
+config_detail_label_color = "#c4a7e7"  # Rosé Pine iris
+
+# Mode selector colors
+standard_mode_suffix_color = "#9ccfd8"      # Rosé Pine foam
+non_standard_mode_suffix_color = "#6e6a86"  # Rosé Pine muted
+muted_italic_color = "#6e6a86"              # Rosé Pine muted
+
+# Help colors
+help_key_color = "#31748f"         # Rosé Pine pine
+help_description_color = "#e0def4" # Rosé Pine text
+help_separator_color = "#6e6a86"   # Rosé Pine muted

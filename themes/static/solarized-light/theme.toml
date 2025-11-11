@@ -1,0 +1,111 @@
+# Solarized Light Theme for hyprdynamicmonitors
+# Based on the classic Solarized Light color scheme
+
+# Pane borders
+active_pane_color = "#268bd2"      # Solarized blue
+inactive_pane_color = "#93a1a1"    # Solarized base1
+
+# Header colors
+header_color = "#d33682"           # Solarized magenta
+header_indicator_color = "#b58900" # Solarized yellow
+header_indicator_bg = "#eee8d5"    # Solarized base2
+
+# Program name
+program_name_color = "#fdf6e3"     # Solarized base3 (light text)
+program_name_bg = "#268bd2"        # Solarized blue (vibrant, distinct from tabs)
+
+# Status colors
+error_color = "#dc322f"            # Solarized red
+error_bg = "#eee8d5"               # Solarized base2
+success_color = "#859900"          # Solarized green
+success_bg = "#eee8d5"             # Solarized base2
+
+# Tab colors
+tab_active_color = "#fdf6e3"       # Solarized base3 (light text)
+tab_active_bg = "#6c71c4"          # Solarized violet
+tab_inactive_color = "#657b83"     # Solarized base00
+tab_inactive_bg = "#eee8d5"        # Solarized base2
+
+# Hypr config colors
+hypr_config_title_color = "#cb4b16"  # Solarized orange
+hypr_command_color = "#657b83"       # Solarized base00
+hypr_command_bg = "#eee8d5"          # Solarized base2
+
+# Monitor/Item colors
+item_subtitle_color = "#cb4b16"           # Solarized orange
+monitor_color_mode_color = "#2aa198"      # Solarized cyan
+monitor_scale_mode_color = "#268bd2"      # Solarized blue
+monitor_mirroring_mode_color = "#6c71c4"  # Solarized violet
+monitor_editing_mode_color = "#b58900"    # Solarized yellow
+monitor_mode_selection_color = "#cb4b16"  # Solarized orange
+muted_color = "#93a1a1"                   # Solarized base1
+monitor_list_title_color = "#657b83"      # Solarized base00
+monitor_list_selected_color = "#d33682"   # Solarized magenta
+monitor_preview_pane_label_bg = "#eee8d5" # Solarized base2
+
+# Legend and selection
+legend_color = "#93a1a1"              # Solarized base1
+selected_monitor_color = "#b58900"    # Solarized yellow
+selected_monitor_bg = "#eee8d5"       # Solarized base2
+
+# Title and subtitle colors
+title_color = "#d33682"           # Solarized magenta
+subtitle_color = "#cb4b16"        # Solarized orange
+subtitle_info_color = "#859900"   # Solarized green
+link_color = "#2aa198"            # Solarized cyan
+
+# Grid and monitor edge colors
+grid_dot_color = "#93a1a1"        # Solarized base1
+monitor_edge_colors = [
+    "#9298d4",  # Lighter violet
+    "#e57f4a",  # Lighter orange
+    "#4ea3dd",  # Lighter blue
+    "#d4a933",  # Lighter yellow
+    "#e35f5a",  # Lighter red
+    "#dd5f9f"   # Lighter magenta
+]
+
+# Monitor fill colors (parallel arrays with monitor_edge_colors)
+monitor_fill_colors_unselected = [
+    "#d4d6f0",  # Very light violet
+    "#f7c9a8",  # Very light orange
+    "#c0e3f5",  # Very light blue
+    "#f5e8b3",  # Very light yellow
+    "#f5c5c3",  # Very light red
+    "#f5c9e3"   # Very light magenta
+]
+monitor_fill_colors_selected = [
+    "#a8abdb",  # Medium violet
+    "#ea9c6f",  # Medium orange
+    "#7fc0e8",  # Medium blue
+    "#e5d085",  # Medium yellow
+    "#eb8682",  # Medium red
+    "#e892ba"   # Medium magenta
+]
+monitor_bottom_colors = [
+    "#6c71c4",  # Violet
+    "#cb4b16",  # Orange
+    "#268bd2",  # Blue
+    "#b58900",  # Yellow
+    "#dc322f",  # Red
+    "#d33682"   # Magenta
+]
+
+# Config pane colors
+config_pane_warning_color = "#dc322f"  # Solarized red
+config_pane_action_bg = "#eee8d5"      # Solarized base2
+config_detail_color = "#cb4b16"        # Solarized orange
+config_detail_label_color = "#6c71c4"  # Solarized violet
+
+# Mode selector colors
+standard_mode_suffix_color = "#859900"      # Solarized green
+non_standard_mode_suffix_color = "#93a1a1"  # Solarized base1
+muted_italic_color = "#93a1a1"              # Solarized base1
+
+# Background (light theme)
+bg = "#fdf6e3"  # Solarized base3
+
+# Help colors
+help_key_color = "#268bd2"         # Solarized blue
+help_description_color = "#657b83" # Solarized base00
+help_separator_color = "#93a1a1"   # Solarized base1

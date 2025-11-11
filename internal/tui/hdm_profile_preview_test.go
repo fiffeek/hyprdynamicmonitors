@@ -70,9 +70,10 @@ func TestHDMProfilePreview_Update(t *testing.T) {
 			monitors := []*tui.MonitorSpec{
 				{Name: "eDP-1", ID: utils.JustPtr(1), Description: "Hello"},
 			}
+			colors := tui.NewColorsManager(cfg)
 
 			preview := tui.NewHDMProfilePreview(cfg, matcher, monitors,
-				tt.initialPowerState, true, tt.initialLidState)
+				tt.initialPowerState, true, tt.initialLidState, colors)
 			oldProfile := preview.GetProfile()
 
 			preview.Update(tt.msg)

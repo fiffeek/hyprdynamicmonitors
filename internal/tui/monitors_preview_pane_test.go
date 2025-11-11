@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/fiffeek/hyprdynamicmonitors/internal/testutils"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/tui"
 	"github.com/stretchr/testify/assert"
 )
@@ -92,7 +93,9 @@ func TestMonitorsPreviewPane_Update(t *testing.T) {
 				{Name: "eDP-1", X: 0, Y: 0, Width: 1920, Height: 1080, Scale: 1.0},
 				{Name: "HDMI-1", X: 1920, Y: 0, Width: 1920, Height: 1080, Scale: 1.0},
 			}
-			pane := tui.NewMonitorsPreviewPane(monitors)
+			cfg := testutils.NewTestConfig(t).Get()
+			colors := tui.NewColorsManager(cfg)
+			pane := tui.NewMonitorsPreviewPane(monitors, colors)
 
 			if tt.setupMsg != nil {
 				pane.Update(tt.setupMsg())
@@ -198,7 +201,9 @@ func TestMonitorsPreviewPane_KeyboardControls(t *testing.T) {
 			monitors := []*tui.MonitorSpec{
 				{Name: "eDP-1", X: 0, Y: 0, Width: 1920, Height: 1080, Scale: 1.0},
 			}
-			pane := tui.NewMonitorsPreviewPane(monitors)
+			cfg := testutils.NewTestConfig(t).Get()
+			colors := tui.NewColorsManager(cfg)
+			pane := tui.NewMonitorsPreviewPane(monitors, colors)
 
 			if tt.setupCmd != nil {
 				pane.Update(tt.setupCmd())

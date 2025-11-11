@@ -31,9 +31,10 @@ type ProfileNamePicker struct {
 	height    int
 	help      help.Model
 	keyMap    *profileNamePickerKeyMap
+	colors    *ColorsManager
 }
 
-func NewProfileNamePicker() *ProfileNamePicker {
+func NewProfileNamePicker(colors *ColorsManager) *ProfileNamePicker {
 	ti := textinput.New()
 	ti.Placeholder = "New Profile Name"
 	ti.Focus()
@@ -53,6 +54,7 @@ func NewProfileNamePicker() *ProfileNamePicker {
 				key.WithHelp("esc", "return/back"),
 			),
 		},
+		colors: colors,
 	}
 }
 
@@ -121,7 +123,7 @@ func (p *ProfileNamePicker) View() string {
 	availableSpace := p.height
 	logrus.Debugf("availableSpace for ProfileNamePicker: %d", availableSpace)
 
-	title := TitleStyle.Margin(0, 0, 1, 0).Render("Type the profile name")
+	title := p.colors.TitleStyle().Margin(0, 0, 1, 0).Render("Type the profile name")
 	sections = append(sections, title)
 	availableSpace -= lipgloss.Height(title)
 

@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/fiffeek/hyprdynamicmonitors/internal/testutils"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/tui"
 	"github.com/stretchr/testify/assert"
 )
@@ -53,7 +54,9 @@ func TestMirrorList_Update(t *testing.T) {
 				{Name: "HDMI-1"},
 				{Name: "DP-1"},
 			}
-			mirrorList := tui.NewMirrorList(monitors)
+			cfg := testutils.NewTestConfig(t).Get()
+			colors := tui.NewColorsManager(cfg)
+			mirrorList := tui.NewMirrorList(monitors, colors)
 
 			if tt.setupItems {
 				mirrorList.SetItems(monitor)

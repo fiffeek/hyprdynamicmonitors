@@ -74,6 +74,93 @@ type RawConfig struct {
 	Notifications        *Notifications      `toml:"notifications"`
 	StaticTemplateValues map[string]string   `toml:"static_template_values"`
 	KeysOrder            []string            `toml:"-"`
+	TUISection           *TUISection         `toml:"tui"`
+}
+
+type TUISection struct {
+	Colors *TUIColors `toml:"colors"`
+}
+
+type TUIColors struct {
+	SourceFile    *string `toml:"source"`
+	SourceFileDir *string `toml:"-"`
+
+	// Pane borders
+	ActivePaneColor   *string `toml:"active_pane_color"`
+	InactivePaneColor *string `toml:"inactive_pane_color"`
+
+	// Header colors
+	HeaderColor          *string `toml:"header_color"`
+	HeaderIndicatorColor *string `toml:"header_indicator_color"`
+	HeaderIndicatorBg    *string `toml:"header_indicator_bg"`
+
+	// Program name in the top bar
+	ProgramNameColor *string `toml:"program_name_color"`
+	ProgramNameBg    *string `toml:"program_name_bg"`
+
+	// Status colors
+	ErrorColor   *string `toml:"error_color"`
+	ErrorBg      *string `toml:"error_bg"`
+	SuccessColor *string `toml:"success_color"`
+	SuccessBg    *string `toml:"success_bg"`
+
+	// Tab colors
+	TabActiveColor   *string `toml:"tab_active_color"`
+	TabActiveBg      *string `toml:"tab_active_bg"`
+	TabInactiveColor *string `toml:"tab_inactive_color"`
+	TabInactiveBg    *string `toml:"tab_inactive_bg"`
+
+	// Hypr config colors
+	HyprConfigTitleColor *string `toml:"hypr_config_title_color"`
+	HyprCommandColor     *string `toml:"hypr_command_color"`
+
+	// Monitor/Item colors
+	ItemSubtitleColor         *string `toml:"item_subtitle_color"`
+	MonitorColorModeColor     *string `toml:"monitor_color_mode_color"`
+	MonitorScaleModeColor     *string `toml:"monitor_scale_mode_color"`
+	MonitorMirroringModeColor *string `toml:"monitor_mirroring_mode_color"`
+	MonitorEditingModeColor   *string `toml:"monitor_editing_mode_color"`
+	MonitorModeSelectionColor *string `toml:"monitor_mode_selection_color"`
+	MutedColor                *string `toml:"muted_color"`
+	MonitorListTitleColor     *string `toml:"monitor_list_title_color"`
+	MonitorListSelectedColor  *string `toml:"monitor_list_selected_color"`
+
+	// Legend and selection
+	LegendColor          *string `toml:"legend_color"`
+	SelectedMonitorColor *string `toml:"selected_monitor_color"`
+	SelectedMonitorBg    *string `toml:"selected_monitor_bg"`
+
+	// Title and subtitle colors
+	TitleColor        *string `toml:"title_color"`
+	SubtitleColor     *string `toml:"subtitle_color"`
+	SubtitleInfoColor *string `toml:"subtitle_info_color"`
+	LinkColor         *string `toml:"link_color"`
+
+	// Grid and monitor edge colors
+	GridDotColor                           *string   `toml:"grid_dot_color"`
+	MonitorEdgeColors                      *[]string `toml:"monitor_edge_colors"`
+	MonitorPreviewPaneLabelBackgroundColor *string   `toml:"monitor_preview_pane_label_bg"`
+
+	// Config pane colors
+	ConfigPaneWarningColor *string `toml:"config_pane_warning_color"`
+	ConfigPaneActionBg     *string `toml:"config_pane_action_bg"`
+	ConfigDetailColor      *string `toml:"config_detail_color"`
+	ConfigDetailLabelColor *string `toml:"config_detail_label_color"`
+
+	// Mode selector colors
+	StandardModeSuffixColor    *string `toml:"standard_mode_suffix_color"`
+	NonStandardModeSuffixColor *string `toml:"non_standard_mode_suffix_color"`
+	MutedItalicColor           *string `toml:"muted_italic_color"`
+
+	// Monitor fill and bottom colors (parallel arrays with MonitorEdgeColors)
+	MonitorFillColorsUnselected *[]string `toml:"monitor_fill_colors_unselected"`
+	MonitorFillColorsSelected   *[]string `toml:"monitor_fill_colors_selected"`
+	MonitorBottomColors         *[]string `toml:"monitor_bottom_colors"`
+
+	// Help
+	HelpKeyColor         *string `toml:"help_key_color"`
+	HelpDescriptionColor *string `toml:"help_description_color"`
+	HelpSeparatorColor   *string `toml:"help_separator_color"`
 }
 
 type HotReloadSection struct {
@@ -472,6 +559,256 @@ func (c *RawConfig) Validate() error {
 		}
 	}
 
+	if c.TUISection == nil {
+		c.TUISection = &TUISection{}
+	}
+	if err := c.TUISection.Validate(c.ConfigDirPath); err != nil {
+		return fmt.Errorf("tui section validation failed: %w", err)
+	}
+
+	return nil
+}
+
+func (t *TUISection) Validate(configDirPath string) error {
+	if t.Colors == nil {
+		t.Colors = &TUIColors{}
+	}
+	if t.Colors.SourceFile != nil {
+		logrus.WithFields(logrus.Fields{"theme": *t.Colors.SourceFile}).Info("Sourcing theme file")
+		if !strings.HasPrefix(*t.Colors.SourceFile, "/") &&
+			!strings.HasPrefix(*t.Colors.SourceFile, "$") &&
+			!strings.HasPrefix(*t.Colors.SourceFile, "~") {
+			t.Colors.SourceFile = utils.JustPtr(filepath.Join(configDirPath, *t.Colors.SourceFile))
+		}
+
+		t.Colors.SourceFile = utils.JustPtr(os.ExpandEnv(*t.Colors.SourceFile))
+		absConfigFile, err := filepath.Abs(*t.Colors.SourceFile)
+		if err != nil {
+			return fmt.Errorf("cant get absolute path to colors file %s: %w", *t.Colors.SourceFile, err)
+		}
+
+		t.Colors.SourceFile = utils.JustPtr(absConfigFile)
+
+		contents, err := os.ReadFile(*t.Colors.SourceFile)
+		if err != nil {
+			return fmt.Errorf("cant read colors file %s: %w", *t.Colors.SourceFile, err)
+		}
+		logrus.Debugf("Config contents: %s", contents)
+
+		var config TUIColors
+		_, err = toml.DecodeFile(*t.Colors.SourceFile, &config)
+		if err != nil {
+			return fmt.Errorf("failed to decode TOML: %w", err)
+		}
+
+		config.SourceFileDir = utils.JustPtr(filepath.Dir(*t.Colors.SourceFile))
+		t.Colors = &config
+	}
+	if err := t.Colors.Validate(); err != nil {
+		return fmt.Errorf("tui colors validation failed: %w", err)
+	}
+
+	return nil
+}
+
+func (t *TUIColors) Validate() error {
+	// Pane borders
+	if t.ActivePaneColor == nil {
+		t.ActivePaneColor = utils.JustPtr("62")
+	}
+	if t.InactivePaneColor == nil {
+		t.InactivePaneColor = utils.JustPtr("240")
+	}
+
+	// Header colors
+	if t.HeaderColor == nil {
+		t.HeaderColor = utils.JustPtr("205")
+	}
+	if t.HeaderIndicatorColor == nil {
+		t.HeaderIndicatorColor = utils.JustPtr("226")
+	}
+	if t.HeaderIndicatorBg == nil {
+		t.HeaderIndicatorBg = utils.JustPtr("235")
+	}
+
+	// Prog name
+	if t.ProgramNameColor == nil {
+		t.ProgramNameColor = utils.JustPtr("0")
+	}
+	if t.ProgramNameBg == nil {
+		t.ProgramNameBg = utils.JustPtr("250")
+	}
+
+	// Status colors
+	if t.ErrorColor == nil {
+		t.ErrorColor = utils.JustPtr("196")
+	}
+	if t.ErrorBg == nil {
+		t.ErrorBg = utils.JustPtr("235")
+	}
+	if t.SuccessColor == nil {
+		t.SuccessColor = utils.JustPtr("82")
+	}
+	if t.SuccessBg == nil {
+		t.SuccessBg = utils.JustPtr("235")
+	}
+
+	// Tab colors
+	if t.TabActiveColor == nil {
+		t.TabActiveColor = utils.JustPtr("255")
+	}
+	if t.TabActiveBg == nil {
+		t.TabActiveBg = utils.JustPtr("105")
+	}
+	if t.TabInactiveColor == nil {
+		t.TabInactiveColor = utils.JustPtr("243")
+	}
+	if t.TabInactiveBg == nil {
+		t.TabInactiveBg = utils.JustPtr("235")
+	}
+
+	// Hypr config colors
+	if t.HyprConfigTitleColor == nil {
+		t.HyprConfigTitleColor = utils.JustPtr("180")
+	}
+	if t.HyprCommandColor == nil {
+		t.HyprCommandColor = utils.JustPtr("255")
+	}
+
+	// Monitor/Item colors
+	if t.ItemSubtitleColor == nil {
+		t.ItemSubtitleColor = utils.JustPtr("180")
+	}
+	if t.MonitorColorModeColor == nil {
+		t.MonitorColorModeColor = utils.JustPtr("15")
+	}
+	if t.MonitorScaleModeColor == nil {
+		t.MonitorScaleModeColor = utils.JustPtr("39")
+	}
+	if t.MonitorMirroringModeColor == nil {
+		t.MonitorMirroringModeColor = utils.JustPtr("140")
+	}
+	if t.MonitorEditingModeColor == nil {
+		t.MonitorEditingModeColor = utils.JustPtr("226")
+	}
+	if t.MonitorModeSelectionColor == nil {
+		t.MonitorModeSelectionColor = utils.JustPtr("208")
+	}
+	if t.MutedColor == nil {
+		t.MutedColor = utils.JustPtr("243")
+	}
+	if t.MonitorListTitleColor == nil {
+		t.MonitorListTitleColor = utils.JustPtr("255")
+	}
+	if t.MonitorListSelectedColor == nil {
+		t.MonitorListSelectedColor = utils.JustPtr("212")
+	}
+
+	// Legend and selection
+	if t.LegendColor == nil {
+		t.LegendColor = utils.JustPtr("243")
+	}
+	if t.SelectedMonitorColor == nil {
+		t.SelectedMonitorColor = utils.JustPtr("226")
+	}
+	if t.SelectedMonitorBg == nil {
+		t.SelectedMonitorBg = utils.JustPtr("235")
+	}
+
+	// Title and subtitle colors
+	if t.TitleColor == nil {
+		t.TitleColor = utils.JustPtr("105")
+	}
+	if t.SubtitleColor == nil {
+		t.SubtitleColor = utils.JustPtr("180")
+	}
+	if t.SubtitleInfoColor == nil {
+		t.SubtitleInfoColor = utils.JustPtr("108")
+	}
+	if t.LinkColor == nil {
+		t.LinkColor = utils.JustPtr("42")
+	}
+
+	// Grid and monitor edge colors
+	if t.GridDotColor == nil {
+		t.GridDotColor = utils.JustPtr("240")
+	}
+	if t.MonitorEdgeColors == nil {
+		t.MonitorEdgeColors = &[]string{"105", "208", "39", "226", "196", "99"}
+	}
+	if t.MonitorPreviewPaneLabelBackgroundColor == nil {
+		t.MonitorPreviewPaneLabelBackgroundColor = utils.JustPtr("#000000")
+	}
+
+	// Config pane colors
+	if t.ConfigPaneWarningColor == nil {
+		t.ConfigPaneWarningColor = utils.JustPtr("196")
+	}
+	if t.ConfigPaneActionBg == nil {
+		t.ConfigPaneActionBg = utils.JustPtr("235")
+	}
+	if t.ConfigDetailColor == nil {
+		t.ConfigDetailColor = utils.JustPtr("180")
+	}
+	if t.ConfigDetailLabelColor == nil {
+		t.ConfigDetailLabelColor = utils.JustPtr("105")
+	}
+
+	// Mode selector colors
+	if t.StandardModeSuffixColor == nil {
+		t.StandardModeSuffixColor = utils.JustPtr("120")
+	}
+	if t.NonStandardModeSuffixColor == nil {
+		t.NonStandardModeSuffixColor = utils.JustPtr("243")
+	}
+	if t.MutedItalicColor == nil {
+		t.MutedItalicColor = utils.JustPtr("243")
+	}
+
+	// Monitor fill and bottom colors (parallel arrays with MonitorEdgeColors)
+	// Default MonitorEdgeColors: ["105", "208", "39", "226", "196", "99"]
+	if t.MonitorFillColorsUnselected == nil {
+		t.MonitorFillColorsUnselected = &[]string{
+			"99",  // 105: Bright purple -> darker purple
+			"166", // 208: Bright orange -> darker orange
+			"25",  // 39: Bright blue -> darker blue
+			"220", // 226: Bright yellow -> darker golden yellow
+			"124", // 196: Bright red -> darker red
+			"60",  // 99: Bright pink -> darker magenta
+		}
+	}
+	if t.MonitorFillColorsSelected == nil {
+		t.MonitorFillColorsSelected = &[]string{
+			"98",  // 105: Bright purple -> darker purple
+			"94",  // 208: Bright orange -> much darker orange/brown
+			"17",  // 39: Bright blue -> much darker blue
+			"100", // 226: Bright yellow -> much darker gold
+			"52",  // 196: Bright red -> much darker red/maroon
+			"53",  // 99: Bright pink -> much darker magenta/purple
+		}
+	}
+	if t.MonitorBottomColors == nil {
+		t.MonitorBottomColors = &[]string{
+			"141", // 105: Purple -> Bright purple
+			"214", // 208: Orange -> Bright orange
+			"45",  // 39: Blue -> Bright blue
+			"228", // 226: Yellow -> Bright yellow
+			"197", // 196: Red -> Bright red
+			"105", // 99: Pink -> Bright pink
+		}
+	}
+
+	// help
+	if t.HelpKeyColor == nil {
+		t.HelpKeyColor = utils.JustPtr("#909090")
+	}
+	if t.HelpDescriptionColor == nil {
+		t.HelpDescriptionColor = utils.JustPtr("#4A4A4A")
+	}
+	if t.HelpSeparatorColor == nil {
+		t.HelpSeparatorColor = utils.JustPtr("#3C3C3C")
+	}
+
 	return nil
 }
 
@@ -539,7 +876,7 @@ func (p *Profile) SetPath(configPath string) error {
 		return errors.New("config_file is required")
 	}
 
-	if !strings.HasPrefix(p.ConfigFile, "/") {
+	if !strings.HasPrefix(p.ConfigFile, "/") && !strings.HasPrefix(p.ConfigFile, "$") && !strings.HasPrefix(p.ConfigFile, "~") {
 		p.ConfigFile = filepath.Join(configPath, p.ConfigFile)
 	}
 
