@@ -13,13 +13,13 @@
 │  • Desc: Samsung Electric Compa... | Tag: monitor2││┃   5 # Monitors are given arbitrary tags (the "monitor" prefix and the ID coming from hyprland).       │ 
 │  • Desc: Headless Virtual Display | Tag: monitor3 ││┃   6 # If you are using tui to edit, leave this at the end of your file (the last monitor config       │ 
 │                                                   ││┃     applies)                                                                                          │ 
-│New settings will be appended when saved           ││┃   7 # and leave the markers.                                                                          │ 
-│                                                   ││┃   8 # <<<<< TUI AUTO START                                                                            │ 
-│                                                   ││┃   9 monitor=desc:BOE NE135A1M-NY1,2880x1920@120.00000,1920x1080,2.00000000,transform,0,vrr,1          │ 
+│New settings will be appended (or replaced         ││┃   7 # and leave the markers.                                                                          │ 
+│depending on the `<<<<<` markers position) when    ││┃   8 # <<<<< TUI AUTO START                                                                            │ 
+│applied (type `a`).                                ││┃   9 monitor=desc:BOE NE135A1M-NY1,2880x1920@120.00000,1920x1080,2.00000000,transform,0,vrr,1          │ 
 │                                                   ││┃  10 monitor=desc:Dell Inc. DELL U2723QE 5YNK3H3,3840x2160@60.00000,0x0,1.25000000,transform,0,vrr,0   │ 
-│                                                   ││┃  11 monitor=desc:Samsung Electric Company C27F390                                                     │ 
-│                                                   ││┃     HTHK500315,1920x1080@60.00000,3840x540,1.00000000,transform,0,vrr,0                               │ 
-│                                                   │╰────────────────────────────────────────────────────────────────────────────────────────────────────────╯ 
+│If you're not running the daemon you likely want to││┃  11 monitor=desc:Samsung Electric Company C27F390                                                     │ 
+│follow up by rendering the profile into the hypr   ││┃     HTHK500315,1920x1080@60.00000,3840x540,1.00000000,transform,0,vrr,0                               │ 
+│settings destination (type `R`).                   │╰────────────────────────────────────────────────────────────────────────────────────────────────────────╯ 
 │                                                   │╭────────────────────────────────────────────────────────────────────────────────────────────────────────╮ 
 │                                                   ││Generated hypr config preview                                                                           │ 
 │                                                   ││target.conf                                                                                             │ 

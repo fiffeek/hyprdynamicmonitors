@@ -6,6 +6,18 @@ sidebar_position: 3
 
 Choose your preferred setup approach based on whether you want to run the daemon for automatic profile switching.
 
+## Understanding HDM flow
+
+In essence, what `hyprdynamicmonitors` does is:
+- Aggregate all system information about battery/lid states (optional)
+- Aggregate information from Hyprland about the currently connected outputs (think: `hyprctl monitors all`)
+- See what the user defined in `config.toml`
+  - Iterate through user-defined profiles and find the best matching one
+  - For that profile, see what template or static configuration it requires
+  - Render that configuration to the `config.general.destination` location
+
+This is a simplified view, but it gives you a good understanding of the system. In reality, it responds to events, aggregates state on startup, sends notifications, and may execute callbacks. See [Configuration](../configuration/overview.md) for more details.
+
 ## Choose Your Approach
 
 :::tip
@@ -113,19 +125,27 @@ The TUI (Terminal User Interface) provides a visual way to configure monitors an
 
 ### Option C: TUI Only (No Daemon)
 
-**Best for:** Users who want manual control without automatic profile switching.
+**Best for:** Desktop users with stable monitor setups who prefer manual control.
 
 1. **Launch the TUI**:
    ```bash
    hyprdynamicmonitors tui
    ```
 
-2. **Configure monitors visually** and press `A` to apply changes.
+2. **Configure and save profiles** in the TUI:
+   - Adjust monitors in the Monitors view
+   - Press `A` to test changes ephemerally (optional)
+   - Switch to the Profile view with `Tab`
+   - Press `n` to create a new profile or `a` to update an existing one
+   - Press `R` to manually render the configuration to the destination file
 
-3. **Changes are ephemeral** - they apply immediately to Hyprland but won't persist on restart or monitor changes.
+3. **Source the configuration** in your `~/.config/hypr/hyprland.conf`:
+   ```conf
+   source = ~/.config/hypr/monitors.conf
+   ```
 
 :::info
-Without the daemon, you won't get automatic profile switching based on connected monitors or power state.
+Without the daemon, you manage profile rendering manually using the `R` key in the Profile view. See the [Running without a daemon guide](../guides/running-without-daemon.md) for detailed workflows.
 :::
 
 ---

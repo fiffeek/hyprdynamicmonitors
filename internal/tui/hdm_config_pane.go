@@ -213,9 +213,8 @@ func (h *HDMConfigPane) renderMatchedProfile(profile *config.Profile) string {
 
 	if !h.hasMonitorCountMismatch(profile) {
 		result.WriteString("\n")
-		statusContent := "New settings will be appended when saved"
-		statusBox := configPaneBorderStyle.
-			BorderForeground(lipgloss.Color("39")).
+		statusContent := "New settings will be appended (or replaced depending on the `<<<<<` markers position) when applied (type `a`).\n\nIf you're not running the daemon you likely want to follow up by rendering the profile into the hypr settings destination (type `R`)."
+		statusBox := SubtitleInfoStyle.Width(h.width).
 			Render(statusContent)
 		result.WriteString(statusBox)
 	}

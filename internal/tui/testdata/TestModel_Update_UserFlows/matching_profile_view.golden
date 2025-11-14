@@ -11,13 +11,13 @@
 │  • Desc: BOE NE135A1M-NY1                         ││┃                                                                                                       │ 
 │  • Desc: Dell Inc. DELL U2723QE...                ││┃                                                                                                       │ 
 │                                                   ││┃                                                                                                       │ 
-│New settings will be appended when saved           ││┃                                                                                                       │ 
+│New settings will be appended (or replaced         ││┃                                                                                                       │ 
+│depending on the `<<<<<` markers position) when    ││┃                                                                                                       │ 
+│applied (type `a`).                                ││┃                                                                                                       │ 
 │                                                   ││┃                                                                                                       │ 
-│                                                   ││┃                                                                                                       │ 
-│                                                   ││┃                                                                                                       │ 
-│                                                   ││┃                                                                                                       │ 
-│                                                   ││┃                                                                                                       │ 
-│                                                   ││┃                                                                                                       │ 
+│If you're not running the daemon you likely want to││┃                                                                                                       │ 
+│follow up by rendering the profile into the hypr   ││┃                                                                                                       │ 
+│settings destination (type `R`).                   ││┃                                                                                                       │ 
 │                                                   ││┃                                                                                                       │ 
 │                                                   │╰────────────────────────────────────────────────────────────────────────────────────────────────────────╯ 
 │                                                   │╭────────────────────────────────────────────────────────────────────────────────────────────────────────╮ 
