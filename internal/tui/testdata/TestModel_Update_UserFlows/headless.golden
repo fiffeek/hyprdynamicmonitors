@@ -10,13 +10,13 @@
 │Required Monitors:                                 ││┃   4 # You can use templates here etc, see                                                             │ 
 │  • Name: HEADLESS-2 | Tag: monitor1               ││┃     https://github.com/fiffeek/hyprdynamicmonitors/blob/main/examples/basic/hyprconfigs/template.go.tm│ 
 │                                                   ││┃     pl.                                                                                               │ 
-│New settings will be appended when saved           ││┃   5 # Monitors are given arbitrary tags (the "monitor" prefix and the ID coming from hyprland).       │ 
-│                                                   ││┃   6 # If you are using tui to edit, leave this at the end of your file (the last monitor config       │ 
-│                                                   ││┃     applies)                                                                                          │ 
+│New settings will be appended (or replaced         ││┃   5 # Monitors are given arbitrary tags (the "monitor" prefix and the ID coming from hyprland).       │ 
+│depending on the `<<<<<` markers position) when    ││┃   6 # If you are using tui to edit, leave this at the end of your file (the last monitor config       │ 
+│applied (type `a`).                                ││┃     applies)                                                                                          │ 
 │                                                   ││┃   7 # and leave the markers.                                                                          │ 
-│                                                   ││┃   8 # <<<<< TUI AUTO START                                                                            │ 
-│                                                   ││┃   9 monitor=HEADLESS-2,1920x1080@0.06000,2680x0,1.00000000,transform,0,vrr,0                          │ 
-│                                                   ││┃  10 # <<<<< TUI AUTO END                                                                              │ 
+│If you're not running the daemon you likely want to││┃   8 # <<<<< TUI AUTO START                                                                            │ 
+│follow up by rendering the profile into the hypr   ││┃   9 monitor=HEADLESS-2,1920x1080@0.06000,2680x0,1.00000000,transform,0,vrr,0                          │ 
+│settings destination (type `R`).                   ││┃  10 # <<<<< TUI AUTO END                                                                              │ 
 │                                                   ││┃  11                                                                                                   │ 
 │                                                   ││┃                                                                                                       │ 
 │                                                   │╰────────────────────────────────────────────────────────────────────────────────────────────────────────╯ 

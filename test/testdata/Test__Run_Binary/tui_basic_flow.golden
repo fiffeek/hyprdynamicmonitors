@@ -11,13 +11,13 @@
 │  • Desc: BOE NE135A1M-NY1 | Tag: monitor0         ││┃     https://github.com/fiffeek/hyprdynamicmonitors/blob/main/examples/basic/hyprconfigs/template.go.tm│
 │  • Desc: LG Electronics LG SDQH... | Tag: monitor1││┃     pl.                                                                                               │
 │                                                   ││┃   5 # Monitors are given arbitrary tags (the "monitor" prefix and the ID coming from hyprland).       │
-│New settings will be appended when saved           ││┃   6 # If you are using tui to edit, leave this at the end of your file (the last monitor config       │
-│                                                   ││┃     applies)                                                                                          │
-│                                                   ││┃   7 # and leave the markers.                                                                          │
+│New settings will be appended (or replaced         ││┃   6 # If you are using tui to edit, leave this at the end of your file (the last monitor config       │
+│depending on the `<<<<<` markers position) when    ││┃     applies)                                                                                          │
+│applied (type `a`).                                ││┃   7 # and leave the markers.                                                                          │
 │                                                   ││┃   8 # <<<<< TUI AUTO START                                                                            │
-│                                                   ││┃   9 monitor=desc:BOE NE135A1M-NY1,2880x1920@120.00000,0x0,2.00000000,transform,0,vrr,1                │
-│                                                   ││┃  10 monitor=desc:LG Electronics LG SDQHD                                                              │
-│                                                   ││┃     301NTBKDU037,2560x2880@59.96700,-1800x0,1.60000000,transform,0,vrr,0                              │
+│If you're not running the daemon you likely want to││┃   9 monitor=desc:BOE NE135A1M-NY1,2880x1920@120.00000,0x0,2.00000000,transform,0,vrr,1                │
+│follow up by rendering the profile into the hypr   ││┃  10 monitor=desc:LG Electronics LG SDQHD                                                              │
+│settings destination (type `R`).                   ││┃     301NTBKDU037,2560x2880@59.96700,-1800x0,1.60000000,transform,0,vrr,0                              │
 │                                                   ││┃  11 # <<<<< TUI AUTO END                                                                              │
 │                                                   │╰────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 │                                                   │╭────────────────────────────────────────────────────────────────────────────────────────────────────────╮
