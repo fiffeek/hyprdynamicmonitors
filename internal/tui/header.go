@@ -22,9 +22,10 @@ type Header struct {
 	version        string
 	lastUpdate     time.Time
 	clearAfter     time.Duration
+	colors         *ColorsManager
 }
 
-func NewHeader(title string, availableViews []ViewMode, version string) *Header {
+func NewHeader(title string, availableViews []ViewMode, version string, colors *ColorsManager) *Header {
 	return &Header{
 		title:          title,
 		warning:        "",
@@ -35,6 +36,7 @@ func NewHeader(title string, availableViews []ViewMode, version string) *Header 
 		version:        version,
 		lastUpdate:     time.Now(),
 		clearAfter:     2 * time.Second,
+		colors:         colors,
 	}
 }
 
@@ -82,7 +84,7 @@ func (h *Header) View() string {
 
 	version := "v. " + h.version
 	prog := fmt.Sprintf("%s [%s]", h.title, version)
-	programName := HeaderStyle.Foreground(lipgloss.Color("0")).Background(lipgloss.Color("250")).Padding(0, 1).Render(prog)
+	programName := h.colors.ProgramNameStyle().Padding(0, 1).Render(prog)
 	availableSpace -= lipgloss.Width(programName)
 	sections = append(sections, programName)
 
@@ -94,19 +96,19 @@ func (h *Header) View() string {
 
 	var mode string
 	if h.mode != "" {
-		mode = HeaderIndicatorStyle.Render(h.mode)
+		mode = h.colors.HeaderIndicatorStyle().Render(h.mode)
 		availableSpace -= lipgloss.Width(mode) + 1
 	}
 
 	var statusError string
 	if h.err != "" {
-		statusError = ErrorStyle.Render(h.err)
+		statusError = h.colors.ErrorStyle().Render(h.err)
 		availableSpace -= lipgloss.Width(statusError) + 1
 	}
 
 	var statusSuccess string
 	if h.success != "" {
-		statusSuccess = SuccessStyle.Render(h.success)
+		statusSuccess = h.colors.SuccessStyle().Render(h.success)
 		availableSpace -= lipgloss.Width(statusSuccess) + 1
 	}
 
@@ -143,9 +145,9 @@ func (h *Header) renderTabs() string {
 	for _, view := range h.availableViews {
 		var tab string
 		if view == h.currentView {
-			tab = TabActiveStyle.Render(view.String())
+			tab = h.colors.TabActiveStyle().Render(view.String())
 		} else {
-			tab = TabInactiveStyle.Render(view.String())
+			tab = h.colors.TabInactiveStyle().Render(view.String())
 		}
 		tabs = append(tabs, tab)
 	}

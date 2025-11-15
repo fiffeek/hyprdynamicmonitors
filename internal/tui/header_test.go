@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/fiffeek/hyprdynamicmonitors/internal/testutils"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/tui"
 	"github.com/stretchr/testify/assert"
 )
@@ -65,7 +66,9 @@ func TestHeader_Update(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			header := tui.NewHeader("test", []tui.ViewMode{tui.MonitorsListView}, "1.0.0")
+			cfg := testutils.NewTestConfig(t).Get()
+			colors := tui.NewColorsManager(cfg)
+			header := tui.NewHeader("test", []tui.ViewMode{tui.MonitorsListView}, "1.0.0", colors)
 
 			if tt.setupMsg != nil {
 				tt.msg = tt.setupMsg()

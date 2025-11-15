@@ -1,0 +1,105 @@
+# Gruvbox Dark Theme for hyprdynamicmonitors
+# Based on the popular Gruvbox Dark color scheme
+
+# Pane borders
+active_pane_color = "#83a598"      # Gruvbox bright blue
+inactive_pane_color = "#928374"    # Gruvbox gray
+
+# Header colors
+header_color = "#d3869b"           # Gruvbox bright purple
+header_indicator_color = "#fabd2f" # Gruvbox bright yellow
+header_indicator_bg = "#282828"    # Gruvbox bg0
+
+# Program name
+program_name_color = "#282828"     # Gruvbox bg0 (dark text)
+program_name_bg = "#83a598"        # Gruvbox bright blue
+
+# Status colors
+error_color = "#fb4934"            # Gruvbox bright red
+error_bg = "#282828"               # Gruvbox bg0
+success_color = "#b8bb26"          # Gruvbox bright green
+success_bg = "#282828"             # Gruvbox bg0
+
+# Tab colors
+tab_active_color = "#ebdbb2"       # Gruvbox fg0
+tab_active_bg = "#d3869b"          # Gruvbox bright purple
+tab_inactive_color = "#928374"     # Gruvbox gray
+tab_inactive_bg = "#282828"        # Gruvbox bg0
+
+# Hypr config colors
+hypr_config_title_color = "#fe8019"  # Gruvbox bright orange
+hypr_command_color = "#ebdbb2"       # Gruvbox fg0
+
+# Monitor/Item colors
+item_subtitle_color = "#fe8019"           # Gruvbox bright orange
+monitor_color_mode_color = "#8ec07c"      # Gruvbox bright aqua
+monitor_scale_mode_color = "#83a598"      # Gruvbox bright blue
+monitor_mirroring_mode_color = "#d3869b"  # Gruvbox bright purple
+monitor_editing_mode_color = "#fabd2f"    # Gruvbox bright yellow
+monitor_mode_selection_color = "#fe8019"  # Gruvbox bright orange
+muted_color = "#928374"                   # Gruvbox gray
+monitor_list_title_color = "#ebdbb2"      # Gruvbox fg0
+monitor_list_selected_color = "#d3869b"   # Gruvbox bright purple
+monitor_preview_pane_label_bg = "#282828" # Gruvbox bg0
+
+# Legend and selection
+legend_color = "#928374"              # Gruvbox gray
+selected_monitor_color = "#fabd2f"    # Gruvbox bright yellow
+selected_monitor_bg = "#282828"       # Gruvbox bg0
+
+# Title and subtitle colors
+title_color = "#d3869b"           # Gruvbox bright purple
+subtitle_color = "#fe8019"        # Gruvbox bright orange
+subtitle_info_color = "#b8bb26"   # Gruvbox bright green
+link_color = "#8ec07c"            # Gruvbox bright aqua
+
+# Grid and monitor edge colors
+grid_dot_color = "#928374"        # Gruvbox gray
+monitor_edge_colors = [
+    "#d3869b",  # Bright purple
+    "#fe8019",  # Bright orange
+    "#83a598",  # Bright blue
+    "#fabd2f",  # Bright yellow
+    "#fb4934",  # Bright red
+    "#8ec07c"   # Bright aqua
+]
+monitor_fill_colors_unselected = [
+    "#b16286",  # Purple
+    "#d65d0e",  # Orange
+    "#458588",  # Blue
+    "#d79921",  # Yellow
+    "#cc241d",  # Red
+    "#689d6a"   # Aqua
+]
+monitor_fill_colors_selected = [
+    "#8f3f71",  # Darker purple
+    "#af3a03",  # Darker orange
+    "#076678",  # Darker blue
+    "#b57614",  # Darker yellow
+    "#9d0006",  # Darker red
+    "#427b58"   # Darker aqua
+]
+monitor_bottom_colors = [
+    "#e5b9ca",  # Lighter purple
+    "#ffa066",  # Lighter orange
+    "#a8c5d9",  # Lighter blue
+    "#fdd87a",  # Lighter yellow
+    "#ff7070",  # Lighter red
+    "#a8d4ad"   # Lighter aqua
+]
+
+# Config pane colors
+config_pane_warning_color = "#fb4934"  # Gruvbox bright red
+config_pane_action_bg = "#282828"      # Gruvbox bg0
+config_detail_color = "#fe8019"        # Gruvbox bright orange
+config_detail_label_color = "#d3869b"  # Gruvbox bright purple
+
+# Mode selector colors
+standard_mode_suffix_color = "#b8bb26"      # Gruvbox bright green
+non_standard_mode_suffix_color = "#928374"  # Gruvbox gray
+muted_italic_color = "#928374"              # Gruvbox gray
+
+# Help colors
+help_key_color = "#83a598"         # Gruvbox bright blue
+help_description_color = "#ebdbb2" # Gruvbox fg0
+help_separator_color = "#928374"   # Gruvbox gray

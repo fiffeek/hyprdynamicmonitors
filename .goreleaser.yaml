@@ -30,6 +30,7 @@ archives:
       files:
           - LICENSE
           - infrastructure/systemd/*
+          - themes/*
 
 changelog:
     sort: asc
@@ -82,6 +83,11 @@ aurs:
 
           # systemd
           install -Dm644 "./infrastructure/systemd/hyprdynamicmonitors.service" "${pkgdir}/usr/lib/systemd/user/hyprdynamicmonitors.service"
+
+          # themes
+          install -d -m 755 "${pkgdir}/usr/share/hyprdynamicmonitors"
+          install -d -m 755 "${pkgdir}/usr/share/hyprdynamicmonitors/themes"
+          cp -r themes/* "${pkgdir}/usr/share/hyprdynamicmonitors/themes"
 
           # completions
           mkdir -p "${pkgdir}/usr/share/bash-completion/completions/"

@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/fiffeek/hyprdynamicmonitors/internal/testutils"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/tui"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/utils"
 	"github.com/stretchr/testify/assert"
@@ -104,8 +105,10 @@ func TestMonitorList_Update(t *testing.T) {
 				ID:   utils.IntPtr(1),
 			}
 
+			cfg := testutils.NewTestConfig(t).Get()
+			colors := tui.NewColorsManager(cfg)
 			monitors := []*tui.MonitorSpec{monitor}
-			monitorList := tui.NewMonitorList(monitors)
+			monitorList := tui.NewMonitorList(monitors, colors)
 
 			if tt.setupState != nil {
 				monitorList.Update(tui.StateChanged{State: *tt.setupState})
@@ -218,8 +221,10 @@ func TestMonitorList_DelegateUpdate(t *testing.T) {
 				ID:   utils.IntPtr(1),
 			}
 
+			cfg := testutils.NewTestConfig(t).Get()
+			colors := tui.NewColorsManager(cfg)
 			monitors := []*tui.MonitorSpec{monitor}
-			monitorList := tui.NewMonitorList(monitors)
+			monitorList := tui.NewMonitorList(monitors, colors)
 
 			if tt.setupEditing {
 				monitorList.Update(tea.KeyMsg{Type: tea.KeyEnter})

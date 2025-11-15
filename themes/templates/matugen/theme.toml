@@ -1,0 +1,107 @@
+# Matugen-generated theme for hyprdynamicmonitors
+# Auto-generated using Material You colors from wallpaper
+
+# Pane borders
+active_pane_color = "{{ colors.primary.default.hex }}"
+inactive_pane_color = "{{ colors.surface_variant.default.hex }}"
+
+# Header colors
+header_color = "{{ colors.secondary.default.hex }}"
+header_indicator_color = "{{ colors.tertiary.default.hex }}"
+header_indicator_bg = "{{ colors.surface.default.hex }}"
+
+# Program name
+program_name_color = "{{ colors.on_primary.default.hex }}"
+program_name_bg = "{{ colors.primary.default.hex }}"
+
+# Status colors
+error_color = "{{ colors.error.default.hex }}"
+error_bg = "{{ colors.surface.default.hex }}"
+success_color = "{{ colors.tertiary.default.hex }}"
+success_bg = "{{ colors.surface.default.hex }}"
+
+# Tab colors
+tab_active_color = "{{ colors.on_secondary.default.hex }}"
+tab_active_bg = "{{ colors.secondary.default.hex }}"
+tab_inactive_color = "{{ colors.on_surface_variant.default.hex }}"
+tab_inactive_bg = "{{ colors.surface.default.hex }}"
+
+# Hypr config colors
+hypr_config_title_color = "{{ colors.tertiary.default.hex }}"
+hypr_command_color = "{{ colors.on_surface.default.hex }}"
+
+# Monitor/Item colors
+item_subtitle_color = "{{ colors.tertiary.default.hex }}"
+monitor_color_mode_color = "{{ colors.primary.default.hex }}"
+monitor_scale_mode_color = "{{ colors.secondary.default.hex }}"
+monitor_mirroring_mode_color = "{{ colors.tertiary.default.hex }}"
+monitor_editing_mode_color = "{{ colors.primary_container.default.hex }}"
+monitor_mode_selection_color = "{{ colors.secondary_container.default.hex }}"
+muted_color = "{{ colors.surface_variant.default.hex }}"
+monitor_list_title_color = "{{ colors.on_surface.default.hex }}"
+monitor_list_selected_color = "{{ colors.primary.default.hex }}"
+monitor_preview_pane_label_bg = "{{ colors.surface.default.hex }}"
+
+# Legend and selection
+legend_color = "{{ colors.on_surface_variant.default.hex }}"
+selected_monitor_color = "{{ colors.tertiary.default.hex }}"
+selected_monitor_bg = "{{ colors.surface.default.hex }}"
+
+# Title and subtitle colors
+title_color = "{{ colors.primary.default.hex }}"
+subtitle_color = "{{ colors.secondary.default.hex }}"
+subtitle_info_color = "{{ colors.tertiary.default.hex }}"
+link_color = "{{ colors.primary.default.hex }}"
+
+# Grid and monitor edge colors
+grid_dot_color = "{{ colors.surface_variant.default.hex }}"
+monitor_edge_colors = [
+    "{{ colors.primary.default.hex }}",
+    "{{ colors.secondary.default.hex }}",
+    "{{ colors.tertiary.default.hex }}",
+    "{{ colors.error.default.hex }}",
+    "{{ colors.primary_container.default.hex }}",
+    "{{ colors.secondary_container.default.hex }}"
+]
+
+# Monitor fill colors (parallel arrays with monitor_edge_colors)
+monitor_fill_colors_unselected = [
+    "{{ colors.primary_container.default.hex }}",
+    "{{ colors.secondary_container.default.hex }}",
+    "{{ colors.tertiary_container.default.hex }}",
+    "{{ colors.error_container.default.hex }}",
+    "{{ colors.surface_bright.default.hex }}",
+    "{{ colors.surface_container_high.default.hex }}"
+]
+monitor_fill_colors_selected = [
+    "{{ colors.primary.default.hex }}",
+    "{{ colors.secondary.default.hex }}",
+    "{{ colors.tertiary.default.hex }}",
+    "{{ colors.error.default.hex }}",
+    "{{ colors.surface_dim.default.hex }}",
+    "{{ colors.surface_container.default.hex }}"
+]
+monitor_bottom_colors = [
+    "{{ colors.primary.default.hex | set_lightness: 95.0 }}",
+    "{{ colors.secondary.default.hex | set_lightness: 95.0 }}",
+    "{{ colors.tertiary.default.hex | set_lightness: 95.0 }}",
+    "{{ colors.error.default.hex | set_lightness: 95.0 }}",
+    "{{ colors.primary_container.default.hex | set_lightness: 95.0 }}",
+    "{{ colors.secondary_container.default.hex | set_lightness: 95.0 }}"
+]
+
+# Config pane colors
+config_pane_warning_color = "{{ colors.error.default.hex }}"
+config_pane_action_bg = "{{ colors.surface.default.hex }}"
+config_detail_color = "{{ colors.tertiary.default.hex }}"
+config_detail_label_color = "{{ colors.secondary.default.hex }}"
+
+# Mode selector colors
+standard_mode_suffix_color = "{{ colors.tertiary.default.hex }}"
+non_standard_mode_suffix_color = "{{ colors.surface_variant.default.hex }}"
+muted_italic_color = "{{ colors.surface_variant.default.hex }}"
+
+# Help colors
+help_key_color = "{{ colors.primary.default.hex }}"
+help_description_color = "{{ colors.on_surface.default.hex }}"
+help_separator_color = "{{ colors.surface_variant.default.hex }}"

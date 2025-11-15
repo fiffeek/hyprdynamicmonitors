@@ -79,7 +79,7 @@ A full guide is available at [Dynamic Profile Modes](https://fiffeek.github.io/h
 ### Installation
 
 ```bash
-# Binary release (recommended)
+# Binary release
 export DESTDIR="$HOME/.local/bin"  # optional, defaults to ~/.local/bin/
 curl -o- https://raw.githubusercontent.com/fiffeek/hyprdynamicmonitors/refs/heads/main/scripts/install.sh | bash
 

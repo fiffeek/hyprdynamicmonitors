@@ -1,0 +1,105 @@
+# One Dark Theme for hyprdynamicmonitors
+# Based on the popular One Dark color scheme from Atom
+
+# Pane borders
+active_pane_color = "#61afef"      # One Dark blue
+inactive_pane_color = "#5c6370"    # One Dark gutter grey
+
+# Header colors
+header_color = "#c678dd"           # One Dark purple
+header_indicator_color = "#e5c07b" # One Dark yellow
+header_indicator_bg = "#282c34"    # One Dark background
+
+# Program name
+program_name_color = "#282c34"     # One Dark background (dark text for contrast)
+program_name_bg = "#56b6c2"        # One Dark cyan (vibrant, distinct from tabs)
+
+# Status colors
+error_color = "#e06c75"            # One Dark red
+error_bg = "#282c34"               # One Dark background
+success_color = "#98c379"          # One Dark green
+success_bg = "#282c34"             # One Dark background
+
+# Tab colors
+tab_active_color = "#abb2bf"       # One Dark foreground
+tab_active_bg = "#c678dd"          # One Dark purple
+tab_inactive_color = "#5c6370"     # One Dark gutter grey
+tab_inactive_bg = "#282c34"        # One Dark background
+
+# Hypr config colors
+hypr_config_title_color = "#d19a66"  # One Dark orange
+hypr_command_color = "#abb2bf"       # One Dark foreground
+
+# Monitor/Item colors
+item_subtitle_color = "#d19a66"           # One Dark orange
+monitor_color_mode_color = "#56b6c2"      # One Dark cyan
+monitor_scale_mode_color = "#61afef"      # One Dark blue
+monitor_mirroring_mode_color = "#c678dd"  # One Dark purple
+monitor_editing_mode_color = "#e5c07b"    # One Dark yellow
+monitor_mode_selection_color = "#d19a66"  # One Dark orange
+muted_color = "#5c6370"                   # One Dark gutter grey
+monitor_list_title_color = "#abb2bf"      # One Dark foreground
+monitor_list_selected_color = "#c678dd"   # One Dark purple
+monitor_preview_pane_label_bg = "#282c34" # One Dark background
+
+# Legend and selection
+legend_color = "#5c6370"              # One Dark gutter grey
+selected_monitor_color = "#e5c07b"    # One Dark yellow
+selected_monitor_bg = "#282c34"       # One Dark background
+
+# Title and subtitle colors
+title_color = "#c678dd"           # One Dark purple
+subtitle_color = "#d19a66"        # One Dark orange
+subtitle_info_color = "#98c379"   # One Dark green
+link_color = "#56b6c2"            # One Dark cyan
+
+# Grid and monitor edge colors
+grid_dot_color = "#5c6370"        # One Dark gutter grey
+monitor_edge_colors = [
+    "#c678dd",  # Purple
+    "#d19a66",  # Orange
+    "#61afef",  # Blue
+    "#e5c07b",  # Yellow
+    "#e06c75",  # Red
+    "#56b6c2"   # Cyan
+]
+monitor_fill_colors_unselected = [
+    "#a060bd",  # Darker purple
+    "#b17a4d",  # Darker orange
+    "#4d8fcc",  # Darker blue
+    "#c5a062",  # Darker yellow
+    "#c0565c",  # Darker red
+    "#4496a2"   # Darker cyan
+]
+monitor_fill_colors_selected = [
+    "#7a4690",  # Much darker purple
+    "#8a5b39",  # Much darker orange/brown
+    "#396a9a",  # Much darker blue
+    "#9a7a4a",  # Much darker yellow
+    "#9a4048",  # Much darker red
+    "#33727d"   # Much darker cyan
+]
+monitor_bottom_colors = [
+    "#d99aed",  # Brighter purple
+    "#e4b393",  # Brighter orange
+    "#8dc8ff",  # Brighter blue
+    "#f5d9a8",  # Brighter yellow
+    "#f09aa0",  # Brighter red
+    "#7fd4df"   # Brighter cyan
+]
+
+# Config pane colors
+config_pane_warning_color = "#e06c75"  # One Dark red
+config_pane_action_bg = "#282c34"      # One Dark background
+config_detail_color = "#d19a66"        # One Dark orange
+config_detail_label_color = "#c678dd"  # One Dark purple
+
+# Mode selector colors
+standard_mode_suffix_color = "#98c379"      # One Dark green
+non_standard_mode_suffix_color = "#5c6370"  # One Dark gutter grey
+muted_italic_color = "#5c6370"              # One Dark gutter grey
+
+# Help colors
+help_key_color = "#61afef"         # One Dark blue
+help_description_color = "#abb2bf" # One Dark foreground
+help_separator_color = "#5c6370"   # One Dark gutter grey
