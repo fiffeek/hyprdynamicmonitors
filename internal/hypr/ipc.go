@@ -154,10 +154,10 @@ func (h *IPC) queryConnectedMonitors(ctx context.Context) (MonitorSpecs, error) 
 	logrus.Debug("Querying connected monitors")
 	socketPath := GetHyprSocket(h.xdgRuntimeDir, h.instanceSignature)
 	conn, teardown, err := dial.GetUnixSocketConnection(ctx, socketPath)
-	defer teardown()
 	if err != nil {
 		return nil, fmt.Errorf("cant open socket to %s: %w", socketPath, err)
 	}
+	defer teardown()
 
 	return dial.SyncQuerySocket[MonitorSpecs](conn, "j/monitors all\n")
 }
