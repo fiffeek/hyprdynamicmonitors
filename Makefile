@@ -241,6 +241,7 @@ help/generate: build/docs
 	@scripts/autohelp.sh $(TEST_EXECUTABLE_NAME) $(DOCS_COMMAND_FILE) validate
 	@scripts/autohelp.sh $(TEST_EXECUTABLE_NAME) $(DOCS_COMMAND_FILE) freeze
 	@scripts/autohelp.sh $(TEST_EXECUTABLE_NAME) $(DOCS_COMMAND_FILE) tui
+	@scripts/autohelp.sh $(TEST_EXECUTABLE_NAME) $(DOCS_COMMAND_FILE) prepare
 
 # requires vhs to be installed, for now a manual action
 record/preview: build/docs

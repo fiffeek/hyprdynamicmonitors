@@ -1,0 +1,13 @@
+[Unit]
+Description=HyprDynamicMonitors - boot-time cleanup
+Documentation=https://fiffeek.github.io/hyprdynamicmonitors/
+Before=graphical-session-pre.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/hyprdynamicmonitors prepare
+TimeoutStartSec=3
+RemainAfterExit=yes
+
+[Install]
+WantedBy=default.target graphical-session-pre.target

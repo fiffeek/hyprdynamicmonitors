@@ -209,6 +209,15 @@ func (t *TestConfig) WithFilewatcherDebounceTime(ms int) *TestConfig {
 	return t
 }
 
+func (t *TestConfig) WithDestinationContents(filepath string) *TestConfig {
+	//nolint:gosec
+	contents, err := os.ReadFile(filepath)
+	require.NoError(t.t, err, "should be able to read the fixture file")
+	require.NoError(t.t, utils.WriteAtomic(*t.cfg.General.Destination, contents),
+		"should be able to write to destination")
+	return t
+}
+
 func (t *TestConfig) FillDefaults() *TestConfig {
 	if t.cfg.Profiles == nil {
 		t = t.WithProfiles(map[string]*config.Profile{

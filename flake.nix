@@ -74,6 +74,18 @@
               description = "Systemd target to bind to.";
             };
 
+            prepareSystemdTarget = mkOption {
+              type = types.listOf types.str;
+              default = [ "default.target" "graphical-session-pre.target" ];
+              description = "Systemd targets for the prepare service to bind to.";
+            };
+
+            prepareSystemdBefore = mkOption {
+              type = types.listOf types.str;
+              default = [ "graphical-session-pre.target" ];
+              description = "Systemd targets the prepare service should run before.";
+            };
+
             extraFlags = mkOption {
               type = types.listOf types.str;
               default = [];
@@ -107,7 +119,7 @@
               documentation = [ "https://fiffeek.github.io/hyprdynamicmonitors/" ];
               partOf = [ cfg.systemdTarget ];
               requires = [ cfg.systemdTarget ];
-              after = [ cfg.systemdTarget ];
+              after = [ cfg.systemdTarget "hyprdynamicmonitors-prepare.service" ];
 
               serviceConfig = {
                 Type = "simple";
@@ -119,14 +131,31 @@
 
               wantedBy = [ cfg.systemdTarget ];
             };
+
+            prepareUnitSpec = {
+              description = "HyprDynamicMonitors - boot-time cleanup";
+              documentation = [ "https://fiffeek.github.io/hyprdynamicmonitors/" ];
+              before = cfg.prepareSystemdBefore;
+
+              serviceConfig = {
+                Type = "oneshot";
+                ExecStart = "${cfg.package}/bin/hyprdynamicmonitors prepare --config ${cfg.configPath}";
+                TimeoutStartSec = 3;
+                RemainAfterExit = true;
+              };
+
+              wantedBy = cfg.prepareSystemdTarget;
+            };
           in mkMerge [
             { environment.etc = etcAttrs; }
 
             (mkIf (cfg.mode == "system") {
               systemd.services.hyprdynamicmonitors = unitSpec;
+              systemd.services.hyprdynamicmonitors-prepare = prepareUnitSpec;
             })
             (mkIf (cfg.mode == "user") {
               systemd.user.services.hyprdynamicmonitors = unitSpec;
+              systemd.user.services.hyprdynamicmonitors-prepare = prepareUnitSpec;
             })
           ]);
         };
@@ -187,6 +216,18 @@
               description = "Systemd target to bind to.";
             };
 
+            prepareSystemdTarget = mkOption {
+              type = types.listOf types.str;
+              default = [ "default.target" "graphical-session-pre.target" ];
+              description = "Systemd targets for the prepare service to bind to.";
+            };
+
+            prepareSystemdBefore = mkOption {
+              type = types.listOf types.str;
+              default = [ "graphical-session-pre.target" ];
+              description = "Systemd targets the prepare service should run before.";
+            };
+
             extraFlags = mkOption {
               type = types.listOf types.str;
               default = [];
@@ -215,7 +256,7 @@
             systemd.user.services.hyprdynamicmonitors = {
               Unit = {
                 Description = "HyprDynamicMonitors - Dynamic monitor configuration for Hyprland";
-                After = hmCfg.systemdTarget;
+                After = [ hmCfg.systemdTarget "hyprdynamicmonitors-prepare.service" ];
                 PartOf = hmCfg.systemdTarget;
                 Requires = hmCfg.systemdTarget;
               };
@@ -226,6 +267,22 @@
               } // hmCfg.serviceOptions;
               Install = {
                 WantedBy = [ hmCfg.systemdTarget ];
+              };
+            };
+
+            systemd.user.services.hyprdynamicmonitors-prepare = {
+              Unit = {
+                Description = "HyprDynamicMonitors - boot-time cleanup";
+                Before = hmCfg.prepareSystemdBefore;
+              };
+              Service = {
+                Type = "oneshot";
+                ExecStart = "${hmCfg.package}/bin/hyprdynamicmonitors prepare --config ${hmCfg.configPath}";
+                TimeoutStartSec = 3;
+                RemainAfterExit = true;
+              };
+              Install = {
+                WantedBy = hmCfg.prepareSystemdTarget;
               };
             };
           });

@@ -19,6 +19,7 @@ Available Commands:
   completion  Generate the autocompletion script for the specified shell
   freeze      Freeze current monitor configuration as a new profile template
   help        Help about any command
+  prepare     Clean up monitor configuration before daemon start
   run         Run the monitor configuration service
   tui         Launch interactive TUI for monitor configuration
   validate    Validate configuration file
@@ -256,6 +257,72 @@ hyprdynamicmonitors tui --hypr-monitors-override /path/to/monitors-spec.txt
 # Launch TUI for testing with a mock monitors file and custom config
 hyprdynamicmonitors tui --hypr-monitors-override /path/to/monitors-spec.txt --config /path/to/config.toml
 ```
+
+## prepare
+
+Clean up monitor configuration before starting Hyprland to prevent the "no active displays" issue.
+
+This command removes any `monitor=...,disable` lines from your destination configuration file. This is essential if you disable monitors in your profiles (like disabling the laptop screen when using external displays), because Hyprland cannot start if all monitors are disabled at launch.
+
+:::tip
+For detailed explanation and setup instructions, see [What is hyprdynamicmonitors prepare?](../advanced/prepare).
+:::
+
+### Flags
+<!-- START preparehelp -->
+```text
+Prepares the monitor configuration file by removing monitor disable commands.
+
+This command should be run before starting Hyprland to ensure
+a clean state. It removes any 'monitor=...,disable' lines from the destination file,
+which prevents an issue with no active displays (Hyprland does not launch).
+
+This is particularly useful when running with systemd, where you want to ensure the
+monitor configuration is reset before the daemon starts managing profiles.
+
+Example:
+  hyprdynamicmonitors prepare
+
+Usage:
+  hyprdynamicmonitors prepare [flags]
+
+Flags:
+  -h, --help   help for prepare
+
+Global Flags:
+      --config string             Path to configuration file (default "$HOME/.config/hyprdynamicmonitors/config.toml")
+      --debug                     Enable debug logging
+      --enable-json-logs-format   Enable structured logging
+      --verbose                   Enable verbose logging
+```
+<!-- END preparehelp -->
+
+### When to use prepare
+
+Use the `prepare` command if you:
+- Disable monitors in your profiles (e.g., laptop screen when docked)
+- Experience blank screens when starting Hyprland
+- Switch between docked and undocked setups frequently
+
+### Examples
+
+```bash
+# Run manually before starting Hyprland
+hyprdynamicmonitors prepare
+
+# Use in a startup script or alias
+alias hyprstart="hyprdynamicmonitors prepare && Hyprland"
+
+# With systemd (recommended - runs automatically at boot)
+systemctl --user enable hyprdynamicmonitors-prepare.service
+
+# Run with debug logging to see what's being removed
+hyprdynamicmonitors --debug prepare
+```
+
+### Integration with systemd
+
+When using the systemd service, the prepare command runs automatically before Hyprland starts. See the [systemd documentation](../advanced/systemd) for setup instructions.
 
 ## completion
 

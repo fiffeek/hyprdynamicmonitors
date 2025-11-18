@@ -82,6 +82,7 @@ aurs:
 
           # systemd
           install -Dm644 "./infrastructure/systemd/hyprdynamicmonitors.service" "${pkgdir}/usr/lib/systemd/user/hyprdynamicmonitors.service"
+          install -Dm644 "./infrastructure/systemd/hyprdynamicmonitors-prepare.service" "${pkgdir}/usr/lib/systemd/user/hyprdynamicmonitors-prepare.service"
 
           # completions
           mkdir -p "${pkgdir}/usr/share/bash-completion/completions/"

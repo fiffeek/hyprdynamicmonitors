@@ -4,6 +4,7 @@ Documentation=https://fiffeek.github.io/hyprdynamicmonitors/
 PartOf=graphical-session.target
 Requires=graphical-session.target
 After=graphical-session.target
+After=hyprdynamicmonitors-prepare-rc.service
 ConditionEnvironment=WAYLAND_DISPLAY
 
 [Service]
