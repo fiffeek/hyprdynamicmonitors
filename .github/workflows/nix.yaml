@@ -1,0 +1,43 @@
+---
+name: Nix
+
+on:
+    push:
+        branches:
+            - main
+        paths:
+            - flake.nix
+            - flake.lock
+            - go.mod
+            - go.sum
+            - .github/workflows/nix.yaml
+            - nix/**
+    pull_request:
+        branches:
+            - main
+        paths:
+            - flake.nix
+            - flake.lock
+            - go.mod
+            - go.sum
+            - .github/workflows/nix.yaml
+            - nix/**
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        timeout-minutes: 5
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - uses: DeterminateSystems/nix-installer-action@main
+
+            - uses: DeterminateSystems/magic-nix-cache-action@main
+
+            - name: Test Nix build
+              run: |
+                  nix flake check
+                  nix build
+                  ./result/bin/hyprdynamicmonitors --version
