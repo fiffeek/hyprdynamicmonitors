@@ -60,10 +60,32 @@ The TUI (Terminal User Interface) provides a visual way to configure monitors an
    ```conf
    # Add to ~/.config/hypr/hyprland.conf
    exec-once = hyprdynamicmonitors run
+   # Or use systemd
+   systemctl --user daemon-reload
+   systemctl --user enable --now hyprdynamicmonitors.service
    ```
 
+6. **Set up the prepare command** to prevent startup issues:
+
+   :::tip
+   The `prepare` command removes disabled monitor entries from your configuration before Hyprland starts, preventing the "no active displays" issue. See [What is hyprdynamicmonitors prepare?](../advanced/prepare) for details.
+   :::
+
+   **If using systemd** (recommended):
+   ```bash
+   systemctl --user enable hyprdynamicmonitors-prepare.service
+   ```
+
+   **If running Hyprland manually** (e.g., from TTY with `Hyprland` command):
+   ```bash
+   # Add to your shell alias or startup script
+   hyprdynamicmonitors prepare && Hyprland
+   ```
+
+   See the [prepare documentation](../advanced/prepare) for more setup options.
+
 :::info
-  Or use systemd (recommended for production), instead of `exec-once`: see [Running with systemd](../advanced/systemd).
+  Systemd services are recommended in favor of `exec-once`: see [Running with systemd](../advanced/systemd).
 :::
 
 :::note
@@ -117,6 +139,25 @@ The TUI (Terminal User Interface) provides a visual way to configure monitors an
    exec-once = hyprdynamicmonitors run
    ```
 
+5. **Set up the prepare command** to prevent startup issues:
+
+   :::tip
+   The `prepare` command removes disabled monitor entries from your configuration before Hyprland starts, preventing the "no active displays" issue. See [What is hyprdynamicmonitors prepare?](../advanced/prepare) for details.
+   :::
+
+   **If using systemd** (recommended):
+   ```bash
+   systemctl --user enable hyprdynamicmonitors-prepare.service
+   ```
+
+   **If running Hyprland manually** (e.g., from TTY with `Hyprland` command):
+   ```bash
+   # Add to your shell alias or startup script
+   hyprdynamicmonitors prepare && Hyprland
+   ```
+
+   See the [prepare documentation](../advanced/prepare) for more setup options.
+
 :::info
   Or use systemd (recommended for production), instead of `exec-once`: see [Running with systemd](../advanced/systemd).
 :::
@@ -143,6 +184,25 @@ The TUI (Terminal User Interface) provides a visual way to configure monitors an
    ```conf
    source = ~/.config/hypr/monitors.conf
    ```
+
+4. **Set up the prepare command** to prevent startup issues:
+
+   :::tip
+   The `prepare` command removes disabled monitor entries from your configuration before Hyprland starts, preventing the "no active displays" issue. See [What is hyprdynamicmonitors prepare?](../advanced/prepare) for details.
+   :::
+
+   **If using systemd**:
+   ```bash
+   systemctl --user enable hyprdynamicmonitors-prepare.service
+   ```
+
+   **If running Hyprland manually** (e.g., from TTY with `Hyprland` command):
+   ```bash
+   # Add to your shell alias or startup script
+   hyprdynamicmonitors prepare && Hyprland
+   ```
+
+   See the [prepare documentation](../advanced/prepare) for more setup options.
 
 :::info
 Without the daemon, you manage profile rendering manually using the `R` key in the Profile view. See the [Running without a daemon guide](../guides/running-without-daemon.md) for detailed workflows.

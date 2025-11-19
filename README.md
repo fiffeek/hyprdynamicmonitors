@@ -79,7 +79,7 @@ A full guide is available at [Dynamic Profile Modes](https://fiffeek.github.io/h
 ### Installation
 
 ```bash
-# Binary release (recommended)
+# Binary release
 export DESTDIR="$HOME/.local/bin"  # optional, defaults to ~/.local/bin/
 curl -o- https://raw.githubusercontent.com/fiffeek/hyprdynamicmonitors/refs/heads/main/scripts/install.sh | bash
 
@@ -103,16 +103,29 @@ hyprdynamicmonitors tui
 # Configure your monitors visually
 # Press 'Tab' to switch to Profile view
 # Press 'n' to create a new profile
+# For getting started see: https://hyprdynamicmonitors.filipmikina.com/docs/quickstart/tui/
 ```
 
 Then add to your `~/.config/hypr/hyprland.conf`:
 
-```conf
+```bash
 # Source the generated monitor configuration
 source = ~/.config/hypr/monitors.conf
 
 # Run the daemon for automatic profile switching
 exec-once = hyprdynamicmonitors run
+
+# or use systemd instead
+# see: https://fiffeek.github.io/hyprdynamicmonitors/docs/advanced/systemd
+# systemctl --user enable --now hyprdynamicmonitors.service
+```
+
+Ensure you're running `hyprdynamicmonitors prepare` prior to running Hyprland (see [the guide and the why](https://fiffeek.github.io/hyprdynamicmonitors/docs/advanced/prepare)):
+```bash
+# e.g. from a tty:
+hyprdynamicmonitors prepare && Hyprland
+# or use systemd
+# systemctl --user enable hyprdynamicmonitors-prepare.service
 ```
 
 For detailed setup instructions, see the [Quick Start Guide](https://fiffeek.github.io/hyprdynamicmonitors/docs/category/quick-start).
@@ -138,6 +151,7 @@ Key topics:
 | [Power Events](https://fiffeek.github.io/hyprdynamicmonitors/docs/guides/power-events) | Guide to running with Power Events |
 | [Lid Events](https://fiffeek.github.io/hyprdynamicmonitors/docs/guides/lid-events) | Guide to running with Lid Events |
 | [Dynamic Profile Modes](https://fiffeek.github.io/hyprdynamicmonitors/docs/guides/ad-hoc) | Guide to making dynamic profile modes |
+| [Prepare Command](https://fiffeek.github.io/hyprdynamicmonitors/docs/advanced/prepare) | Do I need `hyprdynamicmonitors prepare`? |
 
 ## Examples
 

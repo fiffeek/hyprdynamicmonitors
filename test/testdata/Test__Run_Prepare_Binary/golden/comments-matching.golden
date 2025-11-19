@@ -1,0 +1,3 @@
+monitor=eDP-1,2880x1920@120.00000,0x0,2.0,vrr,1
+# This comment should be kept: normal comment
+workspace = 1, monitor:eDP-1, default:true
