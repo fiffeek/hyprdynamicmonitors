@@ -126,39 +126,43 @@ type MonitorSpec struct {
 	DirectScanoutTo  string               `json:"directScanoutTo"`
 	Solitary         string               `json:"solitary"`
 	Bitdepth         Bitdepth             `json:"-"`
-	ColorPreset      ColorPreset          `json:"-"`
-	SdrBrightness    float64              `json:"-"`
-	SdrSaturation    float64              `json:"-"`
+	ColorPreset      ColorPreset          `json:"colorManagementPreset"`
+	SdrBrightness    float64              `json:"sdrBrightness"`
+	SdrSaturation    float64              `json:"sdrSaturation"`
 	Flipped          bool                 `json:"-"`
 	ValidScalesCache map[float64]struct{} `json:"-"`
 }
 
 func NewMonitorSpec(spec *hypr.MonitorSpec) *MonitorSpec {
+	colorPreset, err := ColorPresetFromString(spec.ColorPreset)
+	if err != nil {
+		logrus.Warnf("cant cast color preset to typed %s: %v", spec.ColorPreset, err)
+		colorPreset = AutoColorPreset
+	}
 	m := &MonitorSpec{
-		Name:            spec.Name,
-		ID:              spec.ID,
-		Description:     spec.Description,
-		Disabled:        spec.Disabled,
-		Width:           spec.Width,
-		Height:          spec.Height,
-		RefreshRate:     spec.RefreshRate,
-		Transform:       spec.Transform % 4,
-		Vrr:             spec.Vrr,
-		Scale:           spec.Scale,
-		X:               spec.X,
-		Y:               spec.Y,
-		AvailableModes:  spec.AvailableModes,
-		Mirror:          spec.Mirror,
-		CurrentFormat:   spec.CurrentFormat,
-		DpmsStatus:      spec.DpmsStatus,
-		ActivelyTearing: spec.ActivelyTearing,
-		DirectScanoutTo: spec.DirectScanoutTo,
-		Solitary:        spec.Solitary,
-		Bitdepth:        GetBitdepth(spec),
-		// TODO(fmikina, 12.10.25): fix after patching hyprctl to expose this information
-		ColorPreset:      AutoColorPreset,
-		SdrBrightness:    1.0,
-		SdrSaturation:    1.0,
+		Name:             spec.Name,
+		ID:               spec.ID,
+		Description:      spec.Description,
+		Disabled:         spec.Disabled,
+		Width:            spec.Width,
+		Height:           spec.Height,
+		RefreshRate:      spec.RefreshRate,
+		Transform:        spec.Transform % 4,
+		Vrr:              spec.Vrr,
+		Scale:            spec.Scale,
+		X:                spec.X,
+		Y:                spec.Y,
+		AvailableModes:   spec.AvailableModes,
+		Mirror:           spec.Mirror,
+		CurrentFormat:    spec.CurrentFormat,
+		DpmsStatus:       spec.DpmsStatus,
+		ActivelyTearing:  spec.ActivelyTearing,
+		DirectScanoutTo:  spec.DirectScanoutTo,
+		Solitary:         spec.Solitary,
+		Bitdepth:         GetBitdepth(spec),
+		ColorPreset:      colorPreset,
+		SdrBrightness:    spec.SdrBrightness,
+		SdrSaturation:    spec.SdrSaturation,
 		Flipped:          spec.Transform >= 4,
 		ValidScalesCache: make(map[float64]struct{}),
 	}

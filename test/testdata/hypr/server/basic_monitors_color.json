@@ -1,0 +1,40 @@
+[
+  {
+    "colorManagementPreset": "wide",
+    "description": "BOE NE135A1M-NY1",
+    "disabled": false,
+    "height": 1920,
+    "id": 0,
+    "name": "eDP-1",
+    "refreshRate": 120.0,
+    "scale": 2.0,
+    "sdrBrightness": 1.0,
+    "sdrMaxLuminance": 80,
+    "sdrMinLuminance": 0.2,
+    "sdrSaturation": 1.0,
+    "transform": 0,
+    "vrr": true,
+    "width": 2880,
+    "x": 0,
+    "y": 0
+  },
+  {
+    "colorManagementPreset": "hdr",
+    "description": "LG Electronics LG SDQHD 301NTBKDU037",
+    "disabled": false,
+    "height": 2880,
+    "id": 1,
+    "name": "DP-11",
+    "refreshRate": 59.967,
+    "scale": 1.6,
+    "sdrBrightness": 1.01,
+    "sdrMaxLuminance": 80,
+    "sdrMinLuminance": 0.2,
+    "sdrSaturation": 1.01,
+    "transform": 3,
+    "vrr": false,
+    "width": 2560,
+    "x": -1800,
+    "y": 0
+  }
+]

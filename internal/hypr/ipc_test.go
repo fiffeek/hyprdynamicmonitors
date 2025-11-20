@@ -306,7 +306,7 @@ func TestIPC_GetConnectedMonitors(t *testing.T) {
 	}{
 		{
 			name:         "happy_path",
-			responseFile: "testdata/monitors_response_valid.json",
+			responseFile: "testdata/monitors_response_valid_colors.json",
 			expectedMonitors: []*hypr.MonitorSpec{
 				{
 					Name:        "eDP-1",
@@ -393,8 +393,9 @@ func TestIPC_GetConnectedMonitors(t *testing.T) {
 					ActivelyTearing: false,
 					DirectScanoutTo: "0",
 					Solitary:        "0",
-					SdrBrightness:   1,
-					SdrSaturation:   1,
+					SdrBrightness:   1.01,
+					SdrSaturation:   1.01,
+					ColorPreset:     "hdr",
 				},
 			},
 			description: "Should successfully parse valid monitor response",

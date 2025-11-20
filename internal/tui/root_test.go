@@ -36,6 +36,8 @@ var (
 	defaultMonitorData = "four.json"
 	headless           = "headless.json"
 	twoMonitorsData    = "two.json"
+	hdr                = "hdr.json"
+	hdrOld             = "hdr_old.json"
 )
 
 func TestModel_Update_UserFlows(t *testing.T) {
@@ -141,6 +143,94 @@ func TestModel_Update_UserFlows(t *testing.T) {
 				{
 					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'j'}},
 					expectOutputToContain: "► srgb",
+				},
+			},
+		},
+
+		{
+			name:         "color_hdr_wide_old",
+			monitorsData: hdrOld,
+			runFor:       utils.JustPtr(500 * time.Millisecond),
+			steps: []step{
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyEnter},
+					expectOutputToContain: "EDITING",
+				},
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'C'}},
+					expectOutputToContain: "Adjust Colors",
+				},
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'j'}},
+					times:                 utils.JustPtr(2),
+					expectOutputToContain: "► wide",
+				},
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'j'}},
+					times:                 utils.JustPtr(2),
+					expectOutputToContain: "► hdr",
+				},
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'r'}},
+					times:                 utils.JustPtr(1),
+					expectOutputToContain: "SDR Brightness: 1.01",
+				},
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'t'}},
+					times:                 utils.JustPtr(1),
+					expectOutputToContain: "SDR Saturation: 1.01",
+				},
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'H'}},
+					expectOutputToContain: "monitor = desc:Dell",
+				},
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyEnter},
+					expectOutputToContain: "EDITING",
+				},
+			},
+		},
+
+		{
+			name:         "color_hdr_wide",
+			monitorsData: hdr,
+			runFor:       utils.JustPtr(500 * time.Millisecond),
+			steps: []step{
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyEnter},
+					expectOutputToContain: "EDITING",
+				},
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'C'}},
+					expectOutputToContain: "Adjust Colors",
+				},
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'k'}},
+					times:                 utils.JustPtr(2),
+					expectOutputToContain: "► wide",
+				},
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'j'}},
+					times:                 utils.JustPtr(2),
+					expectOutputToContain: "► hdr",
+				},
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'r'}},
+					times:                 utils.JustPtr(1),
+					expectOutputToContain: "SDR Brightness: 1.02",
+				},
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'t'}},
+					times:                 utils.JustPtr(1),
+					expectOutputToContain: "SDR Saturation: 1.02",
+				},
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'H'}},
+					expectOutputToContain: "monitor = desc:Dell",
+				},
+				{
+					msg:                   tea.KeyMsg{Type: tea.KeyEnter},
+					expectOutputToContain: "EDITING",
 				},
 			},
 		},
@@ -1204,6 +1294,8 @@ func loadMonitorsFromTestdata(t *testing.T, filename string) hypr.MonitorSpecs {
 	var specs hypr.MonitorSpecs
 	err = json.Unmarshal(data, &specs)
 	require.NoError(t, err, "failed to unmarshal monitor specs from: %s", filename)
+
+	require.NoError(t, specs.Validate(), "should be able to validate the monitors spec")
 
 	return specs
 }
