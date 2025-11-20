@@ -67,11 +67,13 @@ func Test__Run_Binary(t *testing.T) {
 		fakeDesktop        bool
 	}{
 		{
-			name:                     "dry run should succeed",
-			description:              "dry-run without power events should succeed by querying monitor data directly",
-			config:                   testutils.NewTestConfig(t),
+			name:        "dry run should succeed",
+			description: "dry-run without power events should succeed by querying monitor data directly",
+			config: testutils.NewTestConfig(t).WithNotifications(&config.Notifications{
+				Disabled: utils.JustPtr(true),
+			}),
 			extraArgs:                []string{"--dry-run"},
-			expectLogs:               []utils.LogID{utils.DryRunLogID},
+			expectLogs:               []utils.LogID{utils.DryRunLogID, utils.DryRunSymlinkLogID},
 			hyprMonitorResponseFiles: []string{"testdata/hypr/server/basic_monitors.json"},
 			disablePowerEvents:       true,
 			disableHotReload:         true,
@@ -79,15 +81,63 @@ func Test__Run_Binary(t *testing.T) {
 		},
 
 		{
-			name:                     "desktop should disable power events",
-			description:              "running on desktop should result in disabling power events by default",
-			config:                   testutils.NewTestConfig(t),
-			extraArgs:                []string{"--dry-run"},
-			expectLogs:               []utils.LogID{utils.DisablingPowerEventsLogID, utils.DryRunLogID},
+			name:        "dry run on templates should succeed",
+			description: "dry-run without power events should succeed by querying monitor data directly with notifications",
+			config: testutils.NewTestConfig(t).WithNotifications(&config.Notifications{
+				Disabled: utils.JustPtr(false),
+			}).WithProfiles(map[string]*config.Profile{
+				"both": {
+					PreApplyExec:  utils.JustPtr("echo hello > /tmp/dry_run_hdm_hello_007.log"),
+					PostApplyExec: utils.JustPtr("echo world > /tmp/dry_run_hdm_world_007.log"),
+					ConfigType:    utils.JustPtr(config.Template),
+					Conditions: &config.ProfileCondition{
+						RequiredMonitors: []*config.RequiredMonitor{
+							{
+								Name:                utils.StringPtr("eDP.*"),
+								MonitorTag:          utils.StringPtr("EDP"),
+								MatchNameUsingRegex: utils.JustPtr(true),
+							},
+							{
+								Description:                utils.JustPtr("LG.*"),
+								MonitorTag:                 utils.StringPtr("DP"),
+								MatchDescriptionUsingRegex: utils.JustPtr(true),
+							},
+						},
+					},
+				},
+			}).FillProfileConfigFile("both", "testdata/app/templates/basic.toml"),
+			extraArgs: []string{"--dry-run"},
+			expectLogs: []utils.LogID{
+				utils.DryRunLogID, utils.DryRunExedLogID, utils.DryRunTemplateLogID,
+				utils.DryRunExedLogID, utils.DryRunNotificationLogID,
+			},
+			validateSideEffects: func(t *testing.T, c *config.RawConfig) {
+				testutils.AssertFileDoesNotExist(t, *c.General.Destination)
+				testutils.AssertFileDoesNotExist(t, "/tmp/dry_run_hdm_hello_007.log")
+				testutils.AssertFileDoesNotExist(t, "/tmp/dry_run_hdm_world_007.log")
+			},
+			hyprMonitorResponseFiles: []string{"testdata/hypr/server/basic_monitors.json"},
+			disablePowerEvents:       true,
+			disableHotReload:         true,
+			runOnce:                  true,
+		},
+
+		{
+			name:        "desktop should disable power events",
+			description: "running on desktop should result in disabling power events by default",
+			config:      testutils.NewTestConfig(t),
+			extraArgs:   []string{"--dry-run"},
+			expectLogs: []utils.LogID{
+				utils.DisablingPowerEventsLogID,
+				utils.DryRunLogID, utils.DryRunSymlinkLogID, utils.DryRunNotificationLogID,
+			},
 			hyprMonitorResponseFiles: []string{"testdata/hypr/server/basic_monitors.json"},
 			disableHotReload:         true,
 			runOnce:                  true,
 			fakeDesktop:              true,
+			validateSideEffects: func(t *testing.T, c *config.RawConfig) {
+				testutils.AssertFileDoesNotExist(t, *c.General.Destination)
+			},
 		},
 
 		{

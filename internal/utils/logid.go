@@ -16,6 +16,10 @@ const (
 	PreExecLogID
 	PostExecLogID
 	DisablingPowerEventsLogID
+	DryRunSymlinkLogID
+	DryRunTemplateLogID
+	DryRunExedLogID
+	DryRunNotificationLogID
 )
 
 type LogrusCustomFields struct {

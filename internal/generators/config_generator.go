@@ -35,20 +35,20 @@ func NewConfigGenerator(cfg *config.Config) *ConfigGenerator {
 // GenerateConfig either renders a template or links a file, and returns if any changed were done
 // this includes stating the config files to catch if the user modified them by hand (in linking scenario)
 func (g *ConfigGenerator) GenerateConfig(cfg *config.RawConfig, profile *matchers.MatchedProfile,
-	connectedMonitors []*hypr.MonitorSpec, powerState power.PowerState, lidState power.LidState, destination string,
+	connectedMonitors []*hypr.MonitorSpec, powerState power.PowerState, lidState power.LidState, destination string, dryRun bool,
 ) (bool, error) {
 	switch *profile.Profile.ConfigType {
 	case config.Static:
-		return g.linkConfigFile(profile.Profile, destination)
+		return g.linkConfigFile(profile.Profile, destination, dryRun)
 	case config.Template:
-		return g.renderTemplateFile(cfg, profile, connectedMonitors, powerState, lidState, destination)
+		return g.renderTemplateFile(cfg, profile, connectedMonitors, powerState, lidState, destination, dryRun)
 	default:
 		return false, fmt.Errorf("unsupported config type: %v", *profile.Profile.ConfigType)
 	}
 }
 
 func (g *ConfigGenerator) renderTemplateFile(cfg *config.RawConfig, profile *matchers.MatchedProfile,
-	connectedMonitors []*hypr.MonitorSpec, powerState power.PowerState, lidState power.LidState, destination string,
+	connectedMonitors []*hypr.MonitorSpec, powerState power.PowerState, lidState power.LidState, destination string, dryRun bool,
 ) (bool, error) {
 	templatePath := profile.Profile.ConfigFile
 
@@ -78,6 +78,16 @@ func (g *ConfigGenerator) renderTemplateFile(cfg *config.RawConfig, profile *mat
 				"Template content unchanged, skipping write")
 			return false, nil
 		}
+	}
+
+	if dryRun {
+		logrus.WithFields(utils.NewLogrusCustomFields(map[string]interface{}{
+			"config_file": templatePath, "destination": destination,
+		}).WithLogID(utils.DryRunTemplateLogID)).Info(
+			"[DRY RUN] Would render template data to the destination")
+		logrus.Infof("[DRY RUN] Templated data: \n %s", string(renderedContent))
+		return false, nil
+
 	}
 
 	if err := utils.WriteAtomic(destination, renderedContent); err != nil {
@@ -211,7 +221,7 @@ func (g *ConfigGenerator) createTemplateData(cfg *config.RawConfig, profile *mat
 	return data
 }
 
-func (g *ConfigGenerator) linkConfigFile(profile *config.Profile, destination string) (bool, error) {
+func (g *ConfigGenerator) linkConfigFile(profile *config.Profile, destination string, dryRun bool) (bool, error) {
 	source := profile.ConfigFile
 	differentContents, err := g.compareSymlinks(destination, source, profile)
 	if err == nil {
@@ -222,6 +232,14 @@ func (g *ConfigGenerator) linkConfigFile(profile *config.Profile, destination st
 		if err := os.Remove(destination); err != nil {
 			return false, fmt.Errorf("failed to remove existing config: %w", err)
 		}
+	}
+
+	if dryRun {
+		logrus.WithFields(utils.NewLogrusCustomFields(map[string]interface{}{
+			"config_file": source, "destination": destination,
+		}).WithLogID(utils.DryRunSymlinkLogID)).Info(
+			"[DRY RUN] Would create a symlink but running in dry run")
+		return false, nil
 	}
 
 	if err := os.Symlink(source, destination); err != nil {

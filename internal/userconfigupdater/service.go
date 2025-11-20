@@ -199,7 +199,7 @@ func (s *Service) UpdateOnce(ctx context.Context) error {
 	}
 
 	if !found {
-		logrus.Debug("No matching profile found")
+		logrus.Info("No matching profile found")
 		return nil
 	}
 
@@ -211,8 +211,7 @@ func (s *Service) UpdateOnce(ctx context.Context) error {
 
 	if s.serviceConfig.DryRun {
 		logrus.WithFields(utils.NewLogrusCustomFields(profileFields).WithLogID(utils.DryRunLogID)).
-			Info("[DRY RUN] Would use profile")
-		return nil
+			Info("[DRY RUN] Using profile")
 	}
 
 	logrus.WithFields(profileFields).Info("Using profile")
@@ -220,32 +219,43 @@ func (s *Service) UpdateOnce(ctx context.Context) error {
 	s.tryExec(ctx, matchedProfile.Profile.PreApplyExec, cfg.General.PreApplyExec, utils.PreExecLogID)
 
 	destination := *cfg.General.Destination
-	changed, err := s.generator.GenerateConfig(cfg, matchedProfile, monitors, powerState, lidState, destination)
+	changed, err := s.generator.GenerateConfig(cfg, matchedProfile, monitors, powerState,
+		lidState, destination, s.serviceConfig.DryRun)
 	if err != nil {
 		return fmt.Errorf("failed to generate config: %w", err)
 	}
 
-	if !changed {
+	// if not changed and not running in dry run then exit early
+	if !changed && !s.serviceConfig.DryRun {
 		logrus.Info("Not sending notifications since the config has not been changed")
 		return nil
 	}
 
 	s.tryExec(ctx, matchedProfile.Profile.PostApplyExec, cfg.General.PostApplyExec, utils.PostExecLogID)
 
-	if err := s.notificationsService.NotifyProfileApplied(matchedProfile.Profile); err != nil {
+	if err := s.notificationsService.NotifyProfileApplied(matchedProfile.Profile, s.serviceConfig.DryRun); err != nil {
 		logrus.WithFields(profileFields).WithError(err).Error("swallowing notification error")
 	}
 
 	return nil
 }
 
-func (*Service) tryExec(ctx context.Context, command, fallbackCommand *string, logID utils.LogID) {
+func (s *Service) tryExec(ctx context.Context, command, fallbackCommand *string, logID utils.LogID) {
 	// fallback on a default command when it's not provided for a profile
 	if command == nil || *command == "" {
 		command = fallbackCommand
 	}
 	// if it's still empty then nothing to be done
 	if command == nil || *command == "" {
+		return
+	}
+	// if running with dry run then just output the commands
+	if s.serviceConfig.DryRun {
+		logrus.WithFields(utils.NewLogrusCustomFields(map[string]interface{}{
+			"command": *command,
+			"order":   logID,
+		}).WithLogID(utils.DryRunExedLogID)).
+			Info("[DRY RUN] Would run command")
 		return
 	}
 
