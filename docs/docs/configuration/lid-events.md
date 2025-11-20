@@ -60,7 +60,7 @@ dbus-send --system --print-reply \
 
 You can customize which D-Bus signals to monitor for lid events:
 
-```toml
+```toml title="~/.config/hyprdynamicmonitors/config.toml"
 [lid_events]
 [[lid_events.dbus_signal_match_rules]]
 interface = "org.freedesktop.DBus.Properties"
@@ -79,7 +79,7 @@ The `body` filter is useful for limiting the signals processed, as D-Bus propert
 
 You can customize how lid state is queried:
 
-```toml
+```toml title="~/.config/hyprdynamicmonitors/config.toml"
 [lid_events.dbus_query_object]
 destination = "org.freedesktop.UPower"
 path = "/org/freedesktop/UPower"
@@ -109,7 +109,7 @@ This prevents noisy signals. Lid status changes are only propagated when the sta
 
 Lid state is available in templates via functions:
 
-```go
+```go title="~/.config/hyprdynamicmonitors/hyprconfigs/lid_example.go.tmpl"
 {{if isLidClosed}}
 # Disable laptop screen when lid is closed
 monitor=eDP-1,disable
@@ -134,7 +134,7 @@ The `.LidState` variable can have these values:
 
 ### Disable Laptop Screen When Docked with Lid Closed
 
-```go
+```go title="~/.config/hyprdynamicmonitors/hyprconfigs/docked.go.tmpl"
 {{- $laptop := index .MonitorsByTag "laptop" -}}
 {{- $external := index .MonitorsByTag "external" -}}
 
@@ -149,7 +149,7 @@ monitor={{$external.Name}},preferred,auto,1
 
 ### Different Layouts Based on Lid State
 
-```go
+```go title="~/.config/hyprdynamicmonitors/hyprconfigs/lid.go.tmpl"
 {{if isLidClosed}}
 # Closed lid: external monitor only
 monitor=eDP-1,disable

@@ -21,14 +21,14 @@ The easiest way to use theming is to reference one of the built-in themes.
 
 **For AUR installations:**
 
-```toml
+```toml title="~/.config/hyprdynamicmonitors/config.toml"
 [tui.colors]
 source = "/usr/share/hyprdynamicmonitors/themes/static/rose-pine/theme.toml"
 ```
 
 **For manual installations:** Copy the theme from the [repository](https://github.com/fiffeek/hyprdynamicmonitors/tree/main/themes/static) to `~/.config/hyprdynamicmonitors/themes/` first, then:
 
-```toml
+```toml title="~/.config/hyprdynamicmonitors/config.toml"
 [tui.colors]
 source = "~/.config/hyprdynamicmonitors/themes/rose-pine.toml"
 ```
@@ -41,14 +41,14 @@ Changes to themes are detected automatically - no need to restart the TUI.
 
 Point to a theme file in your configuration:
 
-```toml
+```toml title="~/.config/hyprdynamicmonitors/config.toml"
 [tui.colors]
 source = "/path/to/theme.toml"
 ```
 
 Theme files contain color definitions like:
 
-```toml
+```toml title="/path/to/theme.toml"
 # Example theme file
 active_pane_color = "#7aa2f7"
 inactive_pane_color = "#565f89"
@@ -60,7 +60,7 @@ header_color = "#bb9af7"
 
 You can also define colors directly in your config file:
 
-```toml
+```toml title="~/.config/hyprdynamicmonitors/config.toml"
 [tui.colors]
 active_pane_color = "62"
 inactive_pane_color = "240"
@@ -102,14 +102,14 @@ header_color = "205"
 
 **AUR installations:** Themes are automatically installed to `/usr/share/hyprdynamicmonitors/themes/static/`
 
-```toml
+```toml title="~/.config/hyprdynamicmonitors/config.toml"
 [tui.colors]
 source = "/usr/share/hyprdynamicmonitors/themes/static/rose-pine/theme.toml"
 ```
 
 **Manual installations:** Copy themes from the [repository](https://github.com/fiffeek/hyprdynamicmonitors/tree/main/themes/static) to `~/.config/hyprdynamicmonitors/themes/`
 
-```toml
+```toml title="~/.config/hyprdynamicmonitors/config.toml"
 [tui.colors]
 source = "~/.config/hyprdynamicmonitors/themes/my_theme.toml"
 ```
@@ -124,13 +124,13 @@ For automatic color scheme generation based on your wallpaper, `hyprdynamicmonit
 
 **1. Configure your hyprdynamicmonitors config to use the generated theme:**
 
-```toml
+```toml title="~/.config/hyprdynamicmonitors/config.toml"
 [tui.colors]
 source = "~/.config/hyprdynamicmonitors/themes/wallust.toml"
 ```
 
 **2. Configure wallust** to generate the theme file at `~/.config/hyprdynamicmonitors/themes/wallust.toml` using the provided template at `/usr/share/hyprdynamicmonitors/themes/templates/wallust/theme.toml` (or copy it from the [repository](https://github.com/fiffeek/hyprdynamicmonitors/tree/main/themes/templates/wallust)), e.g.:
-```toml
+```toml title="~/.config/wallust/wallust.toml"
 hyprdynamicmonitors.template = '/usr/share/hyprdynamicmonitors/themes/templates/wallust/theme.toml'
 hyprdynamicmonitors.target = '~/.config/hyprdynamicmonitors/themes/theme.toml'
 ```
@@ -143,13 +143,13 @@ hyprdynamicmonitors.target = '~/.config/hyprdynamicmonitors/themes/theme.toml'
 
 **1. Configure your hyprdynamicmonitors config to use the generated theme:**
 
-```toml
+```toml title="~/.config/hyprdynamicmonitors/config.toml"
 [tui.colors]
 source = "~/.config/hyprdynamicmonitors/themes/matugen.toml"
 ```
 
 **2. Configure matugen** to generate the theme file at `~/.config/hyprdynamicmonitors/themes/matugen.toml` using the provided template at `/usr/share/hyprdynamicmonitors/themes/templates/matugen/theme.toml` (or copy it from the [repository](https://github.com/fiffeek/hyprdynamicmonitors/tree/main/themes/templates/matugen)), e.g.:
-```toml
+```toml title="~/.config/matugen/config.toml"
 [templates.hyprdynamicmonitors]
 input_path = "/usr/share/hyprdynamicmonitors/themes/templates/matugen/theme.toml"
 output_path = "~/.config/hyprdynamicmonitors/themes/matugen.toml"
@@ -165,7 +165,7 @@ output_path = "~/.config/hyprdynamicmonitors/themes/matugen.toml"
 
 **1. Configure your hyprdynamicmonitors config to use the generated theme:**
 
-```toml
+```toml title="~/.config/hyprdynamicmonitors/config.toml"
 [tui.colors]
 source = "~/.cache/wal/hyprdynamicmonitors.toml"
 ```
@@ -193,7 +193,7 @@ To create your own theme:
 3. Save to `~/.config/hyprdynamicmonitors/themes/my-theme.toml`
 4. Reference it in your config:
 
-```toml
+```toml title="~/.config/hyprdynamicmonitors/config.toml"
 [tui.colors]
 source = "~/.config/hyprdynamicmonitors/themes/my-theme.toml"
 ```

@@ -133,6 +133,22 @@ config_file_type = "static"
 
 Define a fallback profile that will be used when no other profile matches the current state. See [Profiles](./profiles) for details.
 
+### TUI
+
+```toml title="~/.config/hyprdynamicmonitors/config.toml"
+[tui]
+[tui.colors]
+# use an external file (preferred)
+source = "/path/to/theme.toml"
+# or inline colors
+active_pane_color = "62"
+inactive_pane_color = "240"
+# ... other colors
+```
+
+You can define a custom theme or use the bundled themes to change the TUI. See [Theming](./theming.md) for details.
+
+
 ## Next Steps
 
 - [Monitor Matching](./monitor-matching) - Learn how to match monitors

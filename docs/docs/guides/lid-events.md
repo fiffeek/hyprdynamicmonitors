@@ -61,7 +61,7 @@ hyprdynamicmonitors run --enable-lid-events
 ## Automatic configuration
 
 `hyprdynamicmonitors` has sane defaults for lid events. This is what you get out of the box:
-```toml
+```toml title="~/.config/hyprdynamicmonitors/config.toml"
 [lid_events]
 
 [lid_events.dbus_query_object]
@@ -158,7 +158,7 @@ This will tell you if you need to tweak the queries. For example, you might see 
 #### Custom configuration
 
 The custom configuration will be overlaid on the default. In this case, we expect the lid closing value to be `false`, since we're querying `LidIsOpen` instead of `LidIsClosed`.
-```toml
+```toml title="~/.config/hyprdynamicmonitors/config.toml"
 [lid_events]
 
 [lid_events.dbus_query_object]
@@ -241,7 +241,7 @@ If lid detection is working but profiles aren't switching when you close/open th
 
 1. **Verify your profile has lid state conditions:**
    Check your `config.toml` to ensure profiles specify lid requirements:
-   ```toml
+   ```toml title="~/.config/hyprdynamicmonitors/config.toml"
    [profiles.docked]
    # ... monitor conditions ...
 
@@ -268,7 +268,7 @@ If lid detection is working but profiles aren't switching when you close/open th
 
 4. **Verify daemon is using lid events:**
    If you're running the daemon with `exec-once`, make sure you're passing `--enable-lid-events`:
-   ```
+   ```conf title="~/.config/hypr/hyprland.conf"
    exec-once = hyprdynamicmonitors run --enable-lid-events
    ```
 
@@ -285,7 +285,7 @@ Some systems send lid events during boot or when resuming from suspend, which mi
 **Workaround:**
 
 Add a small delay in your Hyprland config:
-```
+```toml title="~/.config/hypr/hyprland.conf"
 exec-once = sleep 2 && hyprdynamicmonitors run --enable-lid-events
 ```
 
@@ -302,7 +302,7 @@ If your laptop suspends immediately when closing the lid (before the profile swi
 **For systemd-based systems:**
 
 Edit `/etc/systemd/logind.conf`:
-```ini
+```ini title="/etc/systemd/logind.conf"
 HandleLidSwitch=ignore
 HandleLidSwitchExternalPower=ignore
 HandleLidSwitchDocked=ignore
@@ -316,7 +316,7 @@ sudo systemctl restart systemd-logind
 **Warning:** This disables automatic suspend on lid close. You'll need to manage suspend manually or through other tools.
 
 Alternatively, configure specific behavior for docked vs. undocked in `logind.conf`:
-```ini
+```ini title="/etc/systemd/logind.conf"
 HandleLidSwitch=suspend
 HandleLidSwitchDocked=ignore
 ```

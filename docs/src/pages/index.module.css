@@ -64,6 +64,7 @@
 @font-face {
   font-family: 'TheFont';
   src: url("https://garet.typeforward.com/assets/fonts/shared/TFMixVF.woff2") format('woff2');
+  font-display: block;
 }
 
 .heroTitleContainer {

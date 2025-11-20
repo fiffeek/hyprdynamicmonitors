@@ -33,6 +33,7 @@ In this preview, the `HyprDynamicMonitors` daemon runs in the background and aut
 - **Hot reloading**: automatically detects and applies configuration changes without restart by watching config files (optional)
 - **Configurable UPower queries** for custom power management systems
 - **Desktop notifications** for configuration changes (optional)
+- **Theming support** for built-in themes and dynamic generation from wallpapers
 
 ## Design Philosophy
 

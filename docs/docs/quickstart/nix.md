@@ -4,6 +4,10 @@ sidebar_position: 2
 
 # Nix
 
+:::tip
+You can look up Github repositories/code for ideas how to integrate `hyprdynamicmonitors` into your nix setup [here](https://github.com/search?q=hyprdynamicmonitors+path%3A*.nix&type=code&p=1).
+:::
+
 This guide covers how to install and configure HyprDynamicMonitors on NixOS and Home Manager.
 
 ## Installation

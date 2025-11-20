@@ -8,7 +8,7 @@ HyprDynamicMonitors can show desktop notifications when configuration changes oc
 
 ## Configuration
 
-```toml
+```toml title="~/.config/hyprdynamicmonitors/config.toml"
 [notifications]
 disabled = false      # Enable/disable notifications (default: false)
 timeout_ms = 10000   # Notification timeout in milliseconds (default: 10000)
@@ -18,7 +18,7 @@ timeout_ms = 10000   # Notification timeout in milliseconds (default: 10000)
 
 To disable notifications completely:
 
-```toml
+```toml title="~/.config/hyprdynamicmonitors/config.toml"
 [notifications]
 disabled = true
 ```
@@ -27,14 +27,14 @@ disabled = true
 
 To show brief notifications (3 seconds):
 
-```toml
+```toml title="~/.config/hyprdynamicmonitors/config.toml"
 [notifications]
 timeout_ms = 3000
 ```
 
 For longer notifications (15 seconds):
 
-```toml
+```toml title="~/.config/hyprdynamicmonitors/config.toml"
 [notifications]
 timeout_ms = 15000
 ```
@@ -60,7 +60,7 @@ Notifications require:
 
 If you want more control over notifications, consider using [callbacks](./callbacks) instead:
 
-```toml
+```toml title="~/.config/hyprdynamicmonitors/config.toml"
 [general]
 post_apply_exec = "notify-send 'HyprDynamicMonitors' 'Profile applied successfully'"
 ```
