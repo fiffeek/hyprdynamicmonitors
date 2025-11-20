@@ -125,8 +125,17 @@ func Test__Run_Binary(t *testing.T) {
 		{
 			name:        "desktop should disable power events",
 			description: "running on desktop should result in disabling power events by default",
-			config:      testutils.NewTestConfig(t),
-			extraArgs:   []string{"--dry-run"},
+			config: testutils.NewTestConfig(t).WithProfiles(map[string]*config.Profile{
+				"basic": {
+					Name: "basic",
+					Conditions: &config.ProfileCondition{
+						RequiredMonitors: []*config.RequiredMonitor{
+							{Name: utils.StringPtr("eDP-1")},
+						},
+					},
+				},
+			}),
+			extraArgs: []string{"--dry-run"},
 			expectLogs: []utils.LogID{
 				utils.DisablingPowerEventsLogID,
 				utils.DryRunLogID, utils.DryRunSymlinkLogID, utils.DryRunNotificationLogID,

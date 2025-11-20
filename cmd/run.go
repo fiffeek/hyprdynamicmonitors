@@ -26,8 +26,11 @@ var runCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		logrus.WithField("version", Version).Debug("Starting Hyprland Dynamic Monitor Manager")
 
+		disablePowerEventsChanged := cmd.Flags().Changed("disable-power-events")
+		enableLidEventsChanged := cmd.Flags().Changed("enable-lid-events")
+
 		// If the flag wasn't provided, power events are enabled, and not running on a laptop, then default to --disable-power-events
-		if !cmd.Flags().Changed("disable-power-events") && !disablePowerEvents && !utils.IsLaptop() {
+		if !disablePowerEventsChanged && !disablePowerEvents && !utils.IsLaptop() {
 			disablePowerEvents = true
 			logrus.WithFields(utils.NewLogrusCustomFields(logrus.Fields{
 				"disable-power-events": disablePowerEvents,
@@ -36,8 +39,9 @@ var runCmd = &cobra.Command{
 		}
 
 		ctx, cancel := context.WithCancelCause(context.Background())
-		app, err := app.NewApplication(&configPath, &dryRun, ctx, cancel, &disablePowerEvents,
-			&disableAutoHotReload, &connectToSessionBus, &enableLidEvents)
+		app, err := app.NewApplication(&configPath, &dryRun, ctx, cancel,
+			&disableAutoHotReload, &connectToSessionBus, disablePowerEvents, enableLidEvents,
+			disablePowerEventsChanged, enableLidEventsChanged)
 		if err != nil {
 			return fmt.Errorf("cant create application: %w", err)
 		}
