@@ -1,0 +1,6 @@
+[profiles.laptop_only]
+config_file = "hyprconfigs/invalid_syntax_func.go.tmpl"
+config_file_type = "template"
+
+[[profiles.laptop_only.conditions.required_monitors]]
+name = "eDP-1"

@@ -57,18 +57,29 @@ func (f *fakeFilewatcher) Listen() <-chan interface{} {
 	return f.channel
 }
 
+type fakeGenerator struct {
+	validateTemplatesErr   error
+	validateTemplatesCalls int
+}
+
+func (f *fakeGenerator) ValidateTemplates() error {
+	f.validateTemplatesCalls++
+	return f.validateTemplatesErr
+}
+
 func TestService_Reload(t *testing.T) {
 	ctx := context.Background()
 	cfg := testutils.NewTestConfig(t).Get()
 
 	tests := []struct {
-		name           string
-		powerErr       error
-		serviceErr     error
-		lidErr         error
-		filewatcherErr error
-		wantErr        bool
-		errContains    string
+		name                 string
+		powerErr             error
+		serviceErr           error
+		lidErr               error
+		filewatcherErr       error
+		wantErr              bool
+		errContains          string
+		validateTemplatesErr error
 	}{
 		{
 			name:    "successful reload",
@@ -98,6 +109,12 @@ func TestService_Reload(t *testing.T) {
 			wantErr:     true,
 			errContains: "cant update user service",
 		},
+		{
+			name:                 "generator update fails",
+			validateTemplatesErr: errors.New("generator error"),
+			wantErr:              true,
+			errContains:          "cant validate new templates",
+		},
 	}
 
 	for _, tt := range tests {
@@ -106,8 +123,9 @@ func TestService_Reload(t *testing.T) {
 			service := &fakeService{updateErr: tt.serviceErr}
 			filewatcher := &fakeFilewatcher{updateErr: tt.filewatcherErr}
 			lidDetector := &fakeLidDetector{reloadErr: tt.lidErr}
+			generator := &fakeGenerator{validateTemplatesErr: tt.validateTemplatesErr}
 
-			reloaderService := reloader.NewService(cfg, filewatcher, powerDetector, service, false, lidDetector)
+			reloaderService := reloader.NewService(cfg, filewatcher, powerDetector, service, false, lidDetector, generator)
 
 			err := reloaderService.Reload(ctx)
 
@@ -120,6 +138,7 @@ func TestService_Reload(t *testing.T) {
 				assert.Equal(t, 1, powerDetector.reloadCalls)
 				assert.Equal(t, 1, lidDetector.reloadCalls)
 				assert.Equal(t, 1, service.updateCalls)
+				assert.Equal(t, 1, generator.validateTemplatesCalls)
 			}
 		})
 	}
@@ -129,28 +148,31 @@ func TestService_Run(t *testing.T) {
 	cfg := testutils.NewTestConfig(t).Get()
 
 	tests := []struct {
-		name                     string
-		hotReloadDisabled        bool
-		expectedFilewatcherCalls int
-		expectedPowerCalls       int
-		expectedServiceCalls     int
-		expectedLidCalls         int
+		name                           string
+		hotReloadDisabled              bool
+		expectedFilewatcherCalls       int
+		expectedPowerCalls             int
+		expectedServiceCalls           int
+		expectedLidCalls               int
+		expectedValidateTemplatesCalls int
 	}{
 		{
-			name:                     "processes events from filewatcher",
-			hotReloadDisabled:        false,
-			expectedFilewatcherCalls: 1,
-			expectedPowerCalls:       1,
-			expectedServiceCalls:     1,
-			expectedLidCalls:         1,
+			name:                           "processes events from filewatcher",
+			hotReloadDisabled:              false,
+			expectedFilewatcherCalls:       1,
+			expectedPowerCalls:             1,
+			expectedServiceCalls:           1,
+			expectedLidCalls:               1,
+			expectedValidateTemplatesCalls: 1,
 		},
 		{
-			name:                     "disabled hot reload",
-			hotReloadDisabled:        true,
-			expectedFilewatcherCalls: 0,
-			expectedPowerCalls:       0,
-			expectedServiceCalls:     0,
-			expectedLidCalls:         0,
+			name:                           "disabled hot reload",
+			hotReloadDisabled:              true,
+			expectedFilewatcherCalls:       0,
+			expectedPowerCalls:             0,
+			expectedServiceCalls:           0,
+			expectedLidCalls:               0,
+			expectedValidateTemplatesCalls: 0,
 		},
 	}
 
@@ -161,9 +183,10 @@ func TestService_Run(t *testing.T) {
 			channel := make(chan interface{}, 1)
 			filewatcher := &fakeFilewatcher{channel: channel}
 			lidDetector := &fakeLidDetector{}
+			generator := &fakeGenerator{}
 
 			reloaderService := reloader.NewService(cfg, filewatcher, powerDetector,
-				service, tt.hotReloadDisabled, lidDetector)
+				service, tt.hotReloadDisabled, lidDetector, generator)
 
 			ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
 			defer cancel()
@@ -194,6 +217,7 @@ func TestService_Run(t *testing.T) {
 			assert.Equal(t, tt.expectedPowerCalls, powerDetector.reloadCalls)
 			assert.Equal(t, tt.expectedLidCalls, lidDetector.reloadCalls)
 			assert.Equal(t, tt.expectedServiceCalls, service.updateCalls)
+			assert.Equal(t, tt.expectedValidateTemplatesCalls, generator.validateTemplatesCalls)
 		})
 	}
 }

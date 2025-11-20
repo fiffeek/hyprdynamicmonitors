@@ -78,14 +78,17 @@ func NewApplication(
 
 	matcher := matchers.NewMatcher()
 
-	generator := generators.NewConfigGenerator(cfg)
+	generator, err := generators.NewConfigGenerator(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("can't create config generator, likely an issue with one of the template files: %w", err)
+	}
 	notifications := notifications.NewService(cfg)
 
 	svc := userconfigupdater.NewService(cfg, hyprIPC, powerDetector, &userconfigupdater.Config{
 		DryRun: *dryRun,
 	}, matcher, generator, notifications, lidDetector)
 
-	reloader := reloader.NewService(cfg, fswatcher, powerDetector, svc, *disableAutoHotReload, lidDetector)
+	reloader := reloader.NewService(cfg, fswatcher, powerDetector, svc, *disableAutoHotReload, lidDetector, generator)
 
 	signalHandler := signal.NewHandler(cancel, reloader, svc)
 

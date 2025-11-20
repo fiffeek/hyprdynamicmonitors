@@ -95,7 +95,11 @@ func NewTUI(ctx context.Context, configPath, mockedHyprMonitors string,
 		lidState = ld.GetCurrentState()
 	}
 
-	model := tui.NewModel(cfg, monitors, profileMaker, version, currentState, nil, runningUnderTest, lidState)
+	model, err := tui.NewModel(cfg, monitors, profileMaker, version, currentState, nil, runningUnderTest, lidState)
+	if err != nil {
+		return nil, fmt.Errorf("can't create the TUI model: %w", err)
+	}
+
 	program := tea.NewProgram(
 		model,
 		tea.WithAltScreen(),
