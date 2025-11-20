@@ -1,0 +1,80 @@
+[
+  {
+    "activeWorkspace": {
+      "id": 2,
+      "name": "2"
+    },
+    "activelyTearing": false,
+    "availableModes": [
+      "3840x2160@60.00Hz",
+      "3840x2160@59.94Hz",
+      "3840x2160@50.00Hz",
+      "3840x2160@30.00Hz",
+      "3840x2160@29.97Hz",
+      "3840x2160@25.00Hz",
+      "3840x2160@24.00Hz",
+      "3840x2160@23.98Hz",
+      "2560x1440@59.95Hz",
+      "1920x1080@60.00Hz",
+      "1920x1080@59.94Hz",
+      "1920x1080@50.00Hz",
+      "1680x1050@59.95Hz",
+      "1280x1024@75.02Hz",
+      "1280x800@59.81Hz",
+      "1024x768@75.00Hz",
+      "800x600@60.32Hz",
+      "640x480@59.94Hz"
+    ],
+    "colorManagementPreset": "hdr",
+    "currentFormat": "XRGB8888",
+    "description": "Dell Inc. DELL U2723QE 5YNK3H3",
+    "directScanoutBlockedBy": [
+      "USER",
+      "CANDIDATE"
+    ],
+    "directScanoutTo": "0",
+    "disabled": false,
+    "dpmsStatus": true,
+    "focused": false,
+    "height": 2160,
+    "id": 1,
+    "make": "Dell Inc.",
+    "mirrorOf": "none",
+    "model": "DELL U2723QE",
+    "name": "DP-1",
+    "physicalHeight": 336,
+    "physicalWidth": 597,
+    "refreshRate": 60.0,
+    "reserved": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "scale": 1.25,
+    "sdrBrightness": 1.01,
+    "sdrMaxLuminance": 80,
+    "sdrMinLuminance": 0.2,
+    "sdrSaturation": 1.01,
+    "serial": "5YNK3H3",
+    "solitary": "0",
+    "solitaryBlockedBy": [
+      "WINDOWED",
+      "CANDIDATE"
+    ],
+    "specialWorkspace": {
+      "id": 0,
+      "name": ""
+    },
+    "tearingBlockedBy": [
+      "NOT_TORN",
+      "USER",
+      "CANDIDATE"
+    ],
+    "transform": 0,
+    "vrr": false,
+    "width": 3840,
+    "x": 0,
+    "y": 0
+  }
+]

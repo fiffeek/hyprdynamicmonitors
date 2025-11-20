@@ -106,6 +106,21 @@ func Test__Run_Binary(t *testing.T) {
 		},
 
 		{
+			name:                     "basic templating color",
+			description:              "when hypr returns the same monitors as defined in the configuration, the template should match the golden file",
+			config:                   createBasicTestConfig(t),
+			hyprMonitorResponseFiles: []string{"testdata/hypr/server/basic_monitors_color.json"},
+			validateSideEffects: func(t *testing.T, cfg *config.RawConfig) {
+				testutils.AssertFileExists(t, *cfg.General.Destination)
+				compareWithFixture(t, *cfg.General.Destination,
+					"testdata/app/fixtures/basic_both_color.conf")
+			},
+			disablePowerEvents: true,
+			disableHotReload:   true,
+			runOnce:            true,
+		},
+
+		{
 			name:        "basic templating regex",
 			description: "when hypr returns the same monitors as defined in the configuration, the template should match the golden file with a regex",
 			config: createBasicTestConfig(t).WithProfiles(map[string]*config.Profile{

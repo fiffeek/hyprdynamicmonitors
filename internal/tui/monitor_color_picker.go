@@ -229,7 +229,7 @@ func (m *ColorPicker) View() string {
 	logrus.Debugf("availableSpace for color picker: %d", availableSpace)
 
 	subtitle := m.colors.InfoStyle().Width(m.width).Margin(0, 0, 1, 0).Render(
-		"Note: Hyprctl does not support exposing a few of the following values, thus, the defaults shown might not reflect the current monitor state. See: https://github.com/fiffeek/hyprdynamicmonitors/issues/34")
+		"Your monitor might not support all of the following color settings, check with `hyprctl monitors` what Hyprland actually applied and adjust accordingly.")
 	sections = append(sections, subtitle)
 	availableSpace -= lipgloss.Height(subtitle)
 

@@ -30,10 +30,9 @@ type MonitorSpec struct {
 	DirectScanoutTo string   `json:"directScanoutTo"`
 	Solitary        string   `json:"solitary"`
 	TenBitdepth     bool     `json:"-"`
-	// TODO(fmikina, 14.10.25): fix when hyprctl supports these
-	SdrBrightness float64 `json:"-"`
-	SdrSaturation float64 `json:"-"`
-	ColorPreset   string  `json:"-"`
+	SdrBrightness   float64  `json:"sdrBrightness"`
+	SdrSaturation   float64  `json:"sdrSaturation"`
+	ColorPreset     string   `json:"colorManagementPreset"`
 }
 
 func (m *MonitorSpec) IsTenBitdepth() bool {

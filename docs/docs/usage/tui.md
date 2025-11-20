@@ -189,10 +189,6 @@ Select which monitor this monitor should mirror. Mirror loops are prevented auto
 
 ![Color profiles management](/previews/color.gif)
 
-:::caution Known Limitation
-Due to [`hyprctl` not yet supporting the output of these](https://github.com/fiffeek/hyprdynamicmonitors/issues/34), when you change the color preset and apply it, then reload the TUI, the color preset will mismatch and show `auto/default/srgb`. This will change as soon as the underlying issue in Hyprland is resolved.
-:::
-
 ### Applying Changes
 
 | Key | Action |
