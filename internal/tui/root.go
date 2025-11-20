@@ -59,7 +59,7 @@ type Model struct {
 func NewModel(cfg *config.Config, hyprMonitors hypr.MonitorSpecs,
 	profileMaker *profilemaker.Service, version string, powerState power.PowerState,
 	duration *time.Duration, runningUnderTest bool, lidState power.LidState,
-) Model {
+) (Model, error) {
 	monitors := make([]*MonitorSpec, len(hyprMonitors))
 	for i, monitor := range hyprMonitors {
 		monitors[i] = NewMonitorSpec(monitor)
@@ -67,7 +67,11 @@ func NewModel(cfg *config.Config, hyprMonitors hypr.MonitorSpecs,
 
 	state := NewState(monitors, cfg)
 	matcher := matchers.NewMatcher()
-	generator := generators.NewConfigGenerator(cfg)
+	generator, err := generators.NewConfigGenerator(cfg)
+	if err != nil {
+		return Model{}, fmt.Errorf("can't create config generator, likely an issue with one of the template files: %w", err)
+	}
+
 	colors := NewColorsManager(cfg)
 
 	model := Model{
@@ -97,7 +101,7 @@ func NewModel(cfg *config.Config, hyprMonitors hypr.MonitorSpecs,
 		colors:                    colors,
 	}
 
-	return model
+	return model, nil
 }
 
 func (m Model) Init() tea.Cmd {
