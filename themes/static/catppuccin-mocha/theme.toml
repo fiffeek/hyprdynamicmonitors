@@ -1,0 +1,94 @@
+# Catppuccin Mocha Theme for hyprdynamicmonitors
+# Based on the popular Catppuccin Mocha color palette
+
+# Pane borders
+active_pane_color = "#89b4fa"      # Mocha blue
+inactive_pane_color = "#6c7086"    # Mocha overlay0
+
+# Header colors
+header_color = "#cba6f7"           # Mocha mauve
+header_indicator_color = "#f9e2af" # Mocha yellow
+header_indicator_bg = "#1e1e2e"    # Mocha base
+
+# Program name
+program_name_color = "#1e1e2e"     # Mocha base (dark text for contrast)
+program_name_bg = "#cba6f7"        # First monitor edge color (mauve)
+
+# Status colors
+error_color = "#f38ba8"            # Mocha red
+error_bg = "#1e1e2e"               # Mocha base
+success_color = "#a6e3a1"          # Mocha green
+success_bg = "#1e1e2e"             # Mocha base
+warning_color = "#f38ba8"          # Mocha red
+muted_color = "#6c7086"            # Mocha overlay0
+
+# Tab colors
+tab_active_color = "#cdd6f4"       # Mocha text
+tab_active_bg = "#cba6f7"          # Mocha mauve
+tab_inactive_color = "#6c7086"     # Mocha overlay0
+tab_inactive_bg = "#1e1e2e"        # Mocha base
+
+# Monitor mode colors
+monitor_color_mode_color = "#89dceb"      # Mocha sky
+monitor_scale_mode_color = "#89b4fa"      # Mocha blue
+monitor_mirroring_mode_color = "#cba6f7"  # Mocha mauve
+monitor_editing_mode_color = "#f9e2af"    # Mocha yellow
+monitor_mode_selection_color = "#fab387"  # Mocha peach
+
+# List colors
+list_item_subtitle_color = "#fab387"      # Mocha peach
+list_item_unselected_color = "#cdd6f4"    # Mocha text
+list_item_selected_color = "#cba6f7"      # Mocha mauve
+
+# Legend and selection
+legend_color = "#6c7086"                  # Mocha overlay0
+legend_selected_monitor_color = "#f9e2af" # Mocha yellow
+legend_selected_monitor_bg = "#1e1e2e"    # Mocha base
+
+# Title and subtitle colors
+title_color = "#cba6f7"           # Mocha mauve
+subtitle_color = "#fab387"        # Mocha peach
+info_color = "#a6e3a1"            # Mocha green
+link_color = "#89dceb"            # Mocha sky
+
+# Grid and monitor edge colors
+grid_dot_color = "#6c7086"        # Mocha overlay0
+grid_snapping_line_color = "#8288a0" # Slightly brighter overlay0
+monitor_edge_colors = [
+    "#cba6f7",  # Mauve
+    "#fab387",  # Peach
+    "#89b4fa",  # Blue
+    "#f9e2af",  # Yellow
+    "#f38ba8",  # Red
+    "#f5c2e7"   # Pink
+]
+monitor_fill_colors_unselected = [
+    "#ab86d7",  # Darker mauve
+    "#da936a",  # Darker peach
+    "#6994da",  # Darker blue
+    "#d9c28f",  # Darker yellow
+    "#d36b88",  # Darker red
+    "#d5a2c7"   # Darker pink
+]
+monitor_fill_colors_selected = [
+    "#8566af",  # Much darker mauve
+    "#aa734a",  # Much darker peach
+    "#4974aa",  # Much darker blue
+    "#b9a26f",  # Much darker yellow
+    "#a34b68",  # Much darker red
+    "#a582a7"   # Much darker pink
+]
+monitor_bottom_colors = [
+    "#e5d2ff",  # Brighter mauve
+    "#ffcfb3",  # Brighter peach
+    "#b5d7ff",  # Brighter blue
+    "#fff3d5",  # Brighter yellow
+    "#ffb8c8",  # Brighter red
+    "#ffe0f5"   # Brighter pink
+]
+monitor_preview_pane_label_bg = "#1e1e2e" # Mocha base
+
+# Help colors
+help_key_color = "#6c7086"         # Mocha overlay0 (muted)
+help_description_color = "#585b70" # Mocha surface2
+help_separator_color = "#45475a"   # Mocha surface1

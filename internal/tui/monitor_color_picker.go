@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
@@ -24,10 +23,14 @@ func (m colorPresetItem) View() string {
 	return m.preset.Value()
 }
 
-type colorPresetDelegate struct{}
+type colorPresetDelegate struct {
+	colors *ColorsManager
+}
 
-func NewColorPresetDelegate() colorPresetDelegate {
-	return colorPresetDelegate{}
+func NewColorPresetDelegate(colors *ColorsManager) colorPresetDelegate {
+	return colorPresetDelegate{
+		colors: colors,
+	}
 }
 
 func (d colorPresetDelegate) Height() int {
@@ -71,10 +74,10 @@ func (d colorPresetDelegate) Render(w io.Writer, m list.Model, index int, item l
 	switch {
 	case index == m.Index():
 		// todo
-		style = MonitorListSelected
+		style = d.colors.ListItemSelected()
 		prefix = "► "
 	default:
-		style = MonitorListTitle
+		style = d.colors.ListItemUnselected()
 	}
 	title := style.Render(prefix + modeItem.View())
 
@@ -108,18 +111,19 @@ func (s *colorPickerKepMap) Help(sdr bool) []key.Binding {
 
 type ColorPicker struct {
 	colorPreset   list.Model
-	help          help.Model
+	help          *CustomHelp
 	width         int
 	height        int
 	monitor       *MonitorSpec
 	keyMap        *colorPickerKepMap
 	sdrBrightness *NumberAdjuster
 	sdrSaturation *NumberAdjuster
+	colors        *ColorsManager
 }
 
-func NewColorPicker() *ColorPicker {
+func NewColorPicker(colors *ColorsManager) *ColorPicker {
 	items := []list.Item{}
-	delegate := NewColorPresetDelegate()
+	delegate := NewColorPresetDelegate(colors)
 	list := list.New(items, delegate, 0, 0)
 	list.SetShowStatusBar(false)
 	list.SetFilteringEnabled(false)
@@ -128,9 +132,10 @@ func NewColorPicker() *ColorPicker {
 
 	return &ColorPicker{
 		colorPreset:   list,
-		help:          help.New(),
+		help:          NewCustomHelp(colors),
 		sdrBrightness: NewNumberAdjuster(0.0, 2.0, 0.5, 0.01),
 		sdrSaturation: NewNumberAdjuster(0.0, 2.0, 0.5, 0.01),
+		colors:        colors,
 		keyMap: &colorPickerKepMap{
 			Back: key.NewBinding(
 				key.WithKeys("esc"),
@@ -216,19 +221,19 @@ func (m *ColorPicker) View() string {
 	availableSpace := m.height
 	logrus.Debugf("availableSpace for color picker: %d", availableSpace)
 
-	titleText := TitleStyle.Render("Adjust Colors: ")
+	titleText := m.colors.TitleStyle().Render("Adjust Colors: ")
 	monitorName := m.monitor.Name
 	title := lipgloss.NewStyle().Width(m.width).Margin(0, 0, 1, 0).Render(titleText + monitorName)
 	sections = append(sections, title)
 	availableSpace -= lipgloss.Height(title)
 	logrus.Debugf("availableSpace for color picker: %d", availableSpace)
 
-	subtitle := SubtitleInfoStyle.Width(m.width).Margin(0, 0, 1, 0).Render(
+	subtitle := m.colors.InfoStyle().Width(m.width).Margin(0, 0, 1, 0).Render(
 		"Note: Hyprctl does not support exposing a few of the following values, thus, the defaults shown might not reflect the current monitor state. See: https://github.com/fiffeek/hyprdynamicmonitors/issues/34")
 	sections = append(sections, subtitle)
 	availableSpace -= lipgloss.Height(subtitle)
 
-	bitdepthtitle := SubtitleStyle.Render("Bitdepth: ")
+	bitdepthtitle := m.colors.SubtitleStyle().Render("Bitdepth: ")
 	bitdepthvalue := m.monitor.Bitdepth.Value()
 	bitdepthline := lipgloss.NewStyle().Margin(0, 0, 1, 0).Width(m.width).Render(bitdepthtitle + bitdepthvalue)
 	sections = append(sections, bitdepthline)
@@ -239,20 +244,20 @@ func (m *ColorPicker) View() string {
 	availableSpace -= lipgloss.Height(help)
 	logrus.Debugf("availableSpace for color picker: %d", availableSpace)
 
-	presettitle := SubtitleStyle.Render("Color Preset:")
+	presettitle := m.colors.SubtitleStyle().Render("Color Preset:")
 	availableSpace -= lipgloss.Height(presettitle)
 	sections = append(sections, presettitle)
 
 	var sdrBrightnessLine string
 	var sdrSaturationLine string
 	if sdr {
-		sdrBrightnessTitle := SubtitleStyle.Render("SDR Brightness: ")
+		sdrBrightnessTitle := m.colors.SubtitleStyle().Render("SDR Brightness: ")
 		sdrBrightnessValue := fmt.Sprintf("%.2f", m.monitor.SdrBrightness)
 		sdrBrightnessLine = lipgloss.NewStyle().Width(m.width).Render(
 			sdrBrightnessTitle + sdrBrightnessValue)
 		availableSpace -= lipgloss.Height(sdrBrightnessLine)
 
-		saturationTitle := SubtitleStyle.Render("SDR Saturation: ")
+		saturationTitle := m.colors.SubtitleStyle().Render("SDR Saturation: ")
 		saturationValue := fmt.Sprintf("%.2f", m.monitor.SdrSaturation)
 		sdrSaturationLine = lipgloss.NewStyle().Width(m.width).Render(saturationTitle + saturationValue)
 		availableSpace -= lipgloss.Height(sdrSaturationLine)

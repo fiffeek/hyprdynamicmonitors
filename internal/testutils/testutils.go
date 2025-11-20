@@ -25,6 +25,19 @@ func NewTestConfig(t *testing.T) *TestConfig {
 	return &TestConfig{cfg: &config.RawConfig{}, t: t}
 }
 
+func (t *TestConfig) WithThemeFile(file string) *TestConfig {
+	if t.cfg.TUISection == nil {
+		t.cfg.TUISection = &config.TUISection{}
+	}
+	if t.cfg.TUISection.Colors == nil {
+		t.cfg.TUISection.Colors = &config.TUIColors{}
+	}
+	path, err := filepath.Abs(file)
+	require.NoError(t.t, err, "should be able to get a full path to the theme file")
+	t.cfg.TUISection.Colors.SourceFile = utils.JustPtr(path)
+	return t
+}
+
 func (t *TestConfig) WithProfiles(profiles map[string]*config.Profile) *TestConfig {
 	t.cfg.Profiles = profiles
 	for _, profile := range t.cfg.Profiles {

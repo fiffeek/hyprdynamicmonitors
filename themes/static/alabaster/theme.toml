@@ -1,0 +1,94 @@
+# Alabaster Theme for hyprdynamicmonitors
+# Based on the minimalist Alabaster color scheme - nearly monochrome
+
+# Pane borders
+active_pane_color = "#6a6a6a"      # Medium gray
+inactive_pane_color = "#c8c8c8"    # Light gray
+
+# Header colors
+header_color = "#5a5a5a"           # Dark gray
+header_indicator_color = "#7a7a7a" # Medium gray
+header_indicator_bg = "#f7f7f7"    # Off-white
+
+# Program name
+program_name_color = "#f7f7f7"     # Off-white text
+program_name_bg = "#9a9a9a"        # First monitor edge color (gray 1)
+
+# Status colors
+error_color = "#aa3731"            # Minimal red (Alabaster's only color)
+error_bg = "#f7f7f7"               # Off-white
+success_color = "#6a6a6a"          # Medium gray
+success_bg = "#f7f7f7"             # Off-white
+warning_color = "#aa3731"          # Minimal red (Alabaster's only color)
+muted_color = "#b8b8b8"            # Light gray
+
+# Tab colors
+tab_active_color = "#f7f7f7"       # Off-white text
+tab_active_bg = "#5a5a5a"          # Dark gray
+tab_inactive_color = "#7a7a7a"     # Medium gray
+tab_inactive_bg = "#f7f7f7"        # Off-white
+
+# Monitor mode colors
+monitor_color_mode_color = "#6a6a6a"      # Medium gray
+monitor_scale_mode_color = "#5a5a5a"      # Dark gray
+monitor_mirroring_mode_color = "#7a7a7a"  # Medium gray
+monitor_editing_mode_color = "#4a4a4a"    # Dark gray
+monitor_mode_selection_color = "#5a5a5a"  # Dark gray
+
+# List colors
+list_item_subtitle_color = "#5a5a5a"      # Dark gray
+list_item_unselected_color = "#2a2a2a"    # Very dark gray
+list_item_selected_color = "#4a4a4a"      # Dark gray
+
+# Legend and selection
+legend_color = "#b8b8b8"                  # Light gray
+legend_selected_monitor_color = "#5a5a5a" # Dark gray
+legend_selected_monitor_bg = "#f7f7f7"    # Off-white
+
+# Title and subtitle colors
+title_color = "#4a4a4a"           # Dark gray
+subtitle_color = "#5a5a5a"        # Dark gray
+info_color = "#6a6a6a"            # Medium gray
+link_color = "#7a7a7a"            # Medium gray
+
+# Grid and monitor edge colors
+grid_dot_color = "#c8c8c8"        # Light gray
+grid_snapping_line_color = "#a8a8a8" # Slightly darker gray
+monitor_edge_colors = [
+    "#9a9a9a",  # Gray 1
+    "#8a8a8a",  # Gray 2
+    "#a0a0a0",  # Gray 3
+    "#959595",  # Gray 4
+    "#8f8f8f",  # Gray 5
+    "#9f9f9f"   # Gray 6
+]
+monitor_fill_colors_unselected = [
+    "#efefef",  # Very light gray 1
+    "#ededed",  # Very light gray 2
+    "#f0f0f0",  # Very light gray 3
+    "#eeeeee",  # Very light gray 4
+    "#ececec",  # Very light gray 5
+    "#f1f1f1"   # Very light gray 6
+]
+monitor_fill_colors_selected = [
+    "#d8d8d8",  # Light gray 1
+    "#d5d5d5",  # Light gray 2
+    "#dadada",  # Light gray 3
+    "#d7d7d7",  # Light gray 4
+    "#d4d4d4",  # Light gray 5
+    "#dbdbdb"   # Light gray 6
+]
+monitor_bottom_colors = [
+    "#2a2a2a",  # Very dark gray 1
+    "#1a1a1a",  # Very dark gray 2
+    "#303030",  # Very dark gray 3
+    "#252525",  # Very dark gray 4
+    "#1f1f1f",  # Very dark gray 5
+    "#353535"   # Very dark gray 6
+]
+monitor_preview_pane_label_bg = "#f7f7f7" # Off-white
+
+# Help colors
+help_key_color = "#9a9a9a"         # Medium gray (muted)
+help_description_color = "#b0b0b0" # Light gray
+help_separator_color = "#c8c8c8"   # Lighter gray

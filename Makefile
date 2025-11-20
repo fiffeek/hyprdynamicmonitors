@@ -259,7 +259,33 @@ record/preview/daemon: build/docs
 
 demo: record/preview
 
-record/all: demo record/previews record/preview/daemon
+demo/themed: build/docs
+	@git checkout -- ./preview/tapes/
+	@git clean -fd ./preview/tapes/
+	@./scripts/prepare_themed_demo.sh "$(HDM_THEME)" "$(VHS_THEME)"
+	@$(VHS_BIN) ./preview/tapes/demo.tape
+	@git checkout -- ./preview/tapes/
+	@git clean -fd ./preview/tapes/
+
+demos/themed:
+	@$(MAKE) demo/themed HDM_THEME="tokyo-night" VHS_THEME="TokyoNight"
+	@$(MAKE) demo/themed HDM_THEME="gruvbox-light" VHS_THEME="Gruvbox Light"
+	@$(MAKE) demo/themed HDM_THEME="nord" VHS_THEME="nord"
+	@$(MAKE) demo/themed HDM_THEME="one-dark" VHS_THEME="OneDark"
+	@$(MAKE) demo/themed HDM_THEME="dracula" VHS_THEME="Dracula"
+	@$(MAKE) demo/themed HDM_THEME="catppuccin-mocha" VHS_THEME="Catppuccin Mocha"
+	@$(MAKE) demo/themed HDM_THEME="solarized-light" VHS_THEME="Builtin Solarized Light"
+	@$(MAKE) demo/themed HDM_THEME="alabaster" VHS_THEME="Alabaster"
+	@$(MAKE) demo/themed HDM_THEME="kanagawa" VHS_THEME="Kanagawa"
+	@$(MAKE) demo/themed HDM_THEME="gruvbox-dark" VHS_THEME="GruvboxDark"
+	@$(MAKE) demo/themed HDM_THEME="rose-pine" VHS_THEME="Rose Pine"
+
+demos/themed/showcase:
+	@scripts/create_theme_montage.sh
+	@ffmpeg -i ./preview/output/themes-showcase.mp4 -vf "fps=25,scale=1500:-1:flags=lanczos" out.gif
+	@mv out.gif ./preview/output/themes-showcase.gif
+
+record/all: demo record/previews record/preview/daemon demos/themed demos/themed/showcase
 
 record/previews: build/docs
 	$(MAKE) record/preview RECORD_TARGET=views

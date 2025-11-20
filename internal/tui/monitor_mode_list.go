@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
@@ -13,13 +12,15 @@ import (
 )
 
 type ModeItem struct {
-	mode string
+	mode   string
+	colors *ColorsManager
 }
 
 type MonitorModeList struct {
 	L        list.Model
 	monitors []*MonitorSpec
-	help     help.Model
+	help     *CustomHelp
+	colors   *ColorsManager
 }
 
 func (m ModeItem) FilterValue() string {
@@ -45,15 +46,15 @@ func (m ModeItem) View() string {
 
 	var styledSuffix string
 	if isExactStandard {
-		styledSuffix = StandardModeSuffixStyle.Render(" " + suffix)
+		styledSuffix = m.colors.InfoStyle().Render(" " + suffix)
 	} else {
-		styledSuffix = NonStandardModeSuffixStyle.Render(" " + suffix)
+		styledSuffix = m.colors.MutedStyle().Render(" " + suffix)
 	}
 
 	resolutionPart := fmt.Sprintf("%dx%d", width, height)
 	refreshPart := fmt.Sprintf("%.0fHz", refreshRate)
 
-	styledRefresh := RefreshRateBoldStyle.Render(" @ " + refreshPart)
+	styledRefresh := m.colors.RefreshRateBoldStyle().Render(" @ " + refreshPart)
 
 	return resolutionPart + styledRefresh + styledSuffix
 }
@@ -87,10 +88,14 @@ func (m ModeItem) getResolutionSuffix(width, height int) string {
 	return result
 }
 
-type ModeDelegate struct{}
+type ModeDelegate struct {
+	colors *ColorsManager
+}
 
-func NewModeDelegate() ModeDelegate {
-	return ModeDelegate{}
+func NewModeDelegate(colors *ColorsManager) ModeDelegate {
+	return ModeDelegate{
+		colors: colors,
+	}
 }
 
 func (d ModeDelegate) Height() int {
@@ -133,19 +138,19 @@ func (d ModeDelegate) Render(w io.Writer, m list.Model, index int, item list.Ite
 	var prefix string
 	switch {
 	case index == m.Index():
-		style = MonitorListSelected
+		style = d.colors.ListItemSelected()
 		prefix = "► "
 	default:
-		style = MonitorListTitle
+		style = d.colors.ListItemUnselected()
 	}
 	title := style.Render(prefix + modeItem.View())
 
 	fmt.Fprintf(w, "%s", title)
 }
 
-func NewMonitorModeList(monitors []*MonitorSpec) *MonitorModeList {
+func NewMonitorModeList(monitors []*MonitorSpec, colors *ColorsManager) *MonitorModeList {
 	modesItems := []list.Item{}
-	delegate := NewModeDelegate()
+	delegate := NewModeDelegate(colors)
 	modesList := list.New(modesItems, delegate, 0, 0)
 	modesList.SetShowStatusBar(false)
 	modesList.SetFilteringEnabled(false)
@@ -155,7 +160,8 @@ func NewMonitorModeList(monitors []*MonitorSpec) *MonitorModeList {
 	return &MonitorModeList{
 		L:        modesList,
 		monitors: monitors,
-		help:     help.New(),
+		help:     NewCustomHelp(colors),
+		colors:   colors,
 	}
 }
 
@@ -164,7 +170,7 @@ func (m *MonitorModeList) SetItems(monitor *MonitorSpec) tea.Cmd {
 	modesItems := []list.Item{}
 	selectedMode := -1
 	for i, mode := range monitor.AvailableModes {
-		modesItems = append(modesItems, ModeItem{mode: mode})
+		modesItems = append(modesItems, ModeItem{mode: mode, colors: m.colors})
 		logrus.Debugf("Comparing modes: %s with %s", mode, monitor.ModeForComparison())
 		if mode == monitor.ModeForComparison() {
 			selectedMode = i
@@ -201,7 +207,7 @@ func (m *MonitorModeList) View() string {
 	sections := []string{}
 	availHeight := m.L.Height()
 
-	title := TitleStyle.Margin(0, 0, 1, 0).Render("Select monitor mode")
+	title := m.colors.TitleStyle().Margin(0, 0, 1, 0).Render("Select monitor mode")
 	availHeight -= lipgloss.Height(title)
 	sections = append(sections, title)
 

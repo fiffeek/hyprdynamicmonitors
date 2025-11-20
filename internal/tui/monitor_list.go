@@ -5,7 +5,6 @@ import (
 	"io"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
@@ -26,15 +25,15 @@ func (m MonitorItem) Title() string {
 	return m.monitor.Name
 }
 
-func (m MonitorItem) MonitorDescription() string {
+func (m MonitorItem) MonitorDescription(colors *ColorsManager) string {
 	if m.monitor.Description == "" {
 		return ""
 	}
 
-	return ItemSubtitle.Render(fmt.Sprintf("(%s)", m.monitor.Description))
+	return colors.ListItemSubtitle().Render(fmt.Sprintf("(%s)", m.monitor.Description))
 }
 
-func (m MonitorItem) MonitorDescriptionTrunc() string {
+func (m MonitorItem) MonitorDescriptionTrunc(colors *ColorsManager) string {
 	if m.monitor.Description == "" {
 		return ""
 	}
@@ -44,7 +43,7 @@ func (m MonitorItem) MonitorDescriptionTrunc() string {
 		desc = desc[:15]
 		desc += "..."
 	}
-	return ItemSubtitle.Render(fmt.Sprintf("(%s)", desc))
+	return colors.ListItemSubtitle().Render(fmt.Sprintf("(%s)", desc))
 }
 
 func (m *MonitorItem) Unselect() {
@@ -71,29 +70,29 @@ func (m MonitorItem) Editing() bool {
 	return m.isSelectedForEditing || m.inScaleMode || m.inModeSelection || m.inMirroringMode
 }
 
-func (m MonitorItem) Indicator() string {
+func (m MonitorItem) Indicator(colors *ColorsManager) string {
 	if !m.Editing() {
 		return ""
 	}
 
 	if m.inModeSelection {
-		return MonitorModeSelectionMode.Render("[CHANGE MODE]")
+		return colors.MonitorModeSelectionMode().Render("[CHANGE MODE]")
 	}
 
 	if m.inScaleMode {
-		return MonitorScaleMode.Render("[SCALE MODE]")
+		return colors.MonitorScaleMode().Render("[SCALE MODE]")
 	}
 
 	if m.inColorSelection {
-		return MonitorColorMode.Render("[COLOR EDIT]")
+		return colors.MonitorColorMode().Render("[COLOR EDIT]")
 	}
 
 	if m.inMirroringMode {
-		return MonitorMirroringMode.Render("[MIRRORING]")
+		return colors.MonitorMirroringMode().Render("[MIRRORING]")
 	}
 
 	if m.isSelectedForEditing {
-		return MonitorEditingMode.Render("[EDITING]")
+		return colors.MonitorEditingMode().Render("[EDITING]")
 	}
 
 	return ""
@@ -199,11 +198,13 @@ func (m MonitorListKeyMap) ShortHelp(state AppState) []key.Binding {
 type MonitorDelegate struct {
 	keymap *MonitorListKeyMap
 	width  int
+	colors *ColorsManager
 }
 
-func NewMonitorDelegate() MonitorDelegate {
+func NewMonitorDelegate(colors *ColorsManager) MonitorDelegate {
 	return MonitorDelegate{
 		keymap: NewMonitorListKeyMap(),
+		colors: colors,
 	}
 }
 
@@ -372,17 +373,17 @@ func (d MonitorDelegate) Render(w io.Writer, m list.Model, index int, item list.
 	var prefix string
 	switch {
 	case index == m.Index() && monitor.Editing():
-		style = MonitorEditingMode
+		style = d.colors.MonitorEditingMode()
 		prefix = "► "
 	case index == m.Index():
-		style = MonitorListSelected
+		style = d.colors.ListItemSelected()
 		prefix = "► "
 	default:
-		style = MonitorListTitle
+		style = d.colors.ListItemUnselected()
 	}
 	title := fmt.Sprintf("%s%s %s %s", prefix, style.Render(monitor.Title()),
-		monitor.MonitorDescriptionTrunc(), monitor.Indicator())
-	desc := MutedStyle.Render(monitor.Description())
+		monitor.MonitorDescriptionTrunc(d.colors), monitor.Indicator(d.colors))
+	desc := d.colors.MutedStyle().Render(monitor.Description())
 	content := fmt.Sprintf("%s\n%s", title, desc)
 
 	fmt.Fprintf(w, "%s", content)
@@ -409,20 +410,21 @@ type MonitorList struct {
 	L                    list.Model
 	state                AppState
 	keys                 *monitorListKeyMap
-	help                 help.Model
+	help                 *CustomHelp
 	delegate             MonitorDelegate
 	monitorSelected      bool
 	selectedMonitorIndex int
 	width                int
+	colors               *ColorsManager
 }
 
-func NewMonitorList(monitors []*MonitorSpec) *MonitorList {
+func NewMonitorList(monitors []*MonitorSpec, colors *ColorsManager) *MonitorList {
 	monitorItems := make([]list.Item, len(monitors))
 	for i, monitor := range monitors {
 		monitorItems[i] = MonitorItem{monitor: monitor}
 	}
 
-	delegate := NewMonitorDelegate()
+	delegate := NewMonitorDelegate(colors)
 	monitorsList := list.New(monitorItems, delegate, 0, 0)
 	monitorsList.Title = "Connected Monitors"
 	monitorsList.SetShowStatusBar(false)
@@ -438,8 +440,9 @@ func NewMonitorList(monitors []*MonitorSpec) *MonitorList {
 			Left:  rootKeyMap.Left,
 			Right: rootKeyMap.Right,
 		},
-		help:     help.New(),
+		help:     NewCustomHelp(colors),
 		delegate: delegate,
+		colors:   colors,
 	}
 }
 
@@ -522,7 +525,7 @@ func (c *MonitorList) View() string {
 		availHeight = c.L.Height()
 	)
 
-	title := TitleStyle.Margin(0, 0, 1, 0).Render("Connected Monitors")
+	title := c.colors.TitleStyle().Margin(0, 0, 1, 0).Render("Connected Monitors")
 	help := c.ShortHelp()
 	availHeight -= lipgloss.Height(help)
 	availHeight -= lipgloss.Height(title)
@@ -540,10 +543,11 @@ func (c *MonitorList) View() string {
 func (c *MonitorList) ShortHelp() string {
 	sections := []string{}
 
-	listHelp := HelpStyle.Width(c.width).Render(c.help.ShortHelpView(c.keys.Help(c.state)))
+	listHelp := c.colors.HelpStyle().Width(c.width).Render(
+		c.help.ShortHelpView(c.keys.Help(c.state)))
 	sections = append(sections, listHelp)
 
-	delegateHelp := HelpStyle.Width(c.width).Render(c.help.ShortHelpView(
+	delegateHelp := c.colors.HelpStyle().Width(c.width).Render(c.help.ShortHelpView(
 		c.delegate.keymap.ShortHelp(c.state)))
 	sections = append(sections, delegateHelp)
 

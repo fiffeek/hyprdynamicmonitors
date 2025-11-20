@@ -1,0 +1,97 @@
+# Wallust-generated theme for hyprdynamicmonitors
+# Auto-generated from wallpaper colors
+
+# Pane borders
+active_pane_color = "{{color4}}"      # Blue
+inactive_pane_color = "{{color8}}"    # Bright black
+
+# Header colors
+header_color = "{{color5}}"           # Magenta
+header_indicator_color = "{{color3}}" # Yellow
+header_indicator_bg = "{{background}}"
+
+# Program name
+program_name_color = "{{background}}"
+program_name_bg = "{{color5 | saturate(0.3)}}"  # First monitor edge color (magenta)
+
+# Status colors
+error_color = "{{color1}}"            # Red
+error_bg = "{{background}}"
+success_color = "{{color2}}"          # Green
+success_bg = "{{background}}"
+warning_color = "{{color1}}"          # Red
+muted_color = "{{color8}}"            # Bright black
+
+# Tab colors
+tab_active_color = "{{foreground}}"
+tab_active_bg = "{{color5}}"          # Magenta
+tab_inactive_color = "{{color8}}"     # Bright black
+tab_inactive_bg = "{{background}}"
+
+# Monitor mode colors
+monitor_color_mode_color = "{{color6}}"       # Cyan
+monitor_scale_mode_color = "{{color4}}"       # Blue
+monitor_mirroring_mode_color = "{{color5}}"   # Magenta
+monitor_editing_mode_color = "{{color3}}"     # Yellow
+monitor_mode_selection_color = "{{color9}}"   # Bright red/orange
+
+# List colors
+list_item_subtitle_color = "{{color9}}"       # Bright red/orange
+list_item_unselected_color = "{{foreground}}"
+list_item_selected_color = "{{color5}}"       # Magenta
+
+# Legend and selection
+legend_color = "{{color8}}"              # Bright black
+legend_selected_monitor_color = "{{color3}}"    # Yellow
+legend_selected_monitor_bg = "{{background}}"
+
+# Title and subtitle colors
+title_color = "{{color5}}"           # Magenta
+subtitle_color = "{{color9}}"        # Bright red/orange
+info_color = "{{color2}}"            # Green
+link_color = "{{color6}}"            # Cyan
+
+# Grid and monitor edge colors
+grid_dot_color = "{{color8}}"        # Bright black
+grid_snapping_line_color = "{{color8 | lighten(0.15)}}" # Slightly brighter grid dots
+monitor_edge_colors = [
+    "{{color5 | saturate(0.3)}}",  # Magenta (saturated)
+    "{{color9 | saturate(0.3)}}",  # Bright red/orange (saturated)
+    "{{color4 | saturate(0.3)}}",  # Blue (saturated)
+    "{{color3 | saturate(0.3)}}",  # Yellow (saturated)
+    "{{color1 | saturate(0.3)}}",  # Red (saturated)
+    "{{color13 | saturate(0.3)}}"  # Bright magenta/pink (saturated)
+]
+
+# Monitor fill colors (parallel arrays with monitor_edge_colors)
+# Uses wallust filters to create proper color variations
+monitor_fill_colors_unselected = [
+    "{{color5 | lighten(0.3)}}",  # Lighter magenta
+    "{{color9 | lighten(0.3)}}",  # Lighter red/orange
+    "{{color4 | lighten(0.3)}}",  # Lighter blue
+    "{{color3 | lighten(0.3)}}",  # Lighter yellow
+    "{{color1 | lighten(0.3)}}",  # Lighter red
+    "{{color13 | lighten(0.3)}}"  # Lighter magenta/pink
+]
+monitor_fill_colors_selected = [
+    "{{color5 | darken(0.2)}}",   # Darker magenta
+    "{{color9 | darken(0.2)}}",   # Darker red/orange
+    "{{color4 | darken(0.2)}}",   # Darker blue
+    "{{color3 | darken(0.2)}}",   # Darker yellow
+    "{{color1 | darken(0.2)}}",   # Darker red
+    "{{color13 | darken(0.2)}}"   # Darker magenta/pink
+]
+monitor_bottom_colors = [
+    "{{color5 | saturate(0.3) | lighten(0.1)}}",  # Much lighter magenta
+    "{{color9 | saturate(0.3) | lighten(0.1)}}",  # Much lighter red/orange
+    "{{color4 | saturate(0.3) | lighten(0.1)}}",  # Much lighter blue
+    "{{color3 | saturate(0.3) | lighten(0.1)}}",  # Much lighter yellow
+    "{{color1 | saturate(0.3) | lighten(0.1)}}",  # Much lighter red
+    "{{color13 | saturate(0.3) | lighten(0.1)}}"  # Much lighter magenta/pink
+]
+monitor_preview_pane_label_bg = "{{background}}"
+
+# Help colors
+help_key_color = "{{color8}}"              # Bright black (muted)
+help_description_color = "{{color8 | darken(0.2)}}"  # Darker muted
+help_separator_color = "{{color8 | darken(0.3)}}"    # Even darker

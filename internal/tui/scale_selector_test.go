@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/fiffeek/hyprdynamicmonitors/internal/testutils"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/tui"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/utils"
 )
@@ -122,7 +123,9 @@ func TestScaleSelector_Update(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			selector := tui.NewScaleSelector()
+			cfg := testutils.NewTestConfig(t).Get()
+			colors := tui.NewColorsManager(cfg)
+			selector := tui.NewScaleSelector(colors)
 			selector.Set(tc.setupMonitor)
 
 			cmd := selector.Update(tc.message)
@@ -158,7 +161,9 @@ func TestScaleSelector_AcceleratedScaling(t *testing.T) {
 		Scale:            1.0,
 		ValidScalesCache: make(map[float64]struct{}),
 	}
-	selector := tui.NewScaleSelector()
+	cfg := testutils.NewTestConfig(t).Get()
+	colors := tui.NewColorsManager(cfg)
+	selector := tui.NewScaleSelector(colors)
 	selector.Set(monitor)
 
 	selector.Update(tea.KeyMsg{Type: tea.KeyUp})
@@ -195,7 +200,9 @@ func TestScaleSelector_DPICalculation(t *testing.T) {
 				ValidScalesCache: make(map[float64]struct{}),
 			}
 
-			selector := tui.NewScaleSelector()
+			cfg := testutils.NewTestConfig(t).Get()
+			colors := tui.NewColorsManager(cfg)
+			selector := tui.NewScaleSelector(colors)
 			selector.Set(monitor)
 
 			view := selector.View()
@@ -231,7 +238,9 @@ func TestScaleSelector_CustomInput(t *testing.T) {
 				ValidScalesCache: make(map[float64]struct{}),
 			}
 
-			selector := tui.NewScaleSelector()
+			cfg := testutils.NewTestConfig(t).Get()
+			colors := tui.NewColorsManager(cfg)
+			selector := tui.NewScaleSelector(colors)
 			selector.Set(monitor)
 
 			// Trigger custom input mode

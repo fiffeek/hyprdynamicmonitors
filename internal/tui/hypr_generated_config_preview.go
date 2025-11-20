@@ -20,10 +20,11 @@ type HDMGeneratedConfigPreview struct {
 	runningUnderTest  bool
 	reloaded          bool
 	destinationExists bool
+	colors            *ColorsManager
 }
 
 func NewHDMGeneratedConfigPreview(cfg *config.Config,
-	runningUnderTest bool,
+	runningUnderTest bool, colors *ColorsManager,
 ) *HDMGeneratedConfigPreview {
 	ta := textarea.New()
 	return &HDMGeneratedConfigPreview{
@@ -31,6 +32,7 @@ func NewHDMGeneratedConfigPreview(cfg *config.Config,
 		textarea:         ta,
 		runningUnderTest: runningUnderTest,
 		reloaded:         false,
+		colors:           colors,
 	}
 }
 
@@ -95,7 +97,7 @@ func (h *HDMGeneratedConfigPreview) View() string {
 	sections := []string{}
 	availableHeight := h.height
 
-	title := TitleStyle.Margin(0, 0, 0, 0).Render("Generated hypr config preview")
+	title := h.colors.TitleStyle().Margin(0, 0, 0, 0).Render("Generated hypr config preview")
 	availableHeight -= lipgloss.Height(title)
 	sections = append(sections, title)
 
@@ -104,7 +106,7 @@ func (h *HDMGeneratedConfigPreview) View() string {
 		configFile = filepath.Base(configFile)
 	}
 
-	subtitle := SubtitleInfoStyle.Margin(0, 0, 1, 0).Render(configFile)
+	subtitle := h.colors.MutedStyle().Margin(0, 0, 1, 0).Render(configFile)
 	availableHeight -= lipgloss.Height(subtitle)
 	sections = append(sections, subtitle)
 
@@ -117,9 +119,10 @@ func (h *HDMGeneratedConfigPreview) View() string {
 		warnSections := []string{}
 		warnSections = append(warnSections, "Are you running the daemon?")
 		warnSections = append(warnSections, lipgloss.NewStyle().Width(h.width).Margin(0, 0,
-			1, 0).Render("See: "+LinkStyle.Render("https://hyprdynamicmonitors.filipmikina.com/docs/quickstart/setup-approaches")))
-		warnSections = append(warnSections, SubtitleInfoStyle.Width(h.width).Render(
-			"Alternatively, run the generation once: `hyprdynamicmonitors run --run-once`"))
+			1, 0).Render("See: "+h.colors.LinkStyle().Render(
+			"https://hyprdynamicmonitors.filipmikina.com/docs/quickstart/setup-approaches")))
+		warnSections = append(warnSections, h.colors.InfoStyle().Width(h.width).Render(
+			"Alternatively, run the generation once: `hyprdynamicmonitors run --run-once` or hit `R`"))
 		sections = append(sections, lipgloss.JoinVertical(lipgloss.Top, warnSections...))
 	}
 

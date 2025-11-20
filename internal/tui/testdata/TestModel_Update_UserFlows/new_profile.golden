@@ -1,5 +1,5 @@
  HyprDynamicMonitors [v. test-version]  Monitors  Profile                                                                                                       
-╭───────────────────────────────────────────────────╮╭────────────────────────────────────────────────────────────────────────────────────────────────────────╮ 
+┌───────────────────────────────────────────────────┐┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐ 
 │HyprDynamicMonitors Profile                        ││Profile Config Preview (template)                                                                       │ 
 │                                                   ││h.go.tmpl                                                                                               │ 
 │Profile: h                                         ││                                                                                                        │ 
@@ -19,15 +19,15 @@
 │                                                   ││┃  10 monitor=desc:Dell Inc. DELL U2723QE 5YNK3H3,3840x2160@60.00000,0x0,1.25000000,transform,0,vrr,0   │ 
 │If you're not running the daemon you likely want to││┃  11 monitor=desc:Samsung Electric Company C27F390                                                     │ 
 │follow up by rendering the profile into the hypr   ││┃     HTHK500315,1920x1080@60.00000,3840x540,1.00000000,transform,0,vrr,0                               │ 
-│settings destination (type `R`).                   │╰────────────────────────────────────────────────────────────────────────────────────────────────────────╯ 
-│                                                   │╭────────────────────────────────────────────────────────────────────────────────────────────────────────╮ 
+│settings destination (type `R`).                   │└────────────────────────────────────────────────────────────────────────────────────────────────────────┘ 
+│                                                   │┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐ 
 │                                                   ││Generated hypr config preview                                                                           │ 
 │                                                   ││target.conf                                                                                             │ 
 │                                                   ││                                                                                                        │ 
 │                                                   ││Are you running the daemon?                                                                             │ 
 │                                                   ││See: https://hyprdynamicmonitors.filipmikina.com/docs/quickstart/setup-approaches                       │ 
 │                                                   ││                                                                                                        │ 
-│                                                   ││Alternatively, run the generation once: `hyprdynamicmonitors run --run-once`                            │ 
+│                                                   ││Alternatively, run the generation once: `hyprdynamicmonitors run --run-once` or hit `R`                 │ 
 │                                                   ││                                                                                                        │ 
 │                                                   ││                                                                                                        │ 
 │                                                   ││                                                                                                        │ 
@@ -37,9 +37,9 @@
 │                                                   ││                                                                                                        │ 
 │                                                   ││                                                                                                        │ 
 │                                                   ││                                                                                                        │ 
-│  n new profile • a apply monitors to existing     ││                                                                                                        │ 
-│  profile • e edit manually • R render profile to  ││                                                                                                        │ 
-│  config.general.destination                       ││                                                                                                        │ 
-╰───────────────────────────────────────────────────╯╰────────────────────────────────────────────────────────────────────────────────────────────────────────╯ 
-  tab switch view • C edit HyprDynamicMonitors config • E edit hypr generated config (ephemeral)                                                                
+│n new profile • a apply monitors to existing       ││                                                                                                        │ 
+│profile • e edit manually • R render profile to    ││                                                                                                        │ 
+│config.general.destination                         ││                                                                                                        │ 
+└───────────────────────────────────────────────────┘└────────────────────────────────────────────────────────────────────────────────────────────────────────┘ 
+tab switch view • C edit HyprDynamicMonitors config • E edit hypr generated config (ephemeral)                                                                  
                                                                                                                                                                 

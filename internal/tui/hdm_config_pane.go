@@ -5,7 +5,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -38,15 +37,16 @@ type HDMConfigPane struct {
 	keymap        *hdmKeyMap
 	profile       *matchers.MatchedProfile
 	pulledProfile bool
-	help          help.Model
+	help          *CustomHelp
 	height        int
 	width         int
 	powerState    power.PowerState
 	lidState      power.LidState
+	colors        *ColorsManager
 }
 
 func NewHDMConfigPane(cfg *config.Config, matcher *matchers.Matcher, monitors []*MonitorSpec,
-	powerState power.PowerState, lidState power.LidState,
+	powerState power.PowerState, lidState power.LidState, colors *ColorsManager,
 ) *HDMConfigPane {
 	return &HDMConfigPane{
 		cfg:        cfg,
@@ -54,7 +54,8 @@ func NewHDMConfigPane(cfg *config.Config, matcher *matchers.Matcher, monitors []
 		monitors:   monitors,
 		powerState: powerState,
 		lidState:   lidState,
-		help:       help.New(),
+		help:       NewCustomHelp(colors),
+		colors:     colors,
 		keymap: &hdmKeyMap{
 			RenderProfile: key.NewBinding(
 				key.WithKeys("R"),
@@ -148,10 +149,10 @@ func (h *HDMConfigPane) View() string {
 	availableHeight := h.height
 	sections := []string{}
 
-	title := TitleStyle.Margin(0, 0, 1, 0).Render("HyprDynamicMonitors Profile")
+	title := h.colors.TitleStyle().Margin(0, 0, 1, 0).Render("HyprDynamicMonitors Profile")
 
 	var content string
-	help := HelpStyle.Width(h.width).Render(h.help.ShortHelpView(h.keymap.Help()))
+	help := h.colors.HelpStyle().Width(h.width).Render(h.help.ShortHelpView(h.keymap.Help()))
 
 	if h.profile == nil {
 		content = h.renderNoMatchingProfile()
@@ -183,15 +184,13 @@ func (h *HDMConfigPane) renderNoConfig() string {
 func (h *HDMConfigPane) renderNoMatchingProfile() string {
 	sections := []string{}
 
-	sections = append(sections, HyprConfigTitleStyle.Width(h.width).Margin(0, 0, 1, 0).Render("No Matching Profile"))
+	sections = append(sections, h.colors.SubtitleStyle().Width(h.width).Margin(0, 0, 1, 0).Render("No Matching Profile"))
 
 	content := "No configuration profile matches the current monitor setup."
 	content = lipgloss.NewStyle().Margin(0, 0, 2, 0).Width(h.width).Render(content)
 	sections = append(sections, content)
 
-	actionContent := fmt.Sprintf("Press %s to create a new profile",
-		HeaderIndicatorStyle.Render("'n'"))
-	actionBox := configPaneActionStyle.Render(actionContent)
+	actionBox := h.colors.InfoStyle().Render("Press `n` to create a new profile")
 	sections = append(sections, actionBox)
 
 	return lipgloss.JoinVertical(lipgloss.Top, sections...)
@@ -200,8 +199,8 @@ func (h *HDMConfigPane) renderNoMatchingProfile() string {
 func (h *HDMConfigPane) renderMatchedProfile(profile *config.Profile) string {
 	var result strings.Builder
 
-	result.WriteString(HyprConfigTitleStyle.Render(
-		"Profile: " + profile.Name))
+	result.WriteString(h.colors.SubtitleStyle().Render(
+		"Profile: ") + profile.Name)
 	result.WriteString("\n\n")
 
 	if h.hasMonitorCountMismatch(profile) {
@@ -214,7 +213,7 @@ func (h *HDMConfigPane) renderMatchedProfile(profile *config.Profile) string {
 	if !h.hasMonitorCountMismatch(profile) {
 		result.WriteString("\n")
 		statusContent := "New settings will be appended (or replaced depending on the `<<<<<` markers position) when applied (type `a`).\n\nIf you're not running the daemon you likely want to follow up by rendering the profile into the hypr settings destination (type `R`)."
-		statusBox := SubtitleInfoStyle.Width(h.width).
+		statusBox := h.colors.InfoStyle().Width(h.width).
 			Render(statusContent)
 		result.WriteString(statusBox)
 	}
@@ -240,53 +239,54 @@ func (h *HDMConfigPane) renderMonitorMismatchWarning(profile *config.Profile) st
 	currentCount := len(h.monitors)
 
 	var content strings.Builder
-	content.WriteString(ErrorStyle.Render("⚠ Monitor Count Mismatch"))
+	content.WriteString(h.colors.ErrorStyle().Render("⚠ Monitor Count Mismatch"))
 	content.WriteString("\n")
-	content.WriteString(MutedStyle.Render(fmt.Sprintf("Expected: %d monitors, Connected: %d", requiredCount, currentCount)))
-	content.WriteString(MutedStyle.Render("\nConsider creating a new profile (press 'n')"))
+	content.WriteString(h.colors.MutedStyle().Render(
+		fmt.Sprintf("Expected: %d monitors, Connected: %d", requiredCount, currentCount)))
+	content.WriteString(h.colors.MutedStyle().Render("\nConsider creating a new profile (press 'n')"))
 
-	return configPaneWarningStyle.Render(content.String())
+	return h.colors.WarningStyle().Render(content.String())
 }
 
 func (h *HDMConfigPane) renderProfileDetails(profile *config.Profile) string {
 	var content strings.Builder
 
-	content.WriteString(HeaderStyle.Render("Profile Details"))
+	content.WriteString(h.colors.HeaderStyle().Render("Profile Details"))
 	content.WriteString("\n")
 
-	content.WriteString(configDetailLabelStyle.Render("Config File: "))
-	content.WriteString(configDetailStyle.Render(
+	content.WriteString(h.colors.SubtitleStyle().Render("Config File: "))
+	content.WriteString(lipgloss.NewStyle().Render(
 		h.truncateString(filepath.Base(profile.ConfigFile), 40)))
 	content.WriteString("\n")
 
 	if profile.ConfigType != nil {
-		content.WriteString(configDetailLabelStyle.Render("Config Type: "))
-		content.WriteString(configDetailStyle.Render(
+		content.WriteString(h.colors.SubtitleStyle().Render("Config Type: "))
+		content.WriteString(lipgloss.NewStyle().Render(
 			profile.ConfigType.Value()))
 		content.WriteString("\n")
 	}
 
 	if profile.Conditions != nil && profile.Conditions.PowerState != nil {
-		content.WriteString(configDetailLabelStyle.Render("Power State: "))
-		content.WriteString(configDetailStyle.Render(profile.Conditions.PowerState.Value()))
+		content.WriteString(h.colors.SubtitleStyle().Render("Power State: "))
+		content.WriteString(lipgloss.NewStyle().Render(profile.Conditions.PowerState.Value()))
 		content.WriteString("\n")
 	}
 
 	if profile.Conditions != nil && profile.Conditions.LidState != nil {
-		content.WriteString(configDetailLabelStyle.Render("Lid State: "))
-		content.WriteString(configDetailStyle.Render(profile.Conditions.LidState.Value()))
+		content.WriteString(h.colors.SubtitleStyle().Render("Lid State: "))
+		content.WriteString(lipgloss.NewStyle().Render(profile.Conditions.LidState.Value()))
 		content.WriteString("\n")
 	}
 
 	if profile.Conditions != nil && profile.Conditions.RequiredMonitors != nil {
-		content.WriteString(configDetailLabelStyle.Render("Required Monitors:"))
+		content.WriteString(h.colors.SubtitleStyle().Render("Required Monitors:"))
 		content.WriteString("\n")
 		for _, monitor := range profile.Conditions.RequiredMonitors {
 			content.WriteString(h.renderRequiredMonitor(monitor))
 		}
 	}
 
-	return configPaneBorderStyle.Width(h.width).Render(content.String())
+	return h.colors.ConfigPaneBorderStyle().Width(h.width).Render(content.String())
 }
 
 func (h *HDMConfigPane) renderRequiredMonitor(monitor *config.RequiredMonitor) string {

@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/fiffeek/hyprdynamicmonitors/internal/testutils"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/tui"
 	"github.com/stretchr/testify/assert"
 )
@@ -51,8 +52,10 @@ func TestMonitorModeList_Update(t *testing.T) {
 				AvailableModes: []string{"1920x1080@60.00Hz", "1366x768@60.00Hz"},
 			}
 
+			cfg := testutils.NewTestConfig(t).Get()
+			colors := tui.NewColorsManager(cfg)
 			monitors := []*tui.MonitorSpec{monitor}
-			modeList := tui.NewMonitorModeList(monitors)
+			modeList := tui.NewMonitorModeList(monitors, colors)
 
 			if tt.setupItems {
 				modeList.SetItems(monitor)

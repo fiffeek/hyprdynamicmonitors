@@ -37,9 +37,10 @@ type MonitorsPreviewPane struct {
 	snapGridX             *int
 	snapGridY             *int
 	zoomStep              float64
+	colors                *ColorsManager
 }
 
-func NewMonitorsPreviewPane(monitors []*MonitorSpec) *MonitorsPreviewPane {
+func NewMonitorsPreviewPane(monitors []*MonitorSpec, colors *ColorsManager) *MonitorsPreviewPane {
 	pane := &MonitorsPreviewPane{
 		monitors:              monitors,
 		selectedIndex:         -1,
@@ -55,6 +56,7 @@ func NewMonitorsPreviewPane(monitors []*MonitorSpec) *MonitorsPreviewPane {
 		panStep:               100,
 		snapping:              true,
 		zoomStep:              1.1,
+		colors:                colors,
 	}
 
 	pane.autoFitMonitors()
@@ -232,7 +234,7 @@ func (p *MonitorsPreviewPane) Render(availableWidth, availableHeight int) string
 		return "No monitors detected"
 	}
 
-	title := TitleStyle.Render("Monitor Preview")
+	title := p.colors.TitleStyle().Render("Monitor Preview")
 	legend := p.renderLegend()
 
 	titleHeight := lipgloss.Height(title)
@@ -251,7 +253,7 @@ func (p *MonitorsPreviewPane) Render(availableWidth, availableHeight int) string
 			lipgloss.Left,
 			title,
 			lipgloss.NewStyle().Width(availableWidth-titleWidth-scaleInfoWidth).Render(""),
-			SubtitleInfoStyle.Render(scaleInfo),
+			p.colors.MutedStyle().Render(scaleInfo),
 		),
 		grid,
 		legend,
@@ -321,7 +323,10 @@ func (p *MonitorsPreviewPane) drawSnapGridLines(grid [][]gridCell, scaleX, scale
 		if lineX >= 0 && lineX < gridWidth {
 			for y := 0; y < gridHeight; y++ {
 				if grid[y][lineX].char == ' ' || grid[y][lineX].char == '·' {
-					grid[y][lineX] = gridCell{char: '│', color: "243"} // Muted color
+					grid[y][lineX] = gridCell{
+						char:  '│',
+						color: p.colors.GridSnappingLineColor(),
+					}
 				}
 			}
 		}
@@ -332,7 +337,10 @@ func (p *MonitorsPreviewPane) drawSnapGridLines(grid [][]gridCell, scaleX, scale
 		if lineY >= 0 && lineY < gridHeight {
 			for x := 0; x < gridWidth; x++ {
 				if grid[lineY][x].char == ' ' || grid[lineY][x].char == '·' {
-					grid[lineY][x] = gridCell{char: '─', color: "243"} // Muted color
+					grid[lineY][x] = gridCell{
+						char:  '─',
+						color: p.colors.GridSnappingLineColor(),
+					}
 				}
 			}
 		}
@@ -423,13 +431,14 @@ func (p *MonitorsPreviewPane) DrawMonitor(i int, monitor *MonitorSpec, scaleX, s
 		return
 	}
 
-	color := MonitorEdgeColors[i%len(MonitorEdgeColors)]
+	colors := p.colors.MonitorEdgeColors()
+	color := colors[i%len(colors)]
 	isSelected := i == p.selectedIndex
 	p.drawMonitorRectangle(isSelected, rectangle, color, grid)
 	p.drawMonitorLabel(isSelected, monitor, rectangle, grid, color)
 }
 
-func (*MonitorsPreviewPane) drawMonitorLabel(isSelected bool, monitor *MonitorSpec,
+func (p *MonitorsPreviewPane) drawMonitorLabel(isSelected bool, monitor *MonitorSpec,
 	rectangle *MonitorRectangle, grid [][]gridCell, color string,
 ) {
 	gridWidth := len(grid[0])
@@ -457,13 +466,16 @@ func (*MonitorsPreviewPane) drawMonitorLabel(isSelected bool, monitor *MonitorSp
 		for j, char := range fullLabel {
 			labelX := labelStartX + j
 			if labelX >= 0 && labelX < gridWidth && labelX >= rectangle.startX && labelX <= rectangle.endX {
-				grid[labelY][labelX] = gridCell{char: char, color: color}
+				grid[labelY][labelX] = gridCell{
+					char: char, color: color,
+					backgroundColor: p.colors.MonitorPreviewPaneLabelBackgroundColor(),
+				}
 			}
 		}
 	}
 }
 
-func (*MonitorsPreviewPane) drawMonitorRectangle(isSelected bool, rectangle *MonitorRectangle,
+func (p *MonitorsPreviewPane) drawMonitorRectangle(isSelected bool, rectangle *MonitorRectangle,
 	monitorEdgeColor string, grid [][]gridCell,
 ) {
 	gridWidth := len(grid[0])
@@ -480,7 +492,7 @@ func (*MonitorsPreviewPane) drawMonitorRectangle(isSelected bool, rectangle *Mon
 
 				// Use a brighter/different shade for the bottom edge
 				if rectangle.isBottomEdge(x, y) {
-					edgeColor = GetMonitorBottomColor(monitorEdgeColor)
+					edgeColor = p.colors.GetMonitorBottomColor(monitorEdgeColor)
 				}
 
 				switch {
@@ -490,7 +502,7 @@ func (*MonitorsPreviewPane) drawMonitorRectangle(isSelected bool, rectangle *Mon
 					grid[y][x].backgroundColor = monitorEdgeColor
 				case y == rectangle.startY && x > rectangle.startX && x < rectangle.endX:
 					grid[y][x].char = '▄'
-					grid[y][x].color = GetMonitorFillForEdge(monitorEdgeColor, isSelected)
+					grid[y][x].color = p.colors.GetMonitorFillForEdge(monitorEdgeColor, isSelected)
 					grid[y][x].backgroundColor = edgeColor
 				case y == rectangle.endY && (x == rectangle.startX || x == rectangle.endX):
 					grid[y][x].char = '▄'
@@ -498,13 +510,13 @@ func (*MonitorsPreviewPane) drawMonitorRectangle(isSelected bool, rectangle *Mon
 					grid[y][x].backgroundColor = monitorEdgeColor
 				case y == rectangle.endY && x > rectangle.startX && x < rectangle.endX:
 					grid[y][x].char = '▀'
-					grid[y][x].color = GetMonitorFillForEdge(monitorEdgeColor, isSelected)
+					grid[y][x].color = p.colors.GetMonitorFillForEdge(monitorEdgeColor, isSelected)
 					grid[y][x].backgroundColor = edgeColor
 				case y == rectangle.startY || y == rectangle.endY ||
 					x == rectangle.startX || x == rectangle.endX:
 					grid[y][x] = gridCell{char: borderChar, color: edgeColor, backgroundColor: ""}
 				default:
-					grid[y][x] = gridCell{char: fillChar, color: GetMonitorFillForEdge(
+					grid[y][x] = gridCell{char: fillChar, color: p.colors.GetMonitorFillForEdge(
 						monitorEdgeColor, isSelected), backgroundColor: ""}
 				}
 			}
@@ -529,7 +541,7 @@ func (p *MonitorsPreviewPane) initializeGrid(gridHeight, gridWidth int, scaleX, 
 			}
 
 			if i%virtualSpacingY == 0 && j%virtualSpacingX == 0 {
-				grid[i][j] = gridCell{char: '·', color: GridDotColor}
+				grid[i][j] = gridCell{char: '·', color: p.colors.GridDotColor()}
 			} else {
 				grid[i][j] = gridCell{char: ' ', color: ""}
 			}
@@ -546,13 +558,13 @@ func (p *MonitorsPreviewPane) renderLegend() string {
 			continue
 		}
 
-		coloredPattern := GetMonitorColorStyle(i).Render("██")
+		coloredPattern := p.colors.GetMonitorColorStyle(i).Render("██")
 		item := fmt.Sprintf("%s %s - %s, %s, %s, %s",
 			coloredPattern, monitor.Name, monitor.Mode(), monitor.PositionPretty(),
 			monitor.ScalePretty(false), monitor.RotationPretty(false))
 
 		if i == p.selectedIndex {
-			item = SelectedMonitorStyle.Render("► " + item + " ◄")
+			item = p.colors.LegendSelectedMonitorStyle().Render("► " + item + " ◄")
 		}
 
 		legendItems = append(legendItems, item)
@@ -562,7 +574,7 @@ func (p *MonitorsPreviewPane) renderLegend() string {
 		return "No active monitors"
 	}
 
-	return LegendStyle.Render(strings.Join(legendItems, "\n"))
+	return p.colors.LegendStyle().Render(strings.Join(legendItems, "\n"))
 }
 
 func (p *MonitorsPreviewPane) ZoomIn() {

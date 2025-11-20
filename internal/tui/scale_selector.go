@@ -6,7 +6,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
@@ -39,7 +38,7 @@ func (s *scaleSelectorKeyMap) Help() []key.Binding {
 }
 
 type ScaleSelector struct {
-	help                 help.Model
+	help                 *CustomHelp
 	minScale             float64
 	maxScale             float64
 	keyMap               *scaleSelectorKeyMap
@@ -54,22 +53,24 @@ type ScaleSelector struct {
 	enableScaleSnapping  bool
 	customInput          textinput.Model
 	customInputMode      bool
+	colors               *ColorsManager
 }
 
-func NewScaleSelector() *ScaleSelector {
+func NewScaleSelector(colors *ColorsManager) *ScaleSelector {
 	ti := textinput.New()
 	ti.Placeholder = "Enter scale (e.g., 1.5)"
 	ti.CharLimit = 12
 	ti.Width = 30
 
 	return &ScaleSelector{
-		help:                help.New(),
+		help:                NewCustomHelp(colors),
 		minScale:            0.1,
 		maxScale:            10.0,
 		step:                0.005,
 		enableScaleSnapping: true,
 		customInput:         ti,
 		customInputMode:     false,
+		colors:              colors,
 		keyMap: &scaleSelectorKeyMap{
 			Up: key.NewBinding(
 				key.WithKeys("up", "k"),
@@ -141,11 +142,11 @@ func (s *ScaleSelector) View() string {
 		titleString += " (snapping)"
 	}
 
-	title := TitleStyle.Width(s.width).Render(titleString)
+	title := s.colors.TitleStyle().Width(s.width).Render(titleString)
 	sections = append(sections, title)
 	availableSpace -= lipgloss.Height(title)
 
-	subtitle := SubtitleInfoStyle.Margin(0, 0, 1, 0).Width(s.width).Render(
+	subtitle := s.colors.InfoStyle().Margin(0, 0, 1, 0).Width(s.width).Render(
 		fmt.Sprintf("Tip: Hold for acceleration, single tick is %.8f", s.step))
 	sections = append(sections, subtitle)
 	availableSpace -= lipgloss.Height(subtitle)
@@ -155,7 +156,7 @@ func (s *ScaleSelector) View() string {
 		sections = append(sections, inputView)
 		availableSpace -= lipgloss.Height(inputView)
 
-		inputHint := MutedItalicStyle.Render("Press Enter to apply, Esc to cancel")
+		inputHint := s.colors.MutedItalicStyle().Render("Press Enter to apply, Esc to cancel")
 		availableSpace -= lipgloss.Height(inputHint)
 
 		spacer := lipgloss.NewStyle().Height(availableSpace).Render("")
@@ -167,7 +168,7 @@ func (s *ScaleSelector) View() string {
 
 	dpi := s.calculateEffectiveDPI()
 	scaleText := fmt.Sprintf("Scale: %.8f ", s.monitor.Scale)
-	dpiText := MutedItalicStyle.Render(fmt.Sprintf("(%d DPI)", dpi))
+	dpiText := s.colors.MutedItalicStyle().Render(fmt.Sprintf("(%d DPI)", dpi))
 	content := scaleText + dpiText
 	sections = append(sections, content)
 	availableSpace -= lipgloss.Height(content)
