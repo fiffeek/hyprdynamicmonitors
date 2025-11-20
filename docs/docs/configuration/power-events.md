@@ -68,7 +68,7 @@ You can customize which D-Bus signals to monitor and how to query power status.
 
 ### Custom Signal Match Rules
 
-```toml
+```toml title="~/.config/hyprdynamicmonitors/config.toml"
 [power_events]
 [[power_events.dbus_signal_match_rules]]
 interface = "org.freedesktop.DBus.Properties"
@@ -83,7 +83,7 @@ You can add multiple match rules to listen for different events like `DeviceAdde
 
 Filter received events by name to avoid noisy signals:
 
-```toml
+```toml title="~/.config/hyprdynamicmonitors/config.toml"
 [[power_events.dbus_signal_receive_filters]]
 name = "org.freedesktop.DBus.Properties.PropertiesChanged"
 ```
@@ -92,7 +92,7 @@ name = "org.freedesktop.DBus.Properties.PropertiesChanged"
 
 For non-standard power managers:
 
-```toml
+```toml title="~/.config/hyprdynamicmonitors/config.toml"
 [power_events.dbus_query_object]
 destination = "org.freedesktop.UPower"
 path = "/org/freedesktop/UPower"
@@ -122,7 +122,7 @@ The above query configuration is shown for reference only and is not recommended
 
 To explicitly remove default values from D-Bus match rules:
 
-```toml
+```toml title="~/.config/hyprdynamicmonitors/config.toml"
 [[power_events.dbus_signal_match_rules]]
 interface = "leaveEmptyToken"  # Removes interface match
 member = "PropertiesChanged"

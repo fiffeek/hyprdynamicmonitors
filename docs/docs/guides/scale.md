@@ -188,7 +188,7 @@ This will show you all valid scales between 0.10 and 3.00 for your resolution.
 
 When using the daemon with manually configured scales, ensure they produce whole-number logical dimensions:
 
-```toml
+```toml title="~/.config/hyprdynamicmonitors/config.toml"
 [profiles.high_dpi]
 config_file = "hyprconfigs/high_dpi.conf"
 

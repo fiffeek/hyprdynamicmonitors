@@ -10,7 +10,7 @@ HyprDynamicMonitors supports custom user commands that are executed before and a
 
 Define commands that run for all profile changes:
 
-```toml
+```toml title="~/.config/hyprdynamicmonitors/config.toml"
 [general]
 pre_apply_exec = "notify-send 'HyprDynamicMonitors' 'Switching monitor profile...'"
 post_apply_exec = "notify-send 'HyprDynamicMonitors' 'Profile applied successfully'"
@@ -20,7 +20,7 @@ post_apply_exec = "notify-send 'HyprDynamicMonitors' 'Profile applied successful
 
 Override global callbacks for specific profiles:
 
-```toml
+```toml title="~/.config/hyprdynamicmonitors/config.toml"
 [profiles.gaming_setup]
 config_file = "hyprconfigs/gaming.conf"
 pre_apply_exec = "notify-send 'Gaming Mode' 'Activating high-performance profile'"
@@ -94,7 +94,7 @@ This ensures that a failing callback doesn't interrupt monitor configuration.
 
 If you have `disable_autoreload = true` in Hyprland settings, use callbacks to reload manually:
 
-```toml
+```toml title="~/.config/hyprdynamicmonitors/config.toml"
 [general]
 post_apply_exec = "hyprctl reload"
 ```
@@ -103,7 +103,7 @@ post_apply_exec = "hyprctl reload"
 
 ### Conditional Actions
 
-```toml
+```toml title="~/.config/hyprdynamicmonitors/config.toml"
 [profiles.docked]
 config_file = "hyprconfigs/docked.conf"
 post_apply_exec = "systemctl --user start docked-setup.service"

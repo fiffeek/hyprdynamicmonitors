@@ -11,7 +11,7 @@ The HyprDynamicMonitors TUI provides an interactive interface for managing Hyprl
 Before using the TUI effectively, you need to configure Hyprland to use the generated monitor configuration:
 
 1. **Add this line to your `~/.config/hypr/hyprland.conf`**:
-   ```conf
+   ```conf title="~/.config/hypr/hyprland.conf"
    source = ~/.config/hypr/monitors.conf
    ```
 
@@ -152,7 +152,7 @@ When you've set up a new monitor configuration that doesn't match any existing p
 This creates two files:
 
 **1. Profile entry** in `~/.config/hyprdynamicmonitors/config.toml`:
-```toml
+```toml title="~/.config/hyprdynamicmonitors/config.toml"
 [profiles.your_profile_name]
 config_file = "hyprconfigs/your_profile_name.go.tmpl"
 config_file_type = "template"
@@ -163,7 +163,7 @@ description = "Your Monitor Description"
 ```
 
 **2. Template file** at `~/.config/hyprdynamicmonitors/hyprconfigs/your_profile_name.go.tmpl`:
-```
+```conf title="~/.config/hyprdynamicmonitors/hyprconfigs/your_profile_name.go.tmpl"
 monitor=eDP-1,2880x1920@120.00000,0x0,2.0,vrr,1
 # One line for each monitor with your configured settings
 ```
@@ -314,9 +314,9 @@ monitor={{$laptop.Name}},{{if isOnAC}}2880x1920@120{{else}}1920x1080@60{{end}},0
 ```
 
 If you prefer **static files** (plain Hyprland config), you can:
-1. Create a `.conf` file manually in `~/.config/hyprdynamicmonitors/hyprconfigs/`
+1. Create a `my_profile.conf` file manually in `~/.config/hyprdynamicmonitors/hyprconfigs/`
 2. Edit your `config.toml` to use it:
-   ```toml
+   ```toml title="~/.config/hyprdynamicmonitors/config.toml"
    [profiles.my_profile]
    config_file = "hyprconfigs/my_profile.conf"
    config_file_type = "static"

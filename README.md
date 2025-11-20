@@ -80,7 +80,7 @@ A full guide is available at [Dynamic Profile Modes](https://fiffeek.github.io/h
 - **Power state awareness** built-in AC/battery detection for laptop users (optional)
 - **Lid state awareness** built-in lid state detection for laptop users (optional)
 - **Desktop notifications** for configuration changes (optional)
-- **Theming support** support for built-in themes and dynamic generation from wallpapers
+- **Theming support** for built-in themes and dynamic generation from wallpapers
 
 ## Quick Start
 

@@ -19,9 +19,11 @@ monitor=desc:LG Electronics LG ULTRAWIDE 408NTVSDT319,preferred,1920x0,1
 monitor=desc:Dell Inc. DELL P2222H B2RY1H3,preferred,3840x0,1
 
 # Workspace assignments
-workspace=1,monitor:desc:BOE 0x0C6B,default:true
-workspace=2,monitor:desc:LG Electronics LG ULTRAWIDE 408NTVSDT319,default:true
-workspace=3,monitor:desc:Dell Inc. DELL P2222H B2RY1H3,default:true
+# The format is: `monitor:${connectorName}`
+# You can use templates so that you do not have to hardcode these too
+workspace=1,monitor:eDP-1,default:true
+workspace=2,monitor:DP-11,default:true
+workspace=3,monitor:DP-12,default:true
 ```
 
 ### Example with templates
@@ -40,6 +42,20 @@ workspace=3,monitor:{{$external.Name}}
 ```
 
 You can also use the [TUI](./quickstart/tui) to create and edit profiles interactively.
+
+:::info
+Hyprland might still force the workspace to appear on a monitor that technically does not exist anymore (see [this discussion](https://github.com/hyprwm/Hyprland/discussions/11180#discussioncomment-14857978)), you can hack this with moving the workspace on Hyprland reload:
+```
+exec = hyprctl dispatch moveworkspacetomonitor 2 {{$external.Name}}
+```
+
+Alternatively, you could also write a [callback](./configuration/callbacks.md) (this is a simplified version, writing a script will be more robust):
+```toml
+[profiles.gaming_setup]
+config_file = "hyprconfigs/gaming.conf"
+post_apply_exec = "hyprctl dispatch moveworkspacetomonitor 2 DP-11"
+```
+:::
 
 ## How do I use the TUI to create or edit profiles?
 

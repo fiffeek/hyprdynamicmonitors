@@ -95,7 +95,7 @@ upower -e
 ```
 
 Then override the power device in your configuration file at `~/.config/hyprdynamicmonitors/config.toml`:
-```toml
+```toml title="~/.config/hyprdynamicmonitors/config.toml"
 [power_events]
 
 [power_events.dbus_query_object]
@@ -170,7 +170,7 @@ If automatic detection succeeded but profiles aren't switching when you plug/unp
 
 1. **Verify your profile has power state conditions:**
    Check your `config.toml` to ensure profiles specify power requirements:
-   ```toml
+   ```toml title="~/.config/hyprdynamicmonitors/config.toml"
    [profiles.high_performance]
    # ... monitor conditions ...
 

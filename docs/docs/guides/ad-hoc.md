@@ -38,7 +38,7 @@ hyprdynamicmonitors run
 ```
 
 Or in your Hyprland config:
-```title="~/.config/hypr/hyprland.conf"
+```conf title="~/.config/hypr/hyprland.conf"
 exec-once = hyprdynamicmonitors run
 ```
 
@@ -63,7 +63,7 @@ monitor_tag = "external"
 ```
 
 With a simple template created by the TUI at `hyprconfigs/home.go.tmpl`:
-```golang-template title="hyprconfigs/home.go.tmpl"
+```golang-template title="~/.config/hyprdynamicmonitors/hyprconfigs/home.go.tmpl"
 # <<<<< TUI AUTO START
 monitor=desc:BOE NE135A1M-NY1,2880x1920@120.00000,0x0,2.00000000,transform,0,vrr,1
 monitor=desc:LG Electronics LG SDQHD 301NTBKDU037,2560x2880@59.96700,-1800x0,1.60000000,transform,3,vrr,0
@@ -109,7 +109,7 @@ monitor_tag = "external"
 
 Now adjust your template (`hyprconfigs/home.go.tmpl`) to use the mode variable:
 
-```golang-template title="hyprconfigs/home.go.tmpl"
+```golang-template title="~/.config/hyprdynamicmonitors/hyprconfigs/home.go.tmpl"
 {{ if eq .mode "standard" }}
 # <<<<< TUI AUTO START
 monitor=desc:BOE NE135A1M-NY1,2880x1920@120.00000,0x0,2.00000000,transform,0,vrr,1
@@ -124,7 +124,7 @@ This means the monitor lines will only render when `mode` is set to `"standard"`
 
 Now add a `presentation` mode. Edit your template to add a new conditional block:
 
-```golang-template title="hyprconfigs/home.go.tmpl"
+```golang-template title="~/.config/hyprdynamicmonitors/hyprconfigs/home.go.tmpl"
 {{ if eq .mode "standard" }}
 monitor=desc:BOE NE135A1M-NY1,2880x1920@120.00000,0x0,2.00000000,transform,0,vrr,1
 monitor=desc:LG Electronics LG SDQHD 301NTBKDU037,2560x2880@59.96700,-1800x0,1.60000000,transform,3,vrr,0
@@ -177,7 +177,7 @@ Press `a` in the Profile pane. This writes your configuration between the TUI ma
 
 Your template now has different configurations for each mode:
 
-```golang-template title="hyprconfigs/home.go.tmpl"
+```golang-template title="~/.config/hyprdynamicmonitors/hyprconfigs/home.go.tmpl"
 {{ if eq .mode "standard" }}
 monitor=desc:BOE NE135A1M-NY1,2880x1920@120.00000,0x0,2.00000000,transform,0,vrr,1
 monitor=desc:LG Electronics LG SDQHD 301NTBKDU037,2560x2880@59.96700,-1800x0,1.60000000,transform,3,vrr,0
@@ -261,7 +261,7 @@ chmod +x ~/scripts/standard-mode.sh
 ```
 
 **Bind to Hyprland keybindings:**
-```title="~/.config/hypr/hyprland.conf"
+```conf title="~/.config/hypr/hyprland.conf"
 # ~/.config/hypr/hyprland.conf
 bind = $mainMod SHIFT, P, exec, ~/scripts/presentation-mode.sh
 bind = $mainMod SHIFT, S, exec, ~/scripts/standard-mode.sh
@@ -279,7 +279,7 @@ standard_refresh_rate = "60"
 ```
 
 Then in your template:
-```golang-template title="hyprconfigs/home.go.tmpl"
+```golang-template title="~/.config/hyprdynamicmonitors/hyprconfigs/home.go.tmpl"
 {{ if eq .mode "standard" }}
 monitor=desc:BOE NE135A1M-NY1,2880x1920@{{ .standard_refresh_rate }},0x0,2.00000000
 {{ end }}
@@ -379,7 +379,7 @@ monitor_tag = "gaming_monitor"
 ```
 
 **hyprconfigs/home.go.tmpl:**
-```golang-template title="hyprconfigs/home.go.tmpl"
+```golang-template title="~/.config/hyprdynamicmonitors/hyprconfigs/home.go.tmpl"
 {{ if eq .mode "productivity" }}
 # Productivity: Extended displays, laptop on left, 60Hz for battery saving
 monitor=desc:BOE NE135A1M-NY1,2880x1920@60,0x0,2.0,transform,0,vrr,0
@@ -420,7 +420,7 @@ notify-send "HDM" "Switched to presentation mode"
 ```
 
 **Hyprland keybindings:**
-```title="~/.config/hypr/hyprland.conf"
+```conf title="~/.config/hypr/hyprland.conf"
 bind = $mainMod SHIFT, G, exec, ~/scripts/hdm-gaming.sh
 bind = $mainMod SHIFT, P, exec, ~/scripts/hdm-productivity.sh
 bind = $mainMod SHIFT, M, exec, ~/scripts/hdm-presentation.sh

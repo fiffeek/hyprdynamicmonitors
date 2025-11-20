@@ -1,8 +1,10 @@
 import type { ReactNode } from 'react';
+import { useState, useEffect } from 'react';
 import clsx from 'clsx';
 import Link from '@docusaurus/Link';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import Layout from '@theme/Layout';
+import Head from '@docusaurus/Head';
 import HomepageFeatures from '@site/src/components/HomepageFeatures';
 import Heading from '@theme/Heading';
 
@@ -11,6 +13,20 @@ import styles from './index.module.css';
 
 function HomepageHeader() {
   const { siteConfig } = useDocusaurusContext();
+  const [fontLoaded, setFontLoaded] = useState(false);
+
+  useEffect(() => {
+    if (typeof document !== 'undefined' && 'fonts' in document) {
+      document.fonts.load('1em TheFont').then(() => {
+        setFontLoaded(true);
+      }).catch(() => {
+        setFontLoaded(true);
+      });
+    } else {
+      setFontLoaded(true);
+    }
+  }, []);
+
   return (
     <header className={clsx('hero hero--primary', styles.heroBanner)}>
       <div className={styles.heroBackground}>
@@ -31,7 +47,7 @@ function HomepageHeader() {
                 </span>
               ))}
             </div>
-            <Heading as="h1" className={clsx("hero__title", styles.heroTitle)}>
+            <Heading as="h1" className={clsx("hero__title", styles.heroTitle)} style={{ visibility: fontLoaded ? 'visible' : 'hidden' }}>
               {siteConfig.title.split('').map((letter, index) => {
                 const breatheClass = letter === 'H' ? styles.breatheLetterH :
                   letter === 'D' ? styles.breatheLetterD :
@@ -84,6 +100,15 @@ export default function Home(): ReactNode {
     <Layout
       title={`${siteConfig.title}`}
       description="Event-driven monitor configuration service for Hyprland with interactive TUI and profile-based management">
+      <Head>
+        <link
+          rel="preload"
+          href="https://garet.typeforward.com/assets/fonts/shared/TFMixVF.woff2"
+          as="font"
+          type="font/woff2"
+          crossOrigin="anonymous"
+        />
+      </Head>
       <HomepageHeader />
       <main>
         <HomepageFeatures />
