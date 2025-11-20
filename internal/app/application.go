@@ -37,13 +37,18 @@ type Application struct {
 
 func NewApplication(
 	configPath *string, dryRun *bool, ctx context.Context,
-	cancel context.CancelCauseFunc, disablePowerEvents, disableAutoHotReload *bool,
-	connectToSessionBus, enableLidEvents *bool,
+	cancel context.CancelCauseFunc, disableAutoHotReload *bool,
+	connectToSessionBus *bool,
+	disablePowerEvents, enableLidEvents bool,
+	disablePowerEventsChanged, enableLidEventsChanged bool,
 ) (*Application, error) {
 	cfg, err := config.NewConfig(*configPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load configuration: %w", err)
 	}
+
+	disablePowerEvents, enableLidEvents = forceFlags(disablePowerEventsChanged,
+		disablePowerEvents, cfg, enableLidEventsChanged, enableLidEvents)
 
 	hyprIPC, err := hypr.NewIPC(ctx)
 	if err != nil {
@@ -53,25 +58,25 @@ func NewApplication(
 	fswatcher := filewatcher.NewService(cfg, disableAutoHotReload)
 
 	var dbusPowerEvents *dbus.Conn
-	if !*disablePowerEvents {
+	if !disablePowerEvents {
 		dbusPowerEvents, err = getBus(*connectToSessionBus)
 		if err != nil {
 			return nil, fmt.Errorf("cant connect to dbus: %w", err)
 		}
 	}
-	powerDetector, err := power.NewPowerDetector(ctx, cfg, dbusPowerEvents, *disablePowerEvents)
+	powerDetector, err := power.NewPowerDetector(ctx, cfg, dbusPowerEvents, disablePowerEvents)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize PowerDetector: %w", err)
 	}
 
 	var dbusLidEvents *dbus.Conn
-	if *enableLidEvents {
+	if enableLidEvents {
 		dbusLidEvents, err = getBus(*connectToSessionBus)
 		if err != nil {
 			return nil, fmt.Errorf("cant connect to dbus: %w", err)
 		}
 	}
-	lidDetector, err := power.NewLidStateDetector(ctx, cfg, dbusLidEvents, *enableLidEvents)
+	lidDetector, err := power.NewLidStateDetector(ctx, cfg, dbusLidEvents, enableLidEvents)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize LidDetector: %w", err)
 	}
