@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="generator" content="Docusaurus v3.9.1">
 <title data-rh="true">Running without a daemon | HyprDynamicMonitors</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:image" content="https://hyprdynamicmonitors.filipmikina.com/img/docusaurus-social-card.jpg"><meta data-rh="true" name="twitter:image" content="https://hyprdynamicmonitors.filipmikina.com/img/docusaurus-social-card.jpg"><meta data-rh="true" property="og:url" content="https://hyprdynamicmonitors.filipmikina.com/docs/next/guides/running-without-daemon"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="Running without a daemon | HyprDynamicMonitors"><meta data-rh="true" name="description" content="In some situations, particularly with desktop computers where monitor configurations remain stable, running the HyprDynamicMonitors daemon may be unnecessary. If you prefer manual control over when monitor configurations are applied and rendered, you can use the TUI exclusively without the daemon."><meta data-rh="true" property="og:description" content="In some situations, particularly with desktop computers where monitor configurations remain stable, running the HyprDynamicMonitors daemon may be unnecessary. If you prefer manual control over when monitor configurations are applied and rendered, you can use the TUI exclusively without the daemon."><link data-rh="true" rel="icon" href="/img/favicon.ico"><link data-rh="true" rel="canonical" href="https://hyprdynamicmonitors.filipmikina.com/docs/next/guides/running-without-daemon"><link data-rh="true" rel="alternate" href="https://hyprdynamicmonitors.filipmikina.com/docs/next/guides/running-without-daemon" hreflang="en"><link data-rh="true" rel="alternate" href="https://hyprdynamicmonitors.filipmikina.com/docs/next/guides/running-without-daemon" hreflang="x-default"><script data-rh="true" type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Guides","item":"https://hyprdynamicmonitors.filipmikina.com/docs/next/category/guides"},{"@type":"ListItem","position":2,"name":"Running without a daemon","item":"https://hyprdynamicmonitors.filipmikina.com/docs/next/guides/running-without-daemon"}]}</script><link rel="stylesheet" href="/assets/css/styles.e940184f.css">
-<script src="/assets/js/runtime~main.d4ec0d8a.js" defer="defer"></script>
-<script src="/assets/js/main.e3bcc377.js" defer="defer"></script>
+<script src="/assets/js/runtime~main.b3bc0687.js" defer="defer"></script>
+<script src="/assets/js/main.326a0135.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
 <svg style="display: none;"><defs>
@@ -36,7 +36,7 @@
 </ul>
 <h2 class="anchor anchorWithStickyNavbar_LWe7" id="workflows">Workflows<a href="#workflows" class="hash-link" aria-label="Direct link to Workflows" title="Direct link to Workflows" translate="no">​</a></h2>
 <h3 class="anchor anchorWithStickyNavbar_LWe7" id="creating-a-new-profile">Creating a new profile<a href="#creating-a-new-profile" class="hash-link" aria-label="Direct link to Creating a new profile" title="Direct link to Creating a new profile" translate="no">​</a></h3>
-<p><img decoding="async" loading="lazy" alt="Creating a new profile" src="/assets/images/create_profile-4fceb77c4fb3fa2c78fb3ac82f63b146.gif" width="1400" height="1000" class="img_ev3q"></p>
+<p><img decoding="async" loading="lazy" alt="Creating a new profile" src="/assets/images/create_profile-eeb7789063336bbd40fccdeefdd7d50c.gif" width="1400" height="1000" class="img_ev3q"></p>
 <p>When you set up a new monitor configuration:</p>
 <ol>
 <li>Launch the TUI: <code>hyprdynamicmonitors tui</code></li>
@@ -57,7 +57,7 @@
 </ol>
 <div class="theme-admonition theme-admonition-tip admonition_xJq3 alert alert--success"><div class="admonitionHeading_Gvgb"><span class="admonitionIcon_Rf37"><svg viewBox="0 0 12 16"><path fill-rule="evenodd" d="M6.5 0C3.48 0 1 2.19 1 5c0 .92.55 2.25 1 3 1.34 2.25 1.78 2.78 2 4v1h5v-1c.22-1.22.66-1.75 2-4 .45-.75 1-2.08 1-3 0-2.81-2.48-5-5.5-5zm3.64 7.48c-.25.44-.47.8-.67 1.11-.86 1.41-1.25 2.06-1.45 3.23-.02.05-.02.11-.02.17H5c0-.06 0-.13-.02-.17-.2-1.17-.59-1.83-1.45-3.23-.2-.31-.42-.67-.67-1.11C2.44 6.78 2 5.65 2 5c0-2.2 2.02-4 4.5-4 1.22 0 2.36.42 3.22 1.19C10.55 2.94 11 3.94 11 5c0 .66-.44 1.78-.86 2.48zM4 14h5c-.23 1.14-1.3 2-2.5 2s-2.27-.86-2.5-2z"></path></svg></span>tip</div><div class="admonitionContent_BuS1"><p>Make sure your Hyprland config sources the destination file: <code>source = ~/.config/hypr/monitors.conf</code> in <code>~/.config/hypr/hyprland.conf</code></p></div></div>
 <h3 class="anchor anchorWithStickyNavbar_LWe7" id="adjusting-an-existing-profile">Adjusting an existing profile<a href="#adjusting-an-existing-profile" class="hash-link" aria-label="Direct link to Adjusting an existing profile" title="Direct link to Adjusting an existing profile" translate="no">​</a></h3>
-<p><img decoding="async" loading="lazy" alt="Editing an existing profile" src="/assets/images/edit_existing-7838352b41430ec70aa3ce8ebd0d0c94.gif" width="1400" height="1000" class="img_ev3q"></p>
+<p><img decoding="async" loading="lazy" alt="Editing an existing profile" src="/assets/images/edit_existing-012004084186c534a61620a418da6f31.gif" width="1400" height="1000" class="img_ev3q"></p>
 <p>When modifying an existing monitor setup:</p>
 <ol>
 <li>Launch the TUI: <code>hyprdynamicmonitors tui</code></li>
@@ -77,7 +77,7 @@
 <li><strong>Without daemon</strong>: Press <code>R</code> to manually render the updated configuration to the destination file</li>
 </ol>
 <h3 class="anchor anchorWithStickyNavbar_LWe7" id="rendering">Rendering<a href="#rendering" class="hash-link" aria-label="Direct link to Rendering" title="Direct link to Rendering" translate="no">​</a></h3>
-<p><img decoding="async" loading="lazy" alt="Rendering and editing config" src="/assets/images/render_edit-0d274bf747595b4b85990c26e30359de.gif" width="1400" height="1000" class="img_ev3q"></p>
+<p><img decoding="async" loading="lazy" alt="Rendering and editing config" src="/assets/images/render_edit-f91ecfdf0de1a07fe682914445bd7bfe.gif" width="1400" height="1000" class="img_ev3q"></p>
 <p>When running without the daemon, rendering must be triggered manually:</p>
 <ul>
 <li><strong>In the TUI</strong>: Press <code>R</code> in the <strong>Profile</strong> view to render configuration to the destination file</li>
