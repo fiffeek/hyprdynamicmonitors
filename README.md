@@ -102,7 +102,7 @@ See the [Installation Guide](https://fiffeek.github.io/hyprdynamicmonitors/docs/
 
 ### Setup
 
-The easiest way to get started is using the TUI:
+The easiest way to get started is using the TUI (see the [Getting started with the TUI](https://hyprdynamicmonitors.filipmikina.com/docs/quickstart/tui/) guide):
 
 ```bash
 # Launch the interactive TUI
@@ -114,7 +114,7 @@ hyprdynamicmonitors tui
 # For getting started see: https://hyprdynamicmonitors.filipmikina.com/docs/quickstart/tui/
 ```
 
-Then add to your `~/.config/hypr/hyprland.conf`:
+Then add to your `~/.config/hypr/hyprland.conf` (alternatively, see [Running with systemd](https://fiffeek.github.io/hyprdynamicmonitors/docs/advanced/systemd) guide):
 
 ```bash
 # Source the generated monitor configuration
