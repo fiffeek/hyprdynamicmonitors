@@ -14,6 +14,7 @@ import (
 	"github.com/fiffeek/hyprdynamicmonitors/internal/testutils"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/utils"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestConfigGenerator_GenerateConfig_Static(t *testing.T) {
@@ -41,7 +42,7 @@ func TestConfigGenerator_GenerateConfig_Static(t *testing.T) {
 	matchedProfile := matchers.NewMatchedProfile(profile, map[int]*config.RequiredMonitor{})
 
 	changed, err := generator.GenerateConfig(cfg.Get(), matchedProfile, monitors,
-		power.ACPowerState, power.OpenedLidState, destination)
+		power.ACPowerState, power.OpenedLidState, destination, false)
 	assert.NoError(t, err, "GenerateConfig failed")
 	assert.True(t, changed, "file was not changed")
 
@@ -61,7 +62,7 @@ func TestConfigGenerator_GenerateConfig_Static(t *testing.T) {
 	}
 
 	changed, err = generator.GenerateConfig(cfg.Get(), matchedProfile, monitors,
-		power.ACPowerState, power.OpenedLidState, destination)
+		power.ACPowerState, power.OpenedLidState, destination, false)
 	assert.NoError(t, err, "GenerateConfig failed")
 	assert.False(t, changed, "file was changed")
 
@@ -69,9 +70,17 @@ func TestConfigGenerator_GenerateConfig_Static(t *testing.T) {
 	err = os.Chtimes(destination, time.Now(), time.Now())
 	assert.NoError(t, err, "touch failed")
 	changed, err = generator.GenerateConfig(cfg.Get(), matchedProfile, monitors,
-		power.ACPowerState, power.OpenedLidState, destination)
+		power.ACPowerState, power.OpenedLidState, destination, false)
 	assert.NoError(t, err, "GenerateConfig failed")
 	assert.True(t, changed, "file was not changed")
+
+	// assert dry runs
+	require.NoError(t, os.Remove(destination), "should be able to remove the destination file")
+	changed, err = generator.GenerateConfig(cfg.Get(), matchedProfile, monitors,
+		power.ACPowerState, power.OpenedLidState, destination, true)
+	assert.False(t, changed, "nothing should change on dry run")
+	assert.NoError(t, err, "no error should be thrown on dry run")
+	testutils.AssertFileDoesNotExist(t, destination)
 }
 
 func TestConfigGenerator_GenerateConfig_Template(t *testing.T) {
@@ -171,7 +180,7 @@ func TestConfigGenerator_GenerateConfig_Template(t *testing.T) {
 
 	// Test with battery power state
 	changed, err := generator.GenerateConfig(cfg.Get(), matchedProfile, monitors,
-		power.BatteryPowerState, power.OpenedLidState, destination)
+		power.BatteryPowerState, power.OpenedLidState, destination, false)
 	if err != nil {
 		t.Fatalf("GenerateConfig failed: %v", err)
 	}
@@ -183,7 +192,7 @@ func TestConfigGenerator_GenerateConfig_Template(t *testing.T) {
 
 	// Test with AC power state
 	changed, err = generator.GenerateConfig(cfg.Get(), matchedProfile, monitors,
-		power.ACPowerState, power.ClosedLidState, destination)
+		power.ACPowerState, power.ClosedLidState, destination, false)
 	if err != nil {
 		t.Fatalf("GenerateConfig failed with AC power: %v", err)
 	}
@@ -194,7 +203,7 @@ func TestConfigGenerator_GenerateConfig_Template(t *testing.T) {
 	testutils.AssertFixture(t, destination, "testdata/fixtures/ac.conf", *regenerate)
 
 	changed, err = generator.GenerateConfig(cfg.Get(), matchedProfile, monitors,
-		power.ACPowerState, power.ClosedLidState, destination)
+		power.ACPowerState, power.ClosedLidState, destination, false)
 	if err != nil {
 		t.Fatalf("GenerateConfig failed with AC power: %v", err)
 	}
@@ -203,4 +212,11 @@ func TestConfigGenerator_GenerateConfig_Template(t *testing.T) {
 	}
 
 	testutils.AssertFixture(t, destination, "testdata/fixtures/ac.conf", *regenerate)
+
+	require.NoError(t, os.Remove(destination), "should be able to remove the destination file")
+	changed, err = generator.GenerateConfig(cfg.Get(), matchedProfile, monitors,
+		power.ACPowerState, power.ClosedLidState, destination, true)
+	assert.False(t, changed, "should not change anything on dry run")
+	assert.NoError(t, err, "should not err on dry run")
+	testutils.AssertFileDoesNotExist(t, destination)
 }

@@ -69,6 +69,6 @@ func (h *HyprApply) GenerateThroughHDM(cfg *config.Config, profile *matchers.Mat
 		return OperationStatusCmd(OperationNameHydrate, err)
 	}
 	destination := *cfg.Get().General.Destination
-	_, err = h.generator.GenerateConfig(cfg.Get(), profile, hyprMonitors, powerState, lidState, destination)
+	_, err = h.generator.GenerateConfig(cfg.Get(), profile, hyprMonitors, powerState, lidState, destination, false)
 	return OperationStatusCmd(OperationNameHydrate, err)
 }

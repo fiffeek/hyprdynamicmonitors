@@ -6,6 +6,7 @@ import (
 
 	"github.com/TheCreeper/go-notify"
 	"github.com/fiffeek/hyprdynamicmonitors/internal/config"
+	"github.com/fiffeek/hyprdynamicmonitors/internal/utils"
 	"github.com/sirupsen/logrus"
 )
 
@@ -24,9 +25,14 @@ func NewService(cfg *config.Config) *Service {
 	}
 }
 
-func (s *Service) NotifyProfileApplied(profile *config.Profile) error {
+func (s *Service) NotifyProfileApplied(profile *config.Profile, dryRun bool) error {
 	if *s.config.Get().Notifications.Disabled {
 		logrus.Debug("notifications are not enabled, not sending")
+		return nil
+	}
+	if dryRun {
+		logrus.WithFields(utils.NewLogrusEmptyFields().WithLogID(utils.DryRunNotificationLogID)).
+			Info("[DRY RUN] Would send notification")
 		return nil
 	}
 
