@@ -19,6 +19,7 @@ const config: Config = {
   projectName: 'hyprdynamicmonitors',
 
   onBrokenLinks: 'throw',
+  onBrokenAnchors: "throw",
 
   i18n: {
     defaultLocale: 'en',
