@@ -87,6 +87,11 @@ aurs:
           install -Dm644 "./infrastructure/systemd/hyprdynamicmonitors-rc.service" "${pkgdir}/usr/lib/systemd/user/hyprdynamicmonitors-rc.service"
           install -Dm644 "./infrastructure/systemd/hyprdynamicmonitors-prepare-rc.service" "${pkgdir}/usr/lib/systemd/user/hyprdynamicmonitors-prepare-rc.service"
 
+          # themes
+          install -d -m 755 "${pkgdir}/usr/share/hyprdynamicmonitors-rc"
+          install -d -m 755 "${pkgdir}/usr/share/hyprdynamicmonitors-rc/themes"
+          cp -r themes/* "${pkgdir}/usr/share/hyprdynamicmonitors-rc/themes"
+
           # completions
           mkdir -p "${pkgdir}/usr/share/bash-completion/completions/"
           mkdir -p "${pkgdir}/usr/share/zsh/site-functions/"
