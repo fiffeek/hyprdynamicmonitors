@@ -21,15 +21,45 @@ import (
 type ConfigGenerator struct {
 	mtime   map[string]time.Time
 	mtimeMu sync.RWMutex
+	cfg     *config.Config
 }
 
-func NewConfigGenerator(cfg *config.Config) *ConfigGenerator {
+func NewConfigGenerator(cfg *config.Config) (*ConfigGenerator, error) {
 	mtime := make(map[string]time.Time)
 	for _, profile := range cfg.Get().Profiles {
 		mtime[profile.ConfigFile] = profile.ConfigFileModTime
 	}
 
-	return &ConfigGenerator{mtime: mtime, mtimeMu: sync.RWMutex{}}
+	generator := &ConfigGenerator{mtime: mtime, mtimeMu: sync.RWMutex{}, cfg: cfg}
+	if err := generator.ValidateTemplates(); err != nil {
+		return nil, fmt.Errorf("can't validate one of the template files: %w", err)
+	}
+
+	return generator, nil
+}
+
+func (g *ConfigGenerator) ValidateTemplates() error {
+	for _, profile := range g.cfg.Get().Profiles {
+		if *profile.ConfigType == config.Static {
+			continue
+		}
+
+		templatePath := profile.ConfigFile
+
+		//nolint:gosec
+		templateContent, err := os.ReadFile(templatePath)
+		if err != nil {
+			return fmt.Errorf("failed to read template file %s: %w", templatePath, err)
+		}
+
+		_, err = template.New("template").Funcs(
+			getFuncMap(power.UnknownPowerState, power.UnknownLidState)).Parse(string(templateContent))
+		if err != nil {
+			return fmt.Errorf("failed to parse template %s: %w", templatePath, err)
+		}
+	}
+
+	return nil
 }
 
 // GenerateConfig either renders a template or links a file, and returns if any changed were done

@@ -1,11 +1,9 @@
 package cmd
 
 import (
-	"flag"
-	"fmt"
-	"strings"
-
 	"github.com/fiffeek/hyprdynamicmonitors/internal/config"
+	"github.com/fiffeek/hyprdynamicmonitors/internal/generators"
+	"github.com/fiffeek/hyprdynamicmonitors/internal/utils"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -17,14 +15,16 @@ var validateCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		logrus.WithField("config_path", configPath).Debug("Validating configuration")
 
-		_, err := config.NewConfig(configPath)
+		cfg, err := config.NewConfig(configPath)
 		if err != nil {
-			parts := strings.Split(err.Error(), ": ")
-			indent := 0
-			for _, part := range parts {
-				fmt.Fprintf(flag.CommandLine.Output(), "%s%s\n", strings.Repeat(" ", indent), part)
-				indent += 2
-			}
+			utils.PrettyPrintError(err)
+			logrus.Fatal("Configuration validation failed")
+			return
+		}
+
+		_, err = generators.NewConfigGenerator(cfg)
+		if err != nil {
+			utils.PrettyPrintError(err)
 			logrus.Fatal("Configuration validation failed")
 			return
 		}

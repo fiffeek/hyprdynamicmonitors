@@ -1232,8 +1232,9 @@ func TestModel_Update_UserFlows(t *testing.T) {
 				tt.cfg = testutils.NewTestConfig(t).Get()
 			}
 			pm := profilemaker.NewService(tt.cfg, nil)
-			model := tui.NewModel(tt.cfg,
+			model, err := tui.NewModel(tt.cfg,
 				hyprMonitors, pm, "test-version", tt.powerState, tt.runFor, true, tt.lidState)
+			require.NoError(t, err, "should spawn the model")
 			tm := teatest.NewTestModel(t, model, teatest.WithInitialTermSize(160, 45))
 
 			// wait for app to be `ready`, just check if the footer is up

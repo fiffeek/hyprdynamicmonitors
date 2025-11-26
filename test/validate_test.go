@@ -94,6 +94,21 @@ func Test_Validate_InvalidConfigs(t *testing.T) {
 			configFile:    "negative_scoring.toml",
 			expectedError: "score needs to be > 1",
 		},
+		{
+			name:          "invalid template",
+			configFile:    "invalid_template.toml",
+			expectedError: "unexpected \"}\" in operand",
+		},
+		{
+			name:          "invalid template func",
+			configFile:    "invalid_template_func.toml",
+			expectedError: "function \"isOnWhatever\" not defined",
+		},
+		{
+			name:               "valid template",
+			configFile:         "valid_template.toml",
+			doesNotExpectError: true,
+		},
 	}
 
 	for _, tt := range tests {

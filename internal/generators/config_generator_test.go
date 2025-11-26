@@ -19,7 +19,8 @@ import (
 
 func TestConfigGenerator_GenerateConfig_Static(t *testing.T) {
 	cfg := testutils.NewTestConfig(t).Get()
-	generator := generators.NewConfigGenerator(cfg)
+	generator, err := generators.NewConfigGenerator(cfg)
+	require.NoError(t, err, "config generators should be able to init")
 
 	tempDir := t.TempDir()
 	destination := filepath.Join(tempDir, "hyprland.conf")
@@ -88,7 +89,8 @@ func TestConfigGenerator_GenerateConfig_Template(t *testing.T) {
 		"overwritten_value": "this_shall_be_overwritten",
 		"general_value":     "general",
 	}).Get()
-	generator := generators.NewConfigGenerator(cfg)
+	generator, err := generators.NewConfigGenerator(cfg)
+	require.NoError(t, err, "config generators should be able to init")
 
 	tempDir := t.TempDir()
 	destination := filepath.Join(tempDir, "hyprland.conf")

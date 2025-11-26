@@ -29,17 +29,22 @@ type IFilewatcher interface {
 	Listen() <-chan interface{}
 }
 
+type IGenerators interface {
+	ValidateTemplates() error
+}
+
 type Service struct {
 	cfg                  *config.Config
 	filewatcher          IFilewatcher
 	powerDetector        IPowerDetector
 	lidDetector          ILidDetector
 	service              IService
+	gen                  IGenerators
 	disableAutoHotReload *bool
 }
 
 func NewService(cfg *config.Config, filewatcher IFilewatcher, powerDetector IPowerDetector,
-	service IService, disableAutoHotReload bool, lidDetector ILidDetector,
+	service IService, disableAutoHotReload bool, lidDetector ILidDetector, gen IGenerators,
 ) *Service {
 	return &Service{
 		cfg,
@@ -47,6 +52,7 @@ func NewService(cfg *config.Config, filewatcher IFilewatcher, powerDetector IPow
 		powerDetector,
 		lidDetector,
 		service,
+		gen,
 		&disableAutoHotReload,
 	}
 }
@@ -62,6 +68,7 @@ func (s *Service) Reload(ctx context.Context) error {
 		Err  string
 	}{
 		{Fun: s.cfg.Reload, Name: "config reload", Err: "cant reload configuration"},
+		{Fun: s.gen.ValidateTemplates, Name: "generators template validation", Err: "cant validate new templates"},
 		{Fun: s.filewatcher.Update, Name: "update filewatcher", Err: "cant update filewatcher"},
 		{Fun: func() error { return s.powerDetector.Reload(ctx) }, Name: "power detector reload", Err: "cant reload powerDetector"},
 		{Fun: func() error { return s.lidDetector.Reload(ctx) }, Name: "lid detector reload", Err: "cant reload lidDetector"},
