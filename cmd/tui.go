@@ -24,8 +24,11 @@ var tuiCmd = &cobra.Command{
 	Short: "Launch interactive TUI for monitor configuration",
 	Long:  `Launch an interactive terminal-based TUI for managing monitor configurations.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
+		disablePowerEventsChanged := cmd.Flags().Changed("disable-power-events")
+		enableLidEventsChanged := cmd.Flags().Changed("enable-lid-events")
+
 		// If the flag wasn't provided, power events are enabled, and not running on a laptop, then default to --disable-power-events
-		if !cmd.Flags().Changed("disable-power-events") && !disablePowerEvents && !utils.IsLaptop() {
+		if !disablePowerEventsChanged && !disablePowerEvents && !utils.IsLaptop() {
 			disablePowerEvents = true
 			logrus.WithFields(utils.NewLogrusCustomFields(logrus.Fields{
 				"disable-power-events": disablePowerEvents,
@@ -54,7 +57,7 @@ var tuiCmd = &cobra.Command{
 		defer cancel(context.Canceled)
 
 		app, err := app.NewTUI(ctx, configPath, mockedHyprMonitors, Version, disablePowerEvents,
-			connectToSessionBus, enableLidEvents, runningUnderTest)
+			connectToSessionBus, enableLidEvents, runningUnderTest, disablePowerEventsChanged, enableLidEventsChanged)
 		if err != nil {
 			return fmt.Errorf("cant init tui: %w", err)
 		}
