@@ -12,7 +12,7 @@
       nixosModule = { config, pkgs, lib, ... }:
         let
           cfg = config.services.hyprdynamicmonitors;
-          defaultPkg = self.packages.${pkgs.system}.default;
+          defaultPkg = self.packages.${pkgs.stdenv.hostPlatform.system}.default;
           etcKey = lib.replaceStrings [ "/etc/" ] [ "" ] cfg.configPath;
         in
         with lib; {
@@ -22,7 +22,7 @@
             package = mkOption {
               type = types.package;
               default = defaultPkg;
-              defaultText = literalExpression "inputs.hyprdynamicmonitors.packages.${pkgs.system}.default";
+              defaultText = literalExpression "inputs.hyprdynamicmonitors.packages.${pkgs.stdenv.hostPlatform.system}.default";
               description = "Package providing the hyprdynamicmonitors binary.";
             };
 
@@ -179,7 +179,7 @@
       homeModule = { config, pkgs, lib, ... }:
         let
           hmCfg = config.home.hyprdynamicmonitors;
-          defaultPkg = self.packages.${pkgs.system}.default;
+          defaultPkg = self.packages.${pkgs.stdenv.hostPlatform.system}.default;
           defaultConfigPath = "${config.home.homeDirectory}/.config/hyprdynamicmonitors/config.toml";
         in
         with lib; {
@@ -189,7 +189,7 @@
             package = mkOption {
               type = types.package;
               default = defaultPkg;
-              defaultText = literalExpression "inputs.hyprdynamicmonitors.packages.${pkgs.system}.default";
+              defaultText = literalExpression "inputs.hyprdynamicmonitors.packages.${pkgs.stdenv.hostPlatform.system}.default";
             };
 
             configPath = mkOption {
