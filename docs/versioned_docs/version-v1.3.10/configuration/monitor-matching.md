@@ -164,7 +164,7 @@ description = "Dell.*"
 match_description_using_regex = true
 ```
 
-Since one rule matches to one output, this profile will also match the current setup -- but since it defines more constrained rules (see [scoring](#scoring-system)) it would be picked up as the current setup.
+Since one rule matches to one output, this profile will also match the current setup -- but since it defines more constrained rules (see [scoring](#customizing-scoring-weights)) it would be picked up as the current setup.
 
 Moreover, if you do assign tags, they are deterministic -- so for exactly the same setup (`monitor id` matters), same template would be produced.
 
