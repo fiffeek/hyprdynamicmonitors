@@ -1,0 +1,533 @@
+---
+sidebar_position: 3
+---
+
+# Running with systemd
+
+For production use, it's recommended to run HyprDynamicMonitors as a systemd user service. This ensures automatic restart on failures and proper integration with your session management.
+
+:::tip
+Ensure you're properly [pushing environment variables to systemd](https://wiki.hypr.land/Nix/Hyprland-on-Home-Manager/#programs-dont-work-in-systemd-services-but-do-on-the-terminal) for correct Hyprland integration.
+:::
+
+:::tip
+If you run with lid or power events enabled, ensure that `UPower` is properly set up and running.
+:::
+
+:::info
+HyprDynamicMonitors provides two systemd services:
+- `hyprdynamicmonitors.service`: the daemon responsible for profile switching
+- `hyprdynamicmonitors-prepare.service`: a cleanup service that runs before Hyprland starts
+
+The prepare service removes any `monitor=...,disable` lines from your monitor configuration file to prevent the "no active displays" issue that can stop Hyprland from launching. See [What is hyprdynamicmonitors prepare?](./prepare) for more details.
+:::
+
+The [default systemd daemon service configuration](https://github.com/fiffeek/hyprdynamicmonitors/blob/main/infrastructure/systemd/hyprdynamicmonitors.service) assumes you're running Hyprland under systemd:
+```ini title="infrastructure/systemd/hyprdynamicmonitors.service"
+[Unit]
+Description=HyprDynamicMonitors - Dynamic monitor configuration for Hyprland
+Documentation=https://fiffeek.github.io/hyprdynamicmonitors/
+PartOf=graphical-session.target
+Requires=graphical-session.target
+After=graphical-session.target
+After=hyprdynamicmonitors-prepare.service
+ConditionEnvironment=WAYLAND_DISPLAY
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/hyprdynamicmonitors run
+Slice=session.slice
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=graphical-session.target
+```
+
+The [prepare service](https://github.com/fiffeek/hyprdynamicmonitors/blob/main/infrastructure/systemd/hyprdynamicmonitors-prepare.service) runs once at boot to clean up monitor configurations:
+```ini title="infrastructure/systemd/hyprdynamicmonitors-prepare.service"
+[Unit]
+Description=HyprDynamicMonitors - boot-time cleanup
+Documentation=https://fiffeek.github.io/hyprdynamicmonitors/
+Before=graphical-session-pre.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/hyprdynamicmonitors prepare
+TimeoutStartSec=3
+RemainAfterExit=yes
+
+[Install]
+WantedBy=default.target graphical-session-pre.target
+```
+
+This service file is automatically included in AUR and Nix deployments.
+
+## AUR
+
+When installed via AUR, the services are automatically registered as user services. Verify the installation:
+
+```bash
+# Reload service definitions
+systemctl --user daemon-reload
+
+# Check the current status
+systemctl --user status hyprdynamicmonitors.service
+systemctl --user status hyprdynamicmonitors-prepare.service
+```
+
+If you're running Hyprland under systemd (the default for most installations), you can start the service immediately:
+
+```bash
+# Start the daemon service
+systemctl --user start hyprdynamicmonitors.service
+
+# Note: The prepare service runs automatically at boot before Hyprland starts.
+# No need to start it manually unless you want to clean up your config right now.
+
+# Enable both services to start automatically
+systemctl --user enable --now hyprdynamicmonitors.service
+systemctl --user enable hyprdynamicmonitors-prepare.service
+```
+
+:::info
+If you're running Hyprland outside of systemd, see the [Running Hyprland outside of systemd](#running-hyprland-outside-of-systemd) section below.
+:::
+
+## Nix
+
+HyprDynamicMonitors provides both a NixOS module and a Home Manager module for declarative configuration. Both modules automatically set up the systemd services (`hyprdynamicmonitors.service` and `hyprdynamicmonitors-prepare.service`).
+
+:::warning
+If you're running with [power events enabled (default)](../configuration/power-events#disabling-power-events), or [lid events enabled (`--enable-lid-events` passed)](../configuration/lid-events#enabling-lid-events) then `UPower` is required, e.g.
+`services.upower.enable = true` is needed in your configuration.
+:::
+
+### NixOS Module
+
+Add the flake to your NixOS configuration inputs:
+
+```nix title="flake.nix"
+{
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    hyprdynamicmonitors.url = "github:fiffeek/hyprdynamicmonitors";
+  };
+
+  outputs = { self, nixpkgs, hyprdynamicmonitors, ... }: {
+    nixosConfigurations.yourhost = nixpkgs.lib.nixosSystem {
+      modules = [
+        hyprdynamicmonitors.nixosModules.default
+        ./configuration.nix
+      ];
+    };
+  };
+}
+```
+
+Then configure the service in your `configuration.nix`:
+
+```nix title="configuration.nix"
+{
+  services.hyprdynamicmonitors = {
+    enable = true;
+    mode = "user";  # "user", "system", or "none"
+
+    # Optional: provide inline configuration
+    config = ''
+      [general]
+      destination = "$HOME/.config/hypr/config.d/99_autogenerated-monitors.conf"
+      debounce_time_ms = 1500
+    '';
+
+    # Or use a configuration file
+    configFile = ./config.toml;
+
+    # Optional: install additional files (e.g., monitor profiles)
+    extraFiles = {
+      "xdg/hyprdynamicmonitors/hyprconfigs" = ./hyprconfigs;
+    };
+
+    # Optional: customize systemd target (default: graphical-session.target)
+    systemdTarget = "graphical-session.target";
+
+    # Optional: customize prepare service systemd targets (default: both default.target and graphical-session-pre.target)
+    prepareSystemdTarget = [ "default.target" "graphical-session-pre.target" ];
+
+    # Optional: customize what the prepare service runs before
+    prepareSystemdBefore = [ "graphical-session-pre.target" ];
+
+    # Optional: pass extra flags to the binary
+    extraFlags = [ "--debug" ];
+
+    # Optional: override serviceConfig options
+    serviceOptions = {
+      # Add custom systemd service options here
+    };
+  };
+}
+```
+
+**Configuration options:**
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `enable` | boolean | `false` | Enable the service |
+| `mode` | enum | `"user"` | Service type: `"user"`, `"system"`, or `"none"` (config only) |
+| `package` | package | from flake | Package providing the binary |
+| `configPath` | string | `/etc/xdg/hyprdynamicmonitors/config.toml` | Config file location |
+| `config` | string | `null` | Inline TOML configuration (takes precedence over `configFile`) |
+| `configFile` | path | `null` | Path to configuration file |
+| `extraFiles` | attrs | `null` | Additional files to install under `/etc/` (relative paths) |
+| `installExamples` | boolean | `true` | Install example config if no config provided |
+| `systemdTarget` | string | `"graphical-session.target"` | Systemd target for main service to bind to |
+| `prepareSystemdTarget` | list of strings | `["default.target" "graphical-session-pre.target"]` | Systemd targets for prepare service to bind to |
+| `prepareSystemdBefore` | list of strings | `["graphical-session-pre.target"]` | Systemd targets prepare service should run before |
+| `extraFlags` | list of strings | `[]` | Extra command-line flags |
+| `serviceOptions` | attrs | `{}` | Extra systemd service options |
+
+The module installs configuration to `/etc/xdg/hyprdynamicmonitors/` and creates both systemd services (`hyprdynamicmonitors.service` and `hyprdynamicmonitors-prepare.service`) as either user or system services depending on the `mode` setting.
+
+### Home Manager Module
+
+Add the flake to your Home Manager configuration:
+
+```nix title="flake.nix"
+{
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    home-manager = {
+      url = "github:nix-community/home-manager";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    hyprdynamicmonitors.url = "github:fiffeek/hyprdynamicmonitors";
+  };
+
+  outputs = { self, nixpkgs, home-manager, hyprdynamicmonitors, ... }: {
+    homeConfigurations.youruser = home-manager.lib.homeManagerConfiguration {
+      modules = [
+        hyprdynamicmonitors.homeManagerModules.default
+        ./home.nix
+      ];
+    };
+  };
+}
+```
+
+Configure in your `home.nix`:
+
+```nix title="home.nix"
+{
+  home.hyprdynamicmonitors = {
+    enable = true;
+
+    # Optional: provide inline configuration
+    config = ''
+      [general]
+      destination = "$HOME/.config/hypr/config.d/99_autogenerated-monitors.conf"
+      debounce_time_ms = 1500
+    '';
+
+    # Or use a configuration file
+    configFile = ./config.toml;
+
+    # Optional: install additional files under ~/.config
+    extraFiles = {
+      "hyprdynamicmonitors/hyprconfigs" = ./hyprconfigs;
+    };
+
+    # Optional: customize systemd target
+    # Defaults to config.wayland.systemd.target if set
+    systemdTarget = "graphical-session.target";
+
+    # Optional: customize prepare service systemd targets (default: both default.target and graphical-session-pre.target)
+    prepareSystemdTarget = [ "default.target" "graphical-session-pre.target" ];
+
+    # Optional: customize what the prepare service runs before
+    prepareSystemdBefore = [ "graphical-session-pre.target" ];
+
+    # Optional: pass extra flags to the binary
+    extraFlags = [ "--debug" ];
+
+    # Optional: override service options
+    serviceOptions = {
+      # Add custom systemd service options here
+    };
+  };
+}
+```
+
+**Configuration options:**
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `enable` | boolean | `false` | Enable the service |
+| `package` | package | from flake | Package providing the binary |
+| `configPath` | string | `~/.config/hyprdynamicmonitors/config.toml` | Config file location |
+| `config` | string | `null` | Inline TOML configuration (takes precedence over `configFile`) |
+| `configFile` | path | `null` | Path to configuration file |
+| `extraFiles` | attrs | `null` | Additional files to install under `~/.config/` (relative paths) |
+| `installExamples` | boolean | `true` | Install example config if no config provided |
+| `systemdTarget` | string | `config.wayland.systemd.target` | Systemd target for main service to bind to |
+| `prepareSystemdTarget` | list of strings | `["default.target" "graphical-session-pre.target"]` | Systemd targets for prepare service to bind to |
+| `prepareSystemdBefore` | list of strings | `["graphical-session-pre.target"]` | Systemd targets prepare service should run before |
+| `extraFlags` | list of strings | `[]` | Extra command-line flags |
+| `serviceOptions` | attrs | `{}` | Extra systemd service options |
+
+The Home Manager module installs configuration to `~/.config/hyprdynamicmonitors/` and creates both systemd user services (`hyprdynamicmonitors.service` and `hyprdynamicmonitors-prepare.service`).
+
+### Using with NixOS + Home Manager
+
+You can also use Home Manager as a NixOS module:
+
+```nix title="configuration.nix"
+{ inputs, ... }:
+{
+  imports = [ inputs.home-manager.nixosModules.home-manager ];
+
+  home-manager.users.youruser = {
+    imports = [ inputs.hyprdynamicmonitors.homeManagerModules.default ];
+
+    home.hyprdynamicmonitors = {
+      enable = true;
+      configFile = ./config.toml;
+    };
+  };
+}
+```
+
+
+## Running Hyprland outside of systemd
+
+If you're running Hyprland outside of systemd, you'll need to customize the service configuration. There are two approaches to modifying the service definition:
+
+1. **Using systemd overrides** (via `systemctl --user edit hyprdynamicmonitors.service`):
+   - Creates `~/.config/systemd/user/hyprdynamicmonitors.service.d/override.conf`
+   - Requires clearing certain fields before overriding them
+   - More complex but preserves upstream changes
+
+2. **Replacing the unit file entirely** (recommended):
+   - Create `~/.config/systemd/user/hyprdynamicmonitors.service`
+   - Completely shadows the packaged definition
+   - Simpler to understand and maintain
+
+Choose one of the following strategies based on your setup:
+
+### Option 1: Restart-based initialization
+
+This is the simplest approach. Start the service at boot and let systemd's restart mechanism handle initialization:
+
+```ini title="~/.config/systemd/user/hyprdynamicmonitors.service"
+[Unit]
+Description=HyprDynamicMonitors - Dynamic monitor configuration for Hyprland
+Documentation=https://fiffeek.github.io/hyprdynamicmonitors/
+After=hyprdynamicmonitors-prepare.service
+
+[Service]
+Type=exec
+ExecStart=/usr/bin/hyprdynamicmonitors run
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target
+```
+
+and `hyprdynamicmonitors-prepare`:
+```ini title="~/.config/systemd/user/hyprdynamicmonitors-prepare.service"
+[Unit]
+Description=HyprDynamicMonitors - boot-time cleanup
+Documentation=https://fiffeek.github.io/hyprdynamicmonitors/
+Before=graphical-session-pre.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/hyprdynamicmonitors prepare
+TimeoutStartSec=3
+RemainAfterExit=yes
+
+[Install]
+WantedBy=default.target graphical-session-pre.target
+```
+
+
+**How this works:**
+- The service continuously restarts until Hyprland launches
+- Waits for environment variables to become available
+- Automatically starts once the system is ready
+
+**Advantages:**
+- Simple configuration
+- No additional dependencies
+- Works with any Hyprland startup method
+
+### Option 2: Custom systemd target
+
+For more precise control over service lifecycle, you can create a [custom systemd target](https://github.com/fiffeek/.dotfiles.v2/commit/2a0d400b81031e3786a2779c36f70c9771aee884) that Hyprland explicitly manages.
+
+**Advantages:**
+- Clean startup and shutdown
+- Better integration with other services
+- No unnecessary restart attempts
+
+First, configure Hyprland to manage the custom target:
+
+```conf title="~/.config/hypr/hyprland.conf"
+exec-once = systemctl --user start hyprland-custom-session.target
+bind = $mainMod, X, exec, systemctl --user stop hyprland-custom-session.target
+```
+
+Next, create the custom target file:
+
+```ini title="~/.config/systemd/user/hyprland-custom-session.target"
+[Unit]
+Description=A target for other services when Hyprland becomes ready
+After=graphical-session-pre.target
+Wants=graphical-session-pre.target
+BindsTo=graphical-session.target
+```
+
+Finally, create the daemon service file that depends on this target:
+
+```ini title="~/.config/systemd/user/hyprdynamicmonitors.service"
+[Unit]
+Description=HyprDynamicMonitors - Dynamic monitor configuration for Hyprland
+Documentation=https://fiffeek.github.io/hyprdynamicmonitors/
+After=dbus.socket
+Requires=dbus.socket
+PartOf=hyprland-custom-session.target
+
+[Service]
+Type=exec
+ExecStart=/usr/bin/hyprdynamicmonitors run
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=hyprland-custom-session.target
+```
+
+And create the prepare service:
+
+```ini title="~/.config/systemd/user/hyprdynamicmonitors-prepare.service"
+[Unit]
+Description=HyprDynamicMonitors - boot-time cleanup
+Documentation=https://fiffeek.github.io/hyprdynamicmonitors/
+Before=graphical-session-pre.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/hyprdynamicmonitors prepare
+TimeoutStartSec=3
+RemainAfterExit=yes
+
+[Install]
+WantedBy=default.target graphical-session-pre.target
+```
+
+After creating these files, enable the service:
+
+```bash
+systemctl --user daemon-reload
+systemctl --user enable hyprdynamicmonitors.service
+```
+
+The service will now automatically start when Hyprland launches the custom target.
+
+### Option 3: Wrapper script (without systemd)
+
+If you prefer not to use systemd at all, you can create a simple bash wrapper with automatic restart:
+
+```bash title="~/bin/hyprdynamicmonitors-wrapper.sh"
+#!/bin/bash
+while true; do
+    /usr/bin/hyprdynamicmonitors run
+    echo "HyprDynamicMonitors exited with code $?, restarting in 5 seconds..."
+    sleep 5
+done
+```
+
+Make it executable and launch it from Hyprland:
+
+```bash
+chmod +x ~/bin/hyprdynamicmonitors-wrapper.sh
+```
+
+```conf title="~/.config/hypr/hyprland.conf"
+exec-once = ~/bin/hyprdynamicmonitors-wrapper.sh
+```
+
+## Manual Installation
+
+If you installed HyprDynamicMonitors from source or using a GitHub release binary, you'll need to manually create the service file:
+
+1. Copy both of the service configurations above to `~/.config/systemd/user/hyprdynamicmonitors.service` and `~/.config/systemd/user/hyprdynamicmonitors-prepare.service`
+2. Adjust the `ExecStart` path if you installed the binary in a custom location
+3. Reload systemd and start the service:
+
+```bash
+systemctl --user daemon-reload
+systemctl --user enable --now hyprdynamicmonitors.service
+systemctl --user enable hyprdynamicmonitors-prepare.service
+```
+
+Alternatively, use the wrapper script approach described above.
+
+## Service Management
+
+Once set up as a systemd service, you can manage it with standard systemd commands:
+
+```bash
+# Check status
+systemctl --user status hyprdynamicmonitors
+
+# View logs
+journalctl --user -u hyprdynamicmonitors -f
+
+# Restart the service
+systemctl --user restart hyprdynamicmonitors
+
+# Reload configuration
+systemctl --user reload hyprdynamicmonitors
+
+# Stop the service
+systemctl --user stop hyprdynamicmonitors
+
+# Disable automatic start
+systemctl --user disable hyprdynamicmonitors
+```
+
+## Troubleshooting
+
+### Service fails to start
+
+Check the logs:
+
+```bash
+journalctl --user -u hyprdynamicmonitors -n 50
+```
+
+**Common issues:**
+- Hyprland not running yet (expected when using restart-based initialization)
+- Missing environment variables (see tip at top of page)
+- Invalid configuration file
+- Binary not found at the specified path
+
+### Configuration changes not applying
+
+Reload the service:
+
+```bash
+systemctl --user reload hyprdynamicmonitors
+```
+
+Or rely on automatic hot reload (enabled by default).
+
+### Environment variables not available
+
+Ensure environment variables are properly exported to systemd. See [Hyprland's systemd integration guide](https://wiki.hypr.land/Nix/Hyprland-on-Home-Manager/#programs-dont-work-in-systemd-services-but-do-on-the-terminal) for detailed instructions.
+
+## See Also
+
+- [Signals](../usage/signals) - Signal handling and hot reload functionality
+- [Quick Start](../category/quick-start) - Initial setup and configuration guide
