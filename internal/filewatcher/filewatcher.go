@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"path/filepath"
 	"sync"
 	"time"
 
@@ -83,6 +84,14 @@ func (s *Service) collectPaths() []string {
 	tuiDir := s.cfg.Get().TUISection.Colors.SourceFileDir
 	if tuiDir != nil {
 		paths[*tuiDir] = struct{}{}
+	}
+
+	configDir := s.cfg.Get().ConfigDirPath
+	for _, file := range s.cfg.Get().IncludedFiles {
+		if filepath.Dir(file) == configDir {
+			continue
+		}
+		paths[file] = struct{}{}
 	}
 
 	pathsStrings := []string{}

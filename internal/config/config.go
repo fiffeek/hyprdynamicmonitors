@@ -2,6 +2,7 @@
 package config
 
 import (
+	"bufio"
 	"bytes"
 	_ "embed"
 	"errors"
@@ -74,6 +75,7 @@ type RawConfig struct {
 	Notifications        *Notifications      `toml:"notifications"`
 	StaticTemplateValues map[string]string   `toml:"static_template_values"`
 	KeysOrder            []string            `toml:"-"`
+	IncludedFiles        []string            `toml:"-"`
 	TUISection           *TUISection         `toml:"tui"`
 }
 
@@ -422,14 +424,13 @@ func Load(configPath string) (*RawConfig, error) {
 	logrus.WithFields(logrus.Fields{"abs": absConfig}).Debug("Found absolute config path")
 
 	// nolint:gosec
-	contents, err := os.ReadFile(absConfig)
+	contents, includedFiles, err := processIncludes(absConfig, 0)
 	if err != nil {
-		return nil, fmt.Errorf("cant read config file %s: %w", absConfig, err)
+		return nil, fmt.Errorf("cant process config includes %s: %w", absConfig, err)
 	}
-	logrus.Debugf("Config contents: %s", contents)
 
 	var config RawConfig
-	m, err := toml.DecodeFile(configPath, &config)
+	m, err := toml.Decode(string(contents), &config)
 	if err != nil {
 		return nil, fmt.Errorf("failed to decode TOML: %w", err)
 	}
@@ -441,6 +442,7 @@ func Load(configPath string) (*RawConfig, error) {
 	config.ConfigPath = absConfig
 	config.ConfigDirPath = filepath.Dir(config.ConfigPath)
 	config.KeysOrder = keys
+	config.IncludedFiles = includedFiles
 
 	if err := config.Validate(); err != nil {
 		return nil, fmt.Errorf("invalid configuration: %w", err)
@@ -1174,4 +1176,90 @@ func (d *DbusSignalReceiveFilter) Validate() error {
 	}
 
 	return nil
+}
+
+// Regex for single include: include = "path" or include = 'path'
+var reSingleInclude = regexp.MustCompile(`^\s*include\s*=\s*(?:"([^"]+)"|'([^']+)')\s*(?:#.*)?$`)
+
+// Regex for list include: include = ["path", "path2"]
+var reListInclude = regexp.MustCompile(`^\s*include\s*=\s*\[(.*)\]\s*(?:#.*)?$`)
+
+// Regex for quoted string inside list
+var reQuotedString = regexp.MustCompile(`(?:"([^"]+)"|'([^']+)')`)
+
+const MaxIncludeDepth = 20
+
+func processIncludes(path string, depth int) ([]byte, []string, error) {
+	if depth > MaxIncludeDepth {
+		return nil, nil, fmt.Errorf("include depth limit exceeded at %s (max %d)", path, MaxIncludeDepth)
+	}
+
+	path = os.ExpandEnv(path)
+	absPath, err := filepath.Abs(path)
+	if err != nil {
+		return nil, nil, fmt.Errorf("can't convert include path %s to absolute path: %w", path, err)
+	}
+
+	content, err := os.ReadFile(absPath)
+	if err != nil {
+		return nil, nil, fmt.Errorf("can't read include file %s: %w", absPath, err)
+	}
+
+	includedFiles := []string{absPath}
+	var result bytes.Buffer
+	scanner := bufio.NewScanner(bytes.NewReader(content))
+	dir := filepath.Dir(absPath)
+
+	for scanner.Scan() {
+		line := scanner.Text()
+
+		if match := reSingleInclude.FindStringSubmatch(line); match != nil {
+			incPath := match[1]
+			if incPath == "" {
+				incPath = match[2]
+			}
+			if !filepath.IsAbs(incPath) {
+				incPath = filepath.Join(dir, incPath)
+			}
+			incContent, incFiles, err := processIncludes(incPath, depth+1)
+			if err != nil {
+				return nil, nil, fmt.Errorf("failed to process single include '%s' from '%s': %w", incPath, absPath, err)
+			}
+			includedFiles = append(includedFiles, incFiles...)
+			result.Write(incContent)
+			result.WriteString("\n")
+			continue
+		}
+
+		if match := reListInclude.FindStringSubmatch(line); match != nil {
+			listContent := match[1]
+			matches := reQuotedString.FindAllStringSubmatch(listContent, -1)
+			for _, m := range matches {
+				incPath := m[1]
+				if incPath == "" {
+					incPath = m[2]
+				}
+				if !filepath.IsAbs(incPath) {
+					incPath = filepath.Join(dir, incPath)
+				}
+				incContent, incFiles, err := processIncludes(incPath, depth+1)
+				if err != nil {
+					return nil, nil, fmt.Errorf("failed to process list include '%s' from '%s': %w", incPath, absPath, err)
+				}
+				includedFiles = append(includedFiles, incFiles...)
+				result.Write(incContent)
+				result.WriteString("\n")
+			}
+			continue
+		}
+
+		result.WriteString(line)
+		result.WriteString("\n")
+	}
+
+	if err := scanner.Err(); err != nil {
+		return nil, nil, fmt.Errorf("error reading file %s during include processing: %w", absPath, err)
+	}
+
+	return result.Bytes(), includedFiles, nil
 }
