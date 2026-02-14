@@ -27,13 +27,16 @@ type TUI struct {
 }
 
 func NewTUI(ctx context.Context, configPath, mockedHyprMonitors string,
-	version string, disablePowerEvents, connectToSessionBus, enableLidEvents, runningUnderTest bool,
+	version string, disablePowerEvents, connectToSessionBus, enableLidEvents, runningUnderTest, disablePowerEventsChanged, enableLidEventsChanged bool,
 ) (*TUI, error) {
 	cfg, err := config.NewConfig(configPath)
 	if err != nil {
 		logrus.WithError(err).Error("cant create/read config")
 		return nil, fmt.Errorf("cant create/read config: %w", err)
 	}
+
+	disablePowerEvents, enableLidEvents = forceFlags(disablePowerEventsChanged,
+		disablePowerEvents, cfg, enableLidEventsChanged, enableLidEvents)
 
 	var monitors hypr.MonitorSpecs
 	var profileMaker *profilemaker.Service

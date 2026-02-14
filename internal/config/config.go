@@ -1175,3 +1175,96 @@ func (d *DbusSignalReceiveFilter) Validate() error {
 
 	return nil
 }
+
+var (
+	powerStateMentions = []string{".PowerState", "isOnAC", "isOnBattery", "powerState"}
+	lidStateMentions   = []string{".LidState", "isLidClosed", "isLidOpened"}
+)
+
+func (c *RawConfig) ReliesOnPowerEvents() bool {
+	if c.Profiles == nil {
+		return false
+	}
+
+	for _, profile := range c.Profiles {
+		if profile.Conditions != nil && profile.Conditions.PowerState != nil {
+			return true
+		}
+		if *profile.ConfigType == Static {
+			continue
+		}
+		templateFile := profile.ConfigFile
+		//nolint:gosec
+		contents, err := os.ReadFile(templateFile)
+		if err != nil {
+			logrus.WithFields(logrus.Fields{"profile": profile.Name}).Warn(
+				"can't read profile config file, ignoring")
+			continue
+		}
+		contentsText := string(contents)
+
+		for _, line := range strings.Split(contentsText, "\n") {
+			if utils.IsComment(line) {
+				logrus.WithFields(logrus.Fields{"line": line, "file": templateFile}).Debug(
+					"Skipping line as it appears to be a comment")
+				continue
+			}
+
+			for _, mention := range powerStateMentions {
+				if strings.Contains(line, mention) {
+					logrus.WithFields(logrus.Fields{
+						"line": line,
+						"file": templateFile,
+					}).Info("Found power state mention")
+					return true
+				}
+			}
+		}
+	}
+
+	return false
+}
+
+func (c *RawConfig) ReliesOnLidEvents() bool {
+	if c.Profiles == nil {
+		return false
+	}
+
+	for _, profile := range c.Profiles {
+		if profile.Conditions != nil && profile.Conditions.LidState != nil {
+			return true
+		}
+		if *profile.ConfigType == Static {
+			continue
+		}
+		templateFile := profile.ConfigFile
+		//nolint:gosec
+		contents, err := os.ReadFile(templateFile)
+		if err != nil {
+			logrus.WithFields(logrus.Fields{"profile": profile.Name}).Warn(
+				"can't read profile config file, ignoring")
+			continue
+		}
+		contentsText := string(contents)
+
+		for _, line := range strings.Split(contentsText, "\n") {
+			if utils.IsComment(line) {
+				logrus.WithFields(logrus.Fields{"line": line, "file": templateFile}).Debug(
+					"Skipping line as it appears to be a comment")
+				continue
+			}
+
+			for _, mention := range lidStateMentions {
+				if strings.Contains(line, mention) {
+					logrus.WithFields(logrus.Fields{
+						"line": line,
+						"file": templateFile,
+					}).Info("Found lid state mention")
+					return true
+				}
+			}
+		}
+	}
+
+	return false
+}
