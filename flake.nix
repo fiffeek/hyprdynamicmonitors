@@ -31,6 +31,12 @@
               default = "user";
               description = "Whether to install a user unit, system unit, or no unit at all.";
             };
+            
+            settings = mkOption {
+              type = types.nullOr (types.attrsOf types.anything);
+              default = null;
+              description = "Configuration in Nix to be written to configPath.";
+            };
 
             configPath = mkOption {
               type = types.str;
@@ -101,12 +107,16 @@
           };
 
           config = mkIf cfg.enable (let
+            tomlFormat = pkgs.formats.toml {};
+            
             # Extract base directory from configPath for themes
             configDir = lib.removeSuffix "/config.toml" cfg.configPath;
             themesBasePath = lib.replaceStrings [ "/etc/" ] [ "" ] "${configDir}/themes";
 
             tomlAttr = if cfg.config != null then
               { "${etcKey}" = { text = cfg.config; }; }
+            else if cfg.settings != null then
+              { "${etcKey}" = { source = tomlFormat.generate "hyprdynamicmonitors-config.toml" cfg.settings; }; }
             else if cfg.configFile != null then
               { "${etcKey}" = { source = cfg.configFile; }; }
             else if cfg.installExamples then
@@ -162,7 +172,10 @@
               wantedBy = cfg.prepareSystemdTarget;
             };
           in mkMerge [
-            { environment.etc = etcAttrs; }
+            { 
+              environment.systemPackages = [ cfg.package ];
+              environment.etc = etcAttrs;
+            }
 
             (mkIf (cfg.mode == "system") {
               systemd.services.hyprdynamicmonitors = unitSpec;
@@ -192,6 +205,12 @@
               defaultText = literalExpression "inputs.hyprdynamicmonitors.packages.${pkgs.stdenv.hostPlatform.system}.default";
             };
 
+            settings = mkOption {
+              type = types.nullOr (types.attrsOf types.anything);
+              default = null;
+              description = "Configuration in Nix to be written to configPath.";
+            };
+            
             configPath = mkOption {
               type = types.str;
               default = defaultConfigPath;
@@ -258,11 +277,15 @@
           };
 
           config = mkIf hmCfg.enable (let
+            tomlFormat = pkgs.formats.toml { };
+            
             # Extract base directory from configPath for themes
             configDir = lib.removeSuffix "/config.toml" hmCfg.configPath;
 
             tomlEntry = if hmCfg.config != null then
               { "${hmCfg.configPath}" = { text = hmCfg.config; }; }
+            else if hmCfg.settings != null then
+              { "${hmCfg.configPath}" = { source = tomlFormat.generate "hyprdynamicmonitors-config.toml" hmCfg.settings; }; }
             else if hmCfg.configFile != null then
               { "${hmCfg.configPath}" = { source = hmCfg.configFile; }; }
             else if hmCfg.installExamples then
