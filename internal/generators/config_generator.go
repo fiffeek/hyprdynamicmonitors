@@ -258,12 +258,6 @@ func (g *ConfigGenerator) linkConfigFile(profile *config.Profile, destination st
 		return differentContents, nil
 	}
 
-	if _, err := os.Stat(destination); err == nil || !os.IsNotExist(err) {
-		if err := os.Remove(destination); err != nil {
-			return false, fmt.Errorf("failed to remove existing config: %w", err)
-		}
-	}
-
 	if dryRun {
 		logrus.WithFields(utils.NewLogrusCustomFields(map[string]interface{}{
 			"config_file": source, "destination": destination,
@@ -272,8 +266,21 @@ func (g *ConfigGenerator) linkConfigFile(profile *config.Profile, destination st
 		return false, nil
 	}
 
-	if err := os.Symlink(source, destination); err != nil {
-		return false, fmt.Errorf("failed to create symlink from %s to %s: %w", source, destination, err)
+	// Swap the link atomically: create it under a temporary name and rename(2) it
+	// over the destination. Removing the destination first opens a window where the
+	// path does not resolve, which races config watchers (e.g. Hyprland's inotify
+	// autoreload reparses mid-swap and fails with "source= globbing error: found no
+	// match", leaving the error overlay up until the next manual reload).
+	tmpName := destination + ".tmp"
+	if err := os.Remove(tmpName); err != nil && !os.IsNotExist(err) {
+		return false, fmt.Errorf("failed to remove stale temp link %s: %w", tmpName, err)
+	}
+	if err := os.Symlink(source, tmpName); err != nil {
+		return false, fmt.Errorf("failed to create symlink from %s to %s: %w", source, tmpName, err)
+	}
+	if err := os.Rename(tmpName, destination); err != nil {
+		_ = os.Remove(tmpName)
+		return false, fmt.Errorf("failed to replace %s with a link to %s: %w", destination, source, err)
 	}
 
 	logrus.WithFields(logrus.Fields{
