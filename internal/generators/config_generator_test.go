@@ -84,6 +84,78 @@ func TestConfigGenerator_GenerateConfig_Static(t *testing.T) {
 	testutils.AssertFileDoesNotExist(t, destination)
 }
 
+func TestConfigGenerator_GenerateConfig_StaticSwap(t *testing.T) {
+	cfg := testutils.NewTestConfig(t).Get()
+	generator, err := generators.NewConfigGenerator(cfg)
+	require.NoError(t, err, "config generators should be able to init")
+
+	tempDir := t.TempDir()
+	destination := filepath.Join(tempDir, "hyprland.conf")
+
+	staticConfigPath, err := filepath.Abs("testdata/static_config.conf")
+	require.NoError(t, err, "failed to get absolute path")
+	otherConfigPath := filepath.Join(tempDir, "other_config.conf")
+	require.NoError(t, os.WriteFile(otherConfigPath, []byte("# other\n"), 0o600),
+		"should be able to write the other profile config")
+
+	profile := &config.Profile{
+		ConfigFile: staticConfigPath,
+		ConfigType: utils.JustPtr(config.Static),
+	}
+	otherProfile := &config.Profile{
+		ConfigFile: otherConfigPath,
+		ConfigType: utils.JustPtr(config.Static),
+	}
+
+	monitors := []*hypr.MonitorSpec{
+		{Name: "eDP-1", ID: utils.IntPtr(0), Description: "Built-in Display"},
+	}
+	matchedProfile := matchers.NewMatchedProfile(profile, map[int]*config.RequiredMonitor{})
+	otherMatchedProfile := matchers.NewMatchedProfile(otherProfile, map[int]*config.RequiredMonitor{})
+
+	// switching profiles repoints the link, the destination stays a symlink
+	_, err = generator.GenerateConfig(cfg.Get(), matchedProfile, monitors,
+		power.ACPowerState, power.OpenedLidState, destination, false)
+	require.NoError(t, err, "GenerateConfig failed")
+	changed, err := generator.GenerateConfig(cfg.Get(), otherMatchedProfile, monitors,
+		power.ACPowerState, power.OpenedLidState, destination, false)
+	assert.NoError(t, err, "GenerateConfig failed on profile switch")
+	assert.True(t, changed, "profile switch should report a change")
+	linkTarget, err := os.Readlink(destination)
+	assert.NoError(t, err, "destination should still be a symlink")
+	assert.Equal(t, otherConfigPath, linkTarget, "link should point at the new profile")
+
+	// a stale temp link from an interrupted swap does not break linking
+	require.NoError(t, os.Symlink(staticConfigPath, destination+".tmp"),
+		"should be able to plant a stale temp link")
+	changed, err = generator.GenerateConfig(cfg.Get(), matchedProfile, monitors,
+		power.ACPowerState, power.OpenedLidState, destination, false)
+	assert.NoError(t, err, "GenerateConfig should recover from a stale temp link")
+	assert.True(t, changed, "profile switch should report a change")
+	testutils.AssertFileDoesNotExist(t, destination+".tmp")
+
+	// a regular file at the destination (e.g. left by a template profile) is replaced
+	require.NoError(t, os.Remove(destination), "should be able to remove the destination")
+	require.NoError(t, os.WriteFile(destination, []byte("# rendered\n"), 0o600),
+		"should be able to write a regular file at the destination")
+	changed, err = generator.GenerateConfig(cfg.Get(), otherMatchedProfile, monitors,
+		power.ACPowerState, power.OpenedLidState, destination, false)
+	assert.NoError(t, err, "GenerateConfig should replace a regular file")
+	assert.True(t, changed, "replacing a regular file should report a change")
+	linkInfo, err := os.Lstat(destination)
+	assert.NoError(t, err, "failed to stat destination")
+	assert.NotZero(t, linkInfo.Mode()&os.ModeSymlink, "destination should be a symlink again")
+
+	// dry run must not touch an existing destination
+	changed, err = generator.GenerateConfig(cfg.Get(), matchedProfile, monitors,
+		power.ACPowerState, power.OpenedLidState, destination, true)
+	assert.NoError(t, err, "no error should be thrown on dry run")
+	assert.False(t, changed, "nothing should change on dry run")
+	linkTarget, err = os.Readlink(destination)
+	assert.NoError(t, err, "dry run should leave the existing link in place")
+	assert.Equal(t, otherConfigPath, linkTarget, "dry run must not modify the link")
+}
+
 func TestConfigGenerator_GenerateConfig_Template(t *testing.T) {
 	cfg := testutils.NewTestConfig(t).WithStaticTemplateValues(map[string]string{
 		"overwritten_value": "this_shall_be_overwritten",
