@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"os/exec"
+	"sort"
+	"strings"
 	"sync"
 	"time"
 
@@ -50,6 +52,10 @@ type Service struct {
 	cachedPowerState power.PowerState
 	cachedLidState   power.LidState
 	debouncer        *utils.Debouncer
+
+	appliedMu  sync.Mutex
+	appliedKey string
+	hasApplied bool
 }
 
 type Config struct {
@@ -225,19 +231,77 @@ func (s *Service) UpdateOnce(ctx context.Context) error {
 		return fmt.Errorf("failed to generate config: %w", err)
 	}
 
-	// if not changed and not running in dry run then exit early
-	if !changed && !s.serviceConfig.DryRun {
+	// An unchanged destination file does not imply the configuration is applied: writing
+	// or linking it is not what applies it, PostApplyExec is (typically by reloading the
+	// compositor). So the inputs that produced the last apply matter too, not just the
+	// output. Without this, a topology change that keeps the same profile selected --
+	// a display re-attaching, an output renamed by the compositor (DP-3 -> DP-2), a
+	// virtual output appearing -- leaves the file identical, skips the hook, and the new
+	// topology is never configured.
+	stateKey := appliedStateKey(matchedProfile.Profile.Name, monitors, powerState, lidState)
+	stateChanged := s.appliedStateDiffers(stateKey)
+
+	// if nothing changed and not running in dry run then exit early
+	if !changed && !stateChanged && !s.serviceConfig.DryRun {
 		logrus.Info("Not sending notifications since the config has not been changed")
 		return nil
 	}
 
 	s.tryExec(ctx, matchedProfile.Profile.PostApplyExec, cfg.General.PostApplyExec, utils.PostExecLogID)
 
+	if !s.serviceConfig.DryRun {
+		s.recordApplied(stateKey)
+	}
+
 	if err := s.notificationsService.NotifyProfileApplied(matchedProfile.Profile, s.serviceConfig.DryRun); err != nil {
 		logrus.WithFields(profileFields).WithError(err).Error("swallowing notification error")
 	}
 
 	return nil
+}
+
+// appliedStateKey builds a fingerprint of the inputs that decide what gets applied:
+// the selected profile plus the monitor set, power and lid states.
+//
+// Only stable monitor identity is included -- name, description and whether the output
+// is disabled. Volatile fields (DPMS, tearing, solitary, direct scanout, and the
+// geometry the profile itself sets) are deliberately excluded: they change on screen
+// blanking and with window content, so folding them in would re-run PostApplyExec
+// continuously.
+func appliedStateKey(profileName string, monitors hypr.MonitorSpecs,
+	powerState power.PowerState, lidState power.LidState,
+) string {
+	identities := make([]string, 0, len(monitors))
+	for _, monitor := range monitors {
+		if monitor == nil {
+			continue
+		}
+		identities = append(identities,
+			fmt.Sprintf("%s\x1f%s\x1f%t", monitor.Name, monitor.Description, monitor.Disabled))
+	}
+	// event ordering is not guaranteed, sort so an identical set yields an identical key
+	sort.Strings(identities)
+
+	return fmt.Sprintf("%s\x1e%s\x1e%s\x1e%s",
+		profileName, strings.Join(identities, "\x1d"), powerState.String(), lidState.String())
+}
+
+// appliedStateDiffers reports whether the given state differs from the last one applied.
+// The first run always differs: nothing has been applied yet.
+func (s *Service) appliedStateDiffers(stateKey string) bool {
+	s.appliedMu.Lock()
+	defer s.appliedMu.Unlock()
+
+	return !s.hasApplied || s.appliedKey != stateKey
+}
+
+// recordApplied stores the state as applied, after the post-apply hook has run for it.
+func (s *Service) recordApplied(stateKey string) {
+	s.appliedMu.Lock()
+	defer s.appliedMu.Unlock()
+
+	s.appliedKey = stateKey
+	s.hasApplied = true
 }
 
 func (s *Service) tryExec(ctx context.Context, command, fallbackCommand *string, logID utils.LogID) {
