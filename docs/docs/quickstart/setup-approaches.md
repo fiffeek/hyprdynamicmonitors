@@ -51,16 +51,19 @@ The TUI (Terminal User Interface) provides a visual way to configure monitors an
    - Enter a profile name (e.g., "laptop-only")
    - The profile is automatically saved to your configuration
 
-4. **Source the configuration** in your `~/.config/hypr/hyprland.conf`:
-   ```conf
-   source = ~/.config/hypr/monitors.conf
+4. **Source the configuration** in your `~/.config/hypr/hyprland.lua`:
+   ```lua
+   require("monitors")
    ```
 
 5. **Run the daemon** for automatic profile switching:
-   ```conf
-   # Add to ~/.config/hypr/hyprland.conf
-   exec-once = hyprdynamicmonitors run
-   # Or use systemd
+   ```lua
+   -- Add to ~/.config/hypr/hyprland.lua
+   hl.on("hyprland.start", function() hl.exec_cmd("hyprdynamicmonitors run") end)
+   ```
+
+   Or use systemd:
+   ```bash
    systemctl --user daemon-reload
    systemctl --user enable --now hyprdynamicmonitors.service
    ```
@@ -85,7 +88,7 @@ The TUI (Terminal User Interface) provides a visual way to configure monitors an
    See the [prepare documentation](../advanced/prepare) for more setup options.
 
 :::info
-  Systemd services are recommended in favor of `exec-once`: see [Running with systemd](../advanced/systemd).
+  Systemd services are recommended in favor of starting the daemon from `hyprland.lua`: see [Running with systemd](../advanced/systemd).
 :::
 
 :::note
@@ -102,7 +105,7 @@ The TUI (Terminal User Interface) provides a visual way to configure monitors an
 
    ```toml
    [general]
-   destination = "$HOME/.config/hypr/monitors.conf"
+   destination = "$HOME/.config/hypr/monitors.lua"
 
    [power_events]
    [power_events.dbus_query_object]
@@ -112,31 +115,31 @@ The TUI (Terminal User Interface) provides a visual way to configure monitors an
    object_path = "/org/freedesktop/UPower/devices/line_power_ACAD"
 
    [profiles.laptop_only]
-   config_file = "hyprconfigs/laptop.conf"
+   config_file = "hyprconfigs/laptop.lua"
    config_file_type = "static"
 
    [[profiles.laptop_only.conditions.required_monitors]]
    name = "eDP-1"  # Replace with your display name from hyprctl monitors
    ```
 
-2. **Create the monitor configuration** at `~/.config/hyprdynamicmonitors/hyprconfigs/laptop.conf`:
+2. **Create the monitor configuration** at `~/.config/hyprdynamicmonitors/hyprconfigs/laptop.lua`:
 
-   ```
-   monitor=eDP-1,2880x1920@120.00000,0x0,2.0,vrr,1
+   ```lua
+   hl.monitor({ output = "eDP-1", mode = "2880x1920@120.00000", position = "0x0", scale = 2.0, vrr = 1 })
    ```
 
    Replace with your actual monitor settings (check `hyprctl monitors`).
 
-3. **Source the configuration** in your `~/.config/hypr/hyprland.conf`:
+3. **Source the configuration** in your `~/.config/hypr/hyprland.lua`:
 
-   ```conf
-   source = ~/.config/hypr/monitors.conf
+   ```lua
+   require("monitors")
    ```
 
 4. **Run the daemon**:
-   ```conf
-   # Add to ~/.config/hypr/hyprland.conf
-   exec-once = hyprdynamicmonitors run
+   ```lua
+   -- Add to ~/.config/hypr/hyprland.lua
+   hl.on("hyprland.start", function() hl.exec_cmd("hyprdynamicmonitors run") end)
    ```
 
 5. **Set up the prepare command** to prevent startup issues:
@@ -159,7 +162,7 @@ The TUI (Terminal User Interface) provides a visual way to configure monitors an
    See the [prepare documentation](../advanced/prepare) for more setup options.
 
 :::info
-  Or use systemd (recommended for production), instead of `exec-once`: see [Running with systemd](../advanced/systemd).
+  Or use systemd (recommended for production), instead of starting the daemon from `hyprland.lua`: see [Running with systemd](../advanced/systemd).
 :::
 
 ---
@@ -180,9 +183,9 @@ The TUI (Terminal User Interface) provides a visual way to configure monitors an
    - Press `n` to create a new profile or `a` to update an existing one
    - Press `R` to manually render the configuration to the destination file
 
-3. **Source the configuration** in your `~/.config/hypr/hyprland.conf`:
-   ```conf
-   source = ~/.config/hypr/monitors.conf
+3. **Source the configuration** in your `~/.config/hypr/hyprland.lua`:
+   ```lua
+   require("monitors")
    ```
 
 4. **Set up the prepare command** to prevent startup issues:

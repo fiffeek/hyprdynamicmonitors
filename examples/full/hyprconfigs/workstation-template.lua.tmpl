@@ -1,0 +1,157 @@
+-- Workstation Template Configuration
+-- Multi-monitor setup for productivity
+-- Power State: {{.PowerState}} (AC power required)
+
+{{- $laptop := index .MonitorsByTag "laptop" -}}
+{{- $left := index .MonitorsByTag "left_monitor" -}}
+{{- $right := index .MonitorsByTag "right_monitor" -}}
+
+-- Triple Monitor Configuration
+{{- if $left }}
+-- Left monitor - Primary external display
+hl.monitor({ output = "desc:{{$left.Description}}", mode = "2560x1440@60.00000", position = "-2560x0", scale = 1.0 })
+{{- end }}
+
+{{- if $laptop }}
+-- Center laptop screen - Main workspace
+hl.monitor({ output = "{{$laptop.Name}}", mode = "2880x1920@120.00000", position = "0x0", scale = 2.0 })
+{{- end }}
+
+{{- if $right }}
+-- Right monitor - Secondary external display
+hl.monitor({ output = "desc:{{$right.Description}}", mode = "2560x1440@60.00000", position = "2880x0", scale = 1.0 })
+{{- end }}
+
+-- Workspace Layout
+{{- if $left }}
+-- Left monitor - Development/IDE
+hl.workspace_rule({ workspace = "1", monitor = "{{$left.Name}}" }) -- Primary IDE
+hl.workspace_rule({ workspace = "4", monitor = "{{$left.Name}}" }) -- Secondary IDE/Editor
+hl.workspace_rule({ workspace = "7", monitor = "{{$left.Name}}" }) -- Terminal/CLI
+{{- end }}
+
+{{- if $laptop }}
+-- Laptop screen - Main work
+hl.workspace_rule({ workspace = "2", monitor = "{{$laptop.Name}}", default = true }) -- Main applications
+hl.workspace_rule({ workspace = "5", monitor = "{{$laptop.Name}}" }) -- Documentation/Research
+hl.workspace_rule({ workspace = "8", monitor = "{{$laptop.Name}}" }) -- File management
+{{- end }}
+
+{{- if $right }}
+-- Right monitor - Communication/Monitoring
+hl.workspace_rule({ workspace = "3", monitor = "{{$right.Name}}" }) -- Communication (Slack, Email)
+hl.workspace_rule({ workspace = "6", monitor = "{{$right.Name}}" }) -- System monitoring
+hl.workspace_rule({ workspace = "9", monitor = "{{$right.Name}}" }) -- Media/Music
+{{- end }}
+
+-- Visual settings
+hl.config({
+    general = {
+        border_size = 2,
+        col = {
+            active_border   = "rgba(2563ebff)",
+            inactive_border = "rgba(555555aa)",
+        },
+    },
+    decoration = {
+        blur = {
+            enabled = true,
+            size = 6,
+            passes = 2,
+            new_optimizations = true,
+            ignore_opacity = true,
+        },
+        shadow = {
+            enabled = true,
+            range = 8,
+            render_power = 2,
+            color = "rgba(00000050)",
+        },
+        rounding = 8,
+    },
+    animations = {
+        enabled = true,
+    },
+    input = {
+        sensitivity = 0.0,
+        accel_profile = "adaptive",
+        scroll_method = "2fg",
+        touchpad = {
+            natural_scroll = true,
+            tap_to_click = true,
+            middle_button_emulation = true,
+            drag_lock = true,
+            -- Professional touchpad settings
+            clickfinger_behavior = true,
+        },
+    },
+    misc = {
+        animate_manual_resizes = true,
+        animate_mouse_windowdragging = true,
+        focus_on_activate = true,
+        mouse_move_focuses_monitor = false,
+    },
+})
+
+hl.curve("professional", { type = "bezier", points = { {0.25, 0.1}, {0.25, 1} } })
+hl.animation({ leaf = "windows",    enabled = true, speed = 6, bezier = "professional" })
+hl.animation({ leaf = "windowsOut", enabled = true, speed = 6, bezier = "professional", style = "popin 80%" })
+hl.animation({ leaf = "fade",       enabled = true, speed = 8, bezier = "professional" })
+hl.animation({ leaf = "workspaces", enabled = true, speed = 6, bezier = "professional", style = "slide" })
+
+{{- if $left }}
+-- Development environment on left monitor
+hl.window_rule({ match = { class = "^(code)$" }, workspace = "1" })
+hl.window_rule({ match = { class = "^(jetbrains-.*)$" }, workspace = "1" })
+hl.window_rule({ match = { class = "^(neovim)$" }, workspace = "1" })
+
+hl.window_rule({ match = { class = "^(sublime_text)$" }, workspace = "4" })
+hl.window_rule({ match = { class = "^(atom)$" }, workspace = "4" })
+
+hl.window_rule({ match = { class = "^(kitty)$" }, workspace = "7" })
+hl.window_rule({ match = { class = "^(alacritty)$" }, workspace = "7" })
+hl.window_rule({ match = { class = "^(terminator)$" }, workspace = "7" })
+{{- end }}
+
+{{- if $laptop }}
+-- Main applications on laptop screen
+hl.window_rule({ match = { class = "^(firefox)$" }, workspace = "2" })
+hl.window_rule({ match = { class = "^(chromium)$" }, workspace = "2" })
+hl.window_rule({ match = { class = "^(libreoffice.*)$" }, workspace = "2" })
+
+hl.window_rule({ match = { class = "^(zathura)$" }, workspace = "5" })
+hl.window_rule({ match = { class = "^(evince)$" }, workspace = "5" })
+hl.window_rule({ match = { class = "^(notion.*)$" }, workspace = "5" })
+
+hl.window_rule({ match = { class = "^(thunar)$" }, workspace = "8" })
+hl.window_rule({ match = { class = "^(nautilus)$" }, workspace = "8" })
+hl.window_rule({ match = { class = "^(pcmanfm)$" }, workspace = "8" })
+{{- end }}
+
+{{- if $right }}
+-- Communication and monitoring on right monitor
+hl.window_rule({ match = { class = "^(slack)$" }, workspace = "3" })
+hl.window_rule({ match = { class = "^(discord)$" }, workspace = "3" })
+hl.window_rule({ match = { class = "^(teams)$" }, workspace = "3" })
+hl.window_rule({ match = { class = "^(thunderbird)$" }, workspace = "3" })
+
+hl.window_rule({ match = { class = "^(btop)$" }, workspace = "6" })
+hl.window_rule({ match = { class = "^(htop)$" }, workspace = "6" })
+hl.window_rule({ match = { title = "^(.*System Monitor.*)$" }, workspace = "6" })
+hl.window_rule({ match = { class = "^(docker.*)$" }, workspace = "6" })
+
+hl.window_rule({ match = { class = "^(spotify)$" }, workspace = "9" })
+hl.window_rule({ match = { class = "^(vlc)$" }, workspace = "9" })
+hl.window_rule({ match = { class = "^(mpv)$" }, workspace = "9" })
+{{- end }}
+
+-- Focus monitors directly
+{{- if $left }}
+hl.bind("SUPER + F1", hl.dsp.focus({ monitor = "{{$left.Name}}" }))
+{{- end }}
+{{- if $laptop }}
+hl.bind("SUPER + F2", hl.dsp.focus({ monitor = "{{$laptop.Name}}" }))
+{{- end }}
+{{- if $right }}
+hl.bind("SUPER + F3", hl.dsp.focus({ monitor = "{{$right.Name}}" }))
+{{- end }}

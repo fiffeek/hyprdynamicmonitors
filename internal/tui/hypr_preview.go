@@ -39,7 +39,7 @@ func (h *HyprPreviewPane) View() string {
 	}
 
 	for _, monitor := range h.monitors {
-		hyprCommand := "monitor = " + monitor.ToHypr()
+		hyprCommand := monitor.ToHypr()
 		if h.clamp {
 			hyprCommand = ClampTextTo(hyprCommand, h.width)
 		}

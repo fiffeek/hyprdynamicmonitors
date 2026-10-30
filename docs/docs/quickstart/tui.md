@@ -10,9 +10,9 @@ The HyprDynamicMonitors TUI provides an interactive interface for managing Hyprl
 
 Before using the TUI effectively, you need to configure Hyprland to use the generated monitor configuration:
 
-1. **Add this line to your `~/.config/hypr/hyprland.conf`**:
-   ```conf title="~/.config/hypr/hyprland.conf"
-   source = ~/.config/hypr/monitors.conf
+1. **Add this line to your `~/.config/hypr/hyprland.lua`**:
+   ```lua title="~/.config/hypr/hyprland.lua"
+   require("monitors")
    ```
 
 2. **Decide whether to run the daemon** (see [Setup Approaches](./setup-approaches) for guidance):
@@ -65,7 +65,7 @@ The fastest way to get started:
    - Type a name (e.g., "laptop-only" or "desk-setup") and press `Enter`
 4. **Done!** Your profile is now saved
 
-**With daemon running**: Your configuration is automatically written to `~/.config/hypr/monitors.conf` and Hyprland applies it immediately.
+**With daemon running**: Your configuration is automatically written to `~/.config/hypr/monitors.lua` and Hyprland applies it immediately.
 
 **Without daemon**: Press `R` in the Profile view to manually write the configuration to the destination file.
 
@@ -163,12 +163,12 @@ description = "Your Monitor Description"
 ```
 
 **2. Template file** at `~/.config/hyprdynamicmonitors/hyprconfigs/your_profile_name.go.tmpl`:
-```conf title="~/.config/hyprdynamicmonitors/hyprconfigs/your_profile_name.go.tmpl"
-monitor=eDP-1,2880x1920@120.00000,0x0,2.0,vrr,1
-# One line for each monitor with your configured settings
+```lua title="~/.config/hyprdynamicmonitors/hyprconfigs/your_profile_name.go.tmpl"
+hl.monitor({ output = "eDP-1", mode = "2880x1920@120.00000", position = "0x0", scale = 2.0, vrr = 1 })
+-- One line for each monitor with your configured settings
 ```
 
-**With daemon running**: The profile is automatically rendered to your destination file (`~/.config/hypr/monitors.conf` by default), and Hyprland applies it immediately.
+**With daemon running**: The profile is automatically rendered to your destination file (`~/.config/hypr/monitors.lua` by default), and Hyprland applies it immediately.
 
 **Without daemon**: Press `R` to manually render the configuration to the destination file.
 
@@ -186,10 +186,10 @@ When modifying a monitor configuration that matches an existing profile:
 6. Confirm with `Y`
 
 The TUI will update the profile template file by:
-- **Replacing content between the `# <<<<<` TUI markers** (if they exist from previous TUI edits or `hyprdynamicmonitors freeze`)
+- **Replacing content between the `-- <<<<<` TUI markers** (if they exist from previous TUI edits or `hyprdynamicmonitors freeze`)
 - **Or appending a new TUI markers block** at the end of the file (if markers aren't found)
 
-This allows you to manually add custom Hyprlang directives (like `windowrule`, workspace settings, etc.) to your profile files—the TUI will preserve those sections and only update the monitor configuration within the markers.
+This allows you to manually add other Hyprland Lua calls (like `hl.window_rule()`, `hl.workspace_rule()`, etc.) to your profile files—the TUI will preserve those sections and only update the monitor configuration within the markers.
 
 **With daemon running**: Changes are automatically rendered to the destination file.
 
@@ -197,7 +197,7 @@ This allows you to manually add custom Hyprlang directives (like `windowrule`, w
 
 #### Manual Editing
 
-You can also press `e` in the Profile view to manually edit the existing profile configuration file—this allows you to add other Hyprlang directives such as `windowrule`, workspace rules, or any other Hyprland configuration to customize the profile to your liking.
+You can also press `e` in the Profile view to manually edit the existing profile configuration file—this allows you to add other Hyprland Lua calls such as `hl.window_rule()`, `hl.workspace_rule()`, or any other Hyprland configuration to customize the profile to your liking.
 
 When you save and exit your editor, the TUI will reload the configuration automatically.
 
@@ -230,11 +230,11 @@ Understanding these key terms will help you work efficiently with the TUI:
 
 - **Template file**: A Go template file (`.go.tmpl`) that generates Hyprland monitor configuration dynamically. Created by the TUI when you save a profile. See [Templates](../advanced/templates.md) for details.
 
-- **Static file**: A plain Hyprland configuration file (`.conf`) that contains fixed monitor settings. The daemon creates a symlink to it instead of rendering.
+- **Static file**: A plain Hyprland Lua configuration file (`.lua`) that contains fixed monitor settings. The daemon creates a symlink to it instead of rendering.
 
 - **Applying monitors to profile**: Saving the current monitor layout settings to an existing or new profile in your HDM config file. This updates the profile's template file.
 
-- **Rendering configuration to destination**: Generating the final Hyprland monitor configuration from HDM profiles and writing it to the destination file (typically `~/.config/hypr/monitors.conf`). This is the file that Hyprland actually reads.
+- **Rendering configuration to destination**: Generating the final Hyprland monitor configuration from HDM profiles and writing it to the destination file (typically `~/.config/hypr/monitors.lua`). This is the file that Hyprland actually reads.
 
 ### Understanding Profile Matching
 
@@ -288,16 +288,16 @@ This approach is best for desktop users with stable monitor setups. See [Running
 
 When you save a profile using the TUI (with `n` or `a`), the TUI creates or updates the profile's template file with special marker comments:
 
-```
-# <<<<< TUI AUTO START
-monitor=eDP-1,2880x1920@120.00000,0x0,2.0,vrr,1
-monitor=DP-1,3840x2160@60.00000,2880x0,1.0
-# <<<<< TUI AUTO END
+```lua
+-- <<<<< TUI AUTO START
+hl.monitor({ output = "eDP-1", mode = "2880x1920@120.00000", position = "0x0", scale = 2.0, vrr = 1 })
+hl.monitor({ output = "DP-1", mode = "3840x2160@60.00000", position = "2880x0", scale = 1.0 })
+-- <<<<< TUI AUTO END
 ```
 
 These markers allow the TUI to:
 - **Update only the monitor configuration** when you save changes
-- **Preserve your manual edits** outside the markers (like custom `windowrule` directives)
+- **Preserve your manual edits** outside the markers (like custom `hl.window_rule()` calls)
 
 If you manually edit the file and remove the markers, the TUI will append a new markers block at the end of the file on the next save.
 
@@ -310,15 +310,15 @@ When the TUI creates a profile, it uses **template files** (`.go.tmpl`) by defau
 Example template:
 ```go
 {{- $laptop := index .MonitorsByTag "laptop" -}}
-monitor={{$laptop.Name}},{{if isOnAC}}2880x1920@120{{else}}1920x1080@60{{end}},0x0,2.0
+hl.monitor({ output = "{{$laptop.Name}}", mode = "{{if isOnAC}}2880x1920@120{{else}}1920x1080@60{{end}}", position = "0x0", scale = 2.0 })
 ```
 
 If you prefer **static files** (plain Hyprland config), you can:
-1. Create a `my_profile.conf` file manually in `~/.config/hyprdynamicmonitors/hyprconfigs/`
+1. Create a `my_profile.lua` file manually in `~/.config/hyprdynamicmonitors/hyprconfigs/`
 2. Edit your `config.toml` to use it:
    ```toml title="~/.config/hyprdynamicmonitors/config.toml"
    [profiles.my_profile]
-   config_file = "hyprconfigs/my_profile.conf"
+   config_file = "hyprconfigs/my_profile.lua"
    config_file_type = "static"
    ```
 
@@ -328,7 +328,7 @@ See [Templates](../advanced/templates.md) for the full template syntax and capab
 
 ### What happens if I don't press `R` without the daemon?
 
-Your profile changes are saved to the HDM config and template files, but Hyprland won't use them yet. The destination file (`~/.config/hypr/monitors.conf`) still contains the old configuration. Press `R` to render the new configuration to the destination file.
+Your profile changes are saved to the HDM config and template files, but Hyprland won't use them yet. The destination file (`~/.config/hypr/monitors.lua`) still contains the old configuration. Press `R` to render the new configuration to the destination file.
 
 ### What happens if I close the TUI without saving?
 
@@ -338,7 +338,7 @@ Any monitor adjustments you made are **lost**—they were only in the TUI's temp
 
 ### What happens if I press `A` (ephemeral apply) then reboot?
 
-Ephemeral changes are temporary and will be lost. After reboot, Hyprland will use whatever configuration is in your destination file (`~/.config/hypr/monitors.conf`). To make changes permanent, save them to a profile.
+Ephemeral changes are temporary and will be lost. After reboot, Hyprland will use whatever configuration is in your destination file (`~/.config/hypr/monitors.lua`). To make changes permanent, save them to a profile.
 
 ### When should I create a new profile vs update an existing one?
 
@@ -364,7 +364,7 @@ However, these changes won't persist across Hyprland restarts or monitor changes
 ### What if I manually edit a template file?
 
 That's perfectly fine! You can:
-- Add custom Hyprlang directives (`windowrule`, `workspace`, etc.)
+- Add other Hyprland Lua calls (`hl.window_rule()`, `hl.workspace_rule()`, etc.)
 - Modify the monitor configuration manually
 - Add template logic for dynamic behavior
 

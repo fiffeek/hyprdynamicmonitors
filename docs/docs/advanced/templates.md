@@ -66,7 +66,7 @@ Useful for disabling unexpected monitors:
 
 ```go
 {{range .ExtraMonitors}}
-monitor={{.Name}},disable
+hl.monitor({ output = "{{.Name}}", disabled = true })
 {{end}}
 ```
 
@@ -78,8 +78,8 @@ Each monitor object has the same fields as `.Monitors` (see above).
 
 ```go
 {{range .RequiredMonitors}}
-# Required monitor: {{.Name}} ({{.Description}})
-monitor={{.Name}},{{.CurrentFormat}},auto,1
+-- Required monitor: {{.Name}} ({{.Description}})
+hl.monitor({ output = "{{.Name}}", mode = "{{.CurrentFormat}}", position = "auto", scale = 1 })
 {{end}}
 ```
 
@@ -95,9 +95,9 @@ This is the most convenient way to reference specific monitors in templates:
 {{- $laptop := index .MonitorsByTag "laptop" -}}
 {{- $external := index .MonitorsByTag "external" -}}
 
-monitor={{$laptop.Name}},2880x1920@120,0x0,2.0
-monitor={{$external.Name}},preferred,auto,1
-# External monitor description: {{$external.Description}}
+hl.monitor({ output = "{{$laptop.Name}}", mode = "2880x1920@120", position = "0x0", scale = 2.0 })
+hl.monitor({ output = "{{$external.Name}}", mode = "preferred", position = "auto", scale = 1 })
+-- External monitor description: {{$external.Description}}
 ```
 
 ## Template Functions
@@ -108,8 +108,8 @@ Returns true if on battery power.
 
 ```go
 {{if isOnBattery}}
-# Low power configuration
-monitor=eDP-1,1920x1080@60,0x0,2.0
+-- Low power configuration
+hl.monitor({ output = "eDP-1", mode = "1920x1080@60", position = "0x0", scale = 2.0 })
 {{end}}
 ```
 
@@ -119,8 +119,8 @@ Returns true if on AC power.
 
 ```go
 {{if isOnAC}}
-# High performance configuration
-monitor=eDP-1,2880x1920@120,0x0,2.0
+-- High performance configuration
+hl.monitor({ output = "eDP-1", mode = "2880x1920@120", position = "0x0", scale = 2.0 })
 {{end}}
 ```
 
@@ -140,7 +140,7 @@ Requires `--enable-lid-events` flag.
 
 ```go
 {{if isLidClosed}}
-monitor=eDP-1,disable
+hl.monitor({ output = "eDP-1", disabled = true })
 {{end}}
 ```
 
@@ -152,7 +152,7 @@ Requires `--enable-lid-events` flag.
 
 ```go
 {{if isLidOpened}}
-monitor=eDP-1,2880x1920@120,0x0,2.0
+hl.monitor({ output = "eDP-1", mode = "2880x1920@120", position = "0x0", scale = 2.0 })
 {{end}}
 ```
 
@@ -181,7 +181,7 @@ battery_scaling = "1.5"  # Profile-specific value
 ### Using in Templates
 
 ```go
-monitor=eDP-1,{{.default_res}}@{{.refresh_rate_high}},0x0,1,vrr,{{.default_vrr}}
+hl.monitor({ output = "eDP-1", mode = "{{.default_res}}@{{.refresh_rate_high}}", position = "0x0", scale = 1, vrr = {{.default_vrr}} })
 ```
 
 ## Complete Examples
@@ -193,13 +193,13 @@ monitor=eDP-1,{{.default_res}}@{{.refresh_rate_high}},0x0,1,vrr,{{.default_vrr}}
 {{- $external := index .MonitorsByTag "external" -}}
 
 {{if isOnAC}}
-# AC Power: High performance
-monitor={{$laptop.Name}},2880x1920@120,0x0,2.0
-monitor={{$external.Name}},3840x2160@60,2880x0,1
+-- AC Power: High performance
+hl.monitor({ output = "{{$laptop.Name}}", mode = "2880x1920@120", position = "0x0", scale = 2.0 })
+hl.monitor({ output = "{{$external.Name}}", mode = "3840x2160@60", position = "2880x0", scale = 1 })
 {{else}}
-# Battery: Power saving
-monitor={{$laptop.Name}},1920x1080@60,0x0,2.0
-monitor={{$external.Name}},2560x1440@60,1920x0,1
+-- Battery: Power saving
+hl.monitor({ output = "{{$laptop.Name}}", mode = "1920x1080@60", position = "0x0", scale = 2.0 })
+hl.monitor({ output = "{{$external.Name}}", mode = "2560x1440@60", position = "1920x0", scale = 1 })
 {{end}}
 ```
 
@@ -210,13 +210,13 @@ monitor={{$external.Name}},2560x1440@60,1920x0,1
 {{- $external := index .MonitorsByTag "external" -}}
 
 {{if isLidClosed}}
-# Lid closed: external monitor only
-monitor={{$laptop.Name}},disable
-monitor={{$external.Name}},preferred,0x0,1
+-- Lid closed: external monitor only
+hl.monitor({ output = "{{$laptop.Name}}", disabled = true })
+hl.monitor({ output = "{{$external.Name}}", mode = "preferred", position = "0x0", scale = 1 })
 {{else}}
-# Lid open: dual monitor
-monitor={{$laptop.Name}},2880x1920@120,0x0,2.0
-monitor={{$external.Name}},preferred,{{$laptop.Width}}x0,1
+-- Lid open: dual monitor
+hl.monitor({ output = "{{$laptop.Name}}", mode = "2880x1920@120", position = "0x0", scale = 2.0 })
+hl.monitor({ output = "{{$external.Name}}", mode = "preferred", position = "{{$laptop.Width}}x0", scale = 1 })
 {{end}}
 ```
 
@@ -224,12 +224,12 @@ monitor={{$external.Name}},preferred,{{$laptop.Width}}x0,1
 
 ```go
 {{- range .RequiredMonitors}}
-monitor={{.Name}},preferred,auto,1
+hl.monitor({ output = "{{.Name}}", mode = "preferred", position = "auto", scale = 1 })
 {{- end}}
 
 {{- range .ExtraMonitors}}
-# Disable unexpected monitor
-monitor={{.Name}},disable
+-- Disable unexpected monitor
+hl.monitor({ output = "{{.Name}}", disabled = true })
 {{- end}}
 ```
 
@@ -239,11 +239,11 @@ monitor={{.Name}},disable
 {{- $laptop := index .MonitorsByTag "laptop" -}}
 
 {{if isLidClosed}}
-monitor={{$laptop.Name}},disable
+hl.monitor({ output = "{{$laptop.Name}}", disabled = true })
 {{else if isOnAC}}
-monitor={{$laptop.Name}},2880x1920@120,0x0,2.0,vrr,1
+hl.monitor({ output = "{{$laptop.Name}}", mode = "2880x1920@120", position = "0x0", scale = 2.0, vrr = 1 })
 {{else}}
-monitor={{$laptop.Name}},1920x1080@60,0x0,2.0,vrr,0
+hl.monitor({ output = "{{$laptop.Name}}", mode = "1920x1080@60", position = "0x0", scale = 2.0, vrr = 0 })
 {{end}}
 ```
 
@@ -287,7 +287,7 @@ Then check:
 
 - **Destination file** to verify the rendered output:
   ```bash
-  cat ~/.config/hypr/monitors.conf
+  cat ~/.config/hypr/monitors.lua
   ```
 
 ### Creating Initial Templates

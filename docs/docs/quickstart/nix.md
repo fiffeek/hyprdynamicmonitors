@@ -119,26 +119,23 @@ After installing HyprDynamicMonitors and setting up your profiles, you **must** 
 
 **Without this step, your monitor configurations won't be applied.**
 
-The destination path [can be changed](../configuration/overview#general-settings) but defaults to `$HOME/.config/hypr/monitors.conf`.
+The destination path [can be changed](../configuration/overview#general-settings) but defaults to `$HOME/.config/hypr/monitors.lua`.
 
 Add the following to your Hyprland configuration:
 
-```conf title="~/.config/hypr/hyprland.conf"
-# Source the auto-generated monitors configuration
-# Adjust the path to match your destination setting in config.toml
-source = ~/.config/hypr/monitors.conf
+```lua title="~/.config/hypr/hyprland.lua"
+-- Load the auto-generated monitors configuration
+-- Adjust the module name to match your destination setting in config.toml
+require("monitors")
 ```
 
-Or if using Home Manager with declarative Hyprland config:
+Or if you manage `hyprland.lua` with Home Manager:
 
 ```nix
-wayland.windowManager.hyprland = {
-  enable = true;
-  extraConfig = ''
-    # Source the auto-generated monitors configuration
-    source = ~/.config/hypr/monitors.conf
-  '';
-};
+xdg.configFile."hypr/hyprland.lua".text = ''
+  -- Load the auto-generated monitors configuration
+  require("monitors")
+'';
 ```
 
 :::

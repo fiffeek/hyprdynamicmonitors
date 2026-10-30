@@ -31,28 +31,28 @@ func Test__Run_Prepare_Binary(t *testing.T) {
 		{
 			name: "basic",
 			cfg: testutils.NewTestConfig(t).FillDefaults().FillDefaults().WithDestinationContents(
-				"testdata/Test__Run_Prepare_Binary/fixtures/basic.conf"),
+				"testdata/Test__Run_Prepare_Binary/fixtures/basic.lua"),
 			expectError:     false,
 			compareToGolden: "testdata/Test__Run_Prepare_Binary/golden/basic.golden",
 		},
 		{
 			name: "filtered",
 			cfg: testutils.NewTestConfig(t).FillDefaults().FillDefaults().WithDestinationContents(
-				"testdata/Test__Run_Prepare_Binary/fixtures/filtered.conf"),
+				"testdata/Test__Run_Prepare_Binary/fixtures/filtered.lua"),
 			expectError:     false,
 			compareToGolden: "testdata/Test__Run_Prepare_Binary/golden/filtered.golden",
 		},
 		{
 			name: "complex",
 			cfg: testutils.NewTestConfig(t).FillDefaults().FillDefaults().WithDestinationContents(
-				"testdata/Test__Run_Prepare_Binary/fixtures/complex.conf"),
+				"testdata/Test__Run_Prepare_Binary/fixtures/complex.lua"),
 			expectError:     false,
 			compareToGolden: "testdata/Test__Run_Prepare_Binary/golden/complex.golden",
 		},
 		{
 			name: "destination unreadable",
 			cfg: testutils.NewTestConfig(t).FillDefaults().FillDefaults().WithDestinationContents(
-				"testdata/Test__Run_Prepare_Binary/fixtures/basic.conf"),
+				"testdata/Test__Run_Prepare_Binary/fixtures/basic.lua"),
 			prerun: func(cfg *config.RawConfig) {
 				//nolint:gosec
 				require.NoError(t, os.Chmod(*cfg.General.Destination, 0o300))
@@ -63,7 +63,7 @@ func Test__Run_Prepare_Binary(t *testing.T) {
 		{
 			name: "destination unwriteable",
 			cfg: testutils.NewTestConfig(t).FillDefaults().FillDefaults().WithDestinationContents(
-				"testdata/Test__Run_Prepare_Binary/fixtures/basic.conf"),
+				"testdata/Test__Run_Prepare_Binary/fixtures/basic.lua"),
 			prerun: func(cfg *config.RawConfig) {
 				//nolint:gosec
 				require.NoError(t, os.Chmod(filepath.Dir(*cfg.General.Destination), 0o500))
@@ -78,35 +78,35 @@ func Test__Run_Prepare_Binary(t *testing.T) {
 		{
 			name: "empty file",
 			cfg: testutils.NewTestConfig(t).FillDefaults().FillDefaults().WithDestinationContents(
-				"testdata/Test__Run_Prepare_Binary/fixtures/empty.conf"),
+				"testdata/Test__Run_Prepare_Binary/fixtures/empty.lua"),
 			expectError:     false,
 			compareToGolden: "testdata/Test__Run_Prepare_Binary/golden/empty.golden",
 		},
 		{
 			name: "file with only disable lines",
 			cfg: testutils.NewTestConfig(t).FillDefaults().FillDefaults().WithDestinationContents(
-				"testdata/Test__Run_Prepare_Binary/fixtures/only-disable.conf"),
+				"testdata/Test__Run_Prepare_Binary/fixtures/only-disable.lua"),
 			expectError:     false,
 			compareToGolden: "testdata/Test__Run_Prepare_Binary/golden/only-disable.golden",
 		},
 		{
 			name: "file without trailing newline",
 			cfg: testutils.NewTestConfig(t).FillDefaults().FillDefaults().WithDestinationContents(
-				"testdata/Test__Run_Prepare_Binary/fixtures/no-trailing-newline.conf"),
+				"testdata/Test__Run_Prepare_Binary/fixtures/no-trailing-newline.lua"),
 			expectError:     false,
 			compareToGolden: "testdata/Test__Run_Prepare_Binary/golden/no-trailing-newline.golden",
 		},
 		{
 			name: "comments matching regex",
 			cfg: testutils.NewTestConfig(t).FillDefaults().FillDefaults().WithDestinationContents(
-				"testdata/Test__Run_Prepare_Binary/fixtures/comments-matching.conf"),
+				"testdata/Test__Run_Prepare_Binary/fixtures/comments-matching.lua"),
 			expectError:     false,
 			compareToGolden: "testdata/Test__Run_Prepare_Binary/golden/comments-matching.golden",
 		},
 		{
 			name: "file with only whitespace",
 			cfg: testutils.NewTestConfig(t).FillDefaults().FillDefaults().WithDestinationContents(
-				"testdata/Test__Run_Prepare_Binary/fixtures/whitespace-only.conf"),
+				"testdata/Test__Run_Prepare_Binary/fixtures/whitespace-only.lua"),
 			expectError:     false,
 			compareToGolden: "testdata/Test__Run_Prepare_Binary/golden/whitespace-only.golden",
 		},

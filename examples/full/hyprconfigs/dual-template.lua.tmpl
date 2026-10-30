@@ -1,0 +1,99 @@
+-- Dual Monitor Template Configuration
+-- Dynamic configuration for laptop + external monitor setup
+-- Generated for power state: {{.PowerState}}
+
+{{- $laptop := index .MonitorsByTag "laptop" -}}
+{{- $external := index .MonitorsByTag "external" -}}
+
+-- Monitor Configuration
+{{- if $laptop }}
+{{- if isOnBattery }}
+-- Battery mode: Reduce laptop refresh rate to save power
+hl.monitor({ output = "{{$laptop.Name}}", mode = "2880x1920@60.00000", position = "0x0", scale = 2.0 })
+{{- else }}
+-- AC mode: Full laptop performance
+hl.monitor({ output = "{{$laptop.Name}}", mode = "2880x1920@120.00000", position = "0x0", scale = 2.0 })
+{{- end }}
+{{- end }}
+
+{{- if $external }}
+{{- if isOnAC }}
+-- AC mode: Enable external monitor in portrait mode
+hl.monitor({ output = "desc:{{$external.Description}}", mode = "2560x2880@59.96700", position = "auto-left", scale = 1.6, transform = 3 })
+{{- else }}
+-- Battery mode: Disable external monitor to save power
+hl.monitor({ output = "desc:{{$external.Description}}", disabled = true })
+{{- end }}
+{{- end }}
+
+-- Workspace Assignment
+{{- if $laptop }}
+-- Primary workspaces on laptop
+hl.workspace_rule({ workspace = "1", monitor = "{{$laptop.Name}}", default = true })
+hl.workspace_rule({ workspace = "6", monitor = "{{$laptop.Name}}" })
+{{- end }}
+
+{{- if $external }}
+{{- if isOnAC }}
+-- Secondary workspaces on external monitor
+hl.workspace_rule({ workspace = "2", monitor = "{{$external.Name}}" })
+hl.workspace_rule({ workspace = "3", monitor = "{{$external.Name}}" })
+hl.workspace_rule({ workspace = "4", monitor = "{{$external.Name}}" })
+hl.workspace_rule({ workspace = "5", monitor = "{{$external.Name}}" })
+{{- end }}
+{{- end }}
+
+-- Power-dependent visual settings
+{{- if isOnBattery }}
+-- Battery mode: Minimize visual effects
+hl.config({
+    decoration = {
+        blur = {
+            enabled = false,
+        },
+        shadow = {
+            enabled = false,
+        },
+    },
+    animations = {
+        enabled = false,
+    },
+})
+{{- else }}
+-- AC mode: Full visual effects
+hl.config({
+    decoration = {
+        blur = {
+            enabled = true,
+            size = 10,
+            passes = 2,
+            new_optimizations = true,
+        },
+        shadow = {
+            enabled = true,
+            range = 6,
+            render_power = 3,
+        },
+    },
+    animations = {
+        enabled = true,
+    },
+})
+
+hl.curve("easeOutExpo", { type = "bezier", points = { {0.16, 1}, {0.3, 1} } })
+hl.animation({ leaf = "windows",    enabled = true, speed = 6, bezier = "easeOutExpo" })
+hl.animation({ leaf = "windowsOut", enabled = true, speed = 6, bezier = "easeOutExpo", style = "popin 80%" })
+hl.animation({ leaf = "fade",       enabled = true, speed = 8, bezier = "easeOutExpo" })
+hl.animation({ leaf = "workspaces", enabled = true, speed = 7, bezier = "easeOutExpo", style = "slide" })
+{{- end }}
+
+-- Window rules for dual monitor setup
+{{- if $external }}
+{{- if isOnAC }}
+-- Move specific applications to external monitor
+hl.window_rule({ match = { class = "^(firefox)$" }, workspace = "2" })
+hl.window_rule({ match = { class = "^(code)$" }, workspace = "3" })
+hl.window_rule({ match = { class = "^(discord)$" }, workspace = "4" })
+hl.window_rule({ match = { class = "^(spotify)$" }, workspace = "5" })
+{{- end }}
+{{- end }}

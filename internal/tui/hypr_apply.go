@@ -2,7 +2,6 @@ package tui
 
 import (
 	"errors"
-	"fmt"
 	"os/exec"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -29,9 +28,8 @@ func NewHyprApply(profileMaker *profilemaker.Service, generator *generators.Conf
 func (h *HyprApply) ApplyCurrent(monitors []*MonitorSpec) tea.Cmd {
 	var lastError error
 	for _, monitor := range monitors {
-		cmd := fmt.Sprintf("hyprctl keyword monitor \"%s\"", monitor.ToHypr())
 		// nolint:gosec,noctx
-		if err := exec.Command("sh", "-c", cmd).Run(); err != nil {
+		if err := exec.Command("hyprctl", "eval", monitor.ToHypr()).Run(); err != nil {
 			lastError = err
 			logrus.WithError(err).Error("cant apply hypr settings")
 		}

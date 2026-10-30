@@ -145,9 +145,9 @@ Power state is available in templates via functions:
 
 ```go
 {{if isOnAC}}
-monitor=eDP-1,2880x1920@120,0x0,2.0
+hl.monitor({ output = "eDP-1", mode = "2880x1920@120", position = "0x0", scale = 2.0 })
 {{else}}
-monitor=eDP-1,1920x1080@60,0x0,2.0
+hl.monitor({ output = "eDP-1", mode = "1920x1080@60", position = "0x0", scale = 2.0 })
 {{end}}
 ```
 

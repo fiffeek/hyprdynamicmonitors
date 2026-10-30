@@ -34,13 +34,13 @@ Static configurations are plain Hyprland config files. The service creates a sym
 
 ```toml title="~/.config/hyprdynamicmonitors/config.toml"
 [profiles.laptop_only]
-config_file = "hyprconfigs/laptop.conf"
+config_file = "hyprconfigs/laptop.lua"
 config_file_type = "static"
 ```
 
-**hyprconfigs/laptop.conf:**
-```
-monitor=eDP-1,2880x1920@120,0x0,2.0,vrr,1
+**hyprconfigs/laptop.lua:**
+```lua
+hl.monitor({ output = "eDP-1", mode = "2880x1920@120", position = "0x0", scale = 2.0, vrr = 1 })
 ```
 
 ### Template Configuration
@@ -66,8 +66,8 @@ monitor_tag = "external"
 ```go title="~/.config/hyprdynamicmonitors/hyprconfigs/dual.go.tmpl"
 {{- $laptop := index .MonitorsByTag "laptop" -}}
 {{- $external := index .MonitorsByTag "external" -}}
-monitor={{$laptop.Name}},{{if isOnAC}}2880x1920@120{{else}}1920x1080@60{{end}},0x0,2.0
-monitor={{$external.Name}},preferred,2880x0,1
+hl.monitor({ output = "{{$laptop.Name}}", mode = "{{if isOnAC}}2880x1920@120{{else}}1920x1080@60{{end}}", position = "0x0", scale = 2.0 })
+hl.monitor({ output = "{{$external.Name}}", mode = "preferred", position = "2880x0", scale = 1 })
 ```
 
 See [Templates](../advanced/templates) for details on template syntax and variables.
@@ -194,7 +194,7 @@ battery_scaling = "1.5"  # Profile-specific value
 ### Using in Templates
 
 ```go
-monitor=eDP-1,{{.default_res}}@{{if isOnAC}}{{.refresh_rate_high}}{{else}}{{.refresh_rate_low}}{{end}},0x0,1,vrr,{{.default_vrr}}
+hl.monitor({ output = "eDP-1", mode = "{{.default_res}}@{{if isOnAC}}{{.refresh_rate_high}}{{else}}{{.refresh_rate_low}}{{end}}", position = "0x0", scale = 1, vrr = {{.default_vrr}} })
 ```
 
 ## Fallback Profile
@@ -203,7 +203,7 @@ When no regular profile matches, you can define a fallback profile:
 
 ```toml title="~/.config/hyprdynamicmonitors/config.toml"
 [fallback_profile]
-config_file = "hyprconfigs/fallback.conf"
+config_file = "hyprconfigs/fallback.lua"
 config_file_type = "static"
 ```
 
@@ -213,9 +213,9 @@ The fallback profile:
 - Only used when no regular profile matches
 
 **Example fallback configuration:**
-```
-# Generic fallback: configure all connected monitors with preferred settings
-monitor=,preferred,auto,1
+```lua
+-- Generic fallback: configure all connected monitors with preferred settings
+hl.monitor({ output = "", mode = "preferred", position = "auto", scale = 1 })
 ```
 
 ## Profile Callbacks
@@ -230,7 +230,7 @@ post_apply_exec = "notify-send 'Profile applied'"
 
 # Profile-specific commands override global settings
 [profiles.gaming_setup]
-config_file = "hyprconfigs/gaming.conf"
+config_file = "hyprconfigs/gaming.lua"
 pre_apply_exec = "notify-send 'Gaming Mode' 'Activating...'"
 post_apply_exec = "/usr/local/bin/gaming-mode-on.sh"
 ```

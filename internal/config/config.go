@@ -802,7 +802,7 @@ func (n *Notifications) Validate() error {
 
 func (g *GeneralSection) Validate() error {
 	if g.Destination == nil {
-		defaultDest := "$HOME/.config/hypr/monitors.conf"
+		defaultDest := "$HOME/.config/hypr/monitors.lua"
 		g.Destination = &defaultDest
 	}
 

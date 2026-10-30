@@ -15,7 +15,7 @@ var prepareCmd = &cobra.Command{
 	Long: `Prepares the monitor configuration file by removing monitor disable commands.
 
 This command should be run before starting Hyprland to ensure
-a clean state. It removes any 'monitor=...,disable' lines from the destination file,
+a clean state. It removes any 'hl.monitor({ ..., disabled = true })' lines from the destination file,
 which prevents an issue with no active displays (Hyprland does not launch).
 
 This is particularly useful when running with systemd, where you want to ensure the

@@ -1,0 +1,50 @@
+-- Battery Saver Template Configuration
+-- Power-optimized configuration for extended battery life
+-- Power State: {{.PowerState}} (Battery mode)
+
+{{- $laptop := index .MonitorsByTag "laptop" -}}
+
+-- Monitor Configuration - Power Saving
+{{- if $laptop }}
+-- Reduced refresh rate and brightness for battery saving
+hl.monitor({ output = "{{$laptop.Name}}", mode = "2880x1920@60.00000", position = "0x0", scale = 2.0 })
+{{- end }}
+
+-- Workspace Assignment - Minimal
+{{- if $laptop }}
+hl.workspace_rule({ workspace = "1", monitor = "{{$laptop.Name}}", default = true })
+hl.workspace_rule({ workspace = "2", monitor = "{{$laptop.Name}}" })
+hl.workspace_rule({ workspace = "3", monitor = "{{$laptop.Name}}" })
+-- Fewer workspaces to reduce memory usage
+{{- end }}
+
+-- Minimal visual effects for battery saving
+hl.config({
+    general = {
+        -- Reduce border thickness
+        border_size = 1,
+    },
+    decoration = {
+        -- Disable all blur effects
+        blur = {
+            enabled = false,
+        },
+
+        -- Disable shadows completely
+        shadow = {
+            enabled = false,
+        },
+
+        -- Minimal rounding to reduce rendering
+        rounding = 2,
+    },
+    animations = {
+        -- Disable all animations to save power
+        enabled = false,
+    },
+})
+
+-- Battery-optimized applications
+hl.window_rule({ match = { class = "^(firefox)$" }, workspace = "1" })
+hl.window_rule({ match = { class = "^(code)$" }, workspace = "2" })
+hl.window_rule({ match = { class = "^(terminal)$" }, workspace = "3" })

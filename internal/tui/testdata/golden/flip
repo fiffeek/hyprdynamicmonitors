@@ -1,1 +1,1 @@
-HEADLESS-2,640x480@60.00,2680x0,1.00000000,transform,7
+hl.monitor({ output = "HEADLESS-2", mode = "640x480@60.00", position = "2680x0", scale = 1.00000000, transform = 7 })

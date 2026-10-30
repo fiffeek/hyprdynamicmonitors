@@ -23,7 +23,7 @@ The configuration file is written in TOML and consists of several main sections:
 
 ```toml title="~/.config/hyprdynamicmonitors/config.toml"
 [general]
-destination = "$HOME/.config/hypr/monitors.conf"
+destination = "$HOME/.config/hypr/monitors.lua"
 debounce_time_ms = 1500
 pre_apply_exec = "notify-send 'Switching profile...'"
 post_apply_exec = "notify-send 'Profile applied'"
@@ -62,7 +62,7 @@ Lid events monitor your system's lid state (Opened/Closed) via D-Bus. See [Lid E
 
 ```toml title="~/.config/hyprdynamicmonitors/config.toml"
 [profiles.laptop_only]
-config_file = "hyprconfigs/laptop.conf"
+config_file = "hyprconfigs/laptop.lua"
 config_file_type = "static"
 
 [[profiles.laptop_only.conditions.required_monitors]]
@@ -127,7 +127,7 @@ Define global values that can be used in all templates. These can be overridden 
 
 ```toml title="~/.config/hyprdynamicmonitors/config.toml"
 [fallback_profile]
-config_file = "hyprconfigs/fallback.conf"
+config_file = "hyprconfigs/fallback.lua"
 config_file_type = "static"
 ```
 

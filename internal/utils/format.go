@@ -14,8 +14,14 @@ func FormatEnumTypes[T HasValue](enums []T) string {
 	return "[" + strings.Join(mapped, ", ") + "]"
 }
 
-// EscapeHyprDescription escapes # characters in monitor descriptions by doubling them.
-// In Hyprland's configuration syntax, # needs to be escaped as ## when used in desc: fields.
-func EscapeHyprDescription(desc string) string {
-	return strings.ReplaceAll(desc, "#", "##")
+var luaStringEscaper = strings.NewReplacer(`\`, `\\`, `"`, `\"`, "\n", `\n`)
+
+// LuaString returns s as a double-quoted Lua string literal.
+func LuaString(s string) string {
+	return `"` + luaStringEscaper.Replace(s) + `"`
+}
+
+// HyprMonitorRule returns a single-line Hyprland `hl.monitor({...})` call built from `key = value` fields.
+func HyprMonitorRule(fields []string) string {
+	return "hl.monitor({ " + strings.Join(fields, ", ") + " })"
 }

@@ -190,12 +190,14 @@ When using the daemon with manually configured scales, ensure they produce whole
 
 ```toml title="~/.config/hyprdynamicmonitors/config.toml"
 [profiles.high_dpi]
-config_file = "hyprconfigs/high_dpi.conf"
+config_file = "hyprconfigs/high_dpi.lua"
 
-# In hyprconfigs/high_dpi.conf:
-# monitor=eDP-1,3840x2160@60,0x0,2.0  # 2.0 is valid (1920x1080 logical)
-# monitor=eDP-1,3840x2160@60,0x0,1.5  # 1.5 is valid (2560x1440 logical)
-# monitor=eDP-1,3840x2160@60,0x0,1.7  # 1.7 is INVALID (2258.82x1270.59 logical)
+```
+
+```lua title="hyprconfigs/high_dpi.lua"
+hl.monitor({ output = "eDP-1", mode = "3840x2160@60", position = "0x0", scale = 2.0 }) -- 2.0 is valid (1920x1080 logical)
+hl.monitor({ output = "eDP-1", mode = "3840x2160@60", position = "0x0", scale = 1.5 }) -- 1.5 is valid (2560x1440 logical)
+hl.monitor({ output = "eDP-1", mode = "3840x2160@60", position = "0x0", scale = 1.7 }) -- 1.7 is INVALID (2258.82x1270.59 logical)
 ```
 
 ## Related documentation

@@ -1,0 +1,60 @@
+-- Gaming Setup Template Configuration
+-- Configuration for gaming
+-- Power State: {{.PowerState}} (AC power required)
+
+{{- $laptop := index .MonitorsByTag "laptop" -}}
+{{- $gaming := index .MonitorsByTag "gaming_monitor" -}}
+
+-- Monitor Configuration - Gaming Optimized
+{{- if $laptop }}
+-- Laptop as secondary display at lower refresh rate
+hl.monitor({ output = "{{$laptop.Name}}", mode = "2880x1920@60.00000", position = "auto-up", scale = 2.0 })
+{{- end }}
+
+{{- if $gaming }}
+-- Gaming monitor as primary - maximum refresh rate
+hl.monitor({ output = "desc:{{$gaming.Description}}", mode = "1920x1080@144.00000", position = "0x0", scale = 1.0 })
+{{- end }}
+
+-- Workspace Assignment - Gaming Focus
+{{- if $gaming }}
+-- Gaming workspaces on high refresh monitor
+hl.workspace_rule({ workspace = "1", monitor = "{{$gaming.Name}}", default = true })
+hl.workspace_rule({ workspace = "2", monitor = "{{$gaming.Name}}" }) -- Secondary games
+hl.workspace_rule({ workspace = "3", monitor = "{{$gaming.Name}}" }) -- Streaming/recording
+{{- end }}
+
+{{- if $laptop }}
+-- Utility workspaces on laptop screen
+hl.workspace_rule({ workspace = "4", monitor = "{{$laptop.Name}}" }) -- Discord/chat
+hl.workspace_rule({ workspace = "5", monitor = "{{$laptop.Name}}" }) -- System monitoring
+hl.workspace_rule({ workspace = "6", monitor = "{{$laptop.Name}}" }) -- Browser/guides
+{{- end }}
+
+{{- if $gaming }}
+-- Force games to gaming monitor at full screen
+hl.window_rule({ match = { class = "^(steam_app_.*)$" }, workspace = "1", fullscreen = true })
+hl.window_rule({ match = { class = "^(lutris)$" }, workspace = "1" })
+hl.window_rule({ match = { class = "^(minecraft.*)$" }, workspace = "1" })
+hl.window_rule({ match = { class = "^(.*\\.exe)$" }, workspace = "1" })
+
+-- Streaming/recording apps on gaming monitor
+hl.window_rule({ match = { class = "^(obs)$" }, workspace = "3" })
+hl.window_rule({ match = { class = "^(streamlabs.*)$" }, workspace = "3" })
+{{- end }}
+
+{{- if $laptop }}
+-- Communication apps on laptop screen
+hl.window_rule({ match = { class = "^(discord)$" }, workspace = "4" })
+hl.window_rule({ match = { class = "^(teamspeak.*)$" }, workspace = "4" })
+hl.window_rule({ match = { class = "^(mumble)$" }, workspace = "4" })
+
+-- System monitoring on laptop screen
+hl.window_rule({ match = { class = "^(btop)$" }, workspace = "5" })
+hl.window_rule({ match = { class = "^(htop)$" }, workspace = "5" })
+hl.window_rule({ match = { title = "^(.*System Monitor.*)$" }, workspace = "5" })
+
+-- Guides/browser on laptop screen
+hl.window_rule({ match = { class = "^(firefox)$" }, workspace = "6" })
+hl.window_rule({ match = { class = "^(chromium)$" }, workspace = "6" })
+{{- end }}

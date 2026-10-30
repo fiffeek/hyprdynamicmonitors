@@ -92,51 +92,51 @@ func TestService_EditExisting(t *testing.T) {
 	}{
 		{
 			name:         "Replace content between existing markers",
-			inputFile:    "testdata/existing_config_with_markers.conf",
-			expectedFile: "testdata/expected_replace_markers.conf",
+			inputFile:    "testdata/existing_config_with_markers.lua",
+			expectedFile: "testdata/expected_replace_markers.lua",
 			profileName:  "test-profile",
 		},
 		{
 			name:         "Append content when no markers exist",
-			inputFile:    "testdata/existing_config_no_markers.conf",
-			expectedFile: "testdata/expected_append_no_markers.conf",
+			inputFile:    "testdata/existing_config_no_markers.lua",
+			expectedFile: "testdata/expected_append_no_markers.lua",
 			profileName:  "test-profile",
 		},
 		{
 			name:         "Append content when markers are broken",
-			inputFile:    "testdata/config_with_broken_markers.conf",
-			expectedFile: "testdata/expected_append_broken_markers.conf",
+			inputFile:    "testdata/config_with_broken_markers.lua",
+			expectedFile: "testdata/expected_append_broken_markers.lua",
 			profileName:  "test-profile",
 		},
 		{
 			name:         "Handle empty config file",
-			inputFile:    "testdata/empty_config.conf",
-			expectedFile: "testdata/expected_empty_config.conf",
+			inputFile:    "testdata/empty_config.lua",
+			expectedFile: "testdata/expected_empty_config.lua",
 			profileName:  "test-profile",
 		},
 		{
 			name:         "Handle non-existent file",
-			inputFile:    "testdata/non_existent.conf",
-			expectedFile: "testdata/expected_non_existent.conf",
+			inputFile:    "testdata/non_existent.lua",
+			expectedFile: "testdata/expected_non_existent.lua",
 			profileName:  "test-profile",
 		},
 		{
 			name:          "Profile not found",
-			inputFile:     "testdata/empty_config.conf",
+			inputFile:     "testdata/empty_config.lua",
 			profileName:   "non-existent-profile",
 			expectError:   true,
 			errorContains: "profile not found",
 		},
 		{
 			name:         "Repeated calls should not accumulate newlines",
-			inputFile:    "testdata/existing_config_with_markers.conf",
-			expectedFile: "testdata/expected_replace_markers.conf",
+			inputFile:    "testdata/existing_config_with_markers.lua",
+			expectedFile: "testdata/expected_replace_markers.lua",
 			profileName:  "test-profile",
 		},
 		{
 			name:         "Repeated calls with markers only should not accumulate newlines",
-			inputFile:    "testdata/markers_only.conf",
-			expectedFile: "testdata/expected_markers_only.conf",
+			inputFile:    "testdata/markers_only.lua",
+			expectedFile: "testdata/expected_markers_only.lua",
 			profileName:  "test-profile",
 		},
 	}
@@ -171,7 +171,7 @@ func TestService_EditExisting(t *testing.T) {
 					Get()
 			}
 
-			if tc.inputFile != "testdata/non_existent.conf" {
+			if tc.inputFile != "testdata/non_existent.lua" {
 				inputData, err := os.ReadFile(tc.inputFile)
 				require.NoError(t, err)
 				err = os.WriteFile(configFile, inputData, 0o600)

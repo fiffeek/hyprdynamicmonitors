@@ -22,7 +22,7 @@ Before diving into the workflows, it's helpful to understand these key concepts:
 
 - **Applying monitors to profile** - Saving the current monitor layout settings to an existing or new profile in your HDM config file.
 
-- **Rendering** - Generating the Hyprland monitor configuration from HDM profiles and writing it to the destination file (typically `~/.config/hypr/monitors.conf`). When running without a daemon, you need to manually trigger this with the `R` keybind.
+- **Rendering** - Generating the Hyprland monitor configuration from HDM profiles and writing it to the destination file (typically `~/.config/hypr/monitors.lua`). When running without a daemon, you need to manually trigger this with the `R` keybind.
 
 - **Ephemeral apply** - Applying monitor settings directly to Hyprland without saving to a profile or rendering to the destination file. Useful for testing layouts on-the-fly.
 
@@ -45,10 +45,10 @@ When you set up a new monitor configuration:
 6. Type the profile name and press `Enter`
 7. The profile is saved to your HDM config and a template file is created under `~/.config/hyprdynamicmonitors/hyprconfigs/${profile_name}.go.tmpl`
 8. **Without daemon**: Press `R` to manually render the configuration to your destination file
-9. The rendered configuration is written to `config.general.destination` (typically `~/.config/hypr/monitors.conf`)
+9. The rendered configuration is written to `config.general.destination` (typically `~/.config/hypr/monitors.lua`)
 
 :::tip
-Make sure your Hyprland config sources the destination file: `source = ~/.config/hypr/monitors.conf` in `~/.config/hypr/hyprland.conf`
+Make sure your Hyprland config loads the destination file: `require("monitors")` in `~/.config/hypr/hyprland.lua`
 :::
 
 ### Adjusting an existing profile

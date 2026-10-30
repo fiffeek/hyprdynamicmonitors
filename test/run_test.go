@@ -668,7 +668,7 @@ func Test__Run_Binary(t *testing.T) {
 				assert.NotNil(t, profile.ConfigFile, "the config file should be set")
 				testutils.AssertFileExists(t, profile.ConfigFile)
 				compareWithFixture(t, profile.ConfigFile,
-					"testdata/app/fixtures/frozen_current.conf")
+					"testdata/app/fixtures/frozen_current.lua")
 			},
 			expectError:        false,
 			disablePowerEvents: true,

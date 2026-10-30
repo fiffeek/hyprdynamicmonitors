@@ -110,8 +110,8 @@ func (s *Service) EditExisting(profileName string, currentMonitors []*hypr.Monit
 // or appends the content to the end if markers are not found
 func (s *Service) updateConfigFileWithContent(configFile, newContent string) error {
 	const (
-		startMarker = "# <<<<< TUI AUTO START"
-		endMarker   = "# <<<<< TUI AUTO END"
+		startMarker = "-- <<<<< TUI AUTO START"
+		endMarker   = "-- <<<<< TUI AUTO END"
 	)
 
 	// nolint:gosec
@@ -300,51 +300,43 @@ func (s *Service) ToHyprLines(monitors hypr.MonitorSpecs) []string {
 
 		identifier := monitor.Name
 		if monitor.Description != "" {
-			identifier = "desc:" + utils.EscapeHyprDescription(monitor.Description)
+			identifier = "desc:" + monitor.Description
 		}
-		line := "monitor=" + identifier
-		fields = append(fields, line)
+		fields = append(fields, "output = "+utils.LuaString(identifier))
 		if monitor.Disabled {
-			fields = append(fields, "disable")
-			lines = append(lines, strings.Join(fields, ","))
+			fields = append(fields, "disabled = true")
+			lines = append(lines, utils.HyprMonitorRule(fields))
 			continue
 		}
 
-		fields = append(fields, fmt.Sprintf("%dx%d@%.5f", monitor.Width, monitor.Height, monitor.RefreshRate))
-		fields = append(fields, fmt.Sprintf("%dx%d", monitor.X, monitor.Y))
-		fields = append(fields, fmt.Sprintf("%.8f", monitor.Scale))
-		fields = append(fields, "transform")
-		// nolint:perfsprint
-		fields = append(fields, fmt.Sprintf("%d", monitor.Transform))
+		fields = append(fields, "mode = "+utils.LuaString(
+			fmt.Sprintf("%dx%d@%.5f", monitor.Width, monitor.Height, monitor.RefreshRate)))
+		fields = append(fields, "position = "+utils.LuaString(
+			fmt.Sprintf("%dx%d", monitor.X, monitor.Y)))
+		fields = append(fields, fmt.Sprintf("scale = %.8f", monitor.Scale))
+		fields = append(fields, fmt.Sprintf("transform = %d", monitor.Transform))
 		if monitor.Vrr {
-			fields = append(fields, "vrr")
-			fields = append(fields, "1")
+			fields = append(fields, "vrr = 1")
 		} else {
-			fields = append(fields, "vrr")
-			fields = append(fields, "0")
+			fields = append(fields, "vrr = 0")
 		}
 		if monitor.TenBitdepth {
-			fields = append(fields, "bitdepth")
-			fields = append(fields, "10")
+			fields = append(fields, "bitdepth = 10")
 		}
 		if monitor.HasNonDefaultColorPreset() {
-			fields = append(fields, "cm")
-			fields = append(fields, monitor.ColorPreset)
+			fields = append(fields, "cm = "+utils.LuaString(monitor.ColorPreset))
 		}
 		if monitor.HDR() && monitor.SdrBrightness != 1.0 {
-			fields = append(fields, "sdrbrightness")
-			fields = append(fields, fmt.Sprintf("%.2f", monitor.SdrBrightness))
+			fields = append(fields, fmt.Sprintf("sdrbrightness = %.2f", monitor.SdrBrightness))
 		}
 		if monitor.HDR() && monitor.SdrSaturation != 1.0 {
-			fields = append(fields, "sdrsaturation")
-			fields = append(fields, fmt.Sprintf("%.2f", monitor.SdrSaturation))
+			fields = append(fields, fmt.Sprintf("sdrsaturation = %.2f", monitor.SdrSaturation))
 		}
 		if monitor.HasMirror() {
-			fields = append(fields, "mirror")
-			fields = append(fields, monitor.Mirror)
+			fields = append(fields, "mirror = "+utils.LuaString(monitor.Mirror))
 		}
 
-		lines = append(lines, strings.Join(fields, ","))
+		lines = append(lines, utils.HyprMonitorRule(fields))
 	}
 
 	logrus.Debugf("Monitors freeze: %v", lines)

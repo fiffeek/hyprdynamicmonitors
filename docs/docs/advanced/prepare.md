@@ -12,21 +12,21 @@ Hyprland currently has a limitation where it cannot start if all monitors are di
 
 This affects `hyprdynamicmonitors` users who disable monitors in their profiles. For example:
 
-1. You're using external displays with your laptop screen disabled (`monitor=eDP-1,disable`)
+1. You're using external displays with your laptop screen disabled (`hl.monitor({ output = "eDP-1", disabled = true })`)
 2. You power off and unplug all external displays
 3. You try to start your laptop the next day
 4. **Result**: Hyprland shows a blank screen and won't start because the configuration file still has the laptop screen disabled, even though `hyprdynamicmonitors` would correctly reconfigure the monitors once running
 
 ## The Solution
 
-The `prepare` command removes all `monitor=...,disable` lines from your destination file (`config.general.destination`) before Hyprland starts. This ensures:
+The `prepare` command removes all `hl.monitor({ ..., disabled = true })` lines from your destination file (`config.general.destination`) before Hyprland starts. This ensures:
 
 1. Hyprland starts successfully with a clean monitor configuration
 2. Once Hyprland is running, `hyprdynamicmonitors run` (if enabled) automatically applies the correct profile
 3. If not using the daemon, you can adjust settings manually in the TUI
 
 :::info
-This is only relevant if you disable monitors in your profiles. If you don't use `monitor=...,disable` in any configuration, you don't need the prepare command.
+This is only relevant if you disable monitors in your profiles. If you don't use `hl.monitor({ ..., disabled = true })` in any configuration, you don't need the prepare command.
 :::
 
 For command-line options and examples, see the [prepare command documentation](../usage/commands#prepare).
@@ -49,7 +49,7 @@ See the [systemd documentation](./systemd) for complete setup instructions, incl
 
 ### Option 2: Manual execution (Non-systemd)
 
-If you're running Hyprland manually (e.g., from TTY) or using `exec-once` for `hyprdynamicmonitors`, ensure `prepare` runs before Hyprland starts.
+If you're running Hyprland manually (e.g., from TTY) or start `hyprdynamicmonitors` from `hyprland.lua`, ensure `prepare` runs before Hyprland starts.
 
 **Using a shell alias:**
 ```bash
@@ -80,7 +80,7 @@ systemctl --user enable hyprdynamicmonitors-prepare.service
 But due to relying on timing (you entering the Hyprland session after this runs) adding it to your startup routine is more robust.
 
 :::info
-The prepare command is fast (typically completes in milliseconds) and safe to run multiple times. It only modifies your destination file when it finds `monitor=...,disable` lines to remove.
+The prepare command is fast (typically completes in milliseconds) and safe to run multiple times. It only modifies your destination file when it finds `hl.monitor({ ..., disabled = true })` lines to remove.
 :::
 
 ## See Also
