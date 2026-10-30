@@ -1,0 +1,11 @@
+{{- $laptop := index .MonitorsByTag "laptop" -}}
+{{- $external := index .MonitorsByTag "external" -}}
+
+-- Yet another configuration matched by regexes
+{{- if $laptop }}
+hl.monitor({ output = "{{$laptop.Name}}", mode = "2880x1920@60.00000", position = "0x0", scale = 2.0 })
+{{- end }}
+
+{{- if $external }}
+hl.monitor({ output = "{{$external.Name}}", mode = "2880x1920@60.00000", position = "0x0", scale = 2.0 })
+{{- end }}

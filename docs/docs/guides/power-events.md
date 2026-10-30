@@ -197,7 +197,7 @@ If automatic detection succeeded but profiles aren't switching when you plug/unp
    The output should show different profiles being selected based on power state.
 
 4. **Verify daemon is using the same configuration:**
-   If you're running the daemon with `exec-once`, make sure you're not passing conflicting flags like `--disable-power-events`.
+   If you're starting the daemon from `hyprland.lua`, make sure you're not passing conflicting flags like `--disable-power-events`.
 
 ### UPower is not installed
 

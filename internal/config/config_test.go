@@ -305,7 +305,7 @@ func TestGeneralSectionValidate(t *testing.T) {
 		{
 			name:     "nil destination gets default",
 			general:  &config.GeneralSection{},
-			expected: "$HOME/.config/hypr/monitors.conf",
+			expected: "$HOME/.config/hypr/monitors.lua",
 		},
 		{
 			name: "existing destination is preserved",
@@ -329,7 +329,7 @@ func TestGeneralSectionValidate(t *testing.T) {
 			}
 
 			if tt.name == "nil destination gets default" {
-				if !containsString(*tt.general.Destination, ".config/hypr/monitors.conf") {
+				if !containsString(*tt.general.Destination, ".config/hypr/monitors.lua") {
 					t.Errorf("expected destination to contain default path, got '%s'", *tt.general.Destination)
 				}
 			} else {

@@ -114,18 +114,20 @@ hyprdynamicmonitors tui
 # For getting started see: https://hyprdynamicmonitors.filipmikina.com/docs/quickstart/tui/
 ```
 
-Then add to your `~/.config/hypr/hyprland.conf` (alternatively, see [Running with systemd](https://fiffeek.github.io/hyprdynamicmonitors/docs/advanced/systemd) guide):
+Then add to your `~/.config/hypr/hyprland.lua` (alternatively, see [Running with systemd](https://fiffeek.github.io/hyprdynamicmonitors/docs/advanced/systemd) guide):
 
-```bash
-# Source the generated monitor configuration
-source = ~/.config/hypr/monitors.conf
+```lua
+-- Load the generated monitor configuration (~/.config/hypr/monitors.lua)
+require("monitors")
 
-# Run the daemon for automatic profile switching
-exec-once = hyprdynamicmonitors run
+-- Run the daemon for automatic profile switching
+hl.on("hyprland.start", function()
+    hl.exec_cmd("hyprdynamicmonitors run")
+end)
 
-# or use systemd instead
-# see: https://fiffeek.github.io/hyprdynamicmonitors/docs/advanced/systemd
-# systemctl --user enable --now hyprdynamicmonitors.service
+-- or use systemd instead
+-- see: https://fiffeek.github.io/hyprdynamicmonitors/docs/advanced/systemd
+-- systemctl --user enable --now hyprdynamicmonitors.service
 ```
 
 Ensure you're running `hyprdynamicmonitors prepare` prior to running Hyprland (see [the guide and the why](https://fiffeek.github.io/hyprdynamicmonitors/docs/advanced/prepare)):

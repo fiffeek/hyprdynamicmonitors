@@ -22,7 +22,7 @@ Override global callbacks for specific profiles:
 
 ```toml title="~/.config/hyprdynamicmonitors/config.toml"
 [profiles.gaming_setup]
-config_file = "hyprconfigs/gaming.conf"
+config_file = "hyprconfigs/gaming.lua"
 pre_apply_exec = "notify-send 'Gaming Mode' 'Activating high-performance profile'"
 post_apply_exec = "/usr/local/bin/gaming-mode-on.sh"
 ```
@@ -105,18 +105,18 @@ post_apply_exec = "hyprctl reload"
 
 ```toml title="~/.config/hyprdynamicmonitors/config.toml"
 [profiles.docked]
-config_file = "hyprconfigs/docked.conf"
+config_file = "hyprconfigs/docked.lua"
 post_apply_exec = "systemctl --user start docked-setup.service"
 
 [profiles.laptop_only]
-config_file = "hyprconfigs/laptop.conf"
+config_file = "hyprconfigs/laptop.lua"
 post_apply_exec = "systemctl --user stop docked-setup.service"
 ```
 
 ### Workspace Management
 
 ```toml
-post_apply_exec = "hyprctl dispatch workspace 1"  # Switch to workspace 1 after config change
+post_apply_exec = "hyprctl dispatch 'hl.dsp.focus({ workspace = 1 })'"  # Switch to workspace 1 after config change
 ```
 
 ### Application Restart

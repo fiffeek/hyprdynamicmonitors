@@ -10,7 +10,7 @@ match_description_using_regex = false
 match_name_using_regex = false
 
 [general]
-destination = "/.config/hypr/monitors.conf"
+destination = "/.config/hypr/monitors.lua"
 debounce_time_ms = 3000
 
 [scoring]

@@ -1,0 +1,22 @@
+-- Gaming template with custom overridden variables
+{{- range .Monitors }}
+{{- if eq .Tag "laptop" }}
+hl.monitor({ output = "{{ .Name }}", mode = "1920x1080@{{ $.refresh_rate_ac }}", position = "0x0", scale = {{ $.default_scaling }} })
+hl.config({ misc = { vrr = {{ $.default_vrr }} } })
+{{- end }}
+{{- end }}
+
+-- Gaming-specific settings using custom variables
+{{- if eq .gaming_mode "true" }}
+hl.config({
+    decoration = {
+        blur = {
+            enabled = false, -- Disable blur for performance
+        },
+    },
+    animations = {
+        enabled = false, -- Disable animations for performance
+    },
+})
+hl.exec_cmd("brightnessctl set {{ .brightness_high }}")
+{{- end }}

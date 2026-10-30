@@ -267,9 +267,9 @@ If lid detection is working but profiles aren't switching when you close/open th
    The output should show different profiles being selected based on lid state.
 
 4. **Verify daemon is using lid events:**
-   If you're running the daemon with `exec-once`, make sure you're passing `--enable-lid-events`:
-   ```conf title="~/.config/hypr/hyprland.conf"
-   exec-once = hyprdynamicmonitors run --enable-lid-events
+   If you're starting the daemon from `hyprland.lua`, make sure you're passing `--enable-lid-events`:
+   ```lua title="~/.config/hypr/hyprland.lua"
+   hl.on("hyprland.start", function() hl.exec_cmd("hyprdynamicmonitors run --enable-lid-events") end)
    ```
 
 5. **Enable debug logging:**
@@ -285,8 +285,8 @@ Some systems send lid events during boot or when resuming from suspend, which mi
 **Workaround:**
 
 Add a small delay in your Hyprland config:
-```toml title="~/.config/hypr/hyprland.conf"
-exec-once = sleep 2 && hyprdynamicmonitors run --enable-lid-events
+```lua title="~/.config/hypr/hyprland.lua"
+hl.on("hyprland.start", function() hl.exec_cmd("sleep 2 && hyprdynamicmonitors run --enable-lid-events") end)
 ```
 
 This gives the system time to stabilize before monitoring lid events.

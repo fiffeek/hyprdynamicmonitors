@@ -262,7 +262,7 @@ hyprdynamicmonitors tui --hypr-monitors-override /path/to/monitors-spec.txt --co
 
 Clean up monitor configuration before starting Hyprland to prevent the "no active displays" issue.
 
-This command removes any `monitor=...,disable` lines from your destination configuration file. This is essential if you disable monitors in your profiles (like disabling the laptop screen when using external displays), because Hyprland cannot start if all monitors are disabled at launch.
+This command removes any `hl.monitor({ ..., disabled = true })` lines from your destination configuration file. This is essential if you disable monitors in your profiles (like disabling the laptop screen when using external displays), because Hyprland cannot start if all monitors are disabled at launch.
 
 :::tip
 For detailed explanation and setup instructions, see [What is hyprdynamicmonitors prepare?](../advanced/prepare).
@@ -274,7 +274,7 @@ For detailed explanation and setup instructions, see [What is hyprdynamicmonitor
 Prepares the monitor configuration file by removing monitor disable commands.
 
 This command should be run before starting Hyprland to ensure
-a clean state. It removes any 'monitor=...,disable' lines from the destination file,
+a clean state. It removes any 'hl.monitor({ ..., disabled = true })' lines from the destination file,
 which prevents an issue with no active displays (Hyprland does not launch).
 
 This is particularly useful when running with systemd, where you want to ensure the

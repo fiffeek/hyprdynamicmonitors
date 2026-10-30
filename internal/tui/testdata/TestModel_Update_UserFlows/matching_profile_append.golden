@@ -3,13 +3,13 @@
 │HyprDynamicMonitors Profile                        ││Profile Config Preview (template)                                                                       │ 
 │                                                   ││file                                                                                                    │ 
 │Profile: two                                       ││                                                                                                        │ 
-│                                                   ││┃   1 # <<<<< TUI AUTO START                                                                            │ 
-│Profile Details                                    ││┃   2 monitor=desc:BOE NE135A1M-NY1,2880x1920@120.00000,2020x1080,2.00000000,transform,0,vrr,1          │ 
-│Config File: file                                  ││┃   3 monitor=desc:Dell Inc. DELL U2723QE 5YNK3H3,3840x2160@60.00000,0x0,1.25000000,transform,0,vrr,0   │ 
-│Config Type: template                              ││┃   4 # <<<<< TUI AUTO END                                                                              │ 
-│Required Monitors:                                 ││┃   5                                                                                                   │ 
-│  • Desc: BOE NE135A1M-NY1                         ││┃                                                                                                       │ 
-│  • Desc: Dell Inc. DELL U2723QE...                ││┃                                                                                                       │ 
+│                                                   ││┃   1 -- <<<<< TUI AUTO START                                                                           │ 
+│Profile Details                                    ││┃   2 hl.monitor({ output = "desc:BOE NE135A1M-NY1", mode = "2880x1920@120.00000", position =           │ 
+│Config File: file                                  ││┃     "2020x1080", scale = 2.00000000, transform = 0, vrr = 1 })                                        │ 
+│Config Type: template                              ││┃   3 hl.monitor({ output = "desc:Dell Inc. DELL U2723QE 5YNK3H3", mode = "3840x2160@60.00000",         │ 
+│Required Monitors:                                 ││┃     position = "0x0", scale = 1.25000000, transform = 0, vrr = 0 })                                   │ 
+│  • Desc: BOE NE135A1M-NY1                         ││┃   4 -- <<<<< TUI AUTO END                                                                             │ 
+│  • Desc: Dell Inc. DELL U2723QE...                ││┃   5                                                                                                   │ 
 │                                                   ││┃                                                                                                       │ 
 │New settings will be appended (or replaced         ││┃                                                                                                       │ 
 │depending on the `<<<<<` markers position) when    ││┃                                                                                                       │ 

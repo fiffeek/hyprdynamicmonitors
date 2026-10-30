@@ -1,0 +1,60 @@
+-- Presentation Template Configuration
+-- Configuration for presentations and external displays
+-- Power State: {{.PowerState}}
+
+{{- $laptop := index .MonitorsByTag "laptop" -}}
+{{- $projector := index .MonitorsByTag "projector" -}}
+
+-- Monitor Configuration - Presentation Setup
+{{- if $laptop }}
+-- Laptop as presenter display
+hl.monitor({ output = "{{$laptop.Name}}", mode = "2880x1920@60.00000", position = "0x0", scale = 2.0 })
+{{- end }}
+
+{{- if $projector }}
+-- Projector/external display - mirror or extend based on needs
+-- Most projectors work best at 1920x1080 or 1366x768
+hl.monitor({ output = "desc:{{$projector.Description}}", mode = "1920x1080@60.00000", position = "auto-right", scale = 1.0 })
+{{- end }}
+
+-- Workspace Assignment - Presentation Mode
+{{- if $laptop }}
+-- Presenter workspace on laptop
+hl.workspace_rule({ workspace = "1", monitor = "{{$laptop.Name}}", default = true }) -- Presentation control
+hl.workspace_rule({ workspace = "2", monitor = "{{$laptop.Name}}" }) -- Notes/backup slides
+{{- end }}
+
+{{- if $projector }}
+-- Main presentation on external display
+hl.workspace_rule({ workspace = "3", monitor = "{{$projector.Name}}" }) -- Active presentation
+{{- end }}
+
+
+-- Presentation window rules
+{{- if $laptop }}
+-- Presentation control applications on laptop
+hl.window_rule({ match = { class = "^(libreoffice-impress)$" }, workspace = "1" })
+hl.window_rule({ match = { class = "^(soffice)$" }, workspace = "1" })
+hl.window_rule({ match = { title = "^(.* - LibreOffice Impress)$" }, workspace = "1" })
+hl.window_rule({ match = { class = "^(microsoft-powerpoint)$" }, workspace = "1" })
+hl.window_rule({ match = { class = "^(reveal-md)$" }, workspace = "1" })
+
+-- Notes and backup on laptop
+hl.window_rule({ match = { class = "^(obsidian)$" }, workspace = "2" })
+hl.window_rule({ match = { class = "^(notion.*)$" }, workspace = "2" })
+hl.window_rule({ match = { class = "^(joplin)$" }, workspace = "2" })
+hl.window_rule({ match = { class = "^(firefox)$", title = "^(.*notes.*)$" }, workspace = "2" })
+{{- end }}
+
+{{- if $projector }}
+-- Full-screen presentation on projector
+hl.window_rule({ match = { class = "^(libreoffice-impress)$", title = "^(.*Presentation.*)$" }, workspace = "3", fullscreen = true })
+
+-- Media for presentations
+hl.window_rule({ match = { class = "^(vlc)$" }, workspace = "3", fullscreen = true })
+hl.window_rule({ match = { class = "^(mpv)$" }, workspace = "3", fullscreen = true })
+
+-- Browser presentations
+hl.window_rule({ match = { class = "^(firefox)$", title = "^(.*reveal.*)$" }, workspace = "3" })
+hl.window_rule({ match = { class = "^(chromium)$", title = "^(.*slides.*)$" }, workspace = "3" })
+{{- end }}

@@ -18,7 +18,7 @@ type Service struct {
 }
 
 func NewService(cfg *config.Config) *Service {
-	monitorDisableRegex := regexp.MustCompile(`.*monitor.*=.*disable.*`)
+	monitorDisableRegex := regexp.MustCompile(`hl\.monitor\(.*\bdisabled\s*=\s*true\b`)
 	return &Service{
 		cfg,
 		monitorDisableRegex,

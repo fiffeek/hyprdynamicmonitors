@@ -495,33 +495,36 @@ func (m *MonitorSpec) ToHypr() string {
 	// desc can be empty, use the name as a fallback
 	identifier := m.Name
 	if m.Description != "" {
-		identifier = "desc:" + utils.EscapeHyprDescription(m.Description)
+		identifier = "desc:" + m.Description
 	}
+	fields := []string{"output = " + utils.LuaString(identifier)}
 	if m.Disabled {
-		// nolint:perfsprint
-		return fmt.Sprintf("%s,disable", identifier)
+		return utils.HyprMonitorRule(append(fields, "disabled = true"))
 	}
-	line := fmt.Sprintf("%s,%dx%d@%.2f,%dx%d,%.8f,transform,%d", identifier, m.Width,
-		m.Height, m.RefreshRate, m.X, m.Y, m.Scale, m.HyprTransform())
+	fields = append(fields,
+		"mode = "+utils.LuaString(fmt.Sprintf("%dx%d@%.2f", m.Width, m.Height, m.RefreshRate)),
+		"position = "+utils.LuaString(fmt.Sprintf("%dx%d", m.X, m.Y)),
+		fmt.Sprintf("scale = %.8f", m.Scale),
+		fmt.Sprintf("transform = %d", m.HyprTransform()))
 	if m.Vrr {
-		line += ",vrr,1"
+		fields = append(fields, "vrr = 1")
 	}
 	if m.Bitdepth != DefaultBitdepth {
-		line = fmt.Sprintf("%s,bitdepth,%s", line, m.Bitdepth.Value())
+		fields = append(fields, "bitdepth = "+m.Bitdepth.Value())
 	}
 	if !m.ColorPreset.IsDefault() {
-		line = fmt.Sprintf("%s,cm,%s", line, m.ColorPreset.Value())
+		fields = append(fields, "cm = "+utils.LuaString(m.ColorPreset.Value()))
 	}
 	if m.SdrBrightness != 1.0 && m.ColorPreset.CanAdjustSdr() {
-		line = fmt.Sprintf("%s,sdrbrightness,%.2f", line, m.SdrBrightness)
+		fields = append(fields, fmt.Sprintf("sdrbrightness = %.2f", m.SdrBrightness))
 	}
 	if m.SdrSaturation != 1.0 && m.ColorPreset.CanAdjustSdr() {
-		line = fmt.Sprintf("%s,sdrsaturation,%.2f", line, m.SdrSaturation)
+		fields = append(fields, fmt.Sprintf("sdrsaturation = %.2f", m.SdrSaturation))
 	}
 	if m.Mirror != "none" {
-		line = fmt.Sprintf("%s,mirror,%s", line, m.Mirror)
+		fields = append(fields, "mirror = "+utils.LuaString(m.Mirror))
 	}
-	return line
+	return utils.HyprMonitorRule(fields)
 }
 
 type MonitorRectangle struct {

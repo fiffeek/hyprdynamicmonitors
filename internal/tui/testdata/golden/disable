@@ -1,1 +1,1 @@
-HEADLESS-2,disable
+hl.monitor({ output = "HEADLESS-2", disabled = true })

@@ -111,10 +111,10 @@ Lid state is available in templates via functions:
 
 ```go title="~/.config/hyprdynamicmonitors/hyprconfigs/lid_example.go.tmpl"
 {{if isLidClosed}}
-# Disable laptop screen when lid is closed
-monitor=eDP-1,disable
+-- Disable laptop screen when lid is closed
+hl.monitor({ output = "eDP-1", disabled = true })
 {{else}}
-monitor=eDP-1,2880x1920@120,0x0,2.0
+hl.monitor({ output = "eDP-1", mode = "2880x1920@120", position = "0x0", scale = 2.0 })
 {{end}}
 ```
 
@@ -139,25 +139,25 @@ The `.LidState` variable can have these values:
 {{- $external := index .MonitorsByTag "external" -}}
 
 {{if isLidClosed}}
-monitor={{$laptop.Name}},disable
+hl.monitor({ output = "{{$laptop.Name}}", disabled = true })
 {{else}}
-monitor={{$laptop.Name}},2880x1920@120,0x0,2.0
+hl.monitor({ output = "{{$laptop.Name}}", mode = "2880x1920@120", position = "0x0", scale = 2.0 })
 {{end}}
 
-monitor={{$external.Name}},preferred,auto,1
+hl.monitor({ output = "{{$external.Name}}", mode = "preferred", position = "auto", scale = 1 })
 ```
 
 ### Different Layouts Based on Lid State
 
 ```go title="~/.config/hyprdynamicmonitors/hyprconfigs/lid.go.tmpl"
 {{if isLidClosed}}
-# Closed lid: external monitor only
-monitor=eDP-1,disable
-monitor=DP-1,3840x2160@60,0x0,1
+-- Closed lid: external monitor only
+hl.monitor({ output = "eDP-1", disabled = true })
+hl.monitor({ output = "DP-1", mode = "3840x2160@60", position = "0x0", scale = 1 })
 {{else}}
-# Open lid: dual monitor setup
-monitor=eDP-1,2880x1920@120,0x0,2.0
-monitor=DP-1,3840x2160@60,2880x0,1
+-- Open lid: dual monitor setup
+hl.monitor({ output = "eDP-1", mode = "2880x1920@120", position = "0x0", scale = 2.0 })
+hl.monitor({ output = "DP-1", mode = "3840x2160@60", position = "2880x0", scale = 1 })
 {{end}}
 ```
 

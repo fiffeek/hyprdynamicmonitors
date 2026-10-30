@@ -67,7 +67,7 @@ Tags are particularly useful in Go templates where you can reference monitors by
 
 ```go
 {{- $laptop := index .MonitorsByTag "laptop" -}}
-monitor={{$laptop.Name}},preferred,0x0,1
+hl.monitor({ output = "{{$laptop.Name}}", mode = "preferred", position = "0x0", scale = 1 })
 ```
 
 ## Finding Monitor Information
@@ -99,13 +99,13 @@ When multiple profiles could match the current setup, HyprDynamicMonitors uses a
 ```toml title="~/.config/hyprdynamicmonitors/config.toml"
 # This profile will be selected for laptop-only setup
 [profiles.laptop_basic]
-config_file = "hyprconfigs/laptop-basic.conf"
+config_file = "hyprconfigs/laptop-basic.lua"
 [[profiles.laptop_basic.conditions.required_monitors]]
 name = "eDP-1"
 
 # This profile will be selected instead (defined last)
 [profiles.laptop_optimized]
-config_file = "hyprconfigs/laptop-optimized.conf"
+config_file = "hyprconfigs/laptop-optimized.lua"
 [[profiles.laptop_optimized.conditions.required_monitors]]
 name = "eDP-1"
 ```

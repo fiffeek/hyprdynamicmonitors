@@ -182,7 +182,7 @@ func TestModel_Update_UserFlows(t *testing.T) {
 				},
 				{
 					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'H'}},
-					expectOutputToContain: "monitor = desc:Dell",
+					expectOutputToContain: `output = "desc:Dell`,
 				},
 				{
 					msg:                   tea.KeyMsg{Type: tea.KeyEnter},
@@ -226,7 +226,7 @@ func TestModel_Update_UserFlows(t *testing.T) {
 				},
 				{
 					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'H'}},
-					expectOutputToContain: "monitor = desc:Dell",
+					expectOutputToContain: `output = "desc:Dell`,
 				},
 				{
 					msg:                   tea.KeyMsg{Type: tea.KeyEnter},
@@ -265,7 +265,7 @@ func TestModel_Update_UserFlows(t *testing.T) {
 				},
 				{
 					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'H'}},
-					expectOutputToContain: "monitor = desc:BOE",
+					expectOutputToContain: `output = "desc:BOE`,
 				},
 				{
 					msg:                   tea.KeyMsg{Type: tea.KeyEnter},
@@ -706,7 +706,7 @@ func TestModel_Update_UserFlows(t *testing.T) {
 				},
 				{
 					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'e'}},
-					expectOutputToContain: "monitor = desc:Samsung Electric Company C27F390 HTHK500315,disable",
+					expectOutputToContain: `output = "desc:Samsung Electric Company C27F390 HTHK500315", disabled = true })`,
 				},
 			},
 		},
@@ -722,7 +722,7 @@ func TestModel_Update_UserFlows(t *testing.T) {
 				},
 				{
 					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'e'}},
-					expectOutputToContain: "monitor = desc:BOE NE135A1M-NY1,disable",
+					expectOutputToContain: `output = "desc:BOE NE135A1M-NY1", disabled = true })`,
 				},
 				{
 					msg:                   tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'r'}},
